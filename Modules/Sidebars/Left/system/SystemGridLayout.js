@@ -2,7 +2,7 @@
 
 var columnCount = 3;
 var rowCount = 7;
-var schemaVersion = 5;
+var schemaVersion = 6;
 
 var tileDefinitions = [
     { id: "time", columnSpan: 2, rowSpan: 2 },
@@ -13,7 +13,8 @@ var tileDefinitions = [
     { id: "wifi", columnSpan: 1, rowSpan: 1 },
     { id: "network", columnSpan: 2, rowSpan: 1 },
     { id: "storage", columnSpan: 3, rowSpan: 1 },
-    { id: "calendar", columnSpan: 1, rowSpan: 1 }
+    { id: "calendar", columnSpan: 1, rowSpan: 1 },
+    { id: "weather", columnSpan: 3, rowSpan: 1 }
 ];
 
 var defaultAnchors = {
@@ -25,7 +26,8 @@ var defaultAnchors = {
     wifi: { column: 0, row: 3 },
     network: { column: 1, row: 3 },
     storage: { column: 0, row: 4 },
-    calendar: { column: 0, row: 5 }
+    calendar: { column: 0, row: 5 },
+    weather: { column: 0, row: 6 }
 };
 
 function cloneTile(tile) {

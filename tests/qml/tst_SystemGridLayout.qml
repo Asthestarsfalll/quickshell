@@ -12,12 +12,12 @@ TestCase {
     function test_defaultLayoutIsValid() {
         const layout = GridLayout.defaultLayout();
         verify(GridLayout.validateLayout(layout));
-        compare(layout.length, 9);
+        compare(layout.length, 10);
 
         let area = 0;
         for (let index = 0; index < layout.length; index += 1)
             area += layout[index].columnSpan * layout[index].rowSpan;
-        compare(area, 16);
+        compare(area, 19);
 
         compare(
             GridLayout.placementFor(layout, "time").column,
@@ -43,13 +43,21 @@ TestCase {
             GridLayout.placementFor(layout, "calendar").rowSpan,
             1
         );
+        compare(
+            GridLayout.placementFor(layout, "weather").columnSpan,
+            GridLayout.columnCount
+        );
+        compare(
+            GridLayout.placementFor(layout, "weather").row,
+            6
+        );
     }
 
     function test_serializationRoundTrip() {
         const layout = GridLayout.defaultLayout();
         const serialized = GridLayout.serializeLayout(layout);
-        compare(serialized.version, 5);
-        compare(serialized.tiles.length, 9);
+        compare(serialized.version, 6);
+        compare(serialized.tiles.length, 10);
 
         const hydrated = GridLayout.hydrateSaved(serialized);
         verify(GridLayout.validateLayout(hydrated));
@@ -61,7 +69,7 @@ TestCase {
 
     function test_invalidSavedLayoutsFallBack() {
         const duplicate = {
-            version: 5,
+            version: 6,
             tiles: [
                 { id: "time", column: 0, row: 0 },
                 { id: "time", column: 2, row: 0 }
@@ -154,6 +162,19 @@ TestCase {
         compare(storage.columnSpan, GridLayout.columnCount);
         compare(
             GridLayout.clampAnchor(storage, 2, storage.row).column,
+            0
+        );
+    }
+
+    function test_weatherSpansFullGridWidth() {
+        const weather = GridLayout.placementFor(
+            GridLayout.defaultLayout(),
+            "weather"
+        );
+        compare(weather.column, 0);
+        compare(weather.columnSpan, GridLayout.columnCount);
+        compare(
+            GridLayout.clampAnchor(weather, 2, weather.row).column,
             0
         );
     }

@@ -134,6 +134,8 @@ Item {
             return storageComponent;
         case "calendar":
             return calendarComponent;
+        case "weather":
+            return weatherComponent;
         }
         return null;
     }
@@ -468,6 +470,12 @@ Item {
         id: calendarComponent
 
         SystemCalendarCard {}
+    }
+
+    Component {
+        id: weatherComponent
+
+        SystemWeatherCard {}
     }
 
     Item {
