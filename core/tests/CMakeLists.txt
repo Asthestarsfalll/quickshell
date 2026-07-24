@@ -117,3 +117,19 @@ target_compile_definitions(key_sysmon_integration_tests PRIVATE
 
 add_dependencies(key_sysmon_integration_tests key)
 add_test(NAME key_sysmon_integration_tests COMMAND key_sysmon_integration_tests)
+
+qt_add_executable(top_tui_helpers_tests
+    top_tui_helpers_test.cpp
+    ../cli/src/tui/top_tui_helpers.cpp
+)
+
+target_link_libraries(top_tui_helpers_tests PRIVATE
+    Qt6::Core
+    Qt6::Test
+)
+
+target_include_directories(top_tui_helpers_tests PRIVATE
+    ../cli/src/tui
+)
+
+add_test(NAME top_tui_helpers_tests COMMAND top_tui_helpers_tests)
