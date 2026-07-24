@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
-import M3Shapes
 import qs.Common
 import qs.Components
 import "../../../../Common/functions/SystemFormat.js" as Format
@@ -17,8 +16,101 @@ Rectangle {
         ? Math.max(0, Math.min(1, root.battery.chargePercent / 100))
         : 0
     property real animatedLevel: targetLevel
+    readonly property string normalizedStatus:
+        String(root.battery.status || "").toLowerCase()
     readonly property bool charging:
-        String(root.battery.status || "").toLowerCase() === "charging"
+        root.normalizedStatus === "charging"
+    readonly property bool full:
+        root.normalizedStatus === "full"
+        || (
+            root.valueAvailable
+            && root.battery.chargePercent >= 100
+            && !root.charging
+        )
+    readonly property bool powerConnected:
+        root.battery.acOnline === true
+        || (
+            root.battery.acOnline !== false
+            && (
+                root.charging
+                || root.normalizedStatus === "full"
+                || root.normalizedStatus === "not charging"
+            )
+        )
+    readonly property bool lowBattery:
+        root.valueAvailable
+        && root.battery.chargePercent <= 15
+        && !root.powerConnected
+    readonly property real batteryIconCenterY:
+        Appearance.spacing.medium + 18
+    readonly property bool batteryIconCovered:
+        root.animatedLevel
+        >= 1 - root.batteryIconCenterY / Math.max(1, root.height)
+
+    function batteryIconName() {
+        if (!root.present || !root.valueAvailable)
+            return "battery_unknown";
+
+        const percent = root.battery.chargePercent;
+        if (root.charging) {
+            if (percent <= 15)
+                return "battery_charging_20";
+            if (percent <= 35)
+                return "battery_charging_30";
+            if (percent <= 55)
+                return "battery_charging_50";
+            if (percent <= 70)
+                return "battery_charging_60";
+            if (percent <= 85)
+                return "battery_charging_80";
+            if (percent <= 95)
+                return "battery_charging_90";
+            return "battery_charging_full";
+        }
+
+        if (percent <= 5)
+            return "battery_0_bar";
+        if (percent <= 15)
+            return "battery_1_bar";
+        if (percent <= 30)
+            return "battery_2_bar";
+        if (percent <= 45)
+            return "battery_3_bar";
+        if (percent <= 60)
+            return "battery_4_bar";
+        if (percent <= 75)
+            return "battery_5_bar";
+        if (percent <= 90)
+            return "battery_6_bar";
+        return "battery_full";
+    }
+
+    function timingText() {
+        if (root.full)
+            return "—";
+
+        if (root.charging) {
+            return Format.isNumber(
+                root.battery.timeRemainingSeconds
+            )
+                ? "充满还需 " + Format.duration(
+                    root.battery.timeRemainingSeconds
+                )
+                : "充满时长未知";
+        }
+
+        if (!root.powerConnected) {
+            return Format.isNumber(
+                root.battery.timeRemainingSeconds
+            )
+                ? "耗电时长 " + Format.duration(
+                    root.battery.timeRemainingSeconds
+                )
+                : "耗电时长未知";
+        }
+
+        return "已接通电源，未在充电";
+    }
 
     radius: Appearance.rounding.extraLarge
     color: Appearance.colors.colSecondaryContainer
@@ -26,6 +118,11 @@ Rectangle {
         + (root.present
             ? Format.percent(root.battery.chargePercent, 0)
                 + "，" + Format.batteryStatus(root.battery.status)
+                + "，" + (
+                    root.powerConnected
+                        ? "已接通电源"
+                        : "未接通电源"
+                )
             : "未检测到电池")
 
     Behavior on animatedLevel {
@@ -41,7 +138,6 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: Appearance.spacing.medium
         foregroundColor: Appearance.colors.colOnSecondaryContainer
-        accentColor: Appearance.colors.colSecondary
     }
 
     // Item.clip is rectangular, so mask the liquid layer explicitly to the
@@ -84,21 +180,40 @@ Rectangle {
                     anchors.fill: parent
                     anchors.margins: Appearance.spacing.medium
                     foregroundColor: Appearance.colors.colOnSecondary
-                    accentColor: Appearance.colors.colSecondaryContainer
                     Accessible.ignored: true
                 }
             }
         }
 
-        Rectangle {
-            anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
+    }
+
+    MaterialSymbol {
+        anchors {
+            top: parent.top
+            right: parent.right
+            margins: Appearance.spacing.medium
+        }
+        z: 4
+        text: root.batteryIconName()
+        iconSize: 36
+        fill: 1
+        color: {
+            if (root.batteryIconCovered)
+                return Appearance.colors.colOnSecondary;
+            if (!root.present)
+                return Appearance.colors.colOnSecondaryContainer;
+            if (root.lowBattery)
+                return Appearance.colors.colError;
+            if (root.powerConnected)
+                return Appearance.colors.colPrimary;
+            return Appearance.colors.colSecondary;
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration:
+                    Appearance.animation.expressiveEffects.duration
             }
-            height: Appearance.spacing.small
-            color: Appearance.colors.colPrimary
-            opacity: root.charging ? 1 : 0.42
         }
     }
 
@@ -106,7 +221,6 @@ Rectangle {
         id: contents
 
         required property color foregroundColor
-        required property color accentColor
 
         Text {
             anchors {
@@ -118,33 +232,6 @@ Rectangle {
             font.family: Sizes.fontFamily
             font.pixelSize: Sizes.typeTitleSmall
             font.weight: Font.DemiBold
-        }
-
-        MaterialShape {
-            anchors {
-                top: parent.top
-                right: parent.right
-            }
-            implicitSize: 44
-            shape: root.charging
-                ? MaterialShape.Sunny
-                : MaterialShape.Cookie7Sided
-            color: parent.accentColor
-            animationDuration:
-                Appearance.animation.expressiveSlowSpatial.duration
-            animationEasing: Easing.OutBack
-
-            MaterialSymbol {
-                anchors.centerIn: parent
-                text: root.charging
-                    ? "battery_charging_full"
-                    : (root.present
-                        ? "battery_full"
-                        : "battery_unknown")
-                iconSize: 22
-                fill: 1
-                color: contents.foregroundColor
-            }
         }
 
         ColumnLayout {
@@ -163,18 +250,13 @@ Rectangle {
                 MaterialSymbol {
                     text: "schedule"
                     iconSize: 15
+                    fill: 0
                     color: contents.foregroundColor
                 }
 
                 Text {
                     Layout.fillWidth: true
-                    text: Format.isNumber(
-                        root.battery.timeRemainingSeconds
-                    )
-                        ? Format.duration(
-                            root.battery.timeRemainingSeconds
-                        )
-                        : "接通电源"
+                    text: root.timingText()
                     color: contents.foregroundColor
                     opacity: 0.78
                     font.family: Sizes.fontFamily
@@ -196,7 +278,17 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     text: Format.isNumber(root.battery.powerWatts)
-                        ? Format.watts(root.battery.powerWatts)
+                        ? (
+                            root.powerConnected
+                                ? (
+                                    root.charging
+                                        ? "充电 "
+                                        : "功率 "
+                                )
+                                : "放电 "
+                        ) + Format.watts(
+                            root.battery.powerWatts
+                        )
                         : "功率未知"
                     color: contents.foregroundColor
                     opacity: 0.78
@@ -269,12 +361,17 @@ Rectangle {
                 Layout.alignment: Qt.AlignRight
                 spacing: Appearance.spacing.xSmall
 
+                Item {
+                    Layout.fillWidth: true
+                }
+
                 MaterialSymbol {
-                    visible: root.charging
-                    text: "bolt"
-                    iconSize: 24
+                    text: root.powerConnected
+                        ? "power"
+                        : "power_off"
+                    iconSize: 22
                     fill: 1
-                    color: contents.accentColor
+                    color: contents.foregroundColor
                 }
 
                 Text {
