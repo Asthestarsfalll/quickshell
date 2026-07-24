@@ -137,6 +137,9 @@ QString TopCommand::helpText()
         "  Up/Down, k/j        move the selected process\n"
         "  PageUp/PageDown     move one process page\n"
         "  Tab/Shift+Tab       select the next/previous panel\n"
+        "  + or -              adjust refresh interval by 250 ms\n"
+        "  g                   cycle the CPU and available GPU graphs\n"
+        "  [ or ]              show the previous or next CPU core page\n"
         "  / or f              filter processes\n"
         "  s                   cycle CPU, memory, PID and name sorting\n"
         "  t                   toggle process tree view\n"
@@ -155,5 +158,7 @@ QString TopCommand::helpText()
         "Notes:\n"
         "  key top needs an interactive terminal. It restores terminal input,\n"
         "  cursor, colors and the alternate screen on normal or signaled exit.\n"
+        "  Click the header's - interval + control to adjust it with the mouse.\n"
+        "  The terminal default background is preserved for transparency.\n"
         "  Set NO_COLOR to disable colors; unsupported Unicode falls back to ASCII.");
 }

@@ -1,4 +1,5 @@
 #include "top_tui.h"
+#include "top_tui_helpers.h"
 
 #include "sysmon/sampler.h"
 #include "sysmon/types.h"
@@ -35,6 +36,7 @@
 #include <vector>
 
 using namespace Clavis::Sysmon;
+using namespace Clavis::TopTuiDetail;
 
 namespace {
 
@@ -107,6 +109,8 @@ public:
         ::intrflush(stdscr, FALSE);
         ::keypad(stdscr, TRUE);
         ::meta(stdscr, TRUE);
+        ::mousemask(BUTTON1_CLICKED, nullptr);
+        ::mouseinterval(0);
 #if defined(NCURSES_VERSION)
         ::set_escdelay(25);
 #endif
@@ -119,6 +123,7 @@ public:
             return;
 
         ::timeout(-1);
+        ::mousemask(0, nullptr);
         ::keypad(stdscr, FALSE);
         ::echo();
         ::nocbreak();
@@ -272,7 +277,8 @@ private:
             return;
 
         ::start_color();
-        ::use_default_colors();
+        const int defaultBackground =
+            ::use_default_colors() == OK ? -1 : COLOR_BLACK;
         m_colorEnabled = true;
 
         QJsonObject tokens;
@@ -329,7 +335,8 @@ private:
                 }
             }
             if (exact) {
-                initializePairs(17, 16, 18, 19, 20, 21, 22, 24, 23, 25);
+                initializePairs(
+                    17, defaultBackground, 18, 19, 20, 21, 22, 24, 23, 25);
                 return;
             }
             restoreCustomColors();
@@ -337,7 +344,7 @@ private:
 
         if (COLORS >= 256) {
             initializePairs(nearestXtermColor(onSurface),
-                            nearestXtermColor(surface),
+                            defaultBackground,
                             nearestXtermColor(primary),
                             nearestXtermColor(muted),
                             nearestXtermColor(outline),
@@ -350,7 +357,7 @@ private:
         }
 
         initializePairs(COLOR_WHITE,
-                        -1,
+                        defaultBackground,
                         COLOR_CYAN,
                         COLOR_WHITE,
                         COLOR_BLUE,
@@ -606,9 +613,8 @@ bool unicodeAvailable(bool forceAscii)
 struct TopTui::Impl {
     enum class Panel {
         System,
-        Cpu,
+        Compute,
         Memory,
-        Gpu,
         Network,
         Disk,
         Processes,
@@ -737,7 +743,24 @@ struct TopTui::Impl {
             snapshot = sampler.sample(allModules());
             hasSnapshot = true;
             appendHistory(cpuHistory, snapshot.cpu.usagePercent);
-            appendHistory(memoryHistory, snapshot.memory.usagePercent);
+            QSet<QString> activeGpuKeys;
+            for (int index = 0; index < snapshot.gpus.size(); ++index) {
+                const GpuInfo &gpu = snapshot.gpus.at(index);
+                const QString key = gpuKey(gpu, index);
+                activeGpuKeys.insert(key);
+                appendHistory(gpuHistories[key], gpu.utilizationPercent);
+            }
+            for (auto iterator = gpuHistories.begin();
+                 iterator != gpuHistories.end();) {
+                if (!activeGpuKeys.contains(iterator.key()))
+                    iterator = gpuHistories.erase(iterator);
+                else
+                    ++iterator;
+            }
+            if (!computeGraphGpuKey.isEmpty()
+                && !activeGpuKeys.contains(computeGraphGpuKey)) {
+                computeGraphGpuKey.clear();
+            }
             appendHistory(downloadHistory, snapshot.network.downloadBytesPerSecond);
             appendHistory(uploadHistory, snapshot.network.uploadBytesPerSecond);
             rebuildProcessView();
@@ -785,16 +808,19 @@ struct TopTui::Impl {
                 moveSelection(1);
                 return;
             case KEY_PPAGE:
-                moveSelection(-std::max(1, processPageRows));
+                changeFocusedPage(-1);
                 return;
             case KEY_NPAGE:
-                moveSelection(std::max(1, processPageRows));
+                changeFocusedPage(1);
                 return;
             case KEY_BTAB:
                 changePanel(-1);
                 return;
             case KEY_ENTER:
                 openDetails();
+                return;
+            case KEY_MOUSE:
+                handleMouse();
                 return;
             default:
                 return;
@@ -846,6 +872,21 @@ struct TopTui::Impl {
         case L'r':
             forceRefresh = true;
             setStatus(QStringLiteral("Refreshing..."), Tone::Muted, 1);
+            break;
+        case L'g':
+            cycleComputeGraph();
+            break;
+        case L'[':
+            changeCorePage(-1);
+            break;
+        case L']':
+            changeCorePage(1);
+            break;
+        case L'-':
+            adjustRefreshInterval(-250);
+            break;
+        case L'+':
+            adjustRefreshInterval(250);
             break;
         case L'\n':
         case L'\r':
@@ -1139,12 +1180,10 @@ struct TopTui::Impl {
         switch (panel) {
         case Panel::System:
             return QStringLiteral("System");
-        case Panel::Cpu:
-            return QStringLiteral("CPU");
+        case Panel::Compute:
+            return QStringLiteral("Compute");
         case Panel::Memory:
             return QStringLiteral("Memory");
-        case Panel::Gpu:
-            return QStringLiteral("GPU");
         case Panel::Network:
             return QStringLiteral("Network");
         case Panel::Disk:
@@ -1228,21 +1267,15 @@ struct TopTui::Impl {
             return;
         }
 
-        int restoredIndex = -1;
-        if (previousPid > 0) {
-            for (int index = 0; index < processRows.size(); ++index) {
-                if (processRows.at(index).process.pid == previousPid) {
-                    restoredIndex = index;
-                    break;
-                }
-            }
-        }
+        std::vector<long long> orderedPids;
+        orderedPids.reserve(processRows.size());
+        for (const ProcessRow &row : std::as_const(processRows))
+            orderedPids.push_back(row.process.pid);
         selectedIndex =
-            restoredIndex >= 0
-            ? restoredIndex
-            : std::clamp(previousIndex,
-                         0,
-                         static_cast<int>(processRows.size()) - 1);
+            resolveProcessSelection(processSelectionExplicit,
+                                    previousPid,
+                                    previousIndex,
+                                    orderedPids);
         selectedPid = processRows.at(selectedIndex).process.pid;
         ensureSelectionVisible();
     }
@@ -1325,6 +1358,7 @@ struct TopTui::Impl {
     {
         if (processRows.isEmpty())
             return;
+        processSelectionExplicit = true;
         selectedIndex =
             std::clamp(selectedIndex + delta,
                        0,
@@ -1374,8 +1408,11 @@ struct TopTui::Impl {
     bool paused = false;
     bool forceRefresh = false;
     bool treeMode = false;
+    bool processSelectionExplicit = false;
     int rows = 0;
     int columns = 0;
+    int refreshMinusColumn = -1;
+    int refreshPlusColumn = -1;
     Clock::time_point nextSample {};
 
     Panel focusedPanel = Panel::Processes;
@@ -1389,6 +1426,11 @@ struct TopTui::Impl {
     qint64 selectedPid = 0;
     int scrollOffset = 0;
     int processPageRows = 1;
+    int corePage = 0;
+    int corePageCount = 1;
+    int diskPage = 0;
+    int diskPageCount = 1;
+    QString computeGraphGpuKey;
 
     ProcessInfo modalProcess;
     qint64 signalPid = 0;
@@ -1397,7 +1439,7 @@ struct TopTui::Impl {
     quint64 signalStartTicks = 0;
 
     std::deque<double> cpuHistory;
-    std::deque<double> memoryHistory;
+    QHash<QString, std::deque<double>> gpuHistories;
     std::deque<double> downloadHistory;
     std::deque<double> uploadHistory;
 
@@ -1416,9 +1458,8 @@ struct TopTui::Impl {
     void drawPanelFor(Panel panel, const Rect &rect);
     void drawResourcePane(const Rect &rect);
     void drawSystem(const Rect &rect);
-    void drawCpu(const Rect &rect);
+    void drawCompute(const Rect &rect);
     void drawMemory(const Rect &rect);
-    void drawGpu(const Rect &rect);
     void drawNetwork(const Rect &rect);
     void drawDisk(const Rect &rect);
     void drawResources(const Rect &rect);
@@ -1448,10 +1489,32 @@ struct TopTui::Impl {
                           Tone tone,
                           bool invert = false,
                           bool peakBuckets = false);
+    void drawLineHistoryGraph(const Rect &plot,
+                              const std::deque<double> &history,
+                              double maximum,
+                              Tone tone);
     void drawSplitHistoryGraph(const Rect &plot);
-    void drawCoreGrid(const Rect &plot,
-                      const QVector<int> &ids,
-                      const QVector<OptionalNumber> &values);
+    CoreGridLayout drawCoreGrid(const Rect &plot,
+                                const QVector<int> &ids,
+                                const QVector<OptionalNumber> &values);
+    void drawMetricRow(const Rect &rect,
+                       int line,
+                       const QString &label,
+                       const OptionalNumber &percent,
+                       const QString &detail,
+                       int labelWidth,
+                       int detailWidth,
+                       Tone meterTone,
+                       Tone valueTone = Tone::Normal);
+    QString gpuKey(const GpuInfo &gpu, int index) const;
+    QVector<QString> graphGpuKeys() const;
+    const GpuInfo *gpuForKey(const QString &key) const;
+    void cycleComputeGraph();
+    void changeFocusedPage(int direction);
+    void changeCorePage(int direction);
+    void changeDiskPage(int direction);
+    void adjustRefreshInterval(int deltaMs);
+    void handleMouse();
     QStringList distroMark(const QString &distroId) const;
     QString meter(const OptionalNumber &percent, int width) const;
     QString sparkline(const std::deque<double> &history,
@@ -1489,10 +1552,52 @@ void TopTui::Impl::draw()
         ::curs_set(0);
 }
 
+void TopTui::Impl::adjustRefreshInterval(int deltaMs)
+{
+    const int previous = options.refreshIntervalMs;
+    options.refreshIntervalMs =
+        adjustedRefreshInterval(previous, deltaMs);
+    if (options.refreshIntervalMs == previous) {
+        setStatus(
+            QStringLiteral("Refresh interval limit: %1 ms")
+                .arg(options.refreshIntervalMs),
+            Tone::Muted);
+        return;
+    }
+
+    if (!paused) {
+        nextSample =
+            Clock::now()
+            + std::chrono::milliseconds(options.refreshIntervalMs);
+    }
+    setStatus(
+        QStringLiteral("Refresh interval: %1 ms")
+            .arg(options.refreshIntervalMs),
+        Tone::Primary);
+}
+
+void TopTui::Impl::handleMouse()
+{
+    MEVENT event{};
+    if (::getmouse(&event) != OK
+        || !(event.bstate & BUTTON1_CLICKED)
+        || event.y != 0) {
+        return;
+    }
+
+    if (event.x == refreshMinusColumn)
+        adjustRefreshInterval(-250);
+    else if (event.x == refreshPlusColumn)
+        adjustRefreshInterval(250);
+}
+
 void TopTui::Impl::drawHeader()
 {
     if (rows <= 0 || columns <= 0)
         return;
+
+    refreshMinusColumn = -1;
+    refreshPlusColumn = -1;
 
     const SystemInfo &system = snapshot.system;
     const QString host =
@@ -1503,27 +1608,35 @@ void TopTui::Impl::drawHeader()
                                                 : QStringLiteral("system monitor");
     const QString uptime =
         hasSnapshot ? formatDuration(system.uptimeSeconds) : QStringLiteral("--");
-    const QString state = paused ? QStringLiteral("PAUSED")
-                                 : QStringLiteral("%1 ms").arg(options.refreshIntervalMs);
+    const QString pausedState =
+        paused ? QStringLiteral("PAUSED  ") : QString{};
+    const QString intervalControl =
+        QStringLiteral("- %1 ms +").arg(options.refreshIntervalMs);
     const QString clock = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
 
     QString line;
+    QString left;
     if (columns >= 92) {
-        line = QStringLiteral(" CLAVIS TOP  %1 · %2  uptime %3")
+        left = QStringLiteral(" CLAVIS TOP  %1 · %2  uptime %3")
                    .arg(host, os, uptime);
-        const QString right =
-            QStringLiteral("%1  %2 ").arg(state, clock);
-        line = fitText(line,
-                       std::max(0, columns - displayWidth(right)))
-            + right;
     } else {
-        line = QStringLiteral(" CLAVIS TOP  %1")
-                   .arg(host);
-        const QString right = QStringLiteral("%1 %2 ").arg(state, clock);
-        line = fitText(line,
-                       std::max(0, columns - displayWidth(right)))
-            + right;
+        left = QStringLiteral(" CLAVIS TOP  %1").arg(host);
     }
+    const QString right =
+        QStringLiteral("%1%2  %3 ")
+            .arg(pausedState, intervalControl, clock);
+    const int rightStart =
+        std::max(0, columns - displayWidth(right));
+    const int controlStart =
+        rightStart + displayWidth(pausedState);
+    refreshMinusColumn = controlStart;
+    refreshPlusColumn =
+        controlStart
+        + displayWidth(
+            QStringLiteral("- %1 ms ").arg(options.refreshIntervalMs));
+    line = fitText(
+               left, std::max(0, columns - displayWidth(right)))
+        + right;
 
     ::attrset(static_cast<int>(
         theme->attribute(Tone::Selected, A_BOLD)));
@@ -1551,15 +1664,17 @@ void TopTui::Impl::drawFooter()
         statusMessage.clear();
         if (columns >= 112) {
             text = QStringLiteral(
-                " q Quit  ? Help  Tab Panel  j/k Move  PgUp/PgDn Page  / Filter"
-                "  s Sort  t Tree  p Pause  Enter Details  K Signal");
+                " q Quit  ? Help  +/- Interval  Tab Panel  g Graph"
+                "  [/] Cores  j/k Move"
+                "  PgUp/PgDn Focused page  / Filter  s Sort  t Tree  p Pause"
+                "  Enter Details  K Signal");
         } else if (columns >= 76) {
             text = QStringLiteral(
-                " q Quit  ? Help  Tab Panel  j/k Move  / Filter  s Sort"
-                "  t Tree  p Pause  K Signal");
+                " q Quit  ? Help  +/- Rate  Tab Panel  g Graph  PgUp/PgDn Page"
+                "  j/k Move  / Filter  p Pause");
         } else {
             text = QStringLiteral(
-                " q Quit  ? Help  Tab Panel  j/k Move  / Filter  K Signal");
+                " q Quit  ? Help  +/- Interval  g Graph  [/] Cores  j/k Move");
         }
         if (hasSnapshot && !snapshot.errors.isEmpty()) {
             text += QStringLiteral("  [%1 unavailable]")
@@ -1602,13 +1717,13 @@ void TopTui::Impl::drawTooSmall()
 void TopTui::Impl::drawWide(const Rect &content)
 {
     const int gap = 1;
-    const int cpuHeight =
-        std::clamp(static_cast<int>(std::lround(content.height * 0.32)),
-                   12,
+    const int computeHeight =
+        std::clamp(static_cast<int>(std::lround(content.height * 0.38)),
+                   14,
                    std::max(12, content.height - 20));
-    drawCpu({content.x, content.y, content.width, cpuHeight});
+    drawCompute({content.x, content.y, content.width, computeHeight});
 
-    const int lowerY = content.y + cpuHeight + gap;
+    const int lowerY = content.y + computeHeight + gap;
     const int lowerHeight =
         content.y + content.height - lowerY;
     const int leftWidth =
@@ -1692,21 +1807,21 @@ void TopTui::Impl::drawMedium(const Rect &content)
         content.y + content.height - networkY,
     });
 
-    const int cpuHeight =
-        std::clamp(static_cast<int>(std::lround(content.height * 0.46)),
-                   10,
+    const int computeHeight =
+        std::clamp(static_cast<int>(std::lround(content.height * 0.50)),
+                   12,
                    std::max(10, content.height - 8));
-    drawCpu({
+    drawCompute({
         rightX,
         content.y,
         rightWidth,
-        cpuHeight,
+        computeHeight,
     });
     drawProcesses({
         rightX,
-        content.y + cpuHeight + gap,
+        content.y + computeHeight + gap,
         rightWidth,
-        content.height - cpuHeight - gap,
+        content.height - computeHeight - gap,
     });
 }
 
@@ -1779,14 +1894,11 @@ void TopTui::Impl::drawPanelFor(Panel panel, const Rect &rect)
     case Panel::System:
         drawSystem(rect);
         break;
-    case Panel::Cpu:
-        drawCpu(rect);
+    case Panel::Compute:
+        drawCompute(rect);
         break;
     case Panel::Memory:
         drawMemory(rect);
-        break;
-    case Panel::Gpu:
-        drawGpu(rect);
         break;
     case Panel::Network:
         drawNetwork(rect);
@@ -1804,9 +1916,7 @@ void TopTui::Impl::drawPanelFor(Panel panel, const Rect &rect)
 
 void TopTui::Impl::drawResourcePane(const Rect &rect)
 {
-    if (focusedPanel == Panel::Memory
-        || focusedPanel == Panel::Gpu
-        || focusedPanel == Panel::Disk) {
+    if (focusedPanel == Panel::Memory || focusedPanel == Panel::Disk) {
         drawPanelFor(focusedPanel, rect);
         return;
     }
@@ -1921,6 +2031,76 @@ void TopTui::Impl::writeAtInside(const Rect &rect,
             !unicode);
 }
 
+void TopTui::Impl::drawMetricRow(const Rect &rect,
+                                 int line,
+                                 const QString &label,
+                                 const OptionalNumber &percent,
+                                 const QString &detail,
+                                 int labelWidth,
+                                 int detailWidth,
+                                 Tone meterTone,
+                                 Tone valueTone)
+{
+    if (line < 0 || line >= rect.height - 2)
+        return;
+
+    const int innerWidth = std::max(0, rect.width - 2);
+    constexpr int percentWidth = 5;
+    constexpr int gapCount = 3;
+    labelWidth = std::clamp(labelWidth, 1, innerWidth);
+    detailWidth = std::clamp(detailWidth, 0, innerWidth);
+    int meterWidth =
+        innerWidth - labelWidth - percentWidth - detailWidth - gapCount;
+    if (meterWidth < 3) {
+        detailWidth = 0;
+        meterWidth =
+            innerWidth - labelWidth - percentWidth - 2;
+    }
+    if (meterWidth < 1) {
+        writeInside(rect,
+                    line,
+                    QStringLiteral("%1 %2")
+                        .arg(label, formatPercent(percent, 0)),
+                    valueTone,
+                    A_BOLD,
+                    true);
+        return;
+    }
+
+    const int row = rect.y + 1 + line;
+    int column = rect.x + 1;
+    putText(row,
+            column,
+            fitText(label, labelWidth),
+            labelWidth,
+            theme->attribute(Tone::Muted, A_BOLD),
+            !unicode);
+    column += labelWidth + 1;
+    putText(row,
+            column,
+            meter(percent, meterWidth),
+            meterWidth,
+            theme->attribute(meterTone),
+            !unicode);
+    column += meterWidth + 1;
+    putText(row,
+            column,
+            fitText(formatPercent(percent, 0), percentWidth, true),
+            percentWidth,
+            theme->attribute(valueTone, A_BOLD),
+            !unicode);
+    column += percentWidth;
+    if (detailWidth > 0) {
+        ++column;
+        putText(row,
+                column,
+                fitText(detail, detailWidth),
+                detailWidth,
+                theme->attribute(Tone::Muted),
+                !unicode);
+    }
+}
+
 void TopTui::Impl::drawHistoryGraph(const Rect &plot,
                                     const std::deque<double> &history,
                                     double fixedMaximum,
@@ -2002,6 +2182,80 @@ void TopTui::Impl::drawHistoryGraph(const Rect &plot,
     }
 }
 
+void TopTui::Impl::drawLineHistoryGraph(const Rect &plot,
+                                        const std::deque<double> &history,
+                                        double maximum,
+                                        Tone tone)
+{
+    if (plot.width <= 0 || plot.height <= 0 || history.empty())
+        return;
+
+    const LineRaster raster =
+        rasterizeLine(history, plot.width, plot.height, maximum);
+    const auto glyphFor = [this](unsigned char connection, bool point) {
+        if (!unicode) {
+            const bool horizontal =
+                connection & (ConnectLeft | ConnectRight);
+            const bool vertical =
+                connection & (ConnectUp | ConnectDown);
+            if (horizontal && vertical)
+                return static_cast<chtype>('+');
+            if (vertical)
+                return static_cast<chtype>('|');
+            if (horizontal || point)
+                return static_cast<chtype>('-');
+            return static_cast<chtype>(' ');
+        }
+
+        switch (connection) {
+        case ConnectLeft | ConnectRight:
+            return static_cast<chtype>(ACS_HLINE);
+        case ConnectUp | ConnectDown:
+            return static_cast<chtype>(ACS_VLINE);
+        case ConnectRight | ConnectDown:
+            return static_cast<chtype>(ACS_ULCORNER);
+        case ConnectLeft | ConnectDown:
+            return static_cast<chtype>(ACS_URCORNER);
+        case ConnectRight | ConnectUp:
+            return static_cast<chtype>(ACS_LLCORNER);
+        case ConnectLeft | ConnectUp:
+            return static_cast<chtype>(ACS_LRCORNER);
+        case ConnectUp | ConnectRight | ConnectDown:
+            return static_cast<chtype>(ACS_LTEE);
+        case ConnectUp | ConnectLeft | ConnectDown:
+            return static_cast<chtype>(ACS_RTEE);
+        case ConnectLeft | ConnectRight | ConnectDown:
+            return static_cast<chtype>(ACS_TTEE);
+        case ConnectLeft | ConnectRight | ConnectUp:
+            return static_cast<chtype>(ACS_BTEE);
+        case ConnectUp | ConnectRight | ConnectDown | ConnectLeft:
+            return static_cast<chtype>(ACS_PLUS);
+        case ConnectUp:
+        case ConnectDown:
+            return static_cast<chtype>(ACS_VLINE);
+        case ConnectLeft:
+        case ConnectRight:
+            return static_cast<chtype>(ACS_HLINE);
+        default:
+            return point ? static_cast<chtype>(ACS_HLINE)
+                         : static_cast<chtype>(' ');
+        }
+    };
+
+    ::attrset(static_cast<int>(theme->attribute(tone, A_BOLD)));
+    for (int y = 0; y < raster.height; ++y) {
+        for (int x = 0; x < raster.width; ++x) {
+            const unsigned char connection = raster.connectionAt(x, y);
+            const bool point = raster.pointAt(x, y);
+            if (connection == ConnectNone && !point)
+                continue;
+            ::mvaddch(plot.y + y,
+                      plot.x + x,
+                      glyphFor(connection, point));
+        }
+    }
+}
+
 void TopTui::Impl::drawSplitHistoryGraph(const Rect &plot)
 {
     if (plot.width <= 0 || plot.height <= 0)
@@ -2046,85 +2300,79 @@ void TopTui::Impl::drawSplitHistoryGraph(const Rect &plot)
             !unicode);
 }
 
-void TopTui::Impl::drawCoreGrid(
+CoreGridLayout TopTui::Impl::drawCoreGrid(
     const Rect &plot,
     const QVector<int> &ids,
     const QVector<OptionalNumber> &values)
 {
-    if (plot.width <= 0 || plot.height <= 0 || values.isEmpty())
-        return;
+    int largestCoreId =
+        std::max(0, static_cast<int>(values.size()) - 1);
+    for (const int id : ids)
+        largestCoreId = std::max(largestCoreId, id);
 
-    const int maximumColumns = std::max(1, plot.width / 14);
-    const int neededColumns =
-        std::max(1,
-                 static_cast<int>(std::ceil(
-                     static_cast<double>(values.size())
-                     / static_cast<double>(plot.height))));
-    const int columns = std::clamp(neededColumns, 1, maximumColumns);
-    const int rowsNeeded =
-        static_cast<int>(std::ceil(
-            static_cast<double>(values.size())
-            / static_cast<double>(columns)));
-    const int visibleRows = std::min(plot.height, rowsNeeded);
-    const int cellWidth = std::max(1, plot.width / columns);
-    const int capacity = visibleRows * columns;
-    const bool truncated = values.size() > capacity;
-    const int visibleValues =
-        truncated ? std::max(0, capacity - 1) : values.size();
+    CoreGridLayout layout =
+        calculateCoreGridLayout(plot.width,
+                                plot.height,
+                                values.size(),
+                                largestCoreId,
+                                corePage);
+    corePage = layout.page;
+    corePageCount = std::max(1, layout.pageCount);
+    if (layout.visibleCount <= 0)
+        return layout;
 
-    for (int row = 0; row < visibleRows; ++row) {
-        for (int column = 0; column < columns; ++column) {
-            const int index = row * columns + column;
-            if (index >= visibleValues)
-                break;
+    constexpr int percentWidth = 4;
+    for (int offset = 0; offset < layout.visibleCount; ++offset) {
+        const int index = layout.firstIndex + offset;
+        const int row = offset / layout.columns;
+        const int columnIndex = offset % layout.columns;
+        const int cellX = plot.x + columnIndex * layout.cellWidth;
+        const int renderedWidth =
+            std::max(1, layout.cellWidth - 1);
+        const int coreId = index < ids.size() ? ids.at(index) : index;
+        const QString label =
+            QStringLiteral("C%1")
+                .arg(coreId,
+                     layout.labelWidth - 1,
+                     10,
+                     QLatin1Char('0'));
+        const QString percent = formatPercent(values.at(index), 0);
 
-            const int coreId = index < ids.size() ? ids.at(index) : index;
-            const QString label =
-                QStringLiteral("C%1").arg(coreId, 2, 10, QLatin1Char('0'));
-            const QString percent = formatPercent(values.at(index), 0);
-            const int renderedWidth = std::max(1, cellWidth - 1);
-            QString cell;
-            const int meterWidth =
-                renderedWidth - displayWidth(label)
-                - displayWidth(percent) - 2;
-            if (meterWidth >= 5) {
-                cell = QStringLiteral("%1 %2 %3")
-                           .arg(label,
-                                meter(values.at(index), meterWidth),
-                                percent);
-            } else {
-                cell = QStringLiteral("%1 %2").arg(label, percent);
-            }
+        putText(plot.y + row,
+                cellX,
+                fitText(label, layout.labelWidth),
+                std::min(layout.labelWidth, renderedWidth),
+                theme->attribute(Tone::Muted),
+                !unicode);
 
-            Tone tone = Tone::Muted;
-            if (values.at(index) && *values.at(index) >= 90.0)
-                tone = Tone::Critical;
-            else if (values.at(index) && *values.at(index) >= 75.0)
-                tone = Tone::Warning;
+        int cursor = cellX + layout.labelWidth;
+        if (layout.meterWidth > 0) {
+            ++cursor;
             putText(plot.y + row,
-                    plot.x + column * cellWidth,
-                    fitText(cell, renderedWidth),
-                    renderedWidth,
-                    theme->attribute(tone),
+                    cursor,
+                    meter(values.at(index), layout.meterWidth),
+                    layout.meterWidth,
+                    theme->attribute(Tone::Primary),
                     !unicode);
+            cursor += layout.meterWidth;
         }
-    }
 
-    if (truncated && capacity > 0) {
-        const int indicatorIndex = visibleValues;
-        const int indicatorRow = indicatorIndex / columns;
-        const int indicatorColumn = indicatorIndex % columns;
-        const int renderedWidth = std::max(1, cellWidth - 1);
-        const QString indicator =
-            QStringLiteral("+%1 cores")
-                .arg(values.size() - visibleValues);
-        putText(plot.y + indicatorRow,
-                plot.x + indicatorColumn * cellWidth,
-                fitText(indicator, renderedWidth),
-                renderedWidth,
-                theme->attribute(Tone::Warning, A_BOLD),
+        ++cursor;
+        Tone valueTone = Tone::Normal;
+        if (values.at(index) && *values.at(index) >= 90.0)
+            valueTone = Tone::Critical;
+        else if (values.at(index) && *values.at(index) >= 75.0)
+            valueTone = Tone::Warning;
+        putText(plot.y + row,
+                cursor,
+                fitText(percent, percentWidth, true),
+                std::max(0,
+                         std::min(percentWidth,
+                                  cellX + renderedWidth - cursor)),
+                theme->attribute(valueTone, A_BOLD),
                 !unicode);
     }
+    return layout;
 }
 
 QStringList TopTui::Impl::distroMark(const QString &distroId) const
@@ -2173,19 +2421,7 @@ QStringList TopTui::Impl::distroMark(const QString &distroId) const
 
 QString TopTui::Impl::meter(const OptionalNumber &percent, int width) const
 {
-    if (width < 3)
-        return {};
-    const int inner = width - 2;
-    if (!percent)
-        return QStringLiteral("[%1]").arg(QString(inner, QLatin1Char('-')));
-
-    const double normalized = std::clamp(*percent, 0.0, 100.0) / 100.0;
-    const int filled =
-        std::clamp(static_cast<int>(std::lround(normalized * inner)), 0, inner);
-    const QString full = unicode ? QStringLiteral("█") : QStringLiteral("#");
-    const QString empty = unicode ? QStringLiteral("░") : QStringLiteral("-");
-    return QStringLiteral("[%1%2]")
-        .arg(full.repeated(filled), empty.repeated(inner - filled));
+    return borderlessMeter(percent, width, unicode);
 }
 
 QString TopTui::Impl::sparkline(const std::deque<double> &history,
@@ -2318,34 +2554,248 @@ void TopTui::Impl::drawSystem(const Rect &rect)
     }
 }
 
-void TopTui::Impl::drawCpu(const Rect &rect)
+QString TopTui::Impl::gpuKey(const GpuInfo &gpu, int index) const
 {
-    drawBox(rect, QStringLiteral("CPU"), focusedPanel == Panel::Cpu);
+    if (!gpu.pciId.isEmpty())
+        return QStringLiteral("pci:") + gpu.pciId;
+    if (!gpu.id.isEmpty())
+        return QStringLiteral("id:") + gpu.id;
+    return QStringLiteral("gpu:%1:%2:%3")
+        .arg(gpu.vendor, gpu.name)
+        .arg(index);
+}
+
+QVector<QString> TopTui::Impl::graphGpuKeys() const
+{
+    QVector<QString> keys;
+    for (int index = 0; index < snapshot.gpus.size(); ++index) {
+        const GpuInfo &gpu = snapshot.gpus.at(index);
+        if (!gpu.utilizationPercent)
+            continue;
+        keys.push_back(gpuKey(gpu, index));
+    }
+    return keys;
+}
+
+const GpuInfo *TopTui::Impl::gpuForKey(const QString &key) const
+{
+    for (int index = 0; index < snapshot.gpus.size(); ++index) {
+        const GpuInfo &gpu = snapshot.gpus.at(index);
+        if (gpuKey(gpu, index) == key)
+            return &gpu;
+    }
+    return nullptr;
+}
+
+void TopTui::Impl::cycleComputeGraph()
+{
+    const QVector<QString> keys = graphGpuKeys();
+    int currentSource = 0;
+    if (!computeGraphGpuKey.isEmpty()) {
+        const int currentGpu = keys.indexOf(computeGraphGpuKey);
+        currentSource = currentGpu >= 0 ? currentGpu + 1 : 0;
+    }
+    const int nextSource =
+        nextGraphSource(currentSource, keys.size());
+    computeGraphGpuKey =
+        nextSource == 0 ? QString{} : keys.at(nextSource - 1);
+    focusedPanel = Panel::Compute;
+
+    if (computeGraphGpuKey.isEmpty()) {
+        setStatus(QStringLiteral("Compute graph: CPU"), Tone::Primary);
+        return;
+    }
+
+    const GpuInfo *gpu = gpuForKey(computeGraphGpuKey);
+    const QString name =
+        gpu && !gpu->name.isEmpty() ? gpu->name : QStringLiteral("GPU");
+    setStatus(
+        QStringLiteral("Compute graph: GPU %1 · %2")
+            .arg(nextSource - 1)
+            .arg(name),
+        Tone::Good);
+}
+
+void TopTui::Impl::changeFocusedPage(int direction)
+{
+    switch (focusedPanel) {
+    case Panel::Compute:
+        changeCorePage(direction);
+        return;
+    case Panel::Disk:
+        changeDiskPage(direction);
+        return;
+    case Panel::Processes:
+        moveSelection(
+            direction * std::max(1, processPageRows));
+        return;
+    case Panel::System:
+    case Panel::Memory:
+    case Panel::Network:
+    case Panel::Count:
+        setStatus(
+            QStringLiteral("%1 panel has no paged content")
+                .arg(panelName(focusedPanel)),
+            Tone::Muted);
+        return;
+    }
+}
+
+void TopTui::Impl::changeCorePage(int direction)
+{
+    if (corePageCount <= 1) {
+        corePage = 0;
+        setStatus(QStringLiteral("All CPU cores fit on one page"), Tone::Muted);
+        return;
+    }
+    corePage =
+        std::clamp(corePage + direction, 0, corePageCount - 1);
+    focusedPanel = Panel::Compute;
+    setStatus(
+        QStringLiteral("CPU core page %1/%2")
+            .arg(corePage + 1)
+            .arg(corePageCount),
+        Tone::Primary);
+}
+
+void TopTui::Impl::changeDiskPage(int direction)
+{
+    if (diskPageCount <= 1) {
+        diskPage = 0;
+        setStatus(QStringLiteral("All disks fit on one page"), Tone::Muted);
+        return;
+    }
+    diskPage =
+        std::clamp(diskPage + direction, 0, diskPageCount - 1);
+    focusedPanel = Panel::Disk;
+    setStatus(
+        QStringLiteral("Disk page %1/%2")
+            .arg(diskPage + 1)
+            .arg(diskPageCount),
+        Tone::Primary);
+}
+
+void TopTui::Impl::drawCompute(const Rect &rect)
+{
+    const int innerWidth = std::max(0, rect.width - 2);
+    const int innerHeight = std::max(0, rect.height - 2);
+    const int summaryRows = innerHeight >= 4 ? 2 : 1;
+    const int contentTop = rect.y + 1 + summaryRows;
+    const int remainingHeight = innerHeight - summaryRows;
+
+    Rect graphRect{
+        rect.x + 1,
+        contentTop,
+        innerWidth,
+        std::max(0, remainingHeight),
+    };
+    Rect coreRect{};
+    const bool sideBySide =
+        innerWidth >= 72 && remainingHeight >= 5
+        && hasSnapshot && !snapshot.cpu.coreUsagePercent.isEmpty();
+    if (sideBySide) {
+        const int coreWidth =
+            std::clamp(innerWidth * 32 / 100,
+                       30,
+                       std::min(80, innerWidth - 32));
+        const int graphWidth = innerWidth - coreWidth - 1;
+        graphRect.width = graphWidth;
+        coreRect = {
+            rect.x + 1 + graphWidth + 1,
+            contentTop,
+            coreWidth,
+            remainingHeight,
+        };
+    } else if (hasSnapshot
+               && !snapshot.cpu.coreUsagePercent.isEmpty()
+               && remainingHeight >= 4) {
+        const int coreHeight = std::max(2, remainingHeight / 2);
+        coreRect = {
+            rect.x + 1,
+            contentTop,
+            innerWidth,
+            coreHeight,
+        };
+        graphRect.y += coreHeight;
+        graphRect.height -= coreHeight;
+    }
+
+    CoreGridLayout coreLayout;
+    if (coreRect.width > 0 && coreRect.height > 0) {
+        int largestCoreId =
+            std::max(0,
+                     static_cast<int>(
+                         snapshot.cpu.coreUsagePercent.size()) - 1);
+        for (const int id : snapshot.cpu.coreIds)
+            largestCoreId = std::max(largestCoreId, id);
+        coreLayout =
+            calculateCoreGridLayout(
+                coreRect.width,
+                coreRect.height,
+                snapshot.cpu.coreUsagePercent.size(),
+                largestCoreId,
+                corePage);
+        corePage = coreLayout.page;
+        corePageCount = std::max(1, coreLayout.pageCount);
+    } else {
+        corePage = 0;
+        corePageCount = 1;
+    }
+
+    const QVector<QString> gpuKeys = graphGpuKeys();
+    const int activeGpuIndex =
+        computeGraphGpuKey.isEmpty()
+        ? -1
+        : gpuKeys.indexOf(computeGraphGpuKey);
+    QString graphLabel =
+        activeGpuIndex >= 0
+        ? QStringLiteral("GPU %1").arg(activeGpuIndex)
+        : QStringLiteral("CPU");
+    if (activeGpuIndex < 0)
+        computeGraphGpuKey.clear();
+
+    QString title =
+        QStringLiteral("Compute · graph %1 [g]").arg(graphLabel);
+    if (coreLayout.pageCount > 1) {
+        title += QStringLiteral(" · cores %1–%2/%3 [/]")
+                     .arg(coreLayout.firstIndex + 1)
+                     .arg(coreLayout.firstIndex + coreLayout.visibleCount)
+                     .arg(snapshot.cpu.coreUsagePercent.size());
+    }
+    drawBox(rect, title, focusedPanel == Panel::Compute);
+
     if (!hasSnapshot || !snapshot.cpu.available) {
         writeInside(rect,
                     0,
                     hasSnapshot ? QStringLiteral("CPU metrics unavailable")
-                                : QStringLiteral("Waiting for CPU data..."),
+                                : QStringLiteral("Waiting for compute data..."),
                     Tone::Muted);
         return;
     }
 
     const CpuInfo &cpu = snapshot.cpu;
-    Tone utilizationTone = Tone::Primary;
+    Tone cpuTone = Tone::Primary;
     if (cpu.usagePercent && *cpu.usagePercent >= 90.0)
-        utilizationTone = Tone::Critical;
+        cpuTone = Tone::Critical;
     else if (cpu.usagePercent && *cpu.usagePercent >= 75.0)
-        utilizationTone = Tone::Warning;
+        cpuTone = Tone::Warning;
 
-    const int innerWidth = std::max(0, rect.width - 2);
-    const int innerHeight = std::max(0, rect.height - 2);
-    const int barWidth = std::clamp(innerWidth / 3, 8, 42);
-    writeInside(
-        rect,
-        0,
-        QStringLiteral("%1 %2  %3  %4  %5")
-            .arg(formatPercent(cpu.usagePercent),
-                 meter(cpu.usagePercent, barWidth),
+    constexpr int summaryLabelWidth = 4;
+    constexpr int summaryPercentWidth = 5;
+    constexpr int summaryGapWidth = 3;
+    const int summaryMeterWidth =
+        std::clamp(innerWidth / 5, 12, 32);
+    const int detailWidth =
+        std::max(0,
+                 innerWidth - summaryLabelWidth - summaryPercentWidth
+                     - summaryGapWidth - summaryMeterWidth);
+    const QString cpuName =
+        snapshot.system.cpuModelName.isEmpty()
+        ? QStringLiteral("CPU")
+        : snapshot.system.cpuModelName;
+    const QString cpuDetail =
+        QStringLiteral("PWR %1 · %2 · %3 · %4")
+            .arg(optionalNumber(cpu.powerWatts, QStringLiteral(" W"), 1),
                  optionalNumber(cpu.frequencyCurrentMHz,
                                 QStringLiteral(" MHz"),
                                 0),
@@ -2354,73 +2804,103 @@ void TopTui::Impl::drawCpu(const Rect &rect)
                                     : cpu.temperatureCelsius,
                                 QStringLiteral("°C"),
                                 0),
-                 optionalNumber(cpu.powerWatts, QStringLiteral(" W"), 1)),
-        utilizationTone,
-        A_BOLD);
-    writeInside(
-        rect,
-        1,
-        QStringLiteral("user %1 · system %2 · iowait %3 · idle %4")
-            .arg(formatPercent(cpu.userPercent),
-                 formatPercent(cpu.systemPercent),
-                 formatPercent(cpu.iowaitPercent),
-                 formatPercent(cpu.idlePercent)),
-        Tone::Muted);
+                 cpuName);
+    drawMetricRow(rect,
+                  0,
+                  QStringLiteral("CPU"),
+                  cpu.usagePercent,
+                  cpuDetail,
+                  summaryLabelWidth,
+                  detailWidth,
+                  Tone::Primary,
+                  cpuTone);
 
-    const int contentTop = rect.y + 3;
-    const int remainingHeight = innerHeight - 2;
-    if (remainingHeight <= 0)
-        return;
+    const GpuInfo *summaryGpu = nullptr;
+    if (activeGpuIndex >= 0)
+        summaryGpu = gpuForKey(computeGraphGpuKey);
+    if (!summaryGpu && !snapshot.gpus.isEmpty())
+        summaryGpu = &snapshot.gpus.first();
 
-    if (innerWidth >= 68
-        && remainingHeight >= 5
-        && !cpu.coreUsagePercent.isEmpty()) {
-        const int coreWidth =
-            std::clamp(innerWidth * 32 / 100,
-                       28,
-                       std::min(72, innerWidth - 24));
-        const int graphWidth = innerWidth - coreWidth - 1;
-        drawHistoryGraph(
-            {rect.x + 1, contentTop, graphWidth, remainingHeight},
-            cpuHistory,
-            100.0,
-            utilizationTone);
+    if (summaryRows > 1) {
+        if (summaryGpu) {
+            Tone gpuTone = Tone::Good;
+            if (summaryGpu->temperatureCelsius
+                && *summaryGpu->temperatureCelsius >= 90.0) {
+                gpuTone = Tone::Critical;
+            } else if (summaryGpu->temperatureCelsius
+                       && *summaryGpu->temperatureCelsius >= 80.0) {
+                gpuTone = Tone::Warning;
+            }
+            const QString name =
+                summaryGpu->name.isEmpty()
+                ? (summaryGpu->id.isEmpty() ? QStringLiteral("GPU")
+                                            : summaryGpu->id)
+                : summaryGpu->name;
+            const QString vram =
+                summaryGpu->vramUsedBytes && summaryGpu->vramTotalBytes
+                ? QStringLiteral("%1/%2")
+                      .arg(formatBytes(
+                               static_cast<double>(
+                                   *summaryGpu->vramUsedBytes)),
+                           formatBytes(
+                               static_cast<double>(
+                                   *summaryGpu->vramTotalBytes)))
+                : QStringLiteral("--");
+            const QString gpuDetail =
+                QStringLiteral("PWR %1 · %2 · VRAM %3 · %4")
+                    .arg(optionalNumber(summaryGpu->powerWatts,
+                                        QStringLiteral(" W"),
+                                        1),
+                         optionalNumber(summaryGpu->temperatureCelsius,
+                                        QStringLiteral("°C"),
+                                        0),
+                         vram,
+                         name);
+            drawMetricRow(rect,
+                          1,
+                          QStringLiteral("GPU"),
+                          summaryGpu->utilizationPercent,
+                          gpuDetail,
+                          summaryLabelWidth,
+                          detailWidth,
+                          Tone::Good,
+                          gpuTone);
+        } else {
+            writeInside(
+                rect, 1, QStringLiteral("GPU metrics unavailable"), Tone::Muted);
+        }
+    }
 
-        const int dividerX = rect.x + 1 + graphWidth;
+    const std::deque<double> *graphHistory = &cpuHistory;
+    Tone graphTone = cpuTone;
+    if (activeGpuIndex >= 0) {
+        const auto history = gpuHistories.constFind(computeGraphGpuKey);
+        if (history != gpuHistories.constEnd())
+            graphHistory = &history.value();
+        if (summaryGpu && summaryGpu->utilizationPercent
+            && *summaryGpu->utilizationPercent >= 90.0) {
+            graphTone = Tone::Critical;
+        } else if (summaryGpu && summaryGpu->utilizationPercent
+                   && *summaryGpu->utilizationPercent >= 75.0) {
+            graphTone = Tone::Warning;
+        } else {
+            graphTone = Tone::Good;
+        }
+    }
+
+    if (graphRect.height > 0)
+        drawLineHistoryGraph(graphRect, *graphHistory, 100.0, graphTone);
+
+    if (sideBySide) {
+        const int dividerX = coreRect.x - 1;
         ::attrset(static_cast<int>(theme->attribute(Tone::Outline)));
         ::mvvline(contentTop,
                   dividerX,
                   unicode ? ACS_VLINE : static_cast<chtype>('|'),
                   remainingHeight);
-        drawCoreGrid(
-            {dividerX + 1, contentTop, coreWidth, remainingHeight},
-            cpu.coreIds,
-            cpu.coreUsagePercent);
-        return;
     }
-
-    int coreHeight = 0;
-    if (!cpu.coreUsagePercent.isEmpty() && remainingHeight >= 4) {
-        coreHeight = std::min(
-            remainingHeight / 2,
-            std::max(1,
-                     static_cast<int>(std::ceil(
-                         static_cast<double>(cpu.coreUsagePercent.size())
-                         / std::max(1, innerWidth / 14)))));
-        drawCoreGrid(
-            {rect.x + 1, contentTop, innerWidth, coreHeight},
-            cpu.coreIds,
-            cpu.coreUsagePercent);
-    }
-    const int graphY = contentTop + coreHeight;
-    const int graphHeight = remainingHeight - coreHeight;
-    if (graphHeight > 0) {
-        drawHistoryGraph(
-            {rect.x + 1, graphY, innerWidth, graphHeight},
-            cpuHistory,
-            100.0,
-            utilizationTone);
-    }
+    if (coreRect.width > 0 && coreRect.height > 0)
+        drawCoreGrid(coreRect, cpu.coreIds, cpu.coreUsagePercent);
 }
 
 void TopTui::Impl::drawMemory(const Rect &rect)
@@ -2442,126 +2922,71 @@ void TopTui::Impl::drawMemory(const Rect &rect)
     else if (memory.usagePercent && *memory.usagePercent >= 80.0)
         utilizationTone = Tone::Warning;
 
-    const int barWidth = std::clamp((rect.width - 2) / 2, 8, 42);
+    const auto percentOfTotal = [&memory](quint64 value) -> OptionalNumber {
+        if (memory.totalBytes == 0)
+            return std::nullopt;
+        return 100.0 * static_cast<double>(value)
+            / static_cast<double>(memory.totalBytes);
+    };
+    const QString total = formatBytes(memory.totalBytes);
+    const int detailWidth = rect.width >= 52 ? 21 : 0;
+    const int labelWidth = rect.width >= 34 ? 10 : 6;
     int line = 0;
-    writeInside(
-        rect,
-        line++,
-        QStringLiteral("%1 %2")
-            .arg(formatPercent(memory.usagePercent),
-                 meter(memory.usagePercent, barWidth)),
-        utilizationTone,
-        A_BOLD);
-    writeInside(rect,
-                line++,
-                QStringLiteral("%1 used / %2 total")
-                    .arg(formatBytes(memory.usedBytes),
-                         formatBytes(memory.totalBytes)));
-    writeInside(rect,
-                line++,
-                QStringLiteral("%1 available · %2 cached")
-                    .arg(formatBytes(memory.availableBytes),
-                         formatBytes(memory.cachedBytes)),
-                Tone::Muted);
-    writeInside(rect,
-                line++,
-                QStringLiteral("%1 buffers")
-                    .arg(formatBytes(memory.buffersBytes)),
-                Tone::Muted);
+    drawMetricRow(rect,
+                  line++,
+                  QStringLiteral("Used"),
+                  memory.usagePercent,
+                  QStringLiteral("%1 / %2")
+                      .arg(formatBytes(memory.usedBytes), total),
+                  labelWidth,
+                  detailWidth,
+                  utilizationTone,
+                  utilizationTone);
+    drawMetricRow(rect,
+                  line++,
+                  QStringLiteral("Available"),
+                  percentOfTotal(memory.availableBytes),
+                  QStringLiteral("%1 / %2")
+                      .arg(formatBytes(memory.availableBytes), total),
+                  labelWidth,
+                  detailWidth,
+                  Tone::Good);
+    drawMetricRow(rect,
+                  line++,
+                  QStringLiteral("Cached"),
+                  percentOfTotal(memory.cachedBytes),
+                  QStringLiteral("%1 / %2")
+                      .arg(formatBytes(memory.cachedBytes), total),
+                  labelWidth,
+                  detailWidth,
+                  Tone::Primary);
+    drawMetricRow(rect,
+                  line++,
+                  QStringLiteral("Free"),
+                  percentOfTotal(memory.freeBytes),
+                  QStringLiteral("%1 / %2")
+                      .arg(formatBytes(memory.freeBytes), total),
+                  labelWidth,
+                  detailWidth,
+                  Tone::Good);
 
-    if (memory.swapTotalBytes > 0) {
-        const double swapPercent =
-            100.0 * static_cast<double>(memory.swapUsedBytes)
-            / static_cast<double>(memory.swapTotalBytes);
-        writeInside(rect,
-                    line++,
-                    QStringLiteral("Swap %1 / %2 (%3%)")
-                        .arg(formatBytes(memory.swapUsedBytes),
-                             formatBytes(memory.swapTotalBytes))
-                        .arg(swapPercent, 0, 'f', 1));
-    } else {
-        writeInside(rect, line++, QStringLiteral("Swap not configured"), Tone::Muted);
-    }
     if (line < rect.height - 2) {
-        drawHistoryGraph(
-            {rect.x + 1,
-             rect.y + 1 + line,
-             std::max(0, rect.width - 2),
-             rect.height - 2 - line},
-            memoryHistory,
-            100.0,
-            utilizationTone);
-    }
-}
-
-void TopTui::Impl::drawGpu(const Rect &rect)
-{
-    drawBox(rect, QStringLiteral("GPU"), focusedPanel == Panel::Gpu);
-    if (!hasSnapshot) {
-        writeInside(rect, 0, QStringLiteral("Waiting for GPU data..."), Tone::Muted);
-        return;
-    }
-    if (snapshot.gpus.isEmpty()) {
-        writeInside(rect,
-                    0,
-                    QStringLiteral("No supported GPU metrics"),
-                    Tone::Muted);
-        writeInside(rect,
-                    1,
-                    QStringLiteral("Unsupported sensors remain unavailable"),
-                    Tone::Muted);
-        return;
-    }
-
-    int line = 0;
-    int visibleGpus = 0;
-    for (const GpuInfo &gpu : std::as_const(snapshot.gpus)) {
-        if (line >= rect.height - 2)
-            break;
-        const QString name =
-            gpu.name.isEmpty() ? (gpu.id.isEmpty() ? QStringLiteral("GPU") : gpu.id)
-                               : gpu.name;
-        Tone tone = Tone::Primary;
-        if (gpu.temperatureCelsius && *gpu.temperatureCelsius >= 90.0)
-            tone = Tone::Critical;
-        else if (gpu.temperatureCelsius && *gpu.temperatureCelsius >= 80.0)
-            tone = Tone::Warning;
-        writeInside(rect,
-                    line++,
-                    QStringLiteral("%1 · %2 · %3")
-                        .arg(name,
-                             formatPercent(gpu.utilizationPercent),
-                             optionalNumber(gpu.temperatureCelsius,
-                                            QStringLiteral("°C"),
-                                            0)),
-                    tone,
-                    A_BOLD);
-        if (line < rect.height - 2) {
-            const QString vram =
-                gpu.vramUsedBytes && gpu.vramTotalBytes
-                ? QStringLiteral("VRAM %1 / %2")
-                      .arg(formatBytes(static_cast<double>(*gpu.vramUsedBytes)),
-                           formatBytes(static_cast<double>(*gpu.vramTotalBytes)))
-                : QStringLiteral("VRAM --");
+        if (memory.swapTotalBytes > 0) {
+            const double swapPercent =
+                100.0 * static_cast<double>(memory.swapUsedBytes)
+                / static_cast<double>(memory.swapTotalBytes);
             writeInside(
                 rect,
-                line++,
-                QStringLiteral("%1 · %2 · %3")
-                    .arg(vram,
-                         optionalNumber(gpu.frequencyMHz,
-                                        QStringLiteral(" MHz"),
-                                        0),
-                         optionalNumber(gpu.powerWatts, QStringLiteral(" W"), 1)),
+                line,
+                QStringLiteral("Swap %1 / %2 · %3%")
+                    .arg(formatBytes(memory.swapUsedBytes),
+                         formatBytes(memory.swapTotalBytes))
+                    .arg(swapPercent, 0, 'f', 1),
                 Tone::Muted);
+        } else {
+            writeInside(
+                rect, line, QStringLiteral("Swap not configured"), Tone::Muted);
         }
-        ++visibleGpus;
-    }
-    if (visibleGpus < snapshot.gpus.size() && line < rect.height - 2) {
-        writeInside(rect,
-                    line,
-                    QStringLiteral("+%1 more GPU(s)")
-                        .arg(snapshot.gpus.size() - visibleGpus),
-                    Tone::Muted);
     }
 }
 
@@ -2623,7 +3048,25 @@ void TopTui::Impl::drawNetwork(const Rect &rect)
 
 void TopTui::Impl::drawDisk(const Rect &rect)
 {
-    drawBox(rect, QStringLiteral("Disk"), focusedPanel == Panel::Disk);
+    const int availableRows = std::max(0, rect.height - 2);
+    const int rowsPerDisk = availableRows >= 2 ? 2 : 1;
+    const int disksPerPage =
+        std::max(1, availableRows / rowsPerDisk);
+    const PageLayout page =
+        calculatePageLayout(snapshot.disks.size(),
+                            disksPerPage,
+                            diskPage);
+    diskPage = page.page;
+    diskPageCount = page.pageCount;
+
+    QString title = QStringLiteral("Disk");
+    if (page.pageCount > 1) {
+        title += QStringLiteral(" · %1–%2/%3 · PgUp/PgDn")
+                     .arg(page.firstIndex + 1)
+                     .arg(page.firstIndex + page.visibleCount)
+                     .arg(snapshot.disks.size());
+    }
+    drawBox(rect, title, focusedPanel == Panel::Disk);
     if (!hasSnapshot) {
         writeInside(rect, 0, QStringLiteral("Waiting for disk data..."), Tone::Muted);
         return;
@@ -2636,27 +3079,32 @@ void TopTui::Impl::drawDisk(const Rect &rect)
         return;
     }
 
+    const int innerWidth = std::max(0, rect.width - 2);
+    const int labelWidth =
+        std::clamp(innerWidth / 5, 5, 14);
+    const int detailWidth = rect.width >= 48 ? 17 : 0;
     int line = 0;
-    int visibleDisks = 0;
-    for (const DiskInfo &disk : std::as_const(snapshot.disks)) {
-        if (line >= rect.height - 2)
-            break;
+    const int end = page.firstIndex + page.visibleCount;
+    for (int index = page.firstIndex; index < end; ++index) {
+        const DiskInfo &disk = snapshot.disks.at(index);
         Tone tone = Tone::Primary;
         if (disk.usagePercent && *disk.usagePercent >= 95.0)
             tone = Tone::Critical;
         else if (disk.usagePercent && *disk.usagePercent >= 85.0)
             tone = Tone::Warning;
-        writeInside(
+        drawMetricRow(
             rect,
             line++,
-            QStringLiteral("%1 · %2 · %3 / %4")
-                .arg(disk.mountPoint.isEmpty() ? disk.device : disk.mountPoint,
-                     formatPercent(disk.usagePercent, 0),
-                     formatBytes(disk.usedBytes),
+            disk.mountPoint.isEmpty() ? disk.device : disk.mountPoint,
+            disk.usagePercent,
+            QStringLiteral("%1/%2")
+                .arg(formatBytes(disk.usedBytes),
                      formatBytes(disk.totalBytes)),
+            labelWidth,
+            detailWidth,
             tone,
-            A_BOLD);
-        if (line < rect.height - 2) {
+            tone);
+        if (rowsPerDisk > 1 && line < availableRows) {
             writeInside(
                 rect,
                 line++,
@@ -2666,23 +3114,13 @@ void TopTui::Impl::drawDisk(const Rect &rect)
                          disk.filesystem.isEmpty() ? disk.device : disk.filesystem),
                 Tone::Muted);
         }
-        ++visibleDisks;
-    }
-    if (visibleDisks < snapshot.disks.size() && line < rect.height - 2) {
-        writeInside(rect,
-                    line,
-                    QStringLiteral("+%1 more mount(s)")
-                        .arg(snapshot.disks.size() - visibleDisks),
-                    Tone::Muted);
     }
 }
 
 void TopTui::Impl::drawResources(const Rect &rect)
 {
     const bool focused =
-        focusedPanel == Panel::Memory
-        || focusedPanel == Panel::Gpu
-        || focusedPanel == Panel::Disk;
+        focusedPanel == Panel::Memory || focusedPanel == Panel::Disk;
     drawBox(rect, QStringLiteral("Resources"), focused);
     if (!hasSnapshot) {
         writeInside(
@@ -2690,7 +3128,8 @@ void TopTui::Impl::drawResources(const Rect &rect)
         return;
     }
 
-    const int barWidth = std::clamp((rect.width - 18) / 2, 5, 24);
+    const int detailWidth = rect.width >= 48 ? 17 : 0;
+    constexpr int labelWidth = 6;
     int line = 0;
 
     if (snapshot.memory.available && line < rect.height - 2) {
@@ -2702,67 +3141,18 @@ void TopTui::Impl::drawResources(const Rect &rect)
                    && *snapshot.memory.usagePercent >= 80.0) {
             tone = Tone::Warning;
         }
-        writeInside(
+        drawMetricRow(
             rect,
             line++,
-            QStringLiteral("RAM %1 %2")
-                .arg(formatPercent(snapshot.memory.usagePercent, 0),
-                     meter(snapshot.memory.usagePercent, barWidth)),
+            QStringLiteral("RAM"),
+            snapshot.memory.usagePercent,
+            QStringLiteral("%1/%2")
+                .arg(formatBytes(snapshot.memory.usedBytes),
+                     formatBytes(snapshot.memory.totalBytes)),
+            labelWidth,
+            detailWidth,
             tone,
-            A_BOLD);
-        if (line < rect.height - 2) {
-            writeInside(
-                rect,
-                line++,
-                QStringLiteral("    %1 / %2 · swap %3")
-                    .arg(formatBytes(snapshot.memory.usedBytes),
-                         formatBytes(snapshot.memory.totalBytes),
-                         formatBytes(snapshot.memory.swapUsedBytes)),
-                Tone::Muted);
-        }
-    }
-
-    if (line < rect.height - 2) {
-        if (!snapshot.gpus.isEmpty()) {
-            const GpuInfo &gpu = snapshot.gpus.first();
-            Tone tone = Tone::Good;
-            if (gpu.temperatureCelsius && *gpu.temperatureCelsius >= 90.0)
-                tone = Tone::Critical;
-            else if (gpu.temperatureCelsius
-                     && *gpu.temperatureCelsius >= 80.0)
-                tone = Tone::Warning;
-            writeInside(
-                rect,
-                line++,
-                QStringLiteral("GPU %1 %2  %3")
-                    .arg(formatPercent(gpu.utilizationPercent, 0),
-                         meter(gpu.utilizationPercent, barWidth),
-                         optionalNumber(
-                             gpu.temperatureCelsius, QStringLiteral("°C"), 0)),
-                tone,
-                A_BOLD);
-            if (line < rect.height - 2) {
-                const QString vram =
-                    gpu.vramUsedBytes && gpu.vramTotalBytes
-                    ? QStringLiteral("%1 / %2 VRAM")
-                          .arg(formatBytes(
-                                   static_cast<double>(*gpu.vramUsedBytes)),
-                               formatBytes(
-                                   static_cast<double>(*gpu.vramTotalBytes)))
-                    : QStringLiteral("VRAM --");
-                writeInside(
-                    rect,
-                    line++,
-                    QStringLiteral("    %1 · %2")
-                        .arg(vram,
-                             optionalNumber(
-                                 gpu.powerWatts, QStringLiteral(" W"), 1)),
-                    Tone::Muted);
-            }
-        } else {
-            writeInside(
-                rect, line++, QStringLiteral("GPU metrics unavailable"), Tone::Muted);
-        }
+            tone);
     }
 
     const DiskInfo *primaryDisk = nullptr;
@@ -2781,39 +3171,34 @@ void TopTui::Impl::drawResources(const Rect &rect)
         else if (primaryDisk->usagePercent
                  && *primaryDisk->usagePercent >= 85.0)
             tone = Tone::Warning;
-        writeInside(
+        drawMetricRow(
             rect,
             line++,
-            QStringLiteral("%1 %2 %3")
-                .arg(primaryDisk->mountPoint.isEmpty()
-                         ? primaryDisk->device
-                         : primaryDisk->mountPoint,
-                     formatPercent(primaryDisk->usagePercent, 0),
-                     meter(primaryDisk->usagePercent, barWidth)),
+            primaryDisk->mountPoint.isEmpty()
+                ? QStringLiteral("Disk")
+                : primaryDisk->mountPoint,
+            primaryDisk->usagePercent,
+            QStringLiteral("%1/%2")
+                .arg(formatBytes(primaryDisk->usedBytes),
+                     formatBytes(primaryDisk->totalBytes)),
+            labelWidth,
+            detailWidth,
             tone,
-            A_BOLD);
-        if (line < rect.height - 2) {
-            writeInside(
-                rect,
-                line++,
-                QStringLiteral("    %1 / %2 · R %3 · W %4")
-                    .arg(formatBytes(primaryDisk->usedBytes),
-                         formatBytes(primaryDisk->totalBytes),
-                         formatRate(primaryDisk->readBytesPerSecond),
-                         formatRate(primaryDisk->writeBytesPerSecond)),
-                Tone::Muted);
-        }
+            tone);
     }
 
     if (snapshot.battery.present && line < rect.height - 2) {
-        writeInside(
+        drawMetricRow(
             rect,
-            line,
-            QStringLiteral("BAT %1 · %2")
-                .arg(formatPercent(snapshot.battery.chargePercent, 0),
-                     snapshot.battery.status.isEmpty()
-                         ? QStringLiteral("--")
-                         : snapshot.battery.status),
+            line++,
+            QStringLiteral("BAT"),
+            snapshot.battery.chargePercent,
+            snapshot.battery.status.isEmpty()
+                ? QStringLiteral("--")
+                : snapshot.battery.status,
+            labelWidth,
+            detailWidth,
+            Tone::Good,
             Tone::Good);
     }
 }
@@ -2964,7 +3349,7 @@ void TopTui::Impl::drawModal()
 void TopTui::Impl::drawHelpModal()
 {
     const int width = std::max(20, std::min(columns - 4, 92));
-    const int height = std::max(5, std::min(rows - 2, 26));
+    const int height = std::max(5, std::min(rows - 2, 30));
     const Rect rect{
         std::max(0, (columns - width) / 2),
         std::max(0, (rows - height) / 2),
@@ -2976,8 +3361,13 @@ void TopTui::Impl::drawHelpModal()
     const QStringList lines{
         QStringLiteral("Navigation"),
         QStringLiteral("  Up/Down or k/j       move process selection"),
-        QStringLiteral("  PageUp/PageDown      move by one visible page"),
+        QStringLiteral("  PageUp/PageDown      page focused CPU cores, disks, or processes"),
         QStringLiteral("  Tab/Shift+Tab        next/previous metric panel"),
+        QStringLiteral("  + / - or header click adjust refresh interval by 250 ms"),
+        QStringLiteral(""),
+        QStringLiteral("Compute view"),
+        QStringLiteral("  g                     cycle CPU and every GPU graph"),
+        QStringLiteral("  [ / ]                 previous/next CPU core page"),
         QStringLiteral(""),
         QStringLiteral("Process view"),
         QStringLiteral("  / or f               live process filter; Enter accepts"),
@@ -2993,6 +3383,7 @@ void TopTui::Impl::drawHelpModal()
         QStringLiteral("General"),
         QStringLiteral("  ? help   Esc close dialog/mode   q quit (outside filter input)"),
         QStringLiteral(""),
+        QStringLiteral("The terminal default background is preserved for transparency."),
         QStringLiteral("NO_COLOR disables color; --ascii disables Unicode glyphs."),
     };
 
@@ -3003,6 +3394,7 @@ void TopTui::Impl::drawHelpModal()
         attr_t extra = A_NORMAL;
         if (lines.at(line) == QStringLiteral("Navigation")
             || lines.at(line) == QStringLiteral("Process view")
+            || lines.at(line) == QStringLiteral("Compute view")
             || lines.at(line) == QStringLiteral("Signals")
             || lines.at(line) == QStringLiteral("General")) {
             tone = Tone::Primary;

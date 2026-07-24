@@ -70,10 +70,15 @@ OptionalNumber readNumber(const QString &path, double scale = 1.0)
     return value * scale;
 }
 
-OptionalInteger readInteger(const QString &path)
+OptionalInteger readInteger(const QString &path, bool *readOk = nullptr)
 {
+    bool fileOk = false;
+    const QString text =
+        QString::fromUtf8(readAll(path, &fileOk)).trimmed();
     bool ok = false;
-    const qint64 value = readText(path).toLongLong(&ok);
+    const qint64 value = text.toLongLong(&ok);
+    if (readOk)
+        *readOk = fileOk && ok;
     return ok ? OptionalInteger(value) : std::nullopt;
 }
 
@@ -407,9 +412,20 @@ RawCpuInfo LinuxCollector::collectCpu(QVector<Error> *errors) const
             result.packageTemperatureCelsius = package;
     }
     if (!m_packageEnergyPath.isEmpty()) {
-        result.packageEnergyMicroJoules = readInteger(m_packageEnergyPath);
+        bool energyOk = false;
+        result.packageEnergyMicroJoules =
+            readInteger(m_packageEnergyPath, &energyOk);
         result.packageEnergyRangeMicroJoules =
             readInteger(m_packageEnergyRangePath);
+        if (!energyOk && QFileInfo::exists(m_packageEnergyPath)) {
+            errors->push_back({
+                QStringLiteral("cpu"),
+                QStringLiteral("rapl_energy_permission_denied"),
+                QStringLiteral(
+                    "Unable to read Intel RAPL energy counter; the installed "
+                    "key executable requires cap_dac_read_search"),
+            });
+        }
     }
     if (!m_fanPath.isEmpty())
         result.fanRpm = readNumber(m_fanPath);
