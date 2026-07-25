@@ -6,21 +6,21 @@
 .
 
 ### 预览
-灵动岛媒体
+演示
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/gif1.gif" width="500">
+  <img src="https://raw.githubusercontent.com/StatIndet/picture/main/jiemian.gif" width="500">
 </p>
 小工具
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/gif2.gif" width="500">
+  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/lingdongdao.gif" width="500">
 </p>
-灵动岛 dashboard
+天气
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/gif3.gif" width="500">
+  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/weather.gif" width="500">
 </p>
-Launcher
+卡片
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/gif4.gif" width="500">
+  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/system.gif" width="500">
 </p>
 
 ### 天气图标
