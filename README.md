@@ -6,9 +6,40 @@
 .
 
 ### 预览
-演示
+## Screenshots
+
 <p align="center">
-  <img src="https://raw.githubusercontent.com/StatIndet/picture/main/jiemian.gif" width="500">
+  <img
+    src="https://raw.githubusercontent.com/StatIndet/picture/main/island1.png"
+    alt="Clavis Shell dashboard"
+    width="49%"
+  />
+  <img
+    src="https://raw.githubusercontent.com/StatIndet/picture/main/island2.png"
+    alt="Clavis Shell media"
+    width="49%"
+  />
+</p>
+
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/StatIndet/picture/main/island3.png"
+    alt="Clavis Shell wallpapers"
+    width="49%"
+  />
+  <img
+    src="https://raw.githubusercontent.com/StatIndet/picture/main/island4.png"
+    alt="Clavis Shell weather"
+    width="49%"
+  />
+</p>
+
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/StatIndet/picture/main/island5.png"
+    alt="Clavis Shell dynamic island"
+    width="49%"
+  />
 </p>
 小工具
 <p align="center">
