@@ -7,8 +7,7 @@ import qs.Modules.Keystone
 import qs.Modules.Launcher
 import qs.Modules.Lock
 import qs.Modules.RegionSelector
-import qs.Modules.Sidebars.Left
-import qs.Modules.Sidebars.Right
+import qs.Modules.Sidebars
 import qs.Modules.Wallpaper
 import qs.Services
 
@@ -25,9 +24,7 @@ Item {
 
     RegionSelector {}
 
-    LeftSidebarWindow {}
-
-    RightSidebar {}
+    SidebarHostWindow {}
 
     LockWarmup {}
 

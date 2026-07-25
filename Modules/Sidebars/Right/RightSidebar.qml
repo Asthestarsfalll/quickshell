@@ -1,129 +1,109 @@
 import QtQuick
-import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
-import Quickshell
-import Quickshell.Wayland
 import qs.Common
-import qs.Services
-import qs.Widgets.common
 
-PanelWindow {
+Item {
     id: root
-    
 
+    property var panelScreen: null
     property int sidebarWidth: 420
-    property int gap: 24 
-    property int gooeyRadius: 36  
-    readonly property int panelTopMargin: Sizes.barHeight
-    readonly property int sidebarY: gap
-    readonly property bool contentActive: WidgetState.qsOpen || qsShadow.x < root.offScreenX
-    readonly property bool inputActive: WidgetState.qsOpen || qsShadow.x < root.offScreenX - 0.5
-
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "qs-unified-sidebar"
-    WlrLayershell.keyboardFocus: WidgetState.qsOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    WlrLayershell.exclusionMode: ExclusionMode.Ignore
-    exclusiveZone: 0
-    screen: Brightness.getScreenByName(WidgetState.qsScreenName) || Brightness.activeScreen || Quickshell.screens[0]
-
-    anchors { right: true; top: true; bottom: true }
-    margins { top: root.panelTopMargin }
-    
-    implicitWidth: 600
-    visible: root.inputActive
-    color: "transparent"
-
+    property int gap: 24
     property int qsTargetHeight: 640
-    property int targetX: 600 - sidebarWidth - gap
-    property int offScreenX: 600
+    readonly property int sidebarY: Sizes.barHeight + gap
+    readonly property real closedSlideOffset: sidebarWidth + gap
+    readonly property int enterDuration: Animations.durations.large
+    readonly property int exitDuration: Animations.durations.large
+    readonly property bool panelActive: WidgetState.qsOpen
+        || Math.abs(animController.slideOffset - closedSlideOffset) > 0.5
 
-    Connections {
-        target: WidgetState
-
-        function onQsOpenChanged() {
-            if (WidgetState.qsOpen)
-                keyGateway.forceActiveFocus();
-        }
+    function containsPoint(hostX, hostY) {
+        const localPosition =
+            sidebarContentFrame.mapFromItem(root, hostX, hostY);
+        return localPosition.x >= 0
+            && localPosition.x <= sidebarContentFrame.width
+            && localPosition.y >= 0
+            && localPosition.y <= sidebarContentFrame.height;
     }
 
     Item {
-        id: hitBoxRegion
-        x: qsShadow.x
+        id: animController
+
+        property real slideOffset: root.closedSlideOffset
+
+        state: WidgetState.qsOpen ? "open" : "closed"
+
+        states: [
+            State {
+                name: "open"
+
+                PropertyChanges {
+                    target: animController
+                    slideOffset: 0
+                }
+            },
+            State {
+                name: "closed"
+
+                PropertyChanges {
+                    target: animController
+                    slideOffset: root.closedSlideOffset
+                }
+            }
+        ]
+
+        transitions: [
+            Transition {
+                to: "open"
+
+                NumberAnimation {
+                    target: animController
+                    property: "slideOffset"
+                    duration: root.enterDuration
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 0.3
+                }
+            },
+            Transition {
+                to: "closed"
+
+                NumberAnimation {
+                    target: animController
+                    property: "slideOffset"
+                    duration: root.exitDuration
+                    easing.type: Easing.InBack
+                    easing.overshoot: 0.18
+                }
+            }
+        ]
+    }
+
+    Rectangle {
+        id: panelSurface
+
+        visible: root.panelActive
+        x: root.width - root.sidebarWidth - root.gap
+            + animController.slideOffset
         y: root.sidebarY
-        width: root.inputActive ? sidebarWidth : 0
-        height: root.inputActive ? root.qsTargetHeight : 0
+        width: root.sidebarWidth
+        height: Math.min(root.qsTargetHeight,
+            Math.max(0, root.height - root.sidebarY - root.gap))
+        color: Appearance.colors.colLayer0
+        radius: Appearance.rounding.large
     }
 
-    mask: Region { item: hitBoxRegion }
-
     Item {
-        id: renderCanvas
-        width: parent.width + 100 
-        height: parent.height
-        x: 0; y: 0
+        id: sidebarContentFrame
 
-        Item {
-            id: rawShapes
+        visible: root.panelActive
+        x: panelSurface.x
+        y: panelSurface.y
+        width: panelSurface.width
+        height: panelSurface.height
+        clip: true
+
+        Loader {
             anchors.fill: parent
-            visible: false
-
-            Rectangle {
-                id: qsShadow
-                width: root.sidebarWidth
-                height: root.qsTargetHeight
-                y: root.sidebarY
-                x: WidgetState.qsOpen ? root.targetX : root.offScreenX
-                radius: Appearance.rounding.large
-                color: "black" 
-                Behavior on x { NumberAnimation { duration: 600; easing.type: Easing.OutBack; easing.overshoot: 0.3 } }
-            }
-
-            Rectangle {
-                id: offscreenWall
-                width: 100; height: parent.height; x: root.offScreenX; color: "black"
-            }
-        }
-
-        GaussianBlur {
-            id: blurredShapes
-            anchors.fill: parent; source: rawShapes
-            radius: root.gooeyRadius
-            samples: 1 + root.gooeyRadius * 2
-            visible: false 
-        }
-
-        Rectangle { 
-            id: solidBg; anchors.fill: parent; 
-            color: Appearance.colors.colLayer0;
-            visible: false 
-        }
-
-        ThresholdMask {
-            id: gooeyLayer
-            anchors.fill: parent; source: solidBg; maskSource: blurredShapes
-            threshold: 0.51; spread: 0.02
-        }
-    }
-
-    Item {
-        id: keyGateway
-        anchors.fill: parent
-        focus: WidgetState.qsOpen
-
-        Keys.onEscapePressed: (event) => {
-            WidgetState.closeAllPopups();
-            event.accepted = true;
-        }
-
-        Item {
-            width: qsShadow.width; height: qsShadow.height
-            x: qsShadow.x; y: qsShadow.y; clip: true 
-
-            Loader {
-                anchors.fill: parent
-                active: root.contentActive
-                sourceComponent: quickSettingsComponent
-            }
+            active: true
+            sourceComponent: quickSettingsComponent
         }
     }
 
@@ -131,8 +111,8 @@ PanelWindow {
         id: quickSettingsComponent
 
         QuickSettings {
-            screen: root.screen
             anchors.fill: parent
+            screen: root.panelScreen
         }
     }
 }

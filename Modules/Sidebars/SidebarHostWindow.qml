@@ -1,0 +1,117 @@
+import QtQuick
+import Quickshell
+import Quickshell.Wayland
+import qs.Common
+import qs.Modules.Sidebars.Left
+import qs.Modules.Sidebars.Right
+import qs.Services
+
+PanelWindow {
+    id: root
+
+    readonly property bool anySidebarOpen:
+        WidgetState.leftSidebarOpen || WidgetState.qsOpen
+    readonly property var fallbackScreen: Brightness.activeScreen
+        || (Quickshell.screens.length > 0 ? Quickshell.screens[0] : null)
+    property var retainedScreen: null
+
+    screen: retainedScreen || fallbackScreen
+    visible: true
+    color: "transparent"
+    implicitWidth: screen ? screen.width : 1920
+    implicitHeight: screen ? screen.height : 1080
+    exclusiveZone: 0
+
+    anchors {
+        left: true
+        top: true
+        right: true
+        bottom: true
+    }
+
+    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.namespace: "clavis-persistent-sidebars"
+    WlrLayershell.exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.keyboardFocus: root.anySidebarOpen
+        ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    mask: Region {
+        item: root.anySidebarOpen ? interactionRegion : null
+    }
+
+    Component.onCompleted: {
+        root.retainedScreen = root.fallbackScreen;
+        if (root.anySidebarOpen)
+            Qt.callLater(() => keyGateway.forceActiveFocus());
+    }
+
+    onAnySidebarOpenChanged: {
+        if (root.anySidebarOpen)
+            Qt.callLater(() => keyGateway.forceActiveFocus());
+    }
+
+    Connections {
+        target: WidgetState
+
+        function onQsScreenNameChanged() {
+            const requestedScreen =
+                Brightness.getScreenByName(WidgetState.qsScreenName);
+            if (requestedScreen)
+                root.retainedScreen = requestedScreen;
+        }
+
+        function onLeftSidebarOpenChanged() {
+            if (WidgetState.leftSidebarOpen && !WidgetState.qsOpen
+                    && Brightness.activeScreen)
+                root.retainedScreen = Brightness.activeScreen;
+        }
+    }
+
+    Item {
+        id: interactionRegion
+
+        anchors.fill: parent
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.anySidebarOpen
+        acceptedButtons: Qt.LeftButton
+
+        onClicked: mouse => {
+            if (WidgetState.leftSidebarOpen
+                    && !leftSidebar.containsPoint(mouse.x, mouse.y))
+                WidgetState.leftSidebarOpen = false;
+
+            if (WidgetState.qsOpen
+                    && !rightSidebar.containsPoint(mouse.x, mouse.y))
+                WidgetState.qsOpen = false;
+        }
+    }
+
+    LeftSidebarWindow {
+        id: leftSidebar
+
+        anchors.fill: parent
+        panelScreen: root.screen
+    }
+
+    RightSidebar {
+        id: rightSidebar
+
+        anchors.fill: parent
+        panelScreen: root.screen
+    }
+
+    Item {
+        id: keyGateway
+
+        anchors.fill: parent
+        focus: root.anySidebarOpen
+
+        Keys.onEscapePressed: event => {
+            WidgetState.closeAllPopups();
+            event.accepted = true;
+        }
+    }
+}
