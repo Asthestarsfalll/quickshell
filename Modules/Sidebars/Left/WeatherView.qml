@@ -10,7 +10,8 @@ import Clavis.Weather 1.0
 Item {
     id: root
 
-
+    property bool foreground: false
+    property bool presentationActive: false
     property int contentMargin: 16
     property int headerHeight: 62
     property bool lightHeaderPalette: currentIsNight()
@@ -243,9 +244,14 @@ Item {
 
     Timer {
         interval: 60000
-        running: root.visible
+        running: root.foreground
         repeat: true
         onTriggered: root.currentEpoch = Math.floor(Date.now() / 1000)
+    }
+
+    onForegroundChanged: {
+        if (root.foreground)
+            root.currentEpoch = Math.floor(Date.now() / 1000);
     }
 
     Rectangle {
@@ -274,7 +280,7 @@ Item {
             night: root.currentIsNight()
             rainBounceY: flick.y + dailyForecastCard.y - flick.contentY
             scrollProgress: Math.max(0, Math.min(1, flick.contentY / 340))
-            animate: root.visible
+            animate: root.foreground
         }
 
         Rectangle {
@@ -506,12 +512,14 @@ Item {
                     width: parent.width
                     height: 452
                     sourceModel: WeatherPlugin.dailyTrendForecast
+                    foreground: root.foreground
                 }
 
                 HourlyForecastTrendCard {
                     width: parent.width
                     height: 286
                     sourceModel: WeatherPlugin.hourlyForecast
+                    foreground: root.foreground
                 }
 
                 RowLayout {
@@ -526,7 +534,7 @@ Item {
                         contentTop: precipitationWindRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherPrecipitationCard {
@@ -545,7 +553,7 @@ Item {
                         contentTop: precipitationWindRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherWindCard {
@@ -572,7 +580,7 @@ Item {
                         contentTop: aqiHumidityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherAqiCard {
@@ -592,7 +600,7 @@ Item {
                         contentTop: aqiHumidityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherHumidityCard {
@@ -619,7 +627,7 @@ Item {
                         contentTop: uvVisibilityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherUvCard {
@@ -639,7 +647,7 @@ Item {
                         contentTop: uvVisibilityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherVisibilityCard {
@@ -663,7 +671,7 @@ Item {
                         contentTop: pressureSunRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherPressureCard {
@@ -683,7 +691,7 @@ Item {
                         contentTop: pressureSunRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherAstroCard {
@@ -712,7 +720,7 @@ Item {
                         contentTop: moonRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.visible
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherAstroCard {

@@ -4,6 +4,7 @@ import qs.Common
 Rectangle {
     id: root
 
+    property bool active: true
     property date currentDate: new Date()
     readonly property var monthNames: [
         "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
@@ -50,7 +51,7 @@ Rectangle {
     Timer {
         interval: 30000
         repeat: true
-        running: root.visible
+        running: root.active
         triggeredOnStart: true
         onTriggered: root.currentDate = new Date()
     }

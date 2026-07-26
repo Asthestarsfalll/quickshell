@@ -100,6 +100,8 @@ Singleton {
 
     property bool pomodoroSoundEnabled: false
 
+    property bool keepSidebarsLoaded: true
+
     property bool scrollSmoothEnabled: true
     property int scrollMouseFactor: 50
     property int scrollTouchpadFactor: 100
@@ -360,6 +362,10 @@ Singleton {
         setValue("pomodoroSoundEnabled", !!value);
     }
 
+    function setKeepSidebarsLoaded(value) {
+        setValue("keepSidebarsLoaded", !!value);
+    }
+
     function setScrollSmoothEnabled(value) {
         setValue("scrollSmoothEnabled", !!value);
     }
@@ -418,6 +424,9 @@ Singleton {
             "sounds": {
                 "pomodoro": root.pomodoroSoundEnabled
             },
+            "sidebar": {
+                "keepLoaded": root.keepSidebarsLoaded
+            },
             "interactions": {
                 "scrolling": {
                     "smoothEnabled": root.scrollSmoothEnabled,
@@ -434,6 +443,7 @@ Singleton {
         const theme = parsed.theme || {};
         const keystone = parsed.keystone || {};
         const sounds = parsed.sounds || {};
+        const sidebar = parsed.sidebar || {};
         const interactions = parsed.interactions || {};
         const scrolling = interactions.scrolling || {};
         const transition = wallpaper.transition || {};
@@ -468,6 +478,8 @@ Singleton {
         root.iconTheme = theme.iconTheme || "";
         root.keystoneStyle = normalizedOption(root.keystoneStyles, keystone.style, "bangs");
         root.pomodoroSoundEnabled = !!sounds.pomodoro;
+        root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
+            ? true : !!sidebar.keepLoaded;
         root.scrollSmoothEnabled = scrolling.smoothEnabled === undefined ? true : !!scrolling.smoothEnabled;
         root.scrollMouseFactor = normalizedBoundedInt(scrolling.mouseFactor, 50, 10, 240);
         root.scrollTouchpadFactor = normalizedBoundedInt(scrolling.touchpadFactor, 100, 10, 300);

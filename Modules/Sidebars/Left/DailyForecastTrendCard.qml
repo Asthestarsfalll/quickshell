@@ -12,6 +12,7 @@ Rectangle {
     property real itemWidth: trendFlick.width > 0 ? trendFlick.width / 6 : 122
     property int maxItems: 16
     property int currentTab: 0
+    property bool foreground: false
 
     radius: 26
     color: Appearance.colors.colWeatherCardSurface
@@ -209,8 +210,15 @@ Rectangle {
                         anchors.fill: parent
                         antialiasing: true
 
+                        property color primaryColor:
+                            Appearance.colors.colPrimary
+                        property color secondaryColor:
+                            Appearance.colors.colSecondary
                         property real chartTop: trendContent.chartTopInset
                         property real chartBottom: trendContent.chartBottomInset
+
+                        onPrimaryColorChanged: requestPaint()
+                        onSecondaryColorChanged: requestPaint()
 
                         function pointX(index) {
                             return root.itemWidth * index + root.itemWidth / 2
@@ -275,8 +283,8 @@ Rectangle {
                             }
                             ctx.closePath()
                             const fillGradient = ctx.createLinearGradient(0, chartTop, 0, chartBottom)
-                            fillGradient.addColorStop(0, "rgba(" + Math.round(Appearance.colors.colPrimary.r * 255) + "," + Math.round(Appearance.colors.colPrimary.g * 255) + "," + Math.round(Appearance.colors.colPrimary.b * 255) + ",0.12)")
-                            fillGradient.addColorStop(1, "rgba(" + Math.round(Appearance.colors.colPrimary.r * 255) + "," + Math.round(Appearance.colors.colPrimary.g * 255) + "," + Math.round(Appearance.colors.colPrimary.b * 255) + ",0.02)")
+                            fillGradient.addColorStop(0, "rgba(" + Math.round(primaryColor.r * 255) + "," + Math.round(primaryColor.g * 255) + "," + Math.round(primaryColor.b * 255) + ",0.12)")
+                            fillGradient.addColorStop(1, "rgba(" + Math.round(primaryColor.r * 255) + "," + Math.round(primaryColor.g * 255) + "," + Math.round(primaryColor.b * 255) + ",0.02)")
                             ctx.fillStyle = fillGradient
                             ctx.fill()
 
@@ -287,21 +295,21 @@ Rectangle {
                                 const fadedBar = p === 0
                                 const barTop = chartBottom - (chartBottom - chartTop) * Math.min(100, popValue) / 100
                                 ctx.fillStyle = fadedBar
-                                    ? Qt.rgba(Appearance.colors.colSecondary.r, Appearance.colors.colSecondary.g, Appearance.colors.colSecondary.b, 0.10)
-                                    : Qt.rgba(Appearance.colors.colSecondary.r, Appearance.colors.colSecondary.g, Appearance.colors.colSecondary.b, 0.18)
+                                    ? Qt.rgba(secondaryColor.r, secondaryColor.g, secondaryColor.b, 0.10)
+                                    : Qt.rgba(secondaryColor.r, secondaryColor.g, secondaryColor.b, 0.18)
                                 ctx.beginPath()
                                 roundedRect(ctx, x - 5, barTop, 10, chartBottom - barTop, 5)
                                 ctx.fill()
                                 ctx.fillStyle = fadedBar
-                                    ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.42)
-                                    : Appearance.colors.colPrimary
+                                    ? Qt.rgba(primaryColor.r, primaryColor.g, primaryColor.b, 0.42)
+                                    : primaryColor
                                 ctx.font = "bold 11px \"JetBrainsMono Nerd Font\""
                                 ctx.textAlign = "center"
                                 ctx.fillText(root.fmtPercent(popValue), x, trendContent.rainLabelY)
                             }
 
-                            drawSeries(ctx, dayValues, minTemp, maxTemp, Appearance.colors.colPrimary, 4)
-                            drawSeries(ctx, nightValues, minTemp, maxTemp, Appearance.colors.colSecondary, 4)
+                            drawSeries(ctx, dayValues, minTemp, maxTemp, primaryColor, 4)
+                            drawSeries(ctx, nightValues, minTemp, maxTemp, secondaryColor, 4)
                         }
 
                         function drawSeries(ctx, values, minValue, maxValue, color, lineWidth) {
@@ -508,6 +516,14 @@ Rectangle {
         trendFlick.initialPositionApplied = false
         initialPositionTimer.restart()
         trendCanvas.requestPaint()
+    }
+    onCurrentTabChanged: {
+        if (root.currentTab === 0)
+            trendCanvas.requestPaint()
+    }
+    onForegroundChanged: {
+        if (root.foreground)
+            trendCanvas.requestPaint()
     }
     onWidthChanged: trendCanvas.requestPaint()
     onHeightChanged: trendCanvas.requestPaint()

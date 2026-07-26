@@ -8,6 +8,8 @@ Item {
     id: root
 
     property string screenName: ""
+    property bool foreground: false
+    property bool presentationActive: false
 
     ColumnLayout {
         anchors.fill: parent
@@ -103,16 +105,24 @@ Item {
                 anchors.fill: parent
                 visible: WidgetState.leftSidebarView === "info"
                 screenName: root.screenName
+                foreground: root.foreground
+                    && WidgetState.leftSidebarView === "info"
             }
 
             SystemView {
                 anchors.fill: parent
                 visible: WidgetState.leftSidebarView === "sys"
+                foreground: root.foreground
+                    && WidgetState.leftSidebarView === "sys"
             }
 
             WeatherView {
                 anchors.fill: parent
                 visible: WidgetState.leftSidebarView === "weather"
+                foreground: root.foreground
+                    && WidgetState.leftSidebarView === "weather"
+                presentationActive: root.presentationActive
+                    && WidgetState.leftSidebarView === "weather"
             }
         }
     }

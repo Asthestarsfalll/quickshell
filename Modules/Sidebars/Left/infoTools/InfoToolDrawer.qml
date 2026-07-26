@@ -120,7 +120,7 @@ Rectangle {
 
     Timer {
         interval: 60000
-        running: true
+        running: root.active
         repeat: true
         triggeredOnStart: true
         onTriggered: root.currentDate = new Date()

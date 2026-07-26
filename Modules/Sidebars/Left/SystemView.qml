@@ -10,9 +10,8 @@ import "../../../Common/functions/SystemFormat.js" as Format
 Item {
     id: root
 
-    readonly property bool isForeground: root.visible
-        && WidgetState.leftSidebarOpen
-        && WidgetState.leftSidebarView === "sys"
+    property bool foreground: false
+    readonly property bool isForeground: root.foreground
     readonly property int gridColumns: GridLayout.columnCount
     readonly property int gridRows: GridLayout.rowCount
     readonly property real gridGap: Appearance.spacing.small
@@ -284,7 +283,9 @@ Item {
     Component {
         id: timeComponent
 
-        SystemClockCard {}
+        SystemClockCard {
+            active: root.isForeground
+        }
     }
 
     Component {
@@ -469,7 +470,9 @@ Item {
     Component {
         id: calendarComponent
 
-        SystemCalendarCard {}
+        SystemCalendarCard {
+            active: root.isForeground
+        }
     }
 
     Component {
@@ -486,6 +489,7 @@ Item {
 
         SystemLoadingState {
             anchors.fill: parent
+            active: root.isForeground
             visible: !SystemMonitorService.hasData
                 && !SystemMonitorService.error
                 && !SystemMonitorService.reconnecting

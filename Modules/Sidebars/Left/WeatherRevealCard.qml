@@ -46,7 +46,12 @@ Item {
     }
 
     onThresholdCrossedChanged: maybeReveal()
-    onActivationEnabledChanged: maybeReveal()
+    onActivationEnabledChanged: {
+        if (activationEnabled)
+            maybeReveal()
+        else
+            reset()
+    }
     Component.onCompleted: Qt.callLater(maybeReveal)
 
     Item {

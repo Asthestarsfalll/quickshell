@@ -324,6 +324,18 @@ StyledFlickable {
         }
 
         Section {
+            title: "侧边栏"
+            iconName: "side_navigation"
+
+            ToggleSettingRow {
+                title: "保持侧边栏已加载"
+                description: "关闭侧边栏后保留其界面内容，使再次打开更流畅，但会增加内存占用。后台数据采集和动画仍会暂停。"
+                checked: PersonalizationConfig.keepSidebarsLoaded
+                onToggled: checked => PersonalizationConfig.setKeepSidebarsLoaded(checked)
+            }
+        }
+
+        Section {
             title: "滚动交互"
             iconName: "swipe"
 

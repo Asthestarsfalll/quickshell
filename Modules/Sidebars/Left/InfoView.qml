@@ -9,8 +9,9 @@ Item {
     id: root
 
     property string screenName: ""
+    property bool foreground: false
 
-    readonly property bool isForeground: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "info"
+    readonly property bool isForeground: root.foreground
     onIsForegroundChanged: {
         if (isForeground) {
             NotificationManager.timeoutAll();

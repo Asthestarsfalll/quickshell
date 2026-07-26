@@ -164,7 +164,7 @@ Rectangle {
             maximum: 0
             scaleHeadroom: 1.2
             showGuideLines: false
-            active: root.chartActive && visible
+            active: root.chartActive
             accessibilityName: root.label + " 最近一分钟趋势"
             accessibilityDescription:
                 "当前值 " + root.valueText

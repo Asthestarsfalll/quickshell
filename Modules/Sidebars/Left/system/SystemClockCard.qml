@@ -4,6 +4,7 @@ import qs.Common
 Item {
     id: root
 
+    property bool active: true
     property date currentTime: new Date()
     readonly property int hour24: currentTime.getHours()
     readonly property int hour12: ((hour24 + 11) % 12) + 1
@@ -74,7 +75,7 @@ Item {
     Timer {
         interval: 1000
         repeat: true
-        running: root.visible
+        running: root.active
         triggeredOnStart: true
         onTriggered: root.currentTime = new Date()
     }

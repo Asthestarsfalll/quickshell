@@ -7,6 +7,7 @@ import qs.Common
 Item {
     id: root
 
+    property bool active: true
     property string message: "正在连接系统监测服务"
 
     implicitHeight: 240
@@ -17,7 +18,7 @@ Item {
 
         BusyIndicator {
             Layout.alignment: Qt.AlignHCenter
-            running: root.visible
+            running: root.active && root.visible
             Material.accent: Appearance.colors.colPrimary
             Accessible.name: root.message
         }

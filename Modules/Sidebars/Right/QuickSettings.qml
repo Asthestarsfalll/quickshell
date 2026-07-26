@@ -5,28 +5,37 @@ Item {
     id: root
 
     property var screen: null
+    property bool foreground: false
+    property bool presentationActive: false
 
     PageTransitionLayer {
         anchors.fill: parent
-        active: WidgetState.qsView === "network"
+        active: root.presentationActive
+            && WidgetState.qsView === "network"
 
         NetworkContent {
             anchors.fill: parent
+            foreground: root.foreground
+                && WidgetState.qsView === "network"
         }
     }
 
     PageTransitionLayer {
         anchors.fill: parent
-        active: WidgetState.qsView === "bluetooth"
+        active: root.presentationActive
+            && WidgetState.qsView === "bluetooth"
 
         BluetoothContent {
             anchors.fill: parent
+            foreground: root.foreground
+                && WidgetState.qsView === "bluetooth"
         }
     }
 
     PageTransitionLayer {
         anchors.fill: parent
-        active: WidgetState.qsView === "idle"
+        active: root.presentationActive
+            && WidgetState.qsView === "idle"
 
         IdleContent {
             anchors.fill: parent
@@ -35,7 +44,8 @@ Item {
 
     PageTransitionLayer {
         anchors.fill: parent
-        active: WidgetState.qsView === "audio"
+        active: root.presentationActive
+            && WidgetState.qsView === "audio"
 
         AudioContent {
             anchors.fill: parent
@@ -44,7 +54,8 @@ Item {
 
     PageTransitionLayer {
         anchors.fill: parent
-        active: WidgetState.qsView === "microphone"
+        active: root.presentationActive
+            && WidgetState.qsView === "microphone"
 
         MicrophoneContent {
             anchors.fill: parent
@@ -53,7 +64,8 @@ Item {
 
     PageTransitionLayer {
         anchors.fill: parent
-        active: WidgetState.qsView === "settings"
+        active: root.presentationActive
+            && WidgetState.qsView === "settings"
         hubPage: true
 
         SettingsContent {

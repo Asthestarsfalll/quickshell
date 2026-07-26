@@ -15,7 +15,9 @@ WidgetPanel {
     showBackButton: true
     backAction: () => WidgetState.qsView = "settings"
 
-    property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "bluetooth"
+    property bool foreground: false
+    readonly property bool isActive: root.foreground
+        && WidgetState.qsView === "bluetooth"
     property bool discoveryLeaseAcquired: false
     property bool initialLoadAttempted: false
     property bool initialLoading: false

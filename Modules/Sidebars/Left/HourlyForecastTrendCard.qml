@@ -12,6 +12,7 @@ Rectangle {
     property real itemWidth: trendFlick.width > 0 ? trendFlick.width / 6 : 122
     property int maxItems: 25
     property int currentTab: 0
+    property bool foreground: false
 
     radius: 26
     color: Appearance.colors.colWeatherCardSurface
@@ -156,8 +157,18 @@ Rectangle {
                         anchors.fill: parent
                         antialiasing: true
 
+                        property color primaryColor:
+                            Appearance.colors.colPrimary
+                        property color pointInnerColor:
+                            Appearance.colors.colLayer4
+                        property color textColor:
+                            Appearance.colors.colOnSurface
                         property real chartTop: trendContent.chartTopInset
                         property real chartBottom: trendContent.chartBottomInset
+
+                        onPrimaryColorChanged: requestPaint()
+                        onPointInnerColorChanged: requestPaint()
+                        onTextColorChanged: requestPaint()
 
                         function pointX(index) {
                             return root.itemWidth * index + root.itemWidth / 2
@@ -194,7 +205,7 @@ Rectangle {
                                 minTemp -= 1
                             }
 
-                            ctx.strokeStyle = Appearance.colors.colPrimary
+                            ctx.strokeStyle = primaryColor
                             ctx.lineWidth = 3
                             ctx.lineJoin = "round"
                             ctx.lineCap = "round"
@@ -210,17 +221,17 @@ Rectangle {
                             for (let p = 0; p < count; ++p) {
                                 const px = pointX(p)
                                 const py = yAt(values[p], minTemp, maxTemp)
-                                ctx.fillStyle = Appearance.colors.colPrimary
+                                ctx.fillStyle = primaryColor
                                 ctx.beginPath()
                                 ctx.arc(px, py, 4.5, 0, Math.PI * 2)
                                 ctx.fill()
-                                ctx.fillStyle = Appearance.colors.colLayer4
+                                ctx.fillStyle = pointInnerColor
                                 ctx.beginPath()
                                 ctx.arc(px, py, 2.4, 0, Math.PI * 2)
                                 ctx.fill()
                             }
 
-                            ctx.fillStyle = Appearance.colors.colOnSurface
+                            ctx.fillStyle = textColor
                             ctx.font = "bold 13px \"JetBrainsMono Nerd Font\""
                             ctx.textAlign = "center"
                             for (let n = 0; n < count; ++n) {
@@ -322,6 +333,14 @@ Rectangle {
     }
 
     onSourceModelChanged: trendCanvas.requestPaint()
+    onCurrentTabChanged: {
+        if (root.currentTab === 0)
+            trendCanvas.requestPaint()
+    }
+    onForegroundChanged: {
+        if (root.foreground)
+            trendCanvas.requestPaint()
+    }
     onWidthChanged: trendCanvas.requestPaint()
     onHeightChanged: trendCanvas.requestPaint()
 }

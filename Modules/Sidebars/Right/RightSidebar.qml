@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Common
+import qs.Services
 
 Item {
     id: root
@@ -14,6 +15,69 @@ Item {
     readonly property int exitDuration: Animations.durations.large
     readonly property bool panelActive: WidgetState.qsOpen
         || Math.abs(animController.slideOffset - closedSlideOffset) > 0.5
+    property bool contentLoaderActive: true
+    property bool closingPresentationLatched: false
+
+    function ensureContentLoaded() {
+        deferredUnload.stop();
+        root.contentLoaderActive = true;
+        root.closingPresentationLatched = false;
+    }
+
+    function releaseContent(preserveClosingPresentation) {
+        deferredUnload.stop();
+
+        if (WidgetState.qsOpen
+                || root.panelActive
+                || PersonalizationConfig.keepSidebarsLoaded) {
+            root.ensureContentLoaded();
+            return;
+        }
+
+        if (preserveClosingPresentation && root.contentLoaderActive) {
+            root.closingPresentationLatched = true;
+            deferredUnload.start();
+            return;
+        }
+
+        root.closingPresentationLatched = false;
+        root.contentLoaderActive = false;
+    }
+
+    onPanelActiveChanged: {
+        if (root.panelActive)
+            root.ensureContentLoaded();
+        else
+            root.releaseContent(true);
+    }
+
+    Component.onCompleted: {
+        if (WidgetState.qsOpen
+                || PersonalizationConfig.keepSidebarsLoaded)
+            root.ensureContentLoaded();
+        else
+            root.releaseContent(false);
+    }
+
+    Connections {
+        target: PersonalizationConfig
+
+        function onKeepSidebarsLoadedChanged() {
+            if (PersonalizationConfig.keepSidebarsLoaded)
+                root.ensureContentLoaded();
+            else
+                root.releaseContent(false);
+        }
+    }
+
+    Connections {
+        target: WidgetState
+
+        function onQsOpenChanged() {
+            if (WidgetState.qsOpen)
+                root.ensureContentLoaded();
+        }
+    }
 
     function containsPoint(hostX, hostY) {
         const localPosition =
@@ -76,6 +140,21 @@ Item {
         ]
     }
 
+    Timer {
+        id: deferredUnload
+
+        interval: 0
+        repeat: false
+        onTriggered: {
+            if (!WidgetState.qsOpen
+                    && !root.panelActive
+                    && !PersonalizationConfig.keepSidebarsLoaded) {
+                root.contentLoaderActive = false;
+            }
+            root.closingPresentationLatched = false;
+        }
+    }
+
     Rectangle {
         id: panelSurface
 
@@ -102,7 +181,7 @@ Item {
 
         Loader {
             anchors.fill: parent
-            active: true
+            active: root.contentLoaderActive
             sourceComponent: quickSettingsComponent
         }
     }
@@ -113,6 +192,9 @@ Item {
         QuickSettings {
             anchors.fill: parent
             screen: root.panelScreen
+            foreground: WidgetState.qsOpen
+            presentationActive: root.panelActive
+                || root.closingPresentationLatched
         }
     }
 }
