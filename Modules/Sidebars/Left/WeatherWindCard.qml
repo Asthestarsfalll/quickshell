@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import M3Shapes
 import qs.Common
 
 WeatherInsightCard {
@@ -28,9 +29,9 @@ WeatherInsightCard {
 
     icon: ""
     title: ""
+    shapeId: MaterialShape.Circle
     radius: Math.round(Math.min(width, height) / 2)
-    color: Appearance.colors.colWeatherCardSurface
-    border.width: 0
+    shapeColor: Appearance.colors.colWeatherCardSurface
 
     function compactNumber(value) {
         if (value.indexOf(".") < 0)

@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
-import Qt5Compat.GraphicalEffects
+import M3Shapes
 import qs.Common
 
 Item {
@@ -9,7 +9,6 @@ Item {
     property real visibilityMeters: NaN
     property bool animationEnabled: false
     property bool animationActive: true
-    readonly property url shapeSource: Paths.icon("visibility_shape.svg")
 
     WeatherAnimatedValue {
         id: visibilityAnimation
@@ -47,31 +46,36 @@ Item {
         return "优"
     }
 
-    Rectangle {
-        anchors.fill: parent
-        radius: width / 2
-        color: Appearance.colors.colWeatherCardSurface
-    }
-
-    Image {
-        id: shapeLayer
+    MaterialShape {
         width: root.width * 0.93
         height: width
         anchors.centerIn: parent
-        source: root.shapeSource
-        fillMode: Image.PreserveAspectFit
-        cache: true
-        smooth: true
-        mipmap: true
-        sourceSize.width: Math.round(width * 2)
-        sourceSize.height: Math.round(height * 2)
-        visible: false
+        shape: MaterialShape.Cookie12Sided
+        color: Appearance.applyAlpha(
+            Appearance.colors.colWeatherCardSurface,
+            0.38
+        )
+        rotation: -8
     }
 
-    ColorOverlay {
-        anchors.fill: shapeLayer
-        source: shapeLayer
+    MaterialShape {
+        width: root.width * 0.89
+        height: width
+        anchors.centerIn: parent
+        shape: MaterialShape.Cookie12Sided
+        color: Appearance.applyAlpha(
+            Appearance.colors.colWeatherCardSurface,
+            0.64
+        )
+    }
+
+    MaterialShape {
+        width: root.width * 0.85
+        height: width
+        anchors.centerIn: parent
+        shape: MaterialShape.Cookie12Sided
         color: Appearance.colors.colWeatherCardSurface
+        rotation: 8
     }
 
     Row {

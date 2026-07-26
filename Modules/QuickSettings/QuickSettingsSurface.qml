@@ -22,8 +22,56 @@ WidgetPanel {
     property real headerButtonSize: 40
     property real headerButtonSpacing: 5
     property real headerButtonPadding: 5
+    property real presentationProgress: 0
+    property bool presentationAnimating: false
+    property bool presentationPlayed: false
     readonly property var toggleRows: rowsForToggles(QuickToggleConfig.toggles)
     readonly property var toggleRowKeys: toggleRows.map((row, index) => index)
+    readonly property bool presentationForeground:
+        WidgetState.qsOpen && WidgetState.qsView === "settings"
+    readonly property bool presentationLayoutReady:
+        togglePanel.width > 0
+            && togglePanel.baseCellWidth >= root.baseCellHeight
+
+    function startPresentation() {
+        if (presentationPlayed
+                || !presentationForeground
+                || !presentationLayoutReady)
+            return
+
+        presentationAnimation.stop()
+        root.presentationPlayed = true
+        root.presentationAnimating = true
+        root.presentationProgress = 0
+        presentationAnimation.restart()
+    }
+
+    onPresentationForegroundChanged: {
+        if (presentationForeground)
+            startPresentation()
+    }
+    onPresentationLayoutReadyChanged: {
+        if (presentationLayoutReady)
+            startPresentation()
+    }
+
+    Component.onCompleted: {
+        if (presentationForeground)
+            startPresentation()
+    }
+
+    NumberAnimation {
+        id: presentationAnimation
+        target: root
+        property: "presentationProgress"
+        from: 0
+        to: 1
+        duration: Appearance.animation.expressiveDefaultSpatial.duration
+        easing.type: Appearance.animation.expressiveDefaultSpatial.type
+        easing.bezierCurve:
+            Appearance.animation.expressiveDefaultSpatial.bezierCurve
+        onFinished: root.presentationAnimating = false
+    }
 
     function openControlCenter() {
         WidgetState.qsOpen = false;
@@ -333,6 +381,9 @@ WidgetPanel {
                                     readonly property string toggleType: modelData.type
                                     readonly property int toggleSize: root.sizeForToggle(modelData)
 
+                                    presentationProgress: root.presentationProgress
+                                    presentationAnimating:
+                                        root.presentationAnimating
                                     title: root.titleForType(toggleType)
                                     subtitle: root.subtitleForType(toggleType)
                                     iconName: root.iconForType(toggleType)

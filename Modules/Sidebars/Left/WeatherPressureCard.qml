@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import M3Shapes
 import qs.Common
 
 Item {
@@ -43,13 +44,17 @@ Item {
         return Number(pressureAnimation.currentValue).toLocaleString(Qt.locale(), "f", 1)
     }
 
-    Rectangle {
+    Item {
         id: card
         width: root.cardSize
         height: root.cardSize
-        radius: width / 2
         anchors.centerIn: parent
-        color: root.cardFill
+
+        MaterialShape {
+            anchors.fill: parent
+            shape: MaterialShape.Circle
+            color: root.cardFill
+        }
 
         WeatherArcGauge {
             width: parent.width * 0.93

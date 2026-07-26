@@ -15,9 +15,13 @@ Item {
     readonly property int gridColumns: GridLayout.columnCount
     readonly property int gridRows: GridLayout.rowCount
     readonly property real gridGap: Appearance.spacing.small
-    readonly property real minimumRowHeight: 128
-    readonly property real minimumGridHeight:
-        root.gridRows * root.minimumRowHeight
+    readonly property int gridCellWidth: 152
+    readonly property int gridCellHeight: 160
+    readonly property int gridContentWidth:
+        root.gridColumns * root.gridCellWidth
+            + (root.gridColumns - 1) * root.gridGap
+    readonly property int gridContentHeight:
+        root.gridRows * root.gridCellHeight
             + (root.gridRows - 1) * root.gridGap
     readonly property int chartUpdateInterval: Math.max(
         250,
@@ -524,7 +528,7 @@ Item {
             contentWidth: width
             contentHeight: Math.max(
                 height,
-                root.minimumGridHeight
+                root.gridContentHeight
             )
             interactive: contentHeight > height + 1
                 && root.draggingTileId.length === 0
@@ -581,22 +585,21 @@ Item {
             Item {
                 id: dashboard
 
-                width: dashboardScroll.width
-                    - (dashboardScroll.contentHeight
-                            > dashboardScroll.height + 1
-                        ? Appearance.spacing.small
-                        : 0)
-                height: dashboardScroll.contentHeight
+                x: Math.max(
+                    0,
+                    Math.floor(
+                        (dashboardScroll.width
+                            - root.gridContentWidth) / 2
+                    )
+                )
+                width: root.gridContentWidth
+                height: root.gridContentHeight
                 focus: root.draggingTileId.length > 0
 
-                readonly property real cellWidth:
-                    (width - root.gridGap
-                        * (root.gridColumns - 1))
-                        / root.gridColumns
-                readonly property real cellHeight:
-                    (height - root.gridGap
-                        * (root.gridRows - 1))
-                        / root.gridRows
+                readonly property int cellWidth:
+                    root.gridCellWidth
+                readonly property int cellHeight:
+                    root.gridCellHeight
                 readonly property real columnStride:
                     cellWidth + root.gridGap
                 readonly property real rowStride:

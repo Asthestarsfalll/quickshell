@@ -542,7 +542,7 @@ Item {
                             valueText: precipitationValueText()
                             descriptionText: precipitationDescriptionText()
                             animationEnabled: true
-                            animationActive: precipitationReveal.animationStarted
+                            animationActive: precipitationReveal.contentAnimationActive
                         }
                     }
 
@@ -563,7 +563,7 @@ Item {
                             detailText: "阵风 " + fmtSpeed(WeatherPlugin.currentWindGustsMs) + " · " + directionLabel(WeatherPlugin.currentWindDirection)
                             accent: windAccent(WeatherPlugin.currentWindSpeedMs)
                             animationEnabled: true
-                            animationActive: windReveal.animationStarted
+                            animationActive: windReveal.contentAnimationActive
                         }
                     }
                 }
@@ -589,7 +589,7 @@ Item {
                             levelText: aqiSummary().level
                             accent: aqiSummary().color
                             animationEnabled: true
-                            animationActive: aqiReveal.animationStarted
+                            animationActive: aqiReveal.contentAnimationActive
                         }
                     }
 
@@ -610,7 +610,7 @@ Item {
                             dewPointText: fmtTemp(WeatherPlugin.currentDewPointC)
                             accent: humidityWaveAccent()
                             animationEnabled: true
-                            animationActive: humidityReveal.animationStarted
+                            animationActive: humidityReveal.contentAnimationActive
                         }
                     }
                 }
@@ -636,7 +636,7 @@ Item {
                             level: uvLevel(WeatherPlugin.currentUvIndex)
                             activeIndex: uvIndexBucket(WeatherPlugin.currentUvIndex)
                             animationEnabled: true
-                            animationActive: uvReveal.animationStarted
+                            animationActive: uvReveal.contentAnimationActive
                         }
                     }
 
@@ -654,7 +654,7 @@ Item {
                             anchors.fill: parent
                             visibilityMeters: WeatherPlugin.currentVisibilityM
                             animationEnabled: true
-                            animationActive: visibilityReveal.animationStarted
+                            animationActive: visibilityReveal.contentAnimationActive
                         }
                     }
                 }
@@ -680,7 +680,7 @@ Item {
                             valueText: pressureValueText(WeatherPlugin.currentPressureHpa)
                             unitText: "hPa"
                             animationEnabled: true
-                            animationActive: pressureReveal.animationStarted
+                            animationActive: pressureReveal.contentAnimationActive
                         }
                     }
 
@@ -703,7 +703,7 @@ Item {
                             setEpoch: today().sunset || 0
                             currentEpoch: root.currentEpoch
                             animationEnabled: true
-                            animationActive: sunReveal.animationStarted
+                            animationActive: sunReveal.contentAnimationActive
                         }
                     }
                 }
@@ -733,7 +733,7 @@ Item {
                             currentEpoch: root.currentEpoch
                             phaseAngle: today().moonPhaseAngle || 0
                             animationEnabled: true
-                            animationActive: moonReveal.animationStarted
+                            animationActive: moonReveal.contentAnimationActive
                         }
                     }
                 }

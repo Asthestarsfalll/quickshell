@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import M3Shapes
 import qs.Common
 import qs.Widgets.weather
 
@@ -40,8 +41,14 @@ Rectangle {
     readonly property point markerPoint: cubicPoint(Math.max(0, Math.min(1, displayProgress)))
 
     radius: 30
-    color: Appearance.colors.colWeatherCardSurface
+    color: "transparent"
     clip: true
+
+    MaterialShape {
+        anchors.fill: parent
+        shape: MaterialShape.Square
+        color: Appearance.colors.colWeatherCardSurface
+    }
 
     function titleIconPath() {
         if (root.moon) {

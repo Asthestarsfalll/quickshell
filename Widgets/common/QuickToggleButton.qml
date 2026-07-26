@@ -25,6 +25,8 @@ Rectangle {
     property real cellSpacing: 6
     property int cellSize: expanded ? 2 : 1
     property real padding: 6
+    property real presentationProgress: 1
+    property bool presentationAnimating: false
 
     property var parentGroup: root.parent
     readonly property int indexInParent: parentGroup && parentGroup.indexOfButton ? parentGroup.indexOfButton(root) : -1
@@ -38,6 +40,18 @@ Rectangle {
     property real baseHeight: baseCellHeight
     property real clickedWidth: baseWidth + (isAtSide ? 10 : 20)
     property real clickedHeight: baseHeight
+    readonly property real normalizedPresentationProgress:
+        Math.max(0, Math.min(1, presentationProgress))
+    readonly property real restingRadius:
+        toggled ? Appearance.rounding.large : baseHeight / 2
+    readonly property real presentedWidth:
+        collapsedSize
+            + (baseWidth - collapsedSize)
+                * normalizedPresentationProgress
+    readonly property real presentedRadius:
+        baseHeight / 2
+            + (restingRadius - baseHeight / 2)
+                * normalizedPresentationProgress
 
     signal triggered()
     signal altTriggered()
@@ -46,10 +60,11 @@ Rectangle {
     Layout.fillWidth: bounce && clickIndex >= 0 && indexInParent >= clickIndex - 1 && indexInParent <= clickIndex + 1
     Layout.fillHeight: bounce && clickIndex >= 0 && indexInParent >= clickIndex - 1 && indexInParent <= clickIndex + 1
 
-    implicitWidth: down && bounce ? clickedWidth : baseWidth
+    implicitWidth: down && bounce ? clickedWidth : presentedWidth
     implicitHeight: down && bounce ? clickedHeight : baseHeight
-    radius: down ? Appearance.rounding.normal : toggled ? Appearance.rounding.large : height / 2
-    opacity: available || editMode ? 1.0 : 0.45
+    radius: down ? Appearance.rounding.normal : presentedRadius
+    opacity: (available || editMode ? 1.0 : 0.45)
+        * normalizedPresentationProgress
     clip: true
     enabled: available || editMode
 
@@ -73,6 +88,8 @@ Rectangle {
         }
     }
     Behavior on radius {
+        enabled: !root.presentationAnimating
+
         NumberAnimation {
             duration: Appearance.animation.elementMoveFast.duration
             easing.type: Appearance.animation.elementMoveFast.type
@@ -80,7 +97,7 @@ Rectangle {
         }
     }
     Behavior on implicitWidth {
-        enabled: !root.editMode
+        enabled: !root.editMode && !root.presentationAnimating
 
         NumberAnimation {
             duration: Appearance.animation.clickBounce.duration
@@ -111,7 +128,16 @@ Rectangle {
             easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
         }
     }
-    Behavior on opacity { NumberAnimation { duration: 160 } }
+    Behavior on opacity {
+        enabled: !root.presentationAnimating
+
+        NumberAnimation {
+            duration: Appearance.animation.elementMoveFast.duration
+            easing.type: Appearance.animation.elementMoveFast.type
+            easing.bezierCurve:
+                Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
 
     RowLayout {
         z: 1

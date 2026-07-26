@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import M3Shapes
 import qs.Common
 
 WeatherInsightCard {
@@ -22,9 +23,9 @@ WeatherInsightCard {
 
     icon: ""
     title: ""
+    shapeId: MaterialShape.Square
     radius: 42
-    color: Appearance.colors.colWeatherCardSurface
-    border.width: 0
+    shapeColor: Appearance.colors.colWeatherCardSurface
 
     function parseValueText(text) {
         const source = (text || "").trim()

@@ -14,61 +14,30 @@ Item {
     readonly property int exitDuration: Animations.durations.large
     readonly property int qsTargetHeight:
         Math.max(0, height - sidebarY - gap)
-    readonly property bool panelActive: WidgetState.leftSidebarOpen
-        || Math.abs(animController.slideOffset - closedSlideOffset) > 0.5
-    property bool contentLoaderActive: true
-    property bool closingPresentationLatched: false
+    property bool panelPresented: false
+    property bool contentRetained: false
+    readonly property bool panelActive:
+        WidgetState.leftSidebarOpen || panelPresented
 
-    function ensureContentLoaded() {
-        deferredUnload.stop();
-        root.contentLoaderActive = true;
-        root.closingPresentationLatched = false;
+    function beginPresentation() {
+        panelPresented = true
+        contentRetained = true
     }
 
-    function releaseContent(preserveClosingPresentation) {
-        deferredUnload.stop();
+    function finishClosing() {
+        if (WidgetState.leftSidebarOpen)
+            return
 
-        if (WidgetState.leftSidebarOpen
-                || root.panelActive
-                || PersonalizationConfig.keepSidebarsLoaded) {
-            root.ensureContentLoaded();
-            return;
-        }
-
-        if (preserveClosingPresentation && root.contentLoaderActive) {
-            root.closingPresentationLatched = true;
-            deferredUnload.start();
-            return;
-        }
-
-        root.closingPresentationLatched = false;
-        root.contentLoaderActive = false;
-    }
-
-    onPanelActiveChanged: {
-        if (root.panelActive)
-            root.ensureContentLoaded();
-        else
-            root.releaseContent(true);
+        // Hide the already off-screen surface before releasing its layout tree.
+        panelPresented = false
+        if (!PersonalizationConfig.keepSidebarsLoaded)
+            contentRetained = false
     }
 
     Component.onCompleted: {
-        if (WidgetState.leftSidebarOpen
-                || PersonalizationConfig.keepSidebarsLoaded)
-            root.ensureContentLoaded();
-        else
-            root.releaseContent(false);
-    }
-
-    Connections {
-        target: PersonalizationConfig
-
-        function onKeepSidebarsLoadedChanged() {
-            if (PersonalizationConfig.keepSidebarsLoaded)
-                root.ensureContentLoaded();
-            else
-                root.releaseContent(false);
-        }
+        panelPresented = WidgetState.leftSidebarOpen
+        contentRetained = WidgetState.leftSidebarOpen
+            || PersonalizationConfig.keepSidebarsLoaded
     }
 
     Connections {
@@ -76,7 +45,20 @@ Item {
 
         function onLeftSidebarOpenChanged() {
             if (WidgetState.leftSidebarOpen)
-                root.ensureContentLoaded();
+                root.beginPresentation()
+        }
+    }
+
+    Connections {
+        target: PersonalizationConfig
+
+        function onKeepSidebarsLoadedChanged() {
+            if (PersonalizationConfig.keepSidebarsLoaded) {
+                root.contentRetained = true
+            } else if (!WidgetState.leftSidebarOpen
+                    && !root.panelPresented) {
+                root.contentRetained = false
+            }
         }
     }
 
@@ -117,6 +99,7 @@ Item {
 
         transitions: [
             Transition {
+                id: openTransition
                 to: "open"
 
                 NumberAnimation {
@@ -128,32 +111,24 @@ Item {
                 }
             },
             Transition {
+                id: closeTransition
                 to: "closed"
 
-                NumberAnimation {
-                    target: animController
-                    property: "slideOffset"
-                    duration: root.exitDuration
-                    easing.type: Easing.InBack
-                    easing.overshoot: 0.18
+                SequentialAnimation {
+                    NumberAnimation {
+                        target: animController
+                        property: "slideOffset"
+                        duration: root.exitDuration
+                        easing.type: Easing.InBack
+                        easing.overshoot: 0.18
+                    }
+
+                    ScriptAction {
+                        script: root.finishClosing()
+                    }
                 }
             }
         ]
-    }
-
-    Timer {
-        id: deferredUnload
-
-        interval: 0
-        repeat: false
-        onTriggered: {
-            if (!WidgetState.leftSidebarOpen
-                    && !root.panelActive
-                    && !PersonalizationConfig.keepSidebarsLoaded) {
-                root.contentLoaderActive = false;
-            }
-            root.closingPresentationLatched = false;
-        }
     }
 
     Rectangle {
@@ -180,7 +155,9 @@ Item {
 
         Loader {
             anchors.fill: parent
-            active: root.contentLoaderActive
+            active: PersonalizationConfig.keepSidebarsLoaded
+                || WidgetState.leftSidebarOpen
+                || root.contentRetained
             sourceComponent: leftSidebarContentComponent
         }
     }
@@ -193,7 +170,6 @@ Item {
             screenName: root.panelScreen ? root.panelScreen.name : ""
             foreground: WidgetState.leftSidebarOpen
             presentationActive: root.panelActive
-                || root.closingPresentationLatched
         }
     }
 }

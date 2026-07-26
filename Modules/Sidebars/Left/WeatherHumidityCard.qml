@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import Qt5Compat.GraphicalEffects
+import M3Shapes
 import qs.Common
 
 WeatherInsightCard {
@@ -17,8 +18,8 @@ WeatherInsightCard {
 
     icon: ""
     title: ""
-    color: Appearance.colors.colWeatherCardSurface
-    border.width: 0
+    shapeId: MaterialShape.Square
+    shapeColor: Appearance.colors.colWeatherCardSurface
 
     function humidityIconPath() {
         return "M580,720Q605,720 622.5,702.5Q640,685 640,660Q640,635 622.5,617.5Q605,600 580,600Q555,600 537.5,617.5Q520,635 520,660Q520,685 537.5,702.5Q555,720 580,720ZM378,718L638,458L582,402L322,662L378,718ZM380,520Q405,520 422.5,502.5Q440,485 440,460Q440,435 422.5,417.5Q405,400 380,400Q355,400 337.5,417.5Q320,435 320,460Q320,485 337.5,502.5Q355,520 380,520ZM480,880Q343,880 251.5,786Q160,692 160,552Q160,452 239.5,334.5Q319,217 480,80Q641,217 720.5,334.5Q800,452 800,552Q800,692 708.5,786Q617,880 480,880ZM480,800Q584,800 652,729.5Q720,659 720,552Q720,479 659.5,387Q599,295 480,186Q361,295 300.5,387Q240,479 240,552Q240,659 308,729.5Q376,800 480,800ZM480,480Q480,480 480,480Q480,480 480,480Q480,480 480,480Q480,480 480,480Q480,480 480,480Q480,480 480,480Q480,480 480,480Q480,480 480,480Z"
@@ -118,11 +119,7 @@ WeatherInsightCard {
         anchors.fill: parent
         layer.enabled: true
         layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: root.width
-                height: root.height
-                radius: root.radius
-            }
+            maskSource: humidityMask
         }
 
         Image {
@@ -136,6 +133,16 @@ WeatherInsightCard {
             sourceSize.width: Math.max(1, Math.round(width * 2))
             sourceSize.height: Math.max(1, Math.round(height * 2))
         }
+    }
+
+    MaterialShape {
+        id: humidityMask
+
+        anchors.fill: parent
+        shape: root.shapeId
+        color: "white"
+        visible: false
+        layer.enabled: true
     }
 
     Text {

@@ -1,4 +1,5 @@
 import QtQuick
+import M3Shapes
 import qs.Common
 
 Rectangle {
@@ -11,13 +12,25 @@ Rectangle {
     property int headerLeftMargin: 18
     property int headerTopMargin: 16
     property int headerSpacing: 6
+    property int shapeId: MaterialShape.Square
+    property real shapeInset: 0
+    property color shapeColor:
+        Appearance.colors.colWeatherCardSurface
     default property alias content: contentLayer.data
 
     radius: 34
-    color: Qt.rgba(Appearance.colors.colLayer3.r, Appearance.colors.colLayer3.g, Appearance.colors.colLayer3.b, 0.93)
-    border.width: 1
-    border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.26)
+    color: "transparent"
+    border.width: 0
     clip: true
+
+    MaterialShape {
+        anchors {
+            fill: parent
+            margins: root.shapeInset
+        }
+        shape: root.shapeId
+        color: root.shapeColor
+    }
 
     Item {
         id: contentLayer

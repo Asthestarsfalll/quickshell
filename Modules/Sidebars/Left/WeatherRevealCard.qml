@@ -12,6 +12,8 @@ Item {
     property real entryTravel: 120
 
     readonly property bool hasRevealed: revealStarted
+    readonly property bool contentAnimationActive:
+        activationEnabled && animationStarted
     readonly property int entryDelay: Math.max(0, staggerIndex) * 200
     readonly property int entryDuration: Math.max(250, 500 - Math.max(0, staggerIndex) * 50)
     readonly property bool layoutReady: width > 0 && height > 0 && contentTop > 0
@@ -36,13 +38,15 @@ Item {
         }
     }
 
-    function reset() {
+    function settleReveal() {
         entryAnimation.stop()
-        revealStarted = false
-        animationStarted = false
-        visualOpacity = 0
-        entryOffset = entryTravel
-        entryScale = 1.025
+        if (!revealStarted)
+            return
+
+        animationStarted = true
+        visualOpacity = 1
+        entryOffset = 0
+        entryScale = 1
     }
 
     onThresholdCrossedChanged: maybeReveal()
@@ -50,7 +54,7 @@ Item {
         if (activationEnabled)
             maybeReveal()
         else
-            reset()
+            settleReveal()
     }
     Component.onCompleted: Qt.callLater(maybeReveal)
 
