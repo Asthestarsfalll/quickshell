@@ -13,10 +13,13 @@ PanelWindow {
         WidgetState.leftSidebarOpen || WidgetState.qsOpen
     readonly property var fallbackScreen: Brightness.activeScreen
         || (Quickshell.screens.length > 0 ? Quickshell.screens[0] : null)
-    property var retainedScreen: null
+    // DPMS cycles can replace the Screen instance while preserving its name.
+    property string retainedScreenName: ""
+    readonly property var retainedScreen:
+        Brightness.getScreenByName(retainedScreenName)
 
     screen: retainedScreen || fallbackScreen
-    visible: true
+    visible: retainedScreen !== null || fallbackScreen !== null
     color: "transparent"
     implicitWidth: screen ? screen.width : 1920
     implicitHeight: screen ? screen.height : 1080
@@ -40,7 +43,8 @@ PanelWindow {
     }
 
     Component.onCompleted: {
-        root.retainedScreen = root.fallbackScreen;
+        if (root.fallbackScreen)
+            root.retainedScreenName = root.fallbackScreen.name;
         if (root.anySidebarOpen)
             Qt.callLater(() => keyGateway.forceActiveFocus());
     }
@@ -57,13 +61,13 @@ PanelWindow {
             const requestedScreen =
                 Brightness.getScreenByName(WidgetState.qsScreenName);
             if (requestedScreen)
-                root.retainedScreen = requestedScreen;
+                root.retainedScreenName = requestedScreen.name;
         }
 
         function onLeftSidebarOpenChanged() {
             if (WidgetState.leftSidebarOpen && !WidgetState.qsOpen
                     && Brightness.activeScreen)
-                root.retainedScreen = Brightness.activeScreen;
+                root.retainedScreenName = Brightness.activeScreen.name;
         }
     }
 
