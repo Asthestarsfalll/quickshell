@@ -61,7 +61,7 @@ Singleton {
 
     function getTooltipForItem(item) {
         if (!item)
-            return "托盘";
+            return qsTr("托盘");
 
         let result = item.tooltipTitle && item.tooltipTitle.length > 0
             ? item.tooltipTitle

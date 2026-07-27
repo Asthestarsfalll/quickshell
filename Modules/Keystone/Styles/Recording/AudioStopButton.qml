@@ -74,6 +74,6 @@ RoundButton {
 
     StyledToolTip {
         extraVisibleCondition: root.hovered
-        text: root.stopping ? "正在完成录音" : "停止录音"
+        text: root.stopping ? qsTr("正在完成录音") : qsTr("停止录音")
     }
 }

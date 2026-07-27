@@ -178,9 +178,9 @@ StyledFlickable {
         horizontalPadding: 23
         currentValue: group.playing ? "play" : ""
         model: [
-            ({ "value": "play", "icon": group.playing ? "pause" : "play_arrow", "tooltip": group.playing ? "暂停" : "播放" }),
-            ({ "value": "replay", "icon": "keyboard_double_arrow_left", "tooltip": "倒放" }),
-            ({ "value": "flip", "icon": "swap_vert", "tooltip": "翻转", "enabled": group.flipEnabled })
+            ({ "value": "play", "icon": group.playing ? "pause" : "play_arrow", "tooltip": group.playing ? qsTr("暂停") : qsTr("播放") }),
+            ({ "value": "replay", "icon": "keyboard_double_arrow_left", "tooltip": qsTr("倒放") }),
+            ({ "value": "flip", "icon": "swap_vert", "tooltip": qsTr("翻转"), "enabled": group.flipEnabled })
         ]
         onValueSelected: value => {
             if (value === "play")
@@ -200,7 +200,7 @@ StyledFlickable {
         spacing: 30
 
         Section {
-            title: "当前壁纸"
+            title: qsTr("当前壁纸")
             iconName: "wallpaper"
 
             RowLayout {
@@ -280,19 +280,19 @@ StyledFlickable {
 
                             HoverActionButton {
                                 iconName: "folder_open"
-                                tooltipText: "选择文件夹"
+                                tooltipText: qsTr("选择文件夹")
                                 onClicked: root.chooseWallpaperFile()
                             }
 
                             HoverActionButton {
                                 iconName: "palette"
-                                tooltipText: "选择颜色"
+                                tooltipText: qsTr("选择颜色")
                                 onClicked: root.chooseWallpaperColor()
                             }
 
                             HoverActionButton {
                                 iconName: "clear"
-                                tooltipText: "清除壁纸"
+                                tooltipText: qsTr("清除壁纸")
                                 onClicked: WallpaperService.clearWallpaper()
                             }
                         }
@@ -306,7 +306,7 @@ StyledFlickable {
 
                     Text {
                         Layout.fillWidth: true
-                        text: root.currentWallpaperPath !== "" ? WallpaperService.basename(root.currentWallpaperPath) : "未选择壁纸"
+                        text: root.currentWallpaperPath !== "" ? WallpaperService.basename(root.currentWallpaperPath) : qsTr("未选择壁纸")
                         color: Appearance.colors.colOnSurface
                         font.family: Sizes.fontFamily
                         font.pixelSize: 22
@@ -329,9 +329,9 @@ StyledFlickable {
                     StyledButtonGroup {
                         Layout.alignment: Qt.AlignLeft
                         model: [
-                            ({ "value": "previous", "label": "上一张" }),
-                            ({ "value": "random", "label": "随机" }),
-                            ({ "value": "next", "label": "下一张" })
+                            ({ "value": "previous", "label": qsTr("上一张") }),
+                            ({ "value": "random", "label": qsTr("随机") }),
+                            ({ "value": "next", "label": qsTr("下一张") })
                         ]
                         currentValue: ""
                         onValueSelected: value => {
@@ -358,7 +358,7 @@ StyledFlickable {
         }
 
         Section {
-            title: "过渡效果"
+            title: qsTr("过渡效果")
             iconName: "animation"
 
             ColumnLayout {
@@ -367,7 +367,7 @@ StyledFlickable {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "动画效果"
+                    text: qsTr("动画效果")
                     color: Appearance.colors.colOnSurface
                     font.family: Sizes.fontFamily
                     font.pixelSize: 15
@@ -410,7 +410,7 @@ StyledFlickable {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "过渡时间"
+                    text: qsTr("过渡时间")
                     color: Appearance.colors.colOnSurface
                     font.family: Sizes.fontFamily
                     font.pixelSize: 15
@@ -430,7 +430,7 @@ StyledFlickable {
                         to: 5000
                         stepSize: 50
                         value: PersonalizationConfig.transitionDurationMs
-                        accessibleName: "壁纸过渡时间"
+                        accessibleName: qsTr("壁纸过渡时间")
                         valueFormatter: sliderValue => Math.round(sliderValue).toString()
                         onMoved: WallpaperService.setTransitionDurationMs(Math.round(transitionDurationSlider.value))
                     }
@@ -571,7 +571,7 @@ StyledFlickable {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "缓动曲线"
+                    text: qsTr("缓动曲线")
                     color: Appearance.colors.colOnSurface
                     font.family: Sizes.fontFamily
                     font.pixelSize: 15
@@ -700,7 +700,7 @@ StyledFlickable {
                                 }
 
                                 Text {
-                                    text: "编辑贝塞尔"
+                                    text: qsTr("编辑贝塞尔")
                                     color: Appearance.colors.colOnPrimaryContainer
                                     font.family: Sizes.fontFamily
                                     font.pixelSize: 14

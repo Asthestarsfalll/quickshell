@@ -97,7 +97,7 @@ Item {
             }
 
             Text {
-                text: "气压"
+                text: qsTr("气压")
                 color: root.mutedInk
                 font.family: "LXGW WenKai GB Screen"
                 font.pixelSize: 18

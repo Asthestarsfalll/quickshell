@@ -16,10 +16,22 @@ import qs.Widgets.common
 ApplicationWindow {
     id: root
 
+    enum SelectionMode {
+        Files,
+        Folders,
+        FilesAndFolders
+    }
+
     property var targetScreen: null
-    property string description: "选择一张图片作为用户头像"
+    property int selectionMode: FilePickerWindow.Files
+    property string description: qsTr("选择一张图片作为用户头像")
     property string startPath: picturesDir
     property var nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.bmp", "*.gif"]
+    property string windowIconName: "add_photo_alternate"
+    property string emptyStateText: qsTr("当前文件夹没有可选择的图片")
+    property string selectionPrompt: qsTr("选择一张图片")
+    property string acceptLabel: qsTr("选择")
+    property string formatSummary: "JPG · PNG · WebP\nBMP · GIF"
     property string currentPath: startPath
     property string selectedPath: ""
     property string selectedName: ""
@@ -34,13 +46,15 @@ ApplicationWindow {
     readonly property string picturesDir: StandardPaths.writableLocation(StandardPaths.PicturesLocation)
     readonly property string downloadsDir: StandardPaths.writableLocation(StandardPaths.DownloadLocation)
     readonly property bool hasSelection: selectedPath !== ""
-    readonly property bool selectionValid: selectedPath !== "" && !selectedIsDir
+    readonly property bool selectionValid: selectedPath !== ""
+        && ((selectedIsDir && selectionMode !== FilePickerWindow.Files)
+            || (!selectedIsDir && selectionMode !== FilePickerWindow.Folders))
 
-    signal accepted(string path)
+    signal accepted(string path, bool isDirectory)
     signal rejected()
 
     visible: false
-    title: "选择图片"
+    title: qsTr("选择图片")
     flags: Qt.Window | Qt.FramelessWindowHint
     width: 920
     height: 600
@@ -111,10 +125,10 @@ ApplicationWindow {
         let remainder = normalized;
 
         if (insideHome) {
-            items.push({ label: "主文件夹", path: normalizedHome, iconName: "home" });
+            items.push({ label: qsTr("主文件夹"), path: normalizedHome, iconName: "home" });
             remainder = normalized.substring(normalizedHome.length);
         } else {
-            items.push({ label: "文件系统", path: "/", iconName: "hard_drive" });
+            items.push({ label: qsTr("文件系统"), path: "/", iconName: "hard_drive" });
         }
 
         for (const part of remainder.split("/").filter(component => component !== "")) {
@@ -201,9 +215,10 @@ ApplicationWindow {
         if (!selectionValid)
             return;
         const path = selectedPath;
+        const isDirectory = selectedIsDir;
         visible = false;
         clearSelection();
-        accepted(path);
+        accepted(path, isDirectory);
     }
 
     function clearSelection() {
@@ -246,12 +261,18 @@ ApplicationWindow {
         }
     }
 
+    function isImageName(name) {
+        const lower = String(name || "").toLowerCase();
+        return [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"]
+            .some(extension => lower.endsWith(extension));
+    }
+
     FolderListModel {
         id: folderModel
 
         folder: root.encodeFileUrl(root.currentPath)
         showDirs: true
-        showFiles: true
+        showFiles: root.selectionMode !== FilePickerWindow.Folders
         showDirsFirst: true
         showDotAndDotDot: false
         showHidden: root.showHiddenFiles
@@ -375,7 +396,7 @@ ApplicationWindow {
 
                         MaterialSymbol {
                             anchors.centerIn: parent
-                            text: "add_photo_alternate"
+                            text: root.windowIconName
                             iconSize: 25
                             fill: 1
                             color: Appearance.colors.colOnPrimaryContainer
@@ -408,7 +429,7 @@ ApplicationWindow {
 
                     PickerToolButton {
                         iconName: "close"
-                        tooltipText: "关闭"
+                        tooltipText: qsTr("关闭")
                         onClicked: root.dismiss()
                     }
                 }
@@ -443,18 +464,18 @@ ApplicationWindow {
                             Layout.leftMargin: 12
                             Layout.topMargin: 4
                             Layout.bottomMargin: 6
-                            text: "位置"
+                            text: qsTr("位置")
                             color: Appearance.colors.colOnSurface
                             font.family: Sizes.fontFamily
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
                         }
 
-                        LocationButton { label: "Home"; iconName: "home"; path: root.homeDir }
-                        LocationButton { label: "Desktop"; iconName: "desktop_windows"; path: root.desktopDir; visible: path !== "" }
-                        LocationButton { label: "Documents"; iconName: "description"; path: root.documentsDir; visible: path !== "" }
-                        LocationButton { label: "Pictures"; iconName: "image"; path: root.picturesDir; visible: path !== "" }
-                        LocationButton { label: "Downloads"; iconName: "download"; path: root.downloadsDir; visible: path !== "" }
+                        LocationButton { label: qsTr("主文件夹"); iconName: "home"; path: root.homeDir }
+                        LocationButton { label: qsTr("桌面"); iconName: "desktop_windows"; path: root.desktopDir; visible: path !== "" }
+                        LocationButton { label: qsTr("文档"); iconName: "description"; path: root.documentsDir; visible: path !== "" }
+                        LocationButton { label: qsTr("图片"); iconName: "image"; path: root.picturesDir; visible: path !== "" }
+                        LocationButton { label: qsTr("下载"); iconName: "download"; path: root.downloadsDir; visible: path !== "" }
 
                         Item { Layout.fillHeight: true }
 
@@ -470,13 +491,14 @@ ApplicationWindow {
                                 anchors.fill: parent
                                 anchors.leftMargin: 12
                                 anchors.rightMargin: 12
-                                text: "JPG · PNG · WebP\nBMP · GIF"
+                                text: root.formatSummary
                                 color: Appearance.colors.colOnSurfaceVariant
                                 font.family: Sizes.fontFamily
                                 font.pixelSize: 11
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                                 wrapMode: Text.WordWrap
+                                visible: root.formatSummary !== ""
                             }
                         }
                     }
@@ -500,7 +522,7 @@ ApplicationWindow {
 
                             PickerToolButton {
                                 iconName: "arrow_upward"
-                                tooltipText: "上一级"
+                                tooltipText: qsTr("上一级")
                                 enabled: root.currentPath !== "/"
                                 onClicked: root.navigateUp()
                             }
@@ -631,7 +653,7 @@ ApplicationWindow {
 
                             PickerToolButton {
                                 iconName: root.showHiddenFiles ? "visibility_off" : "visibility"
-                                tooltipText: root.showHiddenFiles ? "隐藏隐藏文件" : "显示隐藏文件"
+                                tooltipText: root.showHiddenFiles ? qsTr("隐藏隐藏文件") : qsTr("显示隐藏文件")
                                 active: root.showHiddenFiles
                                 onClicked: root.showHiddenFiles = !root.showHiddenFiles
                             }
@@ -658,7 +680,7 @@ ApplicationWindow {
                             }
 
                             Text {
-                                text: "当前文件夹没有可选择的图片"
+                                text: root.emptyStateText
                                 color: Appearance.colors.colSubtext
                                 font.family: Sizes.fontFamily
                                 font.pixelSize: 14
@@ -743,7 +765,8 @@ ApplicationWindow {
                                             id: previewImage
 
                                             anchors.fill: parent
-                                            source: fileItem.fileIsDir ? "" : root.encodeFileUrl(fileItem.filePath)
+                                            source: !fileItem.fileIsDir && root.isImageName(fileItem.fileName)
+                                                ? root.encodeFileUrl(fileItem.filePath) : ""
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
                                             cache: true
@@ -778,7 +801,9 @@ ApplicationWindow {
 
                                             MaterialSymbol {
                                                 anchors.centerIn: parent
-                                                text: fileItem.fileIsDir ? "folder" : "image"
+                                                text: fileItem.fileIsDir
+                                                    ? "folder"
+                                                    : root.isImageName(fileItem.fileName) ? "image" : "draft"
                                                 iconSize: 38
                                                 fill: fileItem.fileIsDir ? 1 : 0
                                                 color: fileItem.fileIsDir
@@ -864,9 +889,9 @@ ApplicationWindow {
                                     Text {
                                         Layout.fillWidth: true
                                         text: root.selectedPath === ""
-                                            ? "选择一张图片"
+                                            ? root.selectionPrompt
                                             : root.selectedIsDir
-                                              ? "双击进入 " + root.selectedName
+                                              ? qsTr("双击进入 ") + root.selectedName
                                               : root.selectedName
                                         color: Appearance.colors.colOnSurfaceVariant
                                         font.family: Sizes.fontFamily
@@ -877,14 +902,14 @@ ApplicationWindow {
                             }
 
                             PickerActionButton {
-                                label: "取消"
+                                label: qsTr("取消")
                                 iconName: "close"
                                 enabled: root.hasSelection
                                 onClicked: root.clearSelection()
                             }
 
                             PickerActionButton {
-                                label: "选择"
+                                label: root.acceptLabel
                                 iconName: "check"
                                 primary: root.selectionValid
                                 enabled: root.selectionValid

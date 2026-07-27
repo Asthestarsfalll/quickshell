@@ -13,10 +13,23 @@ Singleton {
 
     property bool dndEnabled: false
     property bool darkMode: false
+    property string language: normalizedLanguage(Qt.locale().name)
     property bool storeReady: false
     property bool preferencesReady: false
     property bool savePending: false
     property var systemGridLayout: ({})
+
+    function normalizedLanguage(value) {
+        const normalized = String(value || "").replace("-", "_").toLowerCase();
+        if (normalized.startsWith("en"))
+            return "en_US";
+        if (normalized === "zh_tw"
+                || normalized === "zh_hk"
+                || normalized === "zh_mo"
+                || normalized.indexOf("hant") >= 0)
+            return "zh_TW";
+        return "zh_CN";
+    }
 
     function setDndEnabled(value) {
         root.dndEnabled = value;
@@ -25,6 +38,14 @@ Singleton {
 
     function toggleDnd() {
         root.setDndEnabled(!root.dndEnabled);
+    }
+
+    function setLanguage(value) {
+        const normalized = root.normalizedLanguage(value);
+        if (root.language === normalized)
+            return;
+        root.language = normalized;
+        root.save();
     }
 
     function setDarkMode(value) {
@@ -62,6 +83,7 @@ Singleton {
         root.savePending = false;
         prefsFile.setText(JSON.stringify({
             "dndEnabled": root.dndEnabled,
+            "language": root.language,
             "systemGridLayout": root.systemGridLayout
         }, null, 2));
     }
@@ -81,12 +103,19 @@ Singleton {
     FileView {
         id: prefsFile
         path: root.filePath
+        watchChanges: true
+        blockLoading: true
+        blockWrites: true
+        atomicWrites: true
 
         onLoaded: {
             try {
                 const parsed = JSON.parse(prefsFile.text().trim() || "{}");
                 if (typeof parsed.dndEnabled === "boolean")
                     root.dndEnabled = parsed.dndEnabled;
+                root.language = root.normalizedLanguage(
+                    parsed.language || Qt.locale().name
+                );
                 if (parsed.systemGridLayout
                         && typeof parsed.systemGridLayout === "object") {
                     root.systemGridLayout =

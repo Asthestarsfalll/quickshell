@@ -191,7 +191,8 @@ Item {
                 Text {
                     id: errorMessage
 
-                    property string msg: root.context && root.context.showFailure ? "Incorrect password. Please try again." : ""
+                    property string msg: root.context && root.context.showFailure
+                        ? qsTr("密码错误，请重试。") : ""
                     property string pendingText: ""
 
                     anchors.left: parent.left
@@ -373,11 +374,11 @@ Item {
 
                     property string msg: {
                         if (KeyboardLockState.capsLock && KeyboardLockState.numLock)
-                            return "Caps lock and Num lock are ON.";
+                            return qsTr("大写锁定和数字锁定已开启。");
                         if (KeyboardLockState.capsLock)
-                            return "Caps lock is ON.";
+                            return qsTr("大写锁定已开启。");
                         if (KeyboardLockState.numLock)
-                            return "Num lock is ON.";
+                            return qsTr("数字锁定已开启。");
                         return "";
                     }
                     property bool blocked: errorMessage.msg.length > 0

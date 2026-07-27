@@ -17,11 +17,11 @@ Rectangle {
     radius: Appearance.rounding.extraLarge
     color: Appearance.colors.colSurfaceContainer
     clip: true
-    Accessible.name: "网络，下载 "
+    Accessible.name: qsTr("网络，下载 ")
         + Format.bytesPerSecond(
             root.network.downloadBytesPerSecond
         )
-        + "，上传 "
+        + qsTr("，上传 ")
         + Format.bytesPerSecond(
             root.network.uploadBytesPerSecond
         )
@@ -61,7 +61,7 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "网络"
+                    text: qsTr("网络")
                     color: Appearance.colors.colOnSurface
                     font.family: Sizes.fontFamily
                     font.pixelSize: Sizes.typeTitleSmall
@@ -71,7 +71,7 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     text: root.network.defaultInterface
-                        || "全部接口"
+                        || qsTr("全部接口")
                     color: Appearance.colors.colOnSurfaceVariant
                     font.family: Sizes.fontFamilyMono
                     font.pixelSize: Sizes.typeLabelSmall
@@ -90,7 +90,7 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "DOWNLOAD"
+                    text: qsTr("下载")
                     color: Appearance.colors.colOnSurfaceVariant
                     font.family: Sizes.fontFamily
                     font.pixelSize: 9
@@ -118,7 +118,7 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "UPLOAD"
+                    text: qsTr("上传")
                     color: Appearance.colors.colOnSurfaceVariant
                     font.family: Sizes.fontFamily
                     font.pixelSize: 9
@@ -153,12 +153,12 @@ Rectangle {
             historyLength: 60
             updateInterval: root.updateInterval
             active: root.chartActive
-            accessibilityName: "网络最近一分钟趋势"
-            accessibilityDescription: "下载 "
+            accessibilityName: qsTr("网络最近一分钟趋势")
+            accessibilityDescription: qsTr("下载 ")
                 + Format.bytesPerSecond(
                     root.network.downloadBytesPerSecond
                 )
-                + "，上传 "
+                + qsTr("，上传 ")
                 + Format.bytesPerSecond(
                     root.network.uploadBytesPerSecond
                 )

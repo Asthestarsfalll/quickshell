@@ -59,7 +59,9 @@ Rectangle {
 
         Text {
             Layout.fillWidth: true
-            text: root.notificationCount > 0 ? root.notificationCount + " notification" + (root.notificationCount === 1 ? "" : "s") : "Notifications"
+            text: root.notificationCount > 0
+                ? qsTr("%1 条通知").arg(root.notificationCount)
+                : qsTr("通知")
             color: Appearance.colors.colOutline
             font.family: Sizes.fontFamilyMono
             font.pixelSize: 17
@@ -122,7 +124,7 @@ Rectangle {
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
-                    text: "No Notifications"
+            text: qsTr("没有通知")
                     color: Appearance.colors.colOutlineVariant
                     font.family: Sizes.fontFamilyMono
                     font.pixelSize: 24

@@ -60,11 +60,11 @@ Rectangle {
     }
 
     function dayLabel(index, epoch) {
-        if (index === 0) return "昨天"
-        if (index === 1) return "今天"
-        if (index === 2) return "明天"
+        if (index === 0) return qsTr("昨天")
+        if (index === 1) return qsTr("今天")
+        if (index === 2) return qsTr("明天")
         if (!epoch) return "--"
-        const week = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+        const week = [qsTr("周日"), qsTr("周一"), qsTr("周二"), qsTr("周三"), qsTr("周四"), qsTr("周五"), qsTr("周六")]
         return week[new Date(epoch * 1000).getDay()]
     }
 
@@ -105,7 +105,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: "每日预报"
+                    text: qsTr("每日预报")
                     color: Appearance.colors.colOnSurface
                     font.family: "LXGW WenKai GB Screen"
                     font.bold: true
@@ -123,9 +123,9 @@ Rectangle {
                 StyledButtonGroup {
                     currentValue: root.currentTab
                     model: [
-                        ({ "value": 0, "label": "天气情况" }),
-                        ({ "value": 1, "label": "空气质量" }),
-                        ({ "value": 2, "label": "风况" })
+                        ({ "value": 0, "label": qsTr("天气情况") }),
+                        ({ "value": 1, "label": qsTr("空气质量") }),
+                        ({ "value": 2, "label": qsTr("风况") })
                     ]
                     onValueSelected: value => root.currentTab = value
                 }

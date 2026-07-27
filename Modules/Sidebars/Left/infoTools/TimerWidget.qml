@@ -11,8 +11,8 @@ Item {
     property bool shortcutsEnabled: false
 
     readonly property var tabs: [
-        { "name": "Pomodoro", "icon": "search_activity" },
-        { "name": "Stopwatch", "icon": "timer" }
+        { "name": qsTr("番茄钟"), "icon": "search_activity" },
+        { "name": qsTr("秒表"), "icon": "timer" }
     ]
 
     focus: true

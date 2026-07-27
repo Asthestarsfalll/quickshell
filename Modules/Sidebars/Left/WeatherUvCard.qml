@@ -14,7 +14,7 @@ Item {
         value: root.value
         level: root.level
         activeIndex: root.activeIndex
-        title: "紫外线指数"
+        title: qsTr("紫外线指数")
         animationEnabled: root.animationEnabled
         animationActive: root.animationActive
     }

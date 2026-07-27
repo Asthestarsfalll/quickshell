@@ -13,7 +13,7 @@ FocusScope {
     property string placeholder: ""
     property bool expanded: false
     property int maxVisibleItems: 6
-    property string noResultText: "无匹配结果"
+    property string noResultText: qsTr("无匹配结果")
     property string textRole: "label"
     property string valueRole: "value"
     property bool closeOnAccept: false

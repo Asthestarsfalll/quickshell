@@ -364,7 +364,7 @@ PanelWindow {
                     }
 
                     Text {
-                        text: "Back"
+                        text: qsTr("返回")
                         color: backButton.pointerHovered ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
                         font.family: Sizes.fontFamily
                         font.pixelSize: 13
@@ -407,7 +407,8 @@ PanelWindow {
                 }
 
                 Text {
-                    text: TrayService.isPinned(root.trayItemId) ? "Unpin" : "Pin"
+                    text: TrayService.isPinned(root.trayItemId)
+                        ? qsTr("取消固定") : qsTr("固定")
                     color: pinEntry.pointerHovered ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
                     font.family: Sizes.fontFamily
                     font.pixelSize: 13
@@ -448,7 +449,7 @@ PanelWindow {
             }
 
             Text {
-                text: root.submenuLoading ? "正在加载…" : "暂无可用项目"
+                text: root.submenuLoading ? qsTr("正在加载…") : qsTr("暂无可用项目")
                 color: Appearance.colors.colOnSurfaceVariant
                 font.family: Sizes.fontFamily
                 font.pixelSize: 13

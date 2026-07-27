@@ -49,24 +49,24 @@ Rectangle {
 
     function conditionText() {
         if (hasWeather)
-            return WeatherPlugin.currentWeatherText || "Unknown"
+            return WeatherPlugin.currentWeatherText || qsTr("未知")
         if (WeatherPlugin.loading)
-            return "正在获取天气"
-        return "天气暂不可用"
+            return qsTr("正在获取天气")
+        return qsTr("天气暂不可用")
     }
 
     function updatedText() {
         if (WeatherPlugin.loading)
-            return "正在刷新"
+            return qsTr("正在刷新")
         if (WeatherPlugin.status === "stale")
-            return "数据较旧"
+            return qsTr("数据较旧")
         if (WeatherPlugin.status === "error")
-            return "更新失败"
+            return qsTr("更新失败")
         if (WeatherPlugin.lastUpdated) {
             const updated = new Date(WeatherPlugin.lastUpdated)
             return Qt.formatDateTime(updated, "hh:mm")
         }
-        return "待更新"
+        return qsTr("待更新")
     }
 
     function syncWeatherData() {
@@ -138,7 +138,7 @@ Rectangle {
 
         Text {
             Layout.fillWidth: true
-            text: WeatherPlugin.locationName || "Weather"
+            text: WeatherPlugin.locationName || qsTr("天气")
             color: root.night
                 ? Qt.rgba(0.96, 0.98, 1.0, 0.96)
                 : Qt.rgba(0.09, 0.14, 0.20, 0.90)
@@ -213,7 +213,7 @@ Rectangle {
 
         Text {
             width: parent.width
-            text: "体感温度: " + root.fmtTemp(WeatherPlugin.currentFeelsLikeC)
+            text: qsTr("体感温度: ") + root.fmtTemp(WeatherPlugin.currentFeelsLikeC)
             color: Appearance.colors.colOnImage
             font.family: Sizes.fontFamily
             font.pixelSize: 16
@@ -223,8 +223,8 @@ Rectangle {
 
         Text {
             width: parent.width
-            text: "最高 " + root.fmtTemp(root.today.temperatureMaxC)
-                + " · 最低 " + root.fmtTemp(root.today.temperatureMinC)
+            text: qsTr("最高 ") + root.fmtTemp(root.today.temperatureMaxC)
+                + qsTr(" · 最低 ") + root.fmtTemp(root.today.temperatureMinC)
             color: Appearance.colors.colOnImage
             font.family: Sizes.fontFamily
             font.pixelSize: 16

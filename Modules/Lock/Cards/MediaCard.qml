@@ -30,8 +30,8 @@ Rectangle {
     property bool hasMedia: player !== null
     property bool isPlaying: player && player.isPlaying
     property string artUrl: (player && player.trackArtUrl) ? player.trackArtUrl : ""
-    property string title: (player && player.trackTitle) ? player.trackTitle : "No Media"
-    property string artist: (player && player.trackArtist) ? player.trackArtist : "Not Playing"
+    property string title: (player && player.trackTitle) ? player.trackTitle : qsTr("没有媒体")
+    property string artist: (player && player.trackArtist) ? player.trackArtist : qsTr("未在播放")
 
     Image {
         id: coverArt
@@ -112,7 +112,7 @@ Rectangle {
         Text {
             Layout.topMargin: Sizes.lockOuterPadding
             Layout.bottomMargin: Sizes.lockOuterPadding
-            text: "Now playing"
+            text: qsTr("正在播放")
             color: Appearance.colors.colOnSurfaceVariant
             font.family: Sizes.fontFamilyMono
             font.pixelSize: 17

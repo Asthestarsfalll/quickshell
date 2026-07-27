@@ -12,6 +12,7 @@ Singleton {
     readonly property string iconsDir: assetsDir + "/icons"
     readonly property string appIconsDir: iconsDir + "/apps"
     readonly property string weatherIconsDir: iconsDir + "/weather"
+    readonly property string rcloneIconsDir: iconsDir + "/rclone"
     readonly property string meteoconsDir: weatherIconsDir + "/meteocons"
     readonly property string imagesDir: assetsDir + "/images"
 

@@ -8,7 +8,7 @@ Item {
     id: root
 
     property bool active: true
-    property string message: "正在连接系统监测服务"
+    property string message: qsTr("正在连接系统监测服务")
 
     implicitHeight: 240
 
@@ -32,7 +32,7 @@ Item {
         }
 
         Text {
-            text: "首个有效快照到达后显示实时指标"
+            text: qsTr("首个有效快照到达后显示实时指标")
             color: Appearance.colors.colOnSurfaceVariant
             font.family: Sizes.fontFamily
             font.pixelSize: Sizes.typeBodySmall

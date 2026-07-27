@@ -13,7 +13,7 @@ Item {
 
     required property var taskList
     property string emptyPlaceholderIcon: "check_circle"
-    property string emptyPlaceholderText: "Nothing here!"
+    property string emptyPlaceholderText: qsTr("这里还没有内容")
     property int itemSpacing: 5
     property int itemPadding: 8
     property int listBottomPadding: 76
@@ -82,7 +82,8 @@ Item {
 
                         ActionButton {
                             iconName: taskItem.modelData.done ? "remove_done" : "check"
-                            accessibleName: taskItem.modelData.done ? "Mark unfinished" : "Mark done"
+                            accessibleName: taskItem.modelData.done
+                                ? qsTr("标记为未完成") : qsTr("标记为完成")
                             onClicked: {
                                 if (taskItem.modelData.done)
                                     TodoService.markUnfinished(taskItem.modelData.originalIndex);
@@ -93,7 +94,7 @@ Item {
 
                         ActionButton {
                             iconName: "delete_forever"
-                            accessibleName: "Delete task"
+                            accessibleName: qsTr("删除任务")
                             onClicked: TodoService.deleteItem(taskItem.modelData.originalIndex)
                         }
                     }

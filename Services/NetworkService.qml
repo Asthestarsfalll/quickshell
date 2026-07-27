@@ -93,9 +93,10 @@ Singleton {
         return activeWifi;
     }
     readonly property string activeSsid: activeWifi ? activeWifi.ssid : ""
-    readonly property string activeConnection: activeNetwork ? activeNetwork.name : "Disconnected"
+    readonly property string activeConnection: activeNetwork
+        ? activeNetwork.name : qsTr("已断开")
     readonly property string activeConnectionType: activeNetwork
-        ? (activeNetwork.type === "wired" ? "ETHERNET" : "WIFI")
+        ? (activeNetwork.type === "wired" ? qsTr("有线") : "Wi-Fi")
         : ""
     readonly property int signalStrength: activeWifi ? activeWifi.strength : 0
     readonly property var wifiConnectTarget: connectTargetSsid.length > 0
@@ -158,7 +159,7 @@ Singleton {
 
     function _describeWiredNetwork(device, network) {
         return {
-            "name": String(network.name || device.name || "Wired"),
+            "name": String(network.name || device.name || qsTr("有线网络")),
             "deviceName": String(device.name || ""),
             "type": "wired",
             "known": !!network.known,
@@ -197,7 +198,7 @@ Singleton {
 
     function _beginOperation(operation, network, ssid) {
         if (root.busy) {
-            root.operationFailed(operation, "另一项网络操作仍在进行");
+            root.operationFailed(operation, qsTr("另一项网络操作仍在进行"));
             return false;
         }
 
@@ -227,7 +228,7 @@ Singleton {
             return;
 
         const operation = root._pendingOperation;
-        root.lastError = String(message || "网络操作失败");
+        root.lastError = String(message || qsTr("网络操作失败"));
         operationTimeout.stop();
         root._clearPendingOperation();
         root.operationFailed(operation, root.lastError);
@@ -251,12 +252,12 @@ Singleton {
     function setWifiEnabled(enabled) {
         const requested = !!enabled;
         if (!root.available) {
-            root.lastError = "NetworkManager 不可用";
+            root.lastError = qsTr("NetworkManager 不可用");
             root.operationFailed("set-wifi-enabled", root.lastError);
             return;
         }
         if (requested && !root.wifiHardwareEnabled) {
-            root.lastError = "Wi-Fi 已被硬件或 rfkill 阻止";
+            root.lastError = qsTr("Wi-Fi 已被硬件或 rfkill 阻止");
             root.operationFailed("set-wifi-enabled", root.lastError);
             return;
         }
@@ -304,17 +305,17 @@ Singleton {
 
     function requestScan() {
         if (!root.available) {
-            root.lastError = "NetworkManager 不可用";
+            root.lastError = qsTr("NetworkManager 不可用");
             root.operationFailed("scan", root.lastError);
             return;
         }
         if (!root.wifiAvailable) {
-            root.lastError = "未检测到 Wi-Fi 设备";
+            root.lastError = qsTr("未检测到 Wi-Fi 设备");
             root.operationFailed("scan", root.lastError);
             return;
         }
         if (!root.wifiEnabled) {
-            root.lastError = "Wi-Fi 已关闭";
+            root.lastError = qsTr("Wi-Fi 已关闭");
             root.operationFailed("scan", root.lastError);
             return;
         }
@@ -343,7 +344,7 @@ Singleton {
     function connectNetwork(network, credentials) {
         const nativeNetwork = root._resolveNativeNetwork(network);
         if (!nativeNetwork) {
-            root.lastError = "目标网络已不可用";
+            root.lastError = qsTr("目标网络已不可用");
             root.operationFailed("connect", root.lastError);
             return;
         }
@@ -361,7 +362,7 @@ Singleton {
                     root.openPasswordPrompt(network);
                     return;
                 }
-                root.lastError = "该网络认证类型需要第二阶段 Secret Agent/Extras 后端";
+                root.lastError = qsTr("该网络认证类型需要第二阶段 Secret Agent/Extras 后端");
                 root.operationFailed("connect", root.lastError);
                 return;
             }
@@ -378,7 +379,7 @@ Singleton {
 
         if (password.length > 0) {
             if (!root._isPskSecurity(nativeNetwork.security)) {
-                root._finishOperationFailed("当前 Quickshell API 仅支持 WPA/WPA2-PSK 与 SAE 密码连接");
+                root._finishOperationFailed(qsTr("当前 Quickshell API 仅支持 WPA/WPA2-PSK 与 SAE 密码连接"));
                 return;
             }
             root._pendingWithPsk = true;
@@ -428,7 +429,7 @@ Singleton {
     function disconnectNetwork(network) {
         let nativeNetwork = root._resolveNativeNetwork(network || root.activeNetwork);
         if (!nativeNetwork) {
-            root.lastError = "没有可断开的活动网络";
+            root.lastError = qsTr("没有可断开的活动网络");
             root.operationFailed("disconnect", root.lastError);
             return;
         }
@@ -444,7 +445,7 @@ Singleton {
     function forgetNetwork(network) {
         const nativeNetwork = root._resolveNativeNetwork(network);
         if (!nativeNetwork || !nativeNetwork.known) {
-            root.lastError = "未找到已保存的网络配置";
+            root.lastError = qsTr("未找到已保存的网络配置");
             root.operationFailed("forget", root.lastError);
             return;
         }
@@ -464,13 +465,13 @@ Singleton {
     // TODO(Extras phase 2): the installed Quickshell API does not expose hidden
     // SSID creation, so this must remain an explicit unsupported operation.
     function connectHiddenNetwork(ssid, credentials) {
-        root.lastError = "当前 Quickshell API 不支持创建隐藏网络连接";
+        root.lastError = qsTr("当前 Quickshell API 不支持创建隐藏网络连接");
         root.operationFailed("connect-hidden", root.lastError);
     }
 
     function recheckConnectivity() {
         if (!root.canCheckConnectivity || !root.connectivityCheckEnabled) {
-            root.lastError = "NetworkManager 连接性检查不可用或未启用";
+            root.lastError = qsTr("NetworkManager 连接性检查不可用或未启用");
             root.operationFailed("check-connectivity", root.lastError);
             return;
         }
@@ -511,7 +512,7 @@ Singleton {
 
             let message = ConnectionFailReason.toString(reason);
             if (reason === ConnectionFailReason.NoSecrets || reason === ConnectionFailReason.WifiAuthTimeout) {
-                message = root._pendingWithPsk ? "密码错误或认证超时" : "网络需要密码";
+                message = root._pendingWithPsk ? qsTr("密码错误或认证超时") : qsTr("网络需要密码");
                 if (root._pendingSsid.length > 0)
                     root.passwordRequestSsid = root._pendingSsid;
             }
@@ -538,7 +539,7 @@ Singleton {
             if (root._pendingOperation === "connect"
                     && root._pendingStateWasChanging
                     && root._pendingNetwork.state === ConnectionState.Disconnected)
-                root._finishOperationFailed("连接未完成");
+                root._finishOperationFailed(qsTr("连接未完成"));
         }
     }
 
@@ -556,7 +557,7 @@ Singleton {
         id: operationTimeout
         interval: 60000
         repeat: false
-        onTriggered: root._finishOperationFailed("网络操作超时")
+        onTriggered: root._finishOperationFailed(qsTr("网络操作超时"))
     }
 
     Component.onCompleted: root._applyScanning()

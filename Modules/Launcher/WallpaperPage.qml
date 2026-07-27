@@ -141,7 +141,7 @@ Item {
 
     Text {
         anchors.centerIn: parent
-        text: "Scanning wallpapers..."
+            text: qsTr("正在扫描壁纸…")
         color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.68)
         font.family: Sizes.fontFamilyMono
         font.pixelSize: rofiStyle.fontPixelSize
@@ -150,7 +150,7 @@ Item {
 
     Text {
         anchors.centerIn: parent
-        text: "No wallpapers found."
+            text: qsTr("未找到壁纸。")
         color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.68)
         font.family: Sizes.fontFamilyMono
         font.pixelSize: rofiStyle.fontPixelSize

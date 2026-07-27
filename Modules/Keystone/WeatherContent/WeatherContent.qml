@@ -16,7 +16,7 @@ Item {
     property bool active: false
     property real latitude: 0
     property real longitude: 0
-    property string locationName: "Weather"
+    property string locationName: qsTr("天气")
     property string currentTemp: "--"
     property string currentIcon: "cloud"
     property string currentDesc: "--"
@@ -113,23 +113,23 @@ Item {
 
     function updatedText() {
         if (WeatherPlugin.loading)
-            return root.hasWeather ? "Refreshing" : "Locating"
+            return root.hasWeather ? qsTr("正在刷新") : qsTr("正在定位")
         if (WeatherPlugin.status === "stale")
-            return "Data may be stale"
+            return qsTr("数据可能已过期")
         if (WeatherPlugin.status === "partial")
-            return "Partially updated"
+            return qsTr("部分数据已更新")
         if (WeatherPlugin.status === "error")
-            return "Update failed"
+            return qsTr("更新失败")
         if (WeatherPlugin.lastUpdated) {
             const updated = new Date(WeatherPlugin.lastUpdated)
             if (!isNaN(updated.getTime()))
-                return "Updated " + Qt.formatDateTime(updated, "hh:mm")
+                return qsTr("更新于 %1").arg(Qt.formatDateTime(updated, "hh:mm"))
         }
-        return "Live weather"
+        return qsTr("实时天气")
     }
 
     function weatherErrorText() {
-        return WeatherPlugin.errorMessage || "Weather data is unavailable"
+        return WeatherPlugin.errorMessage || qsTr("天气数据不可用")
     }
 
     function hourlyTemperatureBound(findMaximum) {
@@ -179,7 +179,7 @@ Item {
 
     function syncWeatherData() {
         if (!WeatherPlugin.hasValidData) {
-            root.locationName = WeatherPlugin.locationName || "Weather"
+            root.locationName = WeatherPlugin.locationName || qsTr("天气")
             root.currentTemp = "--"
             root.currentIcon = "cloud"
             root.currentDesc = "--"
@@ -195,10 +195,10 @@ Item {
 
         root.latitude = Number(WeatherPlugin.latitude)
         root.longitude = Number(WeatherPlugin.longitude)
-        root.locationName = WeatherPlugin.locationName || "Unknown"
+        root.locationName = WeatherPlugin.locationName || qsTr("未知")
         root.currentTemp = Math.round(WeatherPlugin.currentTemperatureC) + "°"
         root.currentIcon = WeatherPlugin.currentIconName || "cloud"
-        root.currentDesc = WeatherPlugin.currentWeatherText || "Unknown"
+        root.currentDesc = WeatherPlugin.currentWeatherText || qsTr("未知")
         root.feelsLike = Math.round(WeatherPlugin.currentFeelsLikeC) + "°C"
         root.humidity = Math.round(WeatherPlugin.currentRelativeHumidity) + "%"
         root.windSpeed = Math.round(WeatherPlugin.currentWindSpeedMs * 3.6) + " km/h"
@@ -213,7 +213,7 @@ Item {
                 time: Qt.formatDateTime(timeObject, "hh:00"),
                 temp: Math.round(Number(item.temperatureC || 0)),
                 icon: item.iconName || "cloud",
-                description: item.weatherText || "Unknown",
+                description: item.weatherText || qsTr("未知"),
                 isDaylight: item.isDaylight === undefined ? true : item.isDaylight
             })
         }
@@ -228,10 +228,10 @@ Item {
                 : new Date(Number(item.time || 0) * 1000)
             const dayPart = item.day || ({})
             nextDaily.push({
-                day: dayIndex === 0 ? "Today" : Qt.formatDate(dateObject, "ddd"),
+                day: dayIndex === 0 ? qsTr("今天") : Qt.formatDate(dateObject, "ddd"),
                 date: Qt.formatDate(dateObject, "MMM d"),
                 icon: dayPart.iconName || item.iconName || "cloud",
-                description: dayPart.weatherText || item.weatherText || "Unknown",
+                description: dayPart.weatherText || item.weatherText || qsTr("未知"),
                 maxTemp: Math.round(
                     Number(item.temperatureMaxC || dayPart.temperatureC || 0)
                 ) + "°",
@@ -374,7 +374,7 @@ Item {
                             hoverEnabled: true
                             focusPolicy: Qt.StrongFocus
 
-                            Accessible.name: "Refresh weather"
+                            Accessible.name: qsTr("刷新天气")
 
                             onClicked: root.fetchData()
 
@@ -424,8 +424,8 @@ Item {
                             StyledToolTip {
                                 extraVisibleCondition: refreshButton.hovered
                                 text: WeatherPlugin.loading
-                                    ? "Refreshing weather"
-                                    : "Refresh weather"
+                                    ? qsTr("正在刷新天气")
+                                    : qsTr("刷新天气")
                             }
 
                             RotationAnimation {
@@ -512,7 +512,7 @@ Item {
                                 MetricTile {
                                     Layout.fillWidth: true
                                     iconName: "thermostat"
-                                    label: "Feels like"
+                                    label: qsTr("体感温度")
                                     value: root.feelsLike
                                     containerColor: Appearance.colors.colPrimary
                                     contentColor: Appearance.colors.colOnPrimary
@@ -522,7 +522,7 @@ Item {
                                 MetricTile {
                                     Layout.fillWidth: true
                                     iconName: "water_drop"
-                                    label: "Humidity"
+                                    label: qsTr("湿度")
                                     value: root.humidity
                                     containerColor: Appearance.colors.colPrimary
                                     contentColor: Appearance.colors.colOnPrimary
@@ -532,7 +532,7 @@ Item {
                                 MetricTile {
                                     Layout.fillWidth: true
                                     iconName: "air"
-                                    label: "Wind"
+                                    label: qsTr("风速")
                                     value: root.windSpeed
                                     containerColor: Appearance.colors.colPrimary
                                     contentColor: Appearance.colors.colOnPrimary
@@ -542,7 +542,7 @@ Item {
                                 MetricTile {
                                     Layout.fillWidth: true
                                     iconName: "compress"
-                                    label: "Pressure"
+                                    label: qsTr("气压")
                                     value: root.pressure
                                     containerColor: Appearance.colors.colPrimary
                                     contentColor: Appearance.colors.colOnPrimary
@@ -577,8 +577,8 @@ Item {
                                 Text {
                                     Layout.fillWidth: true
                                     text: WeatherPlugin.loading
-                                        ? "Loading weather"
-                                        : "Weather unavailable"
+                                        ? qsTr("正在加载天气")
+                                        : qsTr("天气不可用")
                                     color: Appearance.colors.colOnSurface
                                     font.family: Sizes.fontFamily
                                     font.pixelSize: 16
@@ -590,7 +590,7 @@ Item {
                                 Text {
                                     Layout.fillWidth: true
                                     text: WeatherPlugin.loading
-                                        ? "Finding your local forecast…"
+                                        ? qsTr("正在查找本地天气预报…")
                                         : root.weatherErrorText()
                                     color: Appearance.colors.colOnSurfaceVariant
                                     font.family: Sizes.fontFamily
@@ -660,8 +660,8 @@ Item {
             clip: true
 
             Accessible.name: root.isHourly
-                ? "Eight hour weather forecast"
-                : "Seven day weather forecast"
+                ? qsTr("八小时天气预报")
+                : qsTr("七天天气预报")
 
             ColumnLayout {
                 anchors.fill: parent
@@ -682,7 +682,7 @@ Item {
                     }
 
                     Text {
-                        text: "Forecast"
+                        text: qsTr("天气预报")
                         color: Appearance.colors.colOnSurface
                         font.family: Sizes.fontFamily
                         font.pixelSize: 18
@@ -704,16 +704,16 @@ Item {
                         model: [
                             ({
                                 "value": "hourly",
-                                "label": "8 Hours",
-                                "tooltip": "Show the next eight hours"
+                                "label": qsTr("8 小时"),
+                                "tooltip": qsTr("显示未来八小时")
                             }),
                             ({
                                 "value": "daily",
-                                "label": "7 Days",
-                                "tooltip": "Show the next seven days"
+                                "label": qsTr("7 天"),
+                                "tooltip": qsTr("显示未来七天")
                             })
                         ]
-                        Accessible.name: "Forecast range"
+                        Accessible.name: qsTr("预报范围")
                         onValueSelected: value => root.isHourly = value === "hourly"
                     }
                 }
@@ -853,7 +853,7 @@ Item {
 
                                 Accessible.name: modelData.time
                                     + ", " + modelData.description
-                                    + ", " + modelData.temp + " degrees"
+                                    + qsTr("，%1 度").arg(modelData.temp)
 
                                 MaterialSymbol {
                                     anchors.top: parent.top
@@ -900,7 +900,7 @@ Item {
                             }
 
                             Text {
-                                text: "Hourly forecast unavailable"
+                                text: qsTr("逐小时预报不可用")
                                 color: Appearance.colors.colOnSurfaceVariant
                                 font.family: Sizes.fontFamily
                                 font.pixelSize: 13
@@ -949,8 +949,8 @@ Item {
                                     Accessible.name: modelData.day
                                         + ", " + modelData.date
                                         + ", " + modelData.description
-                                        + ", high " + modelData.maxTemp
-                                        + ", low " + modelData.minTemp
+                                        + qsTr("，最高 %1").arg(modelData.maxTemp)
+                                        + qsTr("，最低 %1").arg(modelData.minTemp)
 
                                     ColumnLayout {
                                         anchors.fill: parent
@@ -1069,7 +1069,7 @@ Item {
                             }
 
                             Text {
-                                text: "Daily forecast unavailable"
+                                text: qsTr("每日预报不可用")
                                 color: Appearance.colors.colOnSurfaceVariant
                                 font.family: Sizes.fontFamily
                                 font.pixelSize: 13

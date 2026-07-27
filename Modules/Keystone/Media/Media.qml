@@ -18,8 +18,8 @@ Item {
     required property var player
     
     property string artUrl: (player && player.trackArtUrl) ? player.trackArtUrl : ""
-    property string title: (player && player.trackTitle) ? player.trackTitle : "Not Playing"
-    property string artist: (player && player.trackArtist) ? player.trackArtist : "Unknown Artist"
+    property string title: (player && player.trackTitle) ? player.trackTitle : qsTr("未在播放")
+    property string artist: (player && player.trackArtist) ? player.trackArtist : qsTr("未知艺术家")
     property string album: (player && player.trackAlbum) ? player.trackAlbum : ""
     readonly property string playerName: player ? (player.identity || player.busName || "") : ""
 
@@ -71,11 +71,11 @@ Item {
     }
 
     function reloadLyrics() {
-        if (!root.title || root.title === "Not Playing")
+        if (!root.title || root.title === qsTr("未在播放"))
             return;
 
         lyricsModel.clear();
-        lyricsModel.append({"time": 0, "text": "🎵 正在搜寻歌词..."});
+        lyricsModel.append({"time": 0, "text": qsTr("🎵 正在搜寻歌词...")});
         lyricsView.resetToLine(0);
         lyricsProc.running = false;
         lyricsProc.running = true;

@@ -826,7 +826,7 @@ Item {
 
                     StyledToolTip {
                         extraVisibleCondition: copyMouse.containsMouse
-                        text: "复制"
+                        text: qsTr("复制")
                     }
                 }
             }

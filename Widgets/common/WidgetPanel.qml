@@ -32,7 +32,7 @@ Rectangle {
                 Layout.preferredHeight: 40
                 visible: root.showBackButton
                 hoverEnabled: true
-                Accessible.name: "返回快捷设置"
+                Accessible.name: qsTr("返回快捷设置")
                 onClicked: root.backAction()
 
                 background: Rectangle {

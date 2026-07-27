@@ -48,6 +48,7 @@ public:
     int getFanRpm() const;
     double getCpuFreqGHz() const;
     QString getUptime() const;
+    qint64 getUptimeSeconds() const;
     QString getSystemUser() const;
     QString getHostName() const;
     QString getWmName() const;

@@ -27,7 +27,7 @@ Singleton {
             return "";
         const value = String(path);
         if (root.isColorSource(value))
-            return "纯色壁纸 " + value;
+            return qsTr("纯色壁纸 ") + value;
         return value.substring(value.lastIndexOf("/") + 1);
     }
 

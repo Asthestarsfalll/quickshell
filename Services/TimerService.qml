@@ -106,13 +106,16 @@ Singleton {
     function notifyPomodoroStage() {
         let message = "";
         if (root.pomodoroLongBreak)
-            message = `🌿 Long break: ${Math.floor(root.longBreakTime / 60)} minutes`;
+            message = qsTr("🌿 长休息：%1 分钟")
+                .arg(Math.floor(root.longBreakTime / 60));
         else if (root.pomodoroBreak)
-            message = `☕ Break: ${Math.floor(root.breakTime / 60)} minutes`;
+            message = qsTr("☕ 休息：%1 分钟")
+                .arg(Math.floor(root.breakTime / 60));
         else
-            message = `🔴 Focus: ${Math.floor(root.focusTime / 60)} minutes`;
+            message = qsTr("🔴 专注：%1 分钟")
+                .arg(Math.floor(root.focusTime / 60));
 
-        Quickshell.execDetached(["notify-send", "Pomodoro", message, "-a", "Clavis"]);
+        Quickshell.execDetached(["notify-send", qsTr("番茄钟"), message, "-a", "Clavis"]);
         if (PersonalizationConfig.pomodoroSoundEnabled)
             root.playSystemSound("alarm-clock-elapsed");
     }

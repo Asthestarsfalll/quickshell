@@ -20,7 +20,7 @@ Item {
         triggeredOnStart: true
         onTriggered: {
             let d = new Date()
-            root.dateStr = d.toLocaleString(Qt.locale("en_US"), "ddd dd MMM")
+            root.dateStr = d.toLocaleString(Qt.locale(), "ddd dd MMM")
             let hStr = d.getHours().toString().padStart(2, '0')
             let mStr = d.getMinutes().toString().padStart(2, '0')
             

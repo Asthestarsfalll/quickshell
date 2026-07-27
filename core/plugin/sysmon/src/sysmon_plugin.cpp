@@ -65,6 +65,7 @@ double SysmonPlugin::diskUsage() const { return m_diskUsage; }
 double SysmonPlugin::diskUsedGB() const { return m_diskUsedGB; }
 double SysmonPlugin::diskTotalGB() const { return m_diskTotalGB; }
 QString SysmonPlugin::uptime() const { return m_uptime; }
+qint64 SysmonPlugin::uptimeSeconds() const { return SysmonBackend::instance().getUptimeSeconds(); }
 
 QString SysmonPlugin::systemUser() const { return SysmonBackend::instance().getSystemUser(); }
 QString SysmonPlugin::hostName() const { return SysmonBackend::instance().getHostName(); }

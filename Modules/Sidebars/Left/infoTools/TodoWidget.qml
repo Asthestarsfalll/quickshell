@@ -17,8 +17,8 @@ Item {
     readonly property int fabSize: 48
     readonly property int fabMargins: 14
     readonly property var tabs: [
-        { "icon": "checklist", "name": "Unfinished" },
-        { "icon": "check_circle", "name": "Done" }
+        { "icon": "checklist", "name": qsTr("未完成") },
+        { "icon": "check_circle", "name": qsTr("已完成") }
     ]
 
     focus: true
@@ -102,7 +102,7 @@ Item {
             TaskList {
                 listBottomPadding: root.fabSize + root.fabMargins * 2
                 emptyPlaceholderIcon: "check_circle"
-                emptyPlaceholderText: "Nothing here!"
+                emptyPlaceholderText: qsTr("这里还没有内容")
                 taskList: TodoService.list
                     .map((item, index) => Object.assign({}, item, { "originalIndex": index }))
                     .filter(item => !item.done)
@@ -111,7 +111,7 @@ Item {
             TaskList {
                 listBottomPadding: root.fabSize + root.fabMargins * 2
                 emptyPlaceholderIcon: "checklist"
-                emptyPlaceholderText: "Finished tasks will go here"
+                emptyPlaceholderText: qsTr("已完成的任务会显示在这里")
                 taskList: TodoService.list
                     .map((item, index) => Object.assign({}, item, { "originalIndex": index }))
                     .filter(item => item.done)
@@ -140,7 +140,7 @@ Item {
         colBackground: Appearance.colors.colPrimaryContainer
         colBackgroundHover: Appearance.colors.colPrimaryContainerHover
         colRipple: Appearance.colors.colPrimaryContainerActive
-        Accessible.name: "Add task"
+        Accessible.name: qsTr("添加任务")
         onClicked: root.showAddDialog = true
 
         contentItem: MaterialSymbol {
@@ -198,7 +198,7 @@ Item {
                     Layout.topMargin: 16
                     Layout.leftMargin: 16
                     Layout.rightMargin: 16
-                    text: "Add task"
+                    text: qsTr("添加任务")
                     color: Appearance.colors.colOnSurface
                     font.family: Sizes.fontFamily
                     font.pixelSize: 16
@@ -213,7 +213,7 @@ Item {
                     Layout.rightMargin: 16
                     implicitHeight: 56
                     focus: root.showAddDialog
-                    placeholderText: "Task description"
+                    placeholderText: qsTr("任务描述")
                     font.family: Sizes.fontFamily
                     font.pixelSize: 14
                     wrapMode: TextEdit.NoWrap
@@ -228,12 +228,12 @@ Item {
                     spacing: 5
 
                     DialogActionButton {
-                        text: "Cancel"
+                        text: qsTr("取消")
                         onClicked: root.showAddDialog = false
                     }
 
                     DialogActionButton {
-                        text: "Add"
+                        text: qsTr("添加")
                         filled: true
                         enabled: todoInput.text.trim().length > 0
                         opacity: enabled ? 1 : 0.38

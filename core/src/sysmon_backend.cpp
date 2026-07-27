@@ -197,6 +197,9 @@ QString SysmonBackend::getUptime() const {
         return QStringLiteral("%1h %2m").arg(hours).arg(minutes);
     return QStringLiteral("%1m").arg(minutes);
 }
+qint64 SysmonBackend::getUptimeSeconds() const {
+    return m_snapshot.system.uptimeSeconds;
+}
 QString SysmonBackend::getSystemUser() const { return m_snapshot.system.systemUser; }
 QString SysmonBackend::getHostName() const { return m_snapshot.system.hostName; }
 QString SysmonBackend::getWmName() const { return m_snapshot.system.wmName; }

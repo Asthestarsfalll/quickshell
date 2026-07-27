@@ -38,6 +38,7 @@ class SysmonPlugin : public QObject {
     Q_PROPERTY(double diskUsedGB READ diskUsedGB NOTIFY glacialDataChanged)
     Q_PROPERTY(double diskTotalGB READ diskTotalGB NOTIFY glacialDataChanged)
     Q_PROPERTY(QString uptime READ uptime NOTIFY glacialDataChanged)
+    Q_PROPERTY(qint64 uptimeSeconds READ uptimeSeconds NOTIFY glacialDataChanged)
 
     // === Static system info ===
     Q_PROPERTY(QString systemUser READ systemUser CONSTANT)
@@ -82,6 +83,7 @@ public:
     double diskUsedGB() const;
     double diskTotalGB() const;
     QString uptime() const;
+    qint64 uptimeSeconds() const;
 
     QString systemUser() const;
     QString hostName() const;

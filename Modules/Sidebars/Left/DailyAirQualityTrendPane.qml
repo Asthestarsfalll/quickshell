@@ -35,7 +35,7 @@ Item {
     }
 
     function aqiLevelName(level) {
-        const names = ["优", "良", "差", "不健康", "很不健康", "危险"]
+        const names = [qsTr("优"), qsTr("良"), qsTr("差"), qsTr("不健康"), qsTr("很不健康"), qsTr("危险")]
         return level >= 0 && level < names.length ? names[level] : "--"
     }
 
@@ -75,11 +75,11 @@ Item {
     }
 
     function dayLabel(index, epoch) {
-        if (index === 0) return "昨天"
-        if (index === 1) return "今天"
-        if (index === 2) return "明天"
+        if (index === 0) return qsTr("昨天")
+        if (index === 1) return qsTr("今天")
+        if (index === 2) return qsTr("明天")
         if (!epoch) return "--"
-        const week = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+        const week = [qsTr("周日"), qsTr("周一"), qsTr("周二"), qsTr("周三"), qsTr("周四"), qsTr("周五"), qsTr("周六")]
         return week[new Date(epoch * 1000).getDay()]
     }
 
@@ -244,7 +244,7 @@ Item {
                 color: parent.weekColor
                 font.family: "LXGW WenKai GB Screen"
                 font.pixelSize: 14
-                font.bold: modelData.dayText === "今天"
+                font.bold: modelData.dayText === qsTr("今天")
             }
 
             Text {
@@ -273,7 +273,7 @@ Item {
                 color: Appearance.colors.colOnSurface
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 13
-                font.bold: modelData.dayText === "今天"
+                font.bold: modelData.dayText === qsTr("今天")
             }
         }
     }
@@ -281,7 +281,7 @@ Item {
     Text {
         anchors.centerIn: parent
         visible: !root.hasData
-        text: "空气质量数据暂不可用"
+        text: qsTr("空气质量数据暂不可用")
         color: Appearance.colors.colOnSurfaceVariant
         font.family: "LXGW WenKai GB Screen"
         font.pixelSize: 16

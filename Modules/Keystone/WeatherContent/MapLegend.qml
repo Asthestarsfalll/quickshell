@@ -47,43 +47,43 @@ Rectangle {
 
     function titleText() {
         if (mode === "temp")
-            return "Temperature"
+            return qsTr("温度")
         if (mode === "rain")
-            return "Precipitation"
+            return qsTr("降水")
         if (mode === "clouds")
-            return "Cloud cover"
+            return qsTr("云量")
         if (mode === "wind")
-            return "Wind speed"
+            return qsTr("风速")
         if (mode === "pressure")
-            return "Pressure"
-        return "Weather"
+            return qsTr("气压")
+        return qsTr("天气")
     }
 
     function minimumLabel() {
         if (mode === "temp")
-            return "Cold"
+            return qsTr("低温")
         if (mode === "rain")
-            return "Light"
+            return qsTr("少量")
         if (mode === "clouds")
-            return "Clear"
+            return qsTr("晴朗")
         if (mode === "wind")
-            return "Calm"
+            return qsTr("平静")
         if (mode === "pressure")
-            return "Low"
+            return qsTr("低")
         return ""
     }
 
     function maximumLabel() {
         if (mode === "temp")
-            return "Hot"
+            return qsTr("高温")
         if (mode === "rain")
-            return "Heavy"
+            return qsTr("大量")
         if (mode === "clouds")
-            return "Overcast"
+            return qsTr("阴天")
         if (mode === "wind")
-            return "Strong"
+            return qsTr("强劲")
         if (mode === "pressure")
-            return "High"
+            return qsTr("高")
         return ""
     }
 
@@ -92,7 +92,7 @@ Rectangle {
         if (updatedAt && !isNaN(updatedAt.getTime()))
             value = Qt.formatDateTime(updatedAt, "hh:mm")
         if (stale)
-            value = value === "" ? "Cached" : value + " · cached"
+            value = value === "" ? qsTr("缓存") : value + qsTr(" · 缓存")
         return value
     }
 

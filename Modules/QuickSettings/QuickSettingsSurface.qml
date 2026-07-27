@@ -123,13 +123,13 @@ WidgetPanel {
 
     function titleForType(type) {
         switch (type) {
-        case "network": return "网络";
-        case "bluetooth": return "蓝牙";
-        case "caffeine": return "咖啡因";
-        case "mic": return "麦克风";
-        case "audio": return "声音";
-        case "theme": return "外观";
-        case "dnd": return "免打扰";
+        case "network": return qsTr("网络");
+        case "bluetooth": return qsTr("蓝牙");
+        case "caffeine": return qsTr("咖啡因");
+        case "mic": return qsTr("麦克风");
+        case "audio": return qsTr("声音");
+        case "theme": return qsTr("外观");
+        case "dnd": return qsTr("免打扰");
         default: return type;
         }
     }
@@ -138,26 +138,26 @@ WidgetPanel {
         switch (type) {
         case "network":
             if (!NetworkService.available)
-                return "不可用";
+                return qsTr("不可用");
             if (!NetworkService.wifiAvailable)
-                return "无 Wi-Fi 设备";
-            return NetworkService.wifiEnabled ? NetworkService.activeConnection : "已关闭";
+                return qsTr("无 Wi-Fi 设备");
+            return NetworkService.wifiEnabled ? NetworkService.activeConnection : qsTr("已关闭");
         case "bluetooth":
             if (!BluetoothService.available)
-                return "不可用";
+                return qsTr("不可用");
             if (!BluetoothService.enabled)
-                return "已关闭";
-            return BluetoothService.connected ? (BluetoothService.connectedName || "已连接") : "已开启";
+                return qsTr("已关闭");
+            return BluetoothService.connected ? (BluetoothService.connectedName || qsTr("已连接")) : qsTr("已开启");
         case "caffeine":
-            return IdleService.inhibited ? "保持唤醒" : "正常休眠";
+            return IdleService.inhibited ? qsTr("保持唤醒") : qsTr("正常休眠");
         case "mic":
-            return Volume.sourceMuted ? "已静音" : "已开启";
+            return Volume.sourceMuted ? qsTr("已静音") : qsTr("已开启");
         case "audio":
-            return Volume.sinkMuted ? "已静音" : Math.round(Volume.sinkVolume * 100) + "%";
+            return Volume.sinkMuted ? qsTr("已静音") : Math.round(Volume.sinkVolume * 100) + "%";
         case "theme":
-            return PersonalizationConfig.themeMode === "dark" ? "深色" : "浅色";
+            return PersonalizationConfig.themeMode === "dark" ? qsTr("深色") : qsTr("浅色");
         case "dnd":
-            return UiPreferences.dndEnabled ? "已开启" : "已关闭";
+            return UiPreferences.dndEnabled ? qsTr("已开启") : qsTr("已关闭");
         default:
             return "";
         }
@@ -253,9 +253,9 @@ WidgetPanel {
     function tooltipForType(type) {
         const base = titleForType(type) + " | " + subtitleForType(type);
         if (root.editMode)
-            return base + "\n右键切换形状，滚轮调整顺序";
+            return base + qsTr("\n右键切换形状，滚轮调整顺序");
         if (root.hasAltActionForType(type))
-            return base + "\n右键打开详情面板";
+            return base + qsTr("\n右键打开详情面板");
         return base;
     }
 
@@ -277,7 +277,7 @@ WidgetPanel {
             padding: root.headerButtonPadding
             iconName: "edit"
             toggled: root.editMode
-            tooltipText: root.editMode ? "编辑快捷按钮\n右键切换形状，滚轮调整顺序" : "编辑快捷按钮"
+            tooltipText: root.editMode ? qsTr("编辑快捷按钮\n右键切换形状，滚轮调整顺序") : qsTr("编辑快捷按钮")
             onTriggered: root.editMode = !root.editMode
         }
 
@@ -286,7 +286,7 @@ WidgetPanel {
             cellSpacing: root.headerButtonSpacing
             padding: root.headerButtonPadding
             iconName: "restart_alt"
-            tooltipText: "重启 Quickshell"
+            tooltipText: qsTr("重启 Quickshell")
             onTriggered: Quickshell.reload(true)
         }
 
@@ -295,7 +295,7 @@ WidgetPanel {
             cellSpacing: root.headerButtonSpacing
             padding: root.headerButtonPadding
             iconName: "settings"
-            tooltipText: "设置"
+            tooltipText: qsTr("设置")
             onTriggered: root.openControlCenter()
         }
 
@@ -304,7 +304,7 @@ WidgetPanel {
             cellSpacing: root.headerButtonSpacing
             padding: root.headerButtonPadding
             iconName: "power_settings_new"
-            tooltipText: "会话"
+            tooltipText: qsTr("会话")
             onTriggered: Quickshell.execDetached(["wlogout", "-p", "layer-shell", "-b", "2"])
         }
     }

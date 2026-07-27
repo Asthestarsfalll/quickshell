@@ -235,7 +235,7 @@ Item {
     Text {
         anchors.centerIn: parent
         visible: !root.hasData
-        text: "风况数据暂不可用"
+        text: qsTr("风况数据暂不可用")
         color: Appearance.colors.colOnSurfaceVariant
         font.family: "LXGW WenKai GB Screen"
         font.pixelSize: 16

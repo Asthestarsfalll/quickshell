@@ -20,7 +20,7 @@ Item {
     property bool previewWindy: false
     property int previewWeatherCode: 2
     property string previewIconName: "partly_cloudy_day"
-    property string previewWeatherText: "Partly Cloudy"
+    property string previewWeatherText: qsTr("局部多云")
     property real previewTemperatureC: 22
     property real previewFeelsLikeC: 21
     property real previewHighC: 26
@@ -60,23 +60,23 @@ Item {
     }
 
     function updatedText() {
-        if (WeatherPlugin.loading) return "正在刷新"
+        if (WeatherPlugin.loading) return qsTr("正在刷新")
         if (WeatherPlugin.status === "fresh" || WeatherPlugin.status === "partial") {
             const date = new Date(WeatherPlugin.lastUpdated)
-            return "更新于 " + Qt.formatDateTime(date, "hh:mm")
+            return qsTr("更新于 ") + Qt.formatDateTime(date, "hh:mm")
         }
-        if (WeatherPlugin.status === "stale") return "数据较旧"
-        if (WeatherPlugin.status === "error") return "更新失败"
-        return "待更新"
+        if (WeatherPlugin.status === "stale") return qsTr("数据较旧")
+        if (WeatherPlugin.status === "error") return qsTr("更新失败")
+        return qsTr("待更新")
     }
 
     function uvLevel(value) {
         if (!validNumber(value)) return "--"
-        if (value < 3) return "Low"
-        if (value < 6) return "Moderate"
-        if (value < 8) return "High"
-        if (value < 11) return "Very high"
-        return "Extreme"
+        if (value < 3) return qsTr("低")
+        if (value < 6) return qsTr("中")
+        if (value < 8) return qsTr("高")
+        if (value < 11) return qsTr("很高")
+        return qsTr("极高")
     }
 
     function uvIndexBucket(value) {
@@ -157,7 +157,7 @@ Item {
                         }
 
                         Text {
-                            text: WeatherPlugin.locationName || "Weather"
+                            text: WeatherPlugin.locationName || qsTr("天气")
                             color: root.headerInk
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 19
@@ -322,7 +322,7 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: "体感温度: " + fmtTemp(root.previewFeelsLikeC)
+                            text: qsTr("体感温度: ") + fmtTemp(root.previewFeelsLikeC)
                             color: Appearance.colors.colOnImage
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
@@ -332,8 +332,8 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: "最高 " + fmtTemp(root.previewHighC)
-                                  + " · 最低 " + fmtTemp(root.previewLowC)
+                            text: qsTr("最高 ") + fmtTemp(root.previewHighC)
+                                  + qsTr(" · 最低 ") + fmtTemp(root.previewLowC)
                             color: Appearance.colors.colOnImage
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
@@ -377,9 +377,9 @@ Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             icon: "air"
-                            label: "Wind"
+                            label: qsTr("风速")
                             value: fmtSpeed(WeatherPlugin.currentWindSpeedMs)
-                            detail: "Gust " + fmtSpeed(WeatherPlugin.currentWindGustsMs)
+                            detail: qsTr("阵风 ") + fmtSpeed(WeatherPlugin.currentWindGustsMs)
                             accent: Appearance.colors.colPrimary
                         }
 
@@ -387,9 +387,9 @@ Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             icon: "water_drop"
-                            label: "Humidity"
+                            label: qsTr("湿度")
                             value: fmtPercent(WeatherPlugin.currentRelativeHumidity)
-                            detail: "Dew " + fmtTemp(WeatherPlugin.currentDewPointC)
+                            detail: qsTr("露点 ") + fmtTemp(WeatherPlugin.currentDewPointC)
                             accent: Appearance.colors.colSecondary
                         }
                     }
@@ -405,7 +405,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 76
                         icon: "compress"
-                        label: "Pressure"
+                        label: qsTr("气压")
                         value: validNumber(WeatherPlugin.currentPressureHpa) ? Math.round(WeatherPlugin.currentPressureHpa) + " hPa" : "--"
                         accent: Appearance.colors.colTertiary
                     }
@@ -414,7 +414,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 76
                         icon: "visibility"
-                        label: "Visibility"
+                        label: qsTr("能见度")
                         value: fmtDistance(WeatherPlugin.currentVisibilityM)
                         accent: Appearance.colors.colPrimary
                     }
@@ -423,7 +423,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 76
                         icon: "cloud"
-                        label: "Clouds"
+                        label: qsTr("云量")
                         value: fmtPercent(WeatherPlugin.currentCloudCover)
                         accent: Appearance.colors.colSecondary
                     }
@@ -432,7 +432,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 76
                         icon: "grain"
-                        label: "Precipitation"
+                        label: qsTr("降水")
                         value: WeatherPlugin.minutelyForecast.count() > 0
                                ? WeatherPlugin.minutelyForecast.get(0).precipitationIntensityMmH.toFixed(1) + " mm/h"
                                : fmtPercent(WeatherPlugin.hourlyForecast.count() > 0 ? WeatherPlugin.hourlyForecast.get(0).precipitationProbability : NaN)
@@ -447,14 +447,14 @@ Item {
                     AstroPill {
                         Layout.fillWidth: true
                         icon: "sunny"
-                        label: "Sun"
+                        label: qsTr("太阳")
                         value: fmtTime(today().sunrise) + " / " + fmtTime(today().sunset)
                     }
 
                     AstroPill {
                         Layout.fillWidth: true
                         icon: "nightlight"
-                        label: "Moon"
+                        label: qsTr("月亮")
                         value: fmtTime(today().moonrise) + " / " + fmtTime(today().moonset)
                     }
                 }

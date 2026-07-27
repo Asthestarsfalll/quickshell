@@ -33,17 +33,17 @@ Item {
 
     function valueUnitText() {
         if (isNaN(root.visibilityMeters)) return ""
-        return root.visibilityMeters >= 1000 ? "公里" : "米"
+        return root.visibilityMeters >= 1000 ? qsTr("公里") : qsTr("米")
     }
 
     function descriptionText() {
         if (isNaN(root.visibilityMeters)) return "--"
-        if (root.visibilityMeters < 1000) return "极差"
-        if (root.visibilityMeters < 4000) return "差"
-        if (root.visibilityMeters < 10000) return "中"
-        if (root.visibilityMeters < 20000) return "良"
-        if (root.visibilityMeters < 40000) return "清"
-        return "优"
+        if (root.visibilityMeters < 1000) return qsTr("极差")
+        if (root.visibilityMeters < 4000) return qsTr("差")
+        if (root.visibilityMeters < 10000) return qsTr("中")
+        if (root.visibilityMeters < 20000) return qsTr("良")
+        if (root.visibilityMeters < 40000) return qsTr("清")
+        return qsTr("优")
     }
 
     MaterialShape {
@@ -108,7 +108,7 @@ Item {
         }
 
         Text {
-            text: "能见度"
+            text: qsTr("能见度")
             color: Appearance.colors.colOnWeatherCardSurfaceVariant
             font.family: "LXGW WenKai GB Screen"
             font.pixelSize: 19

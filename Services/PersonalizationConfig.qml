@@ -12,56 +12,56 @@ Singleton {
     readonly property string filePath: configDir + "/personalization.json"
 
     readonly property var fillModes: [
-        ({ "value": "Stretch", "label": "拉伸" }),
-        ({ "value": "Fit", "label": "适合" }),
-        ({ "value": "Fill", "label": "填充" }),
-        ({ "value": "Tile", "label": "平铺" }),
-        ({ "value": "TileVertically", "label": "垂直平铺" }),
-        ({ "value": "TileHorizontally", "label": "水平平铺" }),
-        ({ "value": "Pad", "label": "覆盖" })
+        ({ "value": "Stretch", "label": qsTr("拉伸") }),
+        ({ "value": "Fit", "label": qsTr("适合") }),
+        ({ "value": "Fill", "label": qsTr("填充") }),
+        ({ "value": "Tile", "label": qsTr("平铺") }),
+        ({ "value": "TileVertically", "label": qsTr("垂直平铺") }),
+        ({ "value": "TileHorizontally", "label": qsTr("水平平铺") }),
+        ({ "value": "Pad", "label": qsTr("覆盖") })
     ]
 
     readonly property var transitionTypes: [
-        ({ "value": "random", "label": "随机" }),
-        ({ "value": "none", "label": "无" }),
-        ({ "value": "fade", "label": "淡入淡出" }),
-        ({ "value": "wipe", "label": "擦除" }),
-        ({ "value": "disc", "label": "圆盘" }),
-        ({ "value": "stripes", "label": "条纹" }),
-        ({ "value": "iris bloom", "label": "光圈绽放" }),
-        ({ "value": "pixelate", "label": "像素化" }),
-        ({ "value": "portal", "label": "门户" })
+        ({ "value": "random", "label": qsTr("随机") }),
+        ({ "value": "none", "label": qsTr("无") }),
+        ({ "value": "fade", "label": qsTr("淡入淡出") }),
+        ({ "value": "wipe", "label": qsTr("擦除") }),
+        ({ "value": "disc", "label": qsTr("圆盘") }),
+        ({ "value": "stripes", "label": qsTr("条纹") }),
+        ({ "value": "iris bloom", "label": qsTr("光圈绽放") }),
+        ({ "value": "pixelate", "label": qsTr("像素化") }),
+        ({ "value": "portal", "label": qsTr("门户") })
     ]
 
     readonly property var transitionEasingModes: [
-        ({ "value": "linear", "label": "线性" }),
-        ({ "value": "quad", "label": "二次方" }),
-        ({ "value": "cubic", "label": "三次方" }),
-        ({ "value": "quart", "label": "四次方" }),
-        ({ "value": "quint", "label": "五次方" }),
-        ({ "value": "sine", "label": "正弦" }),
-        ({ "value": "expo", "label": "指数" }),
-        ({ "value": "circ", "label": "圆形" }),
-        ({ "value": "customBezier", "label": "自定义贝塞尔" })
+        ({ "value": "linear", "label": qsTr("线性") }),
+        ({ "value": "quad", "label": qsTr("二次方") }),
+        ({ "value": "cubic", "label": qsTr("三次方") }),
+        ({ "value": "quart", "label": qsTr("四次方") }),
+        ({ "value": "quint", "label": qsTr("五次方") }),
+        ({ "value": "sine", "label": qsTr("正弦") }),
+        ({ "value": "expo", "label": qsTr("指数") }),
+        ({ "value": "circ", "label": qsTr("圆形") }),
+        ({ "value": "customBezier", "label": qsTr("自定义贝塞尔") })
     ]
 
     readonly property var baseTransitions: ["fade", "wipe", "disc", "stripes", "iris bloom", "pixelate", "portal"]
 
     readonly property var matugenSchemes: [
-        ({ "value": "scheme-tonal-spot", "label": "音色斑点" }),
-        ({ "value": "scheme-vibrant", "label": "鲜艳" }),
-        ({ "value": "scheme-content", "label": "内容" }),
-        ({ "value": "scheme-expressive", "label": "具有表现力的" }),
-        ({ "value": "scheme-fidelity", "label": "保真" }),
-        ({ "value": "scheme-fruit-salad", "label": "水果沙拉" }),
-        ({ "value": "scheme-monochrome", "label": "单色" }),
-        ({ "value": "scheme-neutral", "label": "中性" }),
-        ({ "value": "scheme-rainbow", "label": "彩虹" })
+        ({ "value": "scheme-tonal-spot", "label": qsTr("音色斑点") }),
+        ({ "value": "scheme-vibrant", "label": qsTr("鲜艳") }),
+        ({ "value": "scheme-content", "label": qsTr("内容") }),
+        ({ "value": "scheme-expressive", "label": qsTr("具有表现力的") }),
+        ({ "value": "scheme-fidelity", "label": qsTr("保真") }),
+        ({ "value": "scheme-fruit-salad", "label": qsTr("水果沙拉") }),
+        ({ "value": "scheme-monochrome", "label": qsTr("单色") }),
+        ({ "value": "scheme-neutral", "label": qsTr("中性") }),
+        ({ "value": "scheme-rainbow", "label": qsTr("彩虹") })
     ]
 
     readonly property var keystoneStyles: [
-        ({ "value": "bangs", "label": "刘海" }),
-        ({ "value": "pill", "label": "药丸" })
+        ({ "value": "bangs", "label": qsTr("刘海") }),
+        ({ "value": "pill", "label": qsTr("药丸") })
     ]
 
     property bool storeReady: false

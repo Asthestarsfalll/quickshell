@@ -170,7 +170,7 @@ Item {
                     spacing: 2
 
                     Text {
-                        text: "选择文件夹"
+                        text: qsTr("选择文件夹")
                         color: Appearance.colors.colOnSurface
                         font.family: Sizes.fontFamily
                         font.pixelSize: 19
@@ -179,7 +179,7 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "选择图片，或使用当前文件夹作为壁纸目录"
+                        text: qsTr("选择图片，或使用当前文件夹作为壁纸目录")
                         color: Appearance.colors.colSubtext
                         font.family: Sizes.fontFamily
                         font.pixelSize: 13
@@ -189,7 +189,7 @@ Item {
 
                 IconButton {
                     iconName: "close"
-                    tooltipText: "关闭"
+                    tooltipText: qsTr("关闭")
                     onClicked: root.close()
                 }
             }
@@ -207,46 +207,46 @@ Item {
                     spacing: 6
 
                     SidebarButton {
-                        label: "Home"
+                        label: qsTr("主文件夹")
                         iconName: "home"
                         active: root.currentPath === root.homeDir
                         onClicked: root.navigateTo(root.homeDir)
                     }
                     SidebarButton {
-                        label: "Desktop"
+                        label: qsTr("桌面")
                         iconName: "desktop_windows"
                         active: root.currentPath === root.desktopDir
                         visible: root.desktopDir !== ""
                         onClicked: root.navigateTo(root.desktopDir)
                     }
                     SidebarButton {
-                        label: "Documents"
+                        label: qsTr("文档")
                         iconName: "description"
                         active: root.currentPath === root.documentsDir
                         visible: root.documentsDir !== ""
                         onClicked: root.navigateTo(root.documentsDir)
                     }
                     SidebarButton {
-                        label: "Pictures"
+                        label: qsTr("图片")
                         iconName: "image"
                         active: root.currentPath === root.picturesDir
                         onClicked: root.navigateTo(root.picturesDir)
                     }
                     SidebarButton {
-                        label: "Downloads"
+                        label: qsTr("下载")
                         iconName: "download"
                         active: root.currentPath === root.downloadsDir
                         onClicked: root.navigateTo(root.downloadsDir)
                     }
                     SidebarButton {
-                        label: "Music"
+                        label: qsTr("音乐")
                         iconName: "music_note"
                         active: root.currentPath === root.musicDir
                         visible: root.musicDir !== ""
                         onClicked: root.navigateTo(root.musicDir)
                     }
                     SidebarButton {
-                        label: "Video"
+                        label: qsTr("视频")
                         iconName: "movie"
                         active: root.currentPath === root.videosDir
                         visible: root.videosDir !== ""
@@ -269,7 +269,7 @@ Item {
 
                         IconButton {
                             iconName: "arrow_back"
-                            tooltipText: "上一级"
+                            tooltipText: qsTr("上一级")
                             enabled: root.currentPath !== root.homeDir && root.currentPath !== "/"
                             onClicked: root.navigateUp()
                         }
@@ -297,19 +297,19 @@ Item {
 
                         IconButton {
                             iconName: root.showHiddenFiles ? "visibility_off" : "visibility"
-                            tooltipText: root.showHiddenFiles ? "隐藏隐藏文件" : "显示隐藏文件"
+                            tooltipText: root.showHiddenFiles ? qsTr("隐藏隐藏文件") : qsTr("显示隐藏文件")
                             active: root.showHiddenFiles
                             onClicked: root.showHiddenFiles = !root.showHiddenFiles
                         }
 
                         IconButton {
                             iconName: root.gridLayout ? "view_list" : "grid_view"
-                            tooltipText: root.gridLayout ? "切换到列表布局" : "切换到网格布局"
+                            tooltipText: root.gridLayout ? qsTr("切换到列表布局") : qsTr("切换到网格布局")
                             onClicked: root.gridLayout = !root.gridLayout
                         }
 
                         ActionButton {
-                            text: "使用当前文件夹"
+                            text: qsTr("使用当前文件夹")
                             iconName: "check"
                             onClicked: {
                                 root.folderSelected(root.currentPath);
@@ -542,7 +542,7 @@ Item {
 
                                         Text {
                                             Layout.fillWidth: true
-                                            text: listItem.fileIsDir ? "文件夹" : listItem.filePath
+                                            text: listItem.fileIsDir ? qsTr("文件夹") : listItem.filePath
                                             color: Appearance.colors.colSubtext
                                             font.family: listItem.fileIsDir ? Sizes.fontFamily : Sizes.fontFamilyMono
                                             font.pixelSize: 11

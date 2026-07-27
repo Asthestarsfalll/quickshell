@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
 # Find Qt 6 basics
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network ShaderTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network ShaderTools LinguistTools)
 find_package(Qt6Keychain REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(Pipewire IMPORTED_TARGET libpipewire-0.3 REQUIRED)
@@ -40,3 +40,4 @@ add_subdirectory(plugin/audio)
 add_subdirectory(plugin/media)
 add_subdirectory(plugin/keyboard)
 add_subdirectory(plugin/m3shapes)
+add_subdirectory(plugin/i18n)

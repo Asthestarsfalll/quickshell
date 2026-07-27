@@ -14,14 +14,14 @@ Item {
     signal requestHideKeystone()
 
     property var toolsModel: [
-        { icon: "colorize",         tip: "取色器" },
-        { icon: "videocam",         tip: "录屏" },        
-        { icon: "gif",              tip: "录制 GIF" },    
-        { icon: "crop_free",        tip: "普通截屏" },
-        { icon: "height",           tip: "截长屏" },
-        { icon: "document_scanner", tip: "OCR 识别" },
-        { icon: "mic",              tip: "录麦克风" },
-        { icon: "speaker",          tip: "录电脑声音" }
+        { icon: "colorize",         tip: qsTr("取色器") },
+        { icon: "videocam",         tip: qsTr("录屏") },
+        { icon: "gif",              tip: qsTr("录制 GIF") },
+        { icon: "crop_free",        tip: qsTr("普通截屏") },
+        { icon: "height",           tip: qsTr("截长屏") },
+        { icon: "document_scanner", tip: qsTr("OCR 识别") },
+        { icon: "mic",              tip: qsTr("录麦克风") },
+        { icon: "speaker",          tip: qsTr("录电脑声音") }
     ]
 
     property int selectedIndex: 0
@@ -46,7 +46,7 @@ Item {
     Keys.onEnterPressed: triggerSelected()
 
     function triggerSelected() {
-        console.log("触发工具: " + toolsModel[selectedIndex].tip)
+        console.log(qsTr("触发工具: ") + toolsModel[selectedIndex].tip)
 
         toolsRoot.requestHideKeystone()
         
@@ -63,7 +63,7 @@ Item {
         } else if (selectedIndex === 7) {
             toolsBackend.startAudio("system")
         } else {
-            console.log("该工具的后端尚未实现！")
+            console.log(qsTr("该工具的后端尚未实现！"))
         }
     }
 

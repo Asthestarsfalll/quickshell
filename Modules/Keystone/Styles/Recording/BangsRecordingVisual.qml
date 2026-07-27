@@ -127,7 +127,7 @@ Item {
             hoverEnabled: true
             scale: down ? 0.9 : (hovered ? 1.04 : 1)
 
-            Accessible.name: "停止录制"
+            Accessible.name: qsTr("停止录制")
             Accessible.role: Accessible.Button
 
             onClicked: root.stopRequested()
@@ -171,7 +171,7 @@ Item {
 
             StyledToolTip {
                 extraVisibleCondition: closeButton.hovered && closeButton.enabled
-                text: "停止录制"
+                text: qsTr("停止录制")
             }
         }
 
@@ -302,7 +302,7 @@ Item {
 
             Text {
                 anchors.fill: parent
-                text: "正在处理"
+                text: qsTr("正在处理")
                 color: Appearance.colors.colOnLayer0
                 font {
                     family: "LXGW WenKai GB Screen"

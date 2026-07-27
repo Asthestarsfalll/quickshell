@@ -29,7 +29,7 @@ Rectangle {
 
         // 中间正文
         Text {
-            text: "休息一下，\n马上回来。"
+            text: qsTr("休息一下，\n马上回来。")
             color: Appearance.colors.colOnSurface
             font.family: Sizes.fontFamily
             font.pixelSize: 26

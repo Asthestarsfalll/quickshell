@@ -268,7 +268,7 @@ FocusScope {
                     property bool animateOnNextShow: true
 
                     anchors.centerIn: parent
-                    text: root.busy ? "Loading..." : "Enter your password"
+                    text: root.busy ? qsTr("正在加载…") : qsTr("输入密码")
                     color: root.busy ? Appearance.colors.colSecondary : Appearance.colors.colOutline
                     font.family: Sizes.fontFamilyMono
                     font.pixelSize: 17

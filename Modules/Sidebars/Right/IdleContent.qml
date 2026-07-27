@@ -10,7 +10,7 @@ import qs.Widgets.common
 WidgetPanel {
     id: panelRoot
 
-    title: "空闲管理"
+    title: qsTr("空闲管理")
     icon: "schedule"
     showBackButton: true
     backAction: () => WidgetState.qsView = "settings"
@@ -23,11 +23,11 @@ WidgetPanel {
     function formatTimeout(seconds) {
         const value = Math.max(0, Number(seconds || 0));
         if (value < 60)
-            return Math.round(value) + " 秒";
+            return Math.round(value) + qsTr(" 秒");
         const minutes = value / 60;
         return (Math.abs(minutes - Math.round(minutes)) < 0.001
             ? Math.round(minutes)
-            : minutes.toFixed(1)) + " 分钟";
+            : minutes.toFixed(1)) + qsTr(" 分钟");
     }
 
     function timeoutOptions(currentSeconds) {
@@ -49,9 +49,9 @@ WidgetPanel {
 
     function policySummary() {
         if (!IdleService.policyEnabled)
-            return "已暂停";
+            return qsTr("已暂停");
         const enabledCount = IdleService.stages.filter(stage => stage.enabled).length;
-        return enabledCount + " 项开启";
+        return enabledCount + qsTr(" 项开启");
     }
 
     onIsActiveChanged: {
@@ -107,14 +107,14 @@ WidgetPanel {
                     SettingsRow {
                         Layout.fillWidth: true
                         iconName: "coffee"
-                        title: "保持唤醒"
+                        title: qsTr("保持唤醒")
                         highlighted: IdleService.inhibited
 
                         trailing: StyledSwitch {
                             scale: 0.78
                             checked: IdleService.inhibited
                             enabled: !IdleService.busy
-                            Accessible.name: "保持唤醒"
+                            Accessible.name: qsTr("保持唤醒")
                             onToggled: IdleService.setInhibited(checked)
                         }
                     }
@@ -122,7 +122,7 @@ WidgetPanel {
                     SettingsRow {
                         Layout.fillWidth: true
                         iconName: "schedule"
-                        title: "自动空闲"
+                        title: qsTr("自动空闲")
                         supportingText: panelRoot.policySummary()
                         highlighted: IdleService.policyEnabled
 
@@ -130,7 +130,7 @@ WidgetPanel {
                             scale: 0.78
                             checked: IdleService.policyEnabled
                             enabled: IdleService.policyReady
-                            Accessible.name: "自动空闲"
+                            Accessible.name: qsTr("自动空闲")
                             onToggled: IdleService.setPolicyEnabled(checked)
                         }
                     }
@@ -138,12 +138,12 @@ WidgetPanel {
 
                 SettingsSection {
                     Layout.fillWidth: true
-                    title: "空闲动作"
+                    title: qsTr("空闲动作")
 
                     StageEditor {
                         Layout.fillWidth: true
                         stageName: "dim"
-                        stageTitle: "调暗屏幕"
+                        stageTitle: qsTr("调暗屏幕")
                         stageIcon: "brightness_4"
                         showDimFraction: true
                     }
@@ -151,21 +151,21 @@ WidgetPanel {
                     StageEditor {
                         Layout.fillWidth: true
                         stageName: "lock"
-                        stageTitle: "锁定会话"
+                        stageTitle: qsTr("锁定会话")
                         stageIcon: "lock"
                     }
 
                     StageEditor {
                         Layout.fillWidth: true
                         stageName: "displayOff"
-                        stageTitle: "关闭显示器"
+                        stageTitle: qsTr("关闭显示器")
                         stageIcon: "display_settings"
                     }
 
                     StageEditor {
                         Layout.fillWidth: true
                         stageName: "suspend"
-                        stageTitle: "挂起系统"
+                        stageTitle: qsTr("挂起系统")
                         stageIcon: "mode_standby"
                     }
                 }
@@ -204,8 +204,8 @@ WidgetPanel {
                 title: stageEditor.stageTitle
                 supportingText: (stageEditor.stageEnabled
                     ? panelRoot.formatTimeout(stageEditor.stageTimeout)
-                    : "已关闭")
-                    + (panelRoot.stageActive(stageEditor.stageName) ? " · 已触发" : "")
+                    : qsTr("已关闭"))
+                    + (panelRoot.stageActive(stageEditor.stageName) ? qsTr(" · 已触发") : "")
                 interactive: true
                 highlighted: stageEditor.stageEnabled && IdleService.policyEnabled
                 onClicked: panelRoot.expandedStage = stageEditor.expanded
@@ -270,7 +270,7 @@ WidgetPanel {
 
                         Text {
                             Layout.fillWidth: true
-                            text: "等待时间"
+                            text: qsTr("等待时间")
                             color: Appearance.colors.colOnLayer2
                             font.family: Sizes.fontFamily
                             font.pixelSize: 13
@@ -286,7 +286,7 @@ WidgetPanel {
                             maxVisibleItems: 5
                             popupBoundsItem: panelRoot
                             closeOnAccept: true
-                            Accessible.name: stageEditor.stageTitle + "等待时间"
+                            Accessible.name: stageEditor.stageTitle + qsTr("等待时间")
                             onAccepted: value => IdleService.configureStage(
                                 stageEditor.stageName,
                                 stageEditor.stageEnabled,
@@ -302,7 +302,7 @@ WidgetPanel {
                         spacing: Appearance.spacing.small
 
                         Text {
-                            text: "调暗比例"
+                            text: qsTr("调暗比例")
                             color: Appearance.colors.colOnLayer2
                             font.family: Sizes.fontFamily
                             font.pixelSize: 13
@@ -321,7 +321,7 @@ WidgetPanel {
                             showTooltipOnHover: true
                             usePercentTooltip: false
                             tooltipContent: Math.round(value * 100) + "%"
-                            Accessible.name: "屏幕调暗比例"
+                            Accessible.name: qsTr("屏幕调暗比例")
 
                             Binding {
                                 target: dimFractionSlider
@@ -340,13 +340,13 @@ WidgetPanel {
                     SettingsRow {
                         Layout.fillWidth: true
                         iconName: "coffee"
-                        title: "保持唤醒时跳过"
+                        title: qsTr("保持唤醒时跳过")
 
                         trailing: StyledSwitch {
                             scale: 0.68
                             checked: stageEditor.respectInhibitors
                             enabled: IdleService.policyReady
-                            Accessible.name: stageEditor.stageTitle + "遵循保持唤醒"
+                            Accessible.name: stageEditor.stageTitle + qsTr("遵循保持唤醒")
                             onToggled: IdleService.configureStage(
                                 stageEditor.stageName,
                                 stageEditor.stageEnabled,

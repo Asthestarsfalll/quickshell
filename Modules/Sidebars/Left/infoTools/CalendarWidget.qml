@@ -55,7 +55,7 @@ Item {
 
             HeaderButton {
                 buttonText: `${root.monthShift !== 0 ? "• " : ""}${root.viewingDate.toLocaleDateString(Qt.locale(), "MMMM yyyy")}`
-                tooltipText: root.monthShift === 0 ? "" : "Jump to current month"
+                tooltipText: root.monthShift === 0 ? "" : qsTr("跳转到当前月份")
                 onClicked: root.monthShift = 0
             }
 
@@ -66,14 +66,14 @@ Item {
             HeaderButton {
                 forceCircle: true
                 iconName: "chevron_left"
-                accessibleName: "Previous month"
+                accessibleName: qsTr("上个月")
                 onClicked: root.monthShift -= 1
             }
 
             HeaderButton {
                 forceCircle: true
                 iconName: "chevron_right"
-                accessibleName: "Next month"
+                accessibleName: qsTr("下个月")
                 onClicked: root.monthShift += 1
             }
         }

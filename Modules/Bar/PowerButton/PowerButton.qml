@@ -31,6 +31,6 @@ Rectangle {
 
     PopupToolTip {
         extraVisibleCondition: mouseArea.containsMouse
-        text: "电源菜单"
+        text: qsTr("电源菜单")
     }
 }

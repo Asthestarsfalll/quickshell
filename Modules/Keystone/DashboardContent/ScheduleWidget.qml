@@ -9,7 +9,10 @@ Item {
 
     property var scheduleItems: []
     property var timeHeaders: []
-    property var headers: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    property var headers: [
+        qsTr("周一"), qsTr("周二"), qsTr("周三"), qsTr("周四"),
+        qsTr("周五"), qsTr("周六"), qsTr("周日")
+    ]
 
     property int timeW: 45      
     property int cellW: 55      
@@ -49,7 +52,7 @@ Item {
                     root.timeHeaders = parsed.timeHeaders || [];
                     root.scheduleItems = parsed.scheduleItems || [];
                 }
-            } catch(e) { console.log("课表 JSON 解析错误:", e); }
+            } catch(e) { console.log(qsTr("课表 JSON 解析错误:"), e); }
             root.jsonBuffer = "";
         }
     }
@@ -63,7 +66,7 @@ Item {
 
     Rectangle {
         x: 0; y: 0; width: root.timeW; height: root.headerH; color: "transparent"
-        Text { anchors.centerIn: parent; text: "Time"; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
+        Text { anchors.centerIn: parent; text: qsTr("时间"); color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { scheduleLoader.running = false; scheduleLoader.running = true; } }
     }
 

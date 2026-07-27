@@ -10,7 +10,7 @@ import qs.Widgets.common
 WidgetPanel {
     id: root
 
-    title: "网络"
+    title: qsTr("网络")
     icon: "wifi"
     showBackButton: true
     backAction: () => WidgetState.qsView = "settings"
@@ -33,13 +33,13 @@ WidgetPanel {
         if (NetworkService.lastError.length > 0)
             return NetworkService.lastError;
         if (!NetworkService.available)
-            return "NetworkManager 当前不可用";
+            return qsTr("NetworkManager 当前不可用");
         if (!NetworkService.wifiAvailable)
-            return "未检测到 Wi-Fi 设备";
+            return qsTr("未检测到 Wi-Fi 设备");
         if (!NetworkService.wifiHardwareEnabled)
-            return "Wi-Fi 已被硬件开关或 rfkill 阻止";
+            return qsTr("Wi-Fi 已被硬件开关或 rfkill 阻止");
         if (!NetworkService.wifiEnabled)
-            return "Wi-Fi 已关闭";
+            return qsTr("Wi-Fi 已关闭");
         return "";
     }
 
@@ -86,14 +86,14 @@ WidgetPanel {
 
     function connectivityText() {
         if (NetworkService.captivePortal)
-            return "需要登录网络门户";
+            return qsTr("需要登录网络门户");
         if (NetworkService.limitedConnectivity)
-            return "网络连接受限";
+            return qsTr("网络连接受限");
         if (NetworkService.internetAvailable)
-            return "互联网可用";
+            return qsTr("互联网可用");
         if (NetworkService.connected)
-            return "已连接，无法确认互联网状态";
-        return "当前未连接";
+            return qsTr("已连接，无法确认互联网状态");
+        return qsTr("当前未连接");
     }
 
     onIsActiveChanged: updateScanLease()
@@ -148,7 +148,7 @@ WidgetPanel {
             Layout.preferredHeight: 40
             enabled: root.networkUsable && !root.refreshLoading
             hoverEnabled: true
-            Accessible.name: "刷新网络列表"
+            Accessible.name: qsTr("刷新网络列表")
             onClicked: root.requestRefresh()
 
             background: Rectangle {
@@ -181,7 +181,7 @@ WidgetPanel {
                 && NetworkService.wifiAvailable
                 && NetworkService.wifiHardwareEnabled
                 && !NetworkService.busy
-            Accessible.name: "Wi-Fi 开关"
+            Accessible.name: qsTr("Wi-Fi 开关")
             onToggled: NetworkService.setWifiEnabled(checked)
         }
     }
@@ -212,7 +212,7 @@ WidgetPanel {
                     : NetworkService.wifiConnected ? "wifi" : "wifi_off"
                 title: NetworkService.activeNetwork
                     ? NetworkService.activeConnection
-                    : "未连接"
+                    : qsTr("未连接")
                 supportingText: root.connectivityText()
                 highlighted: NetworkService.connected
 
@@ -242,7 +242,7 @@ WidgetPanel {
             DialogActionButton {
                 Layout.fillWidth: true
                 visible: NetworkService.captivePortal
-                text: "打开网络门户"
+                text: qsTr("打开网络门户")
                 filled: true
                 onClicked: NetworkService.openPublicWifiPortal()
             }
@@ -271,8 +271,8 @@ WidgetPanel {
                 SettingsSection {
                     Layout.fillWidth: true
                     visible: NetworkService.savedWifiNetworks.length > 0
-                    title: "已保存网络"
-                    supportingText: NetworkService.savedWifiNetworks.length + " 个网络"
+                    title: qsTr("已保存网络")
+                    supportingText: NetworkService.savedWifiNetworks.length + qsTr(" 个网络")
 
                     Repeater {
                         model: NetworkService.savedWifiNetworks
@@ -288,10 +288,10 @@ WidgetPanel {
 
                 SettingsSection {
                     Layout.fillWidth: true
-                    title: "可选网络"
+                    title: qsTr("可选网络")
                     supportingText: root.initialLoading
-                        ? "正在获取扫描结果"
-                        : NetworkService.availableWifiNetworks.length + " 个网络"
+                        ? qsTr("正在获取扫描结果")
+                        : NetworkService.availableWifiNetworks.length + qsTr(" 个网络")
 
                     Item {
                         Layout.fillWidth: true
@@ -310,12 +310,12 @@ WidgetPanel {
                             MaterialLoadingIndicator {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 running: root.initialLoading
-                                accessibleName: "正在查找可选网络"
+                                accessibleName: qsTr("正在查找可选网络")
                             }
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: "正在查找可选网络"
+                                text: qsTr("正在查找可选网络")
                                 color: Appearance.colors.colOnLayer1
                                 font.family: Sizes.fontFamily
                                 font.pixelSize: 12
@@ -358,7 +358,7 @@ WidgetPanel {
                             && !root.refreshLoading
                             && NetworkService.availableWifiNetworks.length === 0
                         iconName: "search_off"
-                        title: "未发现可选网络"
+                        title: qsTr("未发现可选网络")
                     }
                 }
 
@@ -387,7 +387,7 @@ WidgetPanel {
         }
 
         header: Text {
-            text: "遗忘网络"
+            text: qsTr("遗忘网络")
             color: Appearance.colors.colOnLayer2
             font.family: Sizes.fontFamily
             font.pixelSize: 18
@@ -399,7 +399,7 @@ WidgetPanel {
 
         contentItem: Text {
             text: root.pendingForgetNetwork
-                ? "将删除“" + root.pendingForgetNetwork.ssid + "”的已保存连接。"
+                ? qsTr("将删除“") + root.pendingForgetNetwork.ssid + qsTr("”的已保存连接。")
                 : ""
             color: Appearance.colors.colOnLayer1
             font.family: Sizes.fontFamily
@@ -412,14 +412,14 @@ WidgetPanel {
 
             Item { Layout.fillWidth: true }
             DialogActionButton {
-                text: "取消"
+                text: qsTr("取消")
                 onClicked: {
                     forgetDialog.close();
                     root.pendingForgetNetwork = null;
                 }
             }
             DialogActionButton {
-                text: "遗忘"
+                text: qsTr("遗忘")
                 filled: true
                 onClicked: {
                     const target = root.pendingForgetNetwork;
@@ -480,9 +480,9 @@ WidgetPanel {
                     : wifiNetwork.strength > 25 ? "network_wifi_2_bar" : "signal_wifi_0_bar"
             title: wifiNetwork.ssid
             supportingText: networkActive
-                ? "已连接 · " + wifiNetwork.strength + "%"
-                : (networkKnown ? "已保存 · " : "")
-                    + (networkSecure ? wifiNetwork.security : "开放网络")
+                ? qsTr("已连接 · ") + wifiNetwork.strength + "%"
+                : (networkKnown ? qsTr("已保存 · ") : "")
+                    + (networkSecure ? wifiNetwork.security : qsTr("开放网络"))
                     + " · " + wifiNetwork.strength + "%"
             interactive: !NetworkService.busy && !networkAskingPassword
             highlighted: networkActive
@@ -518,7 +518,7 @@ WidgetPanel {
                     implicitWidth: 36
                     implicitHeight: 36
                     enabled: !NetworkService.busy
-                    Accessible.name: "网络操作"
+                    Accessible.name: qsTr("网络操作")
                     onClicked: networkMenu.open()
 
                     background: Rectangle {
@@ -542,11 +542,11 @@ WidgetPanel {
 
                         MenuItem {
                             visible: itemRoot.networkActive
-                            text: "断开连接"
+                            text: qsTr("断开连接")
                             onTriggered: NetworkService.disconnectNetwork(itemRoot.wifiNetwork)
                         }
                         MenuItem {
-                            text: "遗忘网络"
+                            text: qsTr("遗忘网络")
                             onTriggered: {
                                 root.pendingForgetNetwork = itemRoot.wifiNetwork;
                                 forgetDialog.open();
@@ -591,7 +591,7 @@ WidgetPanel {
                     MaterialTextField {
                         id: passwordField
                         Layout.fillWidth: true
-                        placeholderText: "网络密码"
+                        placeholderText: qsTr("网络密码")
                         echoMode: itemRoot.showPassword ? TextInput.Normal : TextInput.Password
                         inputMethodHints: Qt.ImhSensitiveData
                         enabled: !NetworkService.busy
@@ -601,7 +601,7 @@ WidgetPanel {
                     ToolButton {
                         Layout.preferredWidth: 40
                         Layout.preferredHeight: 40
-                        Accessible.name: itemRoot.showPassword ? "隐藏密码" : "显示密码"
+                        Accessible.name: itemRoot.showPassword ? qsTr("隐藏密码") : qsTr("显示密码")
                         onClicked: itemRoot.showPassword = !itemRoot.showPassword
 
                         contentItem: MaterialSymbol {
@@ -618,11 +618,11 @@ WidgetPanel {
 
                     Item { Layout.fillWidth: true }
                     DialogActionButton {
-                        text: "取消"
+                        text: qsTr("取消")
                         onClicked: NetworkService.cancelPasswordRequest(itemRoot.wifiNetwork)
                     }
                     DialogActionButton {
-                        text: "连接"
+                        text: qsTr("连接")
                         filled: true
                         onClicked: itemRoot.submitPassword()
                     }

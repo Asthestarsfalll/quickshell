@@ -11,7 +11,7 @@ import qs.Widgets.common
 WidgetPanel {
     id: root
 
-    title: "声音"
+    title: qsTr("声音")
     icon: "volume_up"
     showBackButton: true
     backAction: () => WidgetState.qsView = "settings"
@@ -23,9 +23,9 @@ WidgetPanel {
         if (Volume.lastError.length > 0)
             return Volume.lastError;
         if (!Volume.ready)
-            return "正在连接 PipeWire 音频服务";
+            return qsTr("正在连接 PipeWire 音频服务");
         if (Volume.outputDevices.length === 0 && !Volume.outputAvailable)
-            return "未检测到可用的声音输出设备";
+            return qsTr("未检测到可用的声音输出设备");
         return "";
     }
 
@@ -38,7 +38,7 @@ WidgetPanel {
         Layout.preferredWidth: 40
         Layout.preferredHeight: 40
         hoverEnabled: true
-        Accessible.name: "打开高级声音设置"
+        Accessible.name: qsTr("打开高级声音设置")
         onClicked: Volume.openMixer()
 
         background: Rectangle {
@@ -54,7 +54,7 @@ WidgetPanel {
             color: Appearance.colors.colOnLayer2
         }
 
-        StyledToolTip { text: "高级声音设置" }
+        StyledToolTip { text: qsTr("高级声音设置") }
     }
 
     ColumnLayout {
@@ -98,12 +98,12 @@ WidgetPanel {
                 SettingsSection {
                     Layout.fillWidth: true
                     visible: Volume.ready && (Volume.outputDevices.length > 0 || Volume.outputAvailable)
-                    title: "输出"
+                    title: qsTr("输出")
 
                     VolumeSlider {
                         Layout.fillWidth: true
                         visible: Volume.outputAvailable
-                        title: Volume.sinkName || "默认输出"
+                        title: Volume.sinkName || qsTr("默认输出")
                         iconName: Volume.nodeIconName(Volume.sink)
                         volume: Volume.sinkVolume
                         muted: Volume.sinkMuted
@@ -119,7 +119,7 @@ WidgetPanel {
 
                         Text {
                             Layout.fillWidth: true
-                            text: "输出设备"
+                            text: qsTr("输出设备")
                             color: Appearance.colors.colOnLayer1
                             font.family: Sizes.fontFamily
                             font.pixelSize: 12
@@ -132,7 +132,7 @@ WidgetPanel {
                             Layout.preferredWidth: 40
                             Layout.preferredHeight: 40
                             hoverEnabled: true
-                            Accessible.name: root.outputDevicesExpanded ? "收起输出设备" : "展开输出设备"
+                            Accessible.name: root.outputDevicesExpanded ? qsTr("收起输出设备") : qsTr("展开输出设备")
                             onClicked: root.outputDevicesExpanded = !root.outputDevicesExpanded
 
                             background: Rectangle {
@@ -156,7 +156,7 @@ WidgetPanel {
                             }
 
                             StyledToolTip {
-                                text: root.outputDevicesExpanded ? "收起输出设备" : "展开输出设备"
+                                text: root.outputDevicesExpanded ? qsTr("收起输出设备") : qsTr("展开输出设备")
                             }
                         }
                     }
@@ -206,7 +206,7 @@ WidgetPanel {
                 SettingsSection {
                     Layout.fillWidth: true
                     visible: Volume.ready && Volume.outputAvailable
-                    title: "应用音量"
+                    title: qsTr("应用音量")
 
                     StyledListView {
                         id: playbackStreamList
@@ -246,7 +246,7 @@ WidgetPanel {
                         Layout.fillWidth: true
                         visible: Volume.playbackStreams.length === 0
                         iconName: "music_off"
-                        title: "没有活动的应用音频"
+                        title: qsTr("没有活动的应用音频")
                     }
                 }
 

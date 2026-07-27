@@ -11,7 +11,7 @@ import qs.Widgets.common
 WidgetPanel {
     id: root
 
-    title: "麦克风"
+    title: qsTr("麦克风")
     icon: "mic"
     showBackButton: true
     backAction: () => WidgetState.qsView = "settings"
@@ -23,9 +23,9 @@ WidgetPanel {
         if (Volume.lastError.length > 0)
             return Volume.lastError;
         if (!Volume.ready)
-            return "正在连接 PipeWire 音频服务";
+            return qsTr("正在连接 PipeWire 音频服务");
         if (Volume.inputDevices.length === 0 && !Volume.inputAvailable)
-            return "未检测到可用的麦克风设备";
+            return qsTr("未检测到可用的麦克风设备");
         return "";
     }
 
@@ -38,7 +38,7 @@ WidgetPanel {
         Layout.preferredWidth: 40
         Layout.preferredHeight: 40
         hoverEnabled: true
-        Accessible.name: "打开高级声音设置"
+        Accessible.name: qsTr("打开高级声音设置")
         onClicked: Volume.openMixer()
 
         background: Rectangle {
@@ -54,7 +54,7 @@ WidgetPanel {
             color: Appearance.colors.colOnLayer2
         }
 
-        StyledToolTip { text: "高级声音设置" }
+        StyledToolTip { text: qsTr("高级声音设置") }
     }
 
     ColumnLayout {
@@ -98,12 +98,12 @@ WidgetPanel {
                 SettingsSection {
                     Layout.fillWidth: true
                     visible: Volume.ready && (Volume.inputDevices.length > 0 || Volume.inputAvailable)
-                    title: "输入"
+                    title: qsTr("输入")
 
                     VolumeSlider {
                         Layout.fillWidth: true
                         visible: Volume.inputAvailable
-                        title: Volume.sourceName || "默认输入"
+                        title: Volume.sourceName || qsTr("默认输入")
                         iconName: "mic"
                         volume: Volume.sourceVolume
                         muted: Volume.sourceMuted
@@ -119,7 +119,7 @@ WidgetPanel {
 
                         Text {
                             Layout.fillWidth: true
-                            text: "输入设备"
+                            text: qsTr("输入设备")
                             color: Appearance.colors.colOnLayer1
                             font.family: Sizes.fontFamily
                             font.pixelSize: 12
@@ -132,7 +132,7 @@ WidgetPanel {
                             Layout.preferredWidth: 40
                             Layout.preferredHeight: 40
                             hoverEnabled: true
-                            Accessible.name: root.inputDevicesExpanded ? "收起输入设备" : "展开输入设备"
+                            Accessible.name: root.inputDevicesExpanded ? qsTr("收起输入设备") : qsTr("展开输入设备")
                             onClicked: root.inputDevicesExpanded = !root.inputDevicesExpanded
 
                             background: Rectangle {
@@ -156,7 +156,7 @@ WidgetPanel {
                             }
 
                             StyledToolTip {
-                                text: root.inputDevicesExpanded ? "收起输入设备" : "展开输入设备"
+                                text: root.inputDevicesExpanded ? qsTr("收起输入设备") : qsTr("展开输入设备")
                             }
                         }
                     }

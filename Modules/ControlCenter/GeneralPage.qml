@@ -312,43 +312,41 @@ StyledFlickable {
         spacing: 30
 
         Section {
-            title: "提示音"
+            title: qsTr("提示音")
             iconName: "notification_sound"
 
             ToggleSettingRow {
-                title: "番茄钟"
-                description: "专注与休息阶段切换时播放系统提示音"
+                title: qsTr("番茄钟")
+                description: qsTr("专注与休息阶段切换时播放系统提示音")
                 checked: PersonalizationConfig.pomodoroSoundEnabled
                 onToggled: checked => PersonalizationConfig.setPomodoroSoundEnabled(checked)
             }
         }
 
         Section {
-            title: "侧边栏"
+            title: qsTr("侧边栏")
             iconName: "side_navigation"
 
             ToggleSettingRow {
-                title: "保持侧边栏已加载"
-                description: "关闭侧边栏后保留其界面内容，使再次打开更流畅，但会增加内存占用。后台数据采集和动画仍会暂停。"
+                title: qsTr("保持侧边栏已加载")
+                description: qsTr("再次打开更快，但会增加内存占用")
                 checked: PersonalizationConfig.keepSidebarsLoaded
                 onToggled: checked => PersonalizationConfig.setKeepSidebarsLoaded(checked)
             }
         }
 
         Section {
-            title: "滚动交互"
+            title: qsTr("滚动交互")
             iconName: "swipe"
 
             ToggleSettingRow {
-                title: "平滑滚轮"
-                description: "列表与滚动容器使用统一的滚轮插值"
+                title: qsTr("平滑滚轮")
                 checked: PersonalizationConfig.scrollSmoothEnabled
                 onToggled: checked => PersonalizationConfig.setScrollSmoothEnabled(checked)
             }
 
             SliderSettingRow {
-                title: "鼠标滚轮速度"
-                description: "适用于滚轮步进输入"
+                title: qsTr("鼠标滚轮速度")
                 from: 10
                 to: 240
                 stepSize: 5
@@ -357,8 +355,7 @@ StyledFlickable {
             }
 
             SliderSettingRow {
-                title: "触摸板滚动速度"
-                description: "适用于连续小幅滚动输入"
+                title: qsTr("触摸板滚动速度")
                 from: 10
                 to: 300
                 stepSize: 5
@@ -367,8 +364,8 @@ StyledFlickable {
             }
 
             SliderSettingRow {
-                title: "滚轮识别阈值"
-                description: "angleDelta 大于该值时按鼠标滚轮处理"
+                title: qsTr("滚轮识别阈值")
+                description: qsTr("angleDelta 大于该值时按鼠标滚轮处理")
                 from: 60
                 to: 240
                 stepSize: 10

@@ -54,29 +54,29 @@ Item {
     }
 
     function updatedText() {
-        if (WeatherPlugin.loading) return "正在刷新"
+        if (WeatherPlugin.loading) return qsTr("正在刷新")
         if (WeatherPlugin.status === "fresh" || WeatherPlugin.status === "partial") {
             const date = new Date(WeatherPlugin.lastUpdated)
-            return "更新于 " + Qt.formatDateTime(date, "hh:mm")
+            return qsTr("更新于 ") + Qt.formatDateTime(date, "hh:mm")
         }
-        if (WeatherPlugin.status === "stale") return "数据较旧"
-        if (WeatherPlugin.status === "error") return "更新失败"
-        return "待更新"
+        if (WeatherPlugin.status === "stale") return qsTr("数据较旧")
+        if (WeatherPlugin.status === "error") return qsTr("更新失败")
+        return qsTr("待更新")
     }
 
     function dayLabel(index, epoch) {
-        if (index === 0) return "Today"
-        if (index === 1) return "Tomorrow"
+        if (index === 0) return qsTr("今天")
+        if (index === 1) return qsTr("明天")
         return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "ddd") : "--"
     }
 
     function uvLevel(value) {
         if (!validNumber(value)) return "--"
-        if (value < 3) return "低"
-        if (value < 6) return "中"
-        if (value < 8) return "高"
-        if (value < 11) return "很高"
-        return "极高"
+        if (value < 3) return qsTr("低")
+        if (value < 6) return qsTr("中")
+        if (value < 8) return qsTr("高")
+        if (value < 11) return qsTr("很高")
+        return qsTr("极高")
     }
 
     function uvIndexBucket(value) {
@@ -134,10 +134,10 @@ Item {
         const rain = validNumber(half.rainMm) ? half.rainMm : 0
         const hour = currentHour()
         const isDay = hour >= 5 && hour < 17
-        if (snow > 0 && rain <= 0) return isDay ? "白天降雪总量" : "夜间降雪总量"
-        if (rain > 0 && snow <= 0) return isDay ? "白天降雨总量" : "夜间降雨总量"
-        if (snow > 0 && rain > 0) return isDay ? "白天总降水" : "夜间总降水"
-        return isDay ? "白天总降水" : "夜间总降水"
+        if (snow > 0 && rain <= 0) return isDay ? qsTr("白天降雪总量") : qsTr("夜间降雪总量")
+        if (rain > 0 && snow <= 0) return isDay ? qsTr("白天降雨总量") : qsTr("夜间降雨总量")
+        if (snow > 0 && rain > 0) return isDay ? qsTr("白天总降水") : qsTr("夜间总降水")
+        return isDay ? qsTr("白天总降水") : qsTr("夜间总降水")
     }
 
     function humidityWaveAccent() {
@@ -147,12 +147,12 @@ Item {
     function visibilityDescription(meters) {
         if (!validNumber(meters)) return "--"
         const km = meters / 1000
-        if (km >= 16) return "Crystal clear"
-        if (km >= 10) return "Clear"
-        if (km >= 6) return "Good"
-        if (km >= 3) return "Hazy"
-        if (km >= 1) return "Low"
-        return "Dense"
+        if (km >= 16) return qsTr("极清晰")
+        if (km >= 10) return qsTr("清晰")
+        if (km >= 6) return qsTr("良好")
+        if (km >= 3) return qsTr("朦胧")
+        if (km >= 1) return qsTr("较低")
+        return qsTr("浓雾")
     }
 
     function aqiThresholds() {
@@ -193,7 +193,7 @@ Item {
     }
 
     function aqiLevelName(level) {
-        const names = ["优", "良", "差", "不健康", "很不健康", "危险"]
+        const names = [qsTr("优"), qsTr("良"), qsTr("差"), qsTr("不健康"), qsTr("很不健康"), qsTr("危险")]
         if (level < 0 || level >= names.length) return "--"
         return names[level]
     }
@@ -321,7 +321,7 @@ Item {
                         }
 
                         Text {
-                            text: WeatherPlugin.locationName || "Weather"
+                            text: WeatherPlugin.locationName || qsTr("天气")
                             color: root.headerInk
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 19
@@ -445,7 +445,7 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: WeatherPlugin.currentWeatherText || "Unknown"
+                            text: WeatherPlugin.currentWeatherText || qsTr("未知")
                             color: Appearance.colors.colOnImage
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 26
@@ -486,7 +486,7 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: "体感温度: " + fmtTemp(WeatherPlugin.currentFeelsLikeC)
+                            text: qsTr("体感温度: ") + fmtTemp(WeatherPlugin.currentFeelsLikeC)
                             color: Appearance.colors.colOnImage
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
@@ -496,8 +496,8 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: "最高 " + fmtTemp(today().temperatureMaxC)
-                                  + " · 最低 " + fmtTemp(today().temperatureMinC)
+                            text: qsTr("最高 ") + fmtTemp(today().temperatureMaxC)
+                                  + qsTr(" · 最低 ") + fmtTemp(today().temperatureMinC)
                             color: Appearance.colors.colOnImage
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
@@ -560,7 +560,7 @@ Item {
                             anchors.fill: parent
                             directionDegrees: WeatherPlugin.currentWindDirection
                             valueText: fmtSpeed(WeatherPlugin.currentWindSpeedMs)
-                            detailText: "阵风 " + fmtSpeed(WeatherPlugin.currentWindGustsMs) + " · " + directionLabel(WeatherPlugin.currentWindDirection)
+                            detailText: qsTr("阵风 ") + fmtSpeed(WeatherPlugin.currentWindGustsMs) + " · " + directionLabel(WeatherPlugin.currentWindDirection)
                             accent: windAccent(WeatherPlugin.currentWindSpeedMs)
                             animationEnabled: true
                             animationActive: windReveal.contentAnimationActive

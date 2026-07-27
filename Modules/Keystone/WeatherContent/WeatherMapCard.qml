@@ -67,17 +67,17 @@ Rectangle {
     Material.accent: Appearance.colors.colPrimary
 
     Accessible.name: selectedMode === "temp"
-        ? "Temperature weather map"
+        ? qsTr("温度天气地图")
         : selectedMode === "rain"
-            ? "Current precipitation weather map"
+            ? qsTr("当前降水天气地图")
             : selectedMode === "clouds"
-                ? "Cloud cover weather map"
+                ? qsTr("云量天气地图")
                 : selectedMode === "wind"
-                    ? "Wind speed weather map"
+                    ? qsTr("风速天气地图")
                     : selectedMode === "pressure"
-                        ? "Atmospheric pressure weather map"
-                        : "Weather map"
-    Accessible.description: "Drag to move the map, or use the mouse wheel to zoom"
+                        ? qsTr("大气压天气地图")
+                        : qsTr("天气地图")
+    Accessible.description: qsTr("拖动地图以移动，或使用鼠标滚轮缩放")
 
     function clampLatitude(value) {
         return Math.max(
@@ -136,15 +136,15 @@ Rectangle {
     function mapStatusText() {
         switch (WeatherMapPlugin.mapTilerStatus) {
         case "not_configured":
-            return "MapTiler 底图未配置"
+            return qsTr("MapTiler 底图未配置")
         case "keychain_error":
-            return "无法访问 MapTiler 密钥"
+            return qsTr("无法访问 MapTiler 密钥")
         case "invalid_key":
-            return "MapTiler API key 无效"
+            return qsTr("MapTiler API key 无效")
         case "rate_limited":
-            return "MapTiler 请求频率受限"
+            return qsTr("MapTiler 请求频率受限")
         case "network_error":
-            return "底图网络不可用，正在使用缓存"
+            return qsTr("底图网络不可用，正在使用缓存")
         default:
             return WeatherMapPlugin.errorMessage
         }
@@ -577,7 +577,7 @@ Rectangle {
                 enabled: root.hasCoordinates
                 hoverEnabled: true
                 focusPolicy: Qt.StrongFocus
-                Accessible.name: "Back to current location"
+                Accessible.name: qsTr("返回当前位置")
                 onClicked: root.recenter()
 
                 background: FrostedMapSurface {
@@ -620,7 +620,7 @@ Rectangle {
 
                 StyledToolTip {
                     extraVisibleCondition: recenterButton.hovered
-                    text: "Back to current location"
+                    text: qsTr("返回当前位置")
                 }
             }
 
@@ -680,7 +680,7 @@ Rectangle {
                     }
 
                     Text {
-                        text: "Waiting for weather location"
+                        text: qsTr("正在等待天气位置")
                         color: Appearance.colors.colOnSurfaceVariant
                         font.family: Sizes.fontFamily
                         font.pixelSize: 11

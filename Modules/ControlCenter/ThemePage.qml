@@ -320,7 +320,7 @@ StyledFlickable {
                 textRole: selectRow.textRole
                 valueRole: selectRow.valueRole
                 maxVisibleItems: 6
-                noResultText: "无匹配结果"
+                noResultText: qsTr("无匹配结果")
                 onAccepted: value => selectRow.accepted(value)
             }
         }
@@ -583,14 +583,14 @@ StyledFlickable {
             spacing: 16
 
             ThemePreviewCard {
-                title: "浅色"
+                title: qsTr("浅色")
                 mode: "light"
                 darkPreview: false
                 onClicked: ThemeService.setThemeMode("light")
             }
 
             ThemePreviewCard {
-                title: "深色"
+                title: qsTr("深色")
                 mode: "dark"
                 darkPreview: true
                 onClicked: ThemeService.setThemeMode("dark")
@@ -598,7 +598,7 @@ StyledFlickable {
         }
 
         Section {
-            title: "matugen配色方案"
+            title: qsTr("matugen配色方案")
             iconName: "colors"
 
             ColumnLayout {
@@ -624,7 +624,7 @@ StyledFlickable {
         }
 
         Section {
-            title: "光标主题"
+            title: qsTr("光标主题")
             iconName: "mouse"
 
             CursorThemeSelect {
@@ -634,45 +634,42 @@ StyledFlickable {
             }
 
             SliderSettingRow {
-                title: "光标尺寸"
-                description: "鼠标指针像素尺寸"
+                title: qsTr("光标尺寸")
                 from: 12
                 to: 128
                 stepSize: 1
-                suffix: "像素"
+                suffix: qsTr("像素")
                 value: PersonalizationConfig.cursorSize
                 onMoved: value => ThemeService.setCursorSize(Math.round(value))
             }
 
             ToggleSettingRow {
-                title: "打字时隐藏"
-                description: "按下键盘按键时隐藏光标"
+                title: qsTr("打字时隐藏")
                 checked: PersonalizationConfig.cursorHideWhenTyping
                 onToggled: checked => ThemeService.setCursorHideWhenTyping(checked)
             }
 
             SliderSettingRow {
-                title: "自动超时隐藏"
-                description: "闲置后隐藏光标，0 表示停用"
+                title: qsTr("自动超时隐藏")
+                description: qsTr("闲置后隐藏光标，0 表示停用")
                 from: 0
                 to: 5000
                 stepSize: 100
-                suffix: "毫秒"
+                suffix: qsTr("毫秒")
                 value: PersonalizationConfig.cursorHideAfterInactiveMs
                 onMoved: value => ThemeService.setCursorHideAfterInactiveMs(Math.round(value))
             }
         }
 
         Section {
-            title: "图标主题"
+            title: qsTr("图标主题")
             iconName: "interests"
 
             SearchSelectSettingRow {
-                title: "图标主题"
-                description: "桌面壳层与系统应用图标"
+                title: qsTr("图标主题")
                 options: ThemeService.availableIconThemes
                 value: PersonalizationConfig.iconTheme
-                placeholder: "选择图标主题"
+                placeholder: qsTr("选择图标主题")
                 onAccepted: value => ThemeService.setIconTheme(value)
             }
         }

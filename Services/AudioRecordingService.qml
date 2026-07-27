@@ -48,7 +48,7 @@ Singleton {
         if (!errorObject)
             return;
         const code = errorObject.code || "audio_recording_error";
-        const message = errorObject.message || "录音命令执行失败";
+        const message = errorObject.message || qsTr("录音命令执行失败");
         const key = code + "\u001f" + message + "\u001f" + root.sessionId;
         if (key === root._lastErrorKey)
             return;
@@ -58,7 +58,7 @@ Singleton {
             "notify-send",
             "-a", "Clavis Shell",
             "-u", "critical",
-            "录音失败",
+            qsTr("录音失败"),
             message
         ]);
     }
@@ -73,7 +73,7 @@ Singleton {
             if (response.schemaVersion !== root.schemaVersion) {
                 root.error = {
                     code: "unsupported_schema",
-                    message: "key audio 返回了不受支持的 JSON schema"
+                    message: qsTr("key audio 返回了不受支持的 JSON schema")
                 };
                 root.notifyError(root.error);
                 return false;
@@ -118,7 +118,7 @@ Singleton {
                     "notify-send",
                     "-a", "Clavis Shell",
                     "-u", "low",
-                    "录音已保存",
+                    qsTr("录音已保存"),
                     root.outputPath
                 ]);
             }
@@ -127,7 +127,7 @@ Singleton {
         } catch (exception) {
             root.error = {
                 code: "invalid_key_json",
-                message: "无法解析 key audio 返回的 JSON: " + exception
+                message: qsTr("无法解析 key audio 返回的 JSON: ") + exception
             };
             root.notifyError(root.error);
             return false;
@@ -223,7 +223,7 @@ Singleton {
             if (exitCode !== 0 && !root.error) {
                 root.error = {
                     code: "key_unavailable",
-                    message: "无法通过 key 查询录音状态"
+                    message: qsTr("无法通过 key 查询录音状态")
                 };
                 root.notifyError(root.error);
             }

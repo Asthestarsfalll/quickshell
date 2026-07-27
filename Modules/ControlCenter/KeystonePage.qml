@@ -111,7 +111,7 @@ StyledFlickable {
                 textRole: "label"
                 valueRole: "value"
                 maxVisibleItems: 6
-                noResultText: "无匹配结果"
+                noResultText: qsTr("无匹配结果")
                 onAccepted: value => selectRow.accepted(value)
             }
         }
@@ -126,15 +126,14 @@ StyledFlickable {
         spacing: 30
 
         Section {
-            title: "钥石样式"
+            title: qsTr("钥石样式")
             iconName: "pill"
 
             SearchSelectSettingRow {
-                title: "样式"
-                description: "选择钥石在屏幕顶部使用的外观"
+                title: qsTr("样式")
                 options: PersonalizationConfig.keystoneStyles
                 value: PersonalizationConfig.keystoneStyle
-                placeholder: "选择钥石样式"
+                placeholder: qsTr("选择钥石样式")
                 onAccepted: value => PersonalizationConfig.setKeystoneStyle(value)
             }
         }

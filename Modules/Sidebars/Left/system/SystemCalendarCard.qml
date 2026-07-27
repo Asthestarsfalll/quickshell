@@ -7,15 +7,17 @@ Rectangle {
     property bool active: true
     property date currentDate: new Date()
     readonly property var monthNames: [
-        "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-        "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+        qsTr("一月"), qsTr("二月"), qsTr("三月"), qsTr("四月"),
+        qsTr("五月"), qsTr("六月"), qsTr("七月"), qsTr("八月"),
+        qsTr("九月"), qsTr("十月"), qsTr("十一月"), qsTr("十二月")
     ]
     readonly property var weekdayNames: [
-        "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"
+        qsTr("周日"), qsTr("周一"), qsTr("周二"), qsTr("周三"),
+        qsTr("周四"), qsTr("周五"), qsTr("周六")
     ]
     readonly property var accessibleWeekdayNames: [
-        "星期日", "星期一", "星期二", "星期三",
-        "星期四", "星期五", "星期六"
+        qsTr("星期日"), qsTr("星期一"), qsTr("星期二"), qsTr("星期三"),
+        qsTr("星期四"), qsTr("星期五"), qsTr("星期六")
     ]
     readonly property string calendarFamily:
         displayFont.status === FontLoader.Ready
@@ -33,9 +35,9 @@ Rectangle {
     color: Appearance.colors.colSurfaceContainerHigh
     clip: true
     Accessible.name: currentDate.getFullYear()
-        + "年" + (currentDate.getMonth() + 1)
-        + "月" + currentDate.getDate()
-        + "日，" + accessibleWeekdayNames[currentDate.getDay()]
+        + qsTr("年") + (currentDate.getMonth() + 1)
+        + qsTr("月") + currentDate.getDate()
+        + qsTr("日，") + accessibleWeekdayNames[currentDate.getDay()]
 
     FontLoader {
         id: displayFont

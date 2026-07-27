@@ -89,7 +89,7 @@ Item {
 
                 PopupToolTip {
                     extraVisibleCondition: mouseArea.containsMouse
-                    text: "工作区 " + model.id + (delegateRoot.hasWindows ? "\n窗口: " + model.windowCount : "")
+                    text: qsTr("工作区 ") + model.id + (delegateRoot.hasWindows ? qsTr("\n窗口: ") + model.windowCount : "")
                 }
             }
         }

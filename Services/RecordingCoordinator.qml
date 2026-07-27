@@ -30,16 +30,16 @@ Singleton {
             ? AudioRecordingService.state
             : (externalCaptureActive ? "capturing" : "idle"))
     readonly property var ownScreenStatusTexts: ({
-        "selecting": "正在选择录制区域",
-        "starting": "正在启动录制",
-        "recording": "正在录制",
-        "finalizing": "正在处理录制文件"
+        "selecting": qsTr("正在选择录制区域"),
+        "starting": qsTr("正在启动录制"),
+        "recording": qsTr("正在录制"),
+        "finalizing": qsTr("正在处理录制文件")
     })
     readonly property var ownAudioStatusTexts: ({
-        "starting": "正在启动录音",
-        "recording": "正在录音",
-        "stopping": "正在停止录音",
-        "finalizing": "正在完成录音文件"
+        "starting": qsTr("正在启动录音"),
+        "recording": qsTr("正在录音"),
+        "stopping": qsTr("正在停止录音"),
+        "finalizing": qsTr("正在完成录音文件")
     })
     readonly property string statusText: ownScreenSessionPresent
         ? (ownScreenStatusTexts[RecordingService.state] || "")

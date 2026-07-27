@@ -12,7 +12,7 @@ ApplicationWindow {
     id: root
 
     visible: true
-    title: "设置"
+    title: qsTr("设置")
     flags: Qt.Window | Qt.FramelessWindowHint
     width: 1100
     height: 750
@@ -22,22 +22,34 @@ ApplicationWindow {
     Material.theme: PersonalizationConfig.themeMode === "light" ? Material.Light : Material.Dark
     Material.accent: Appearance.colors.colPrimary
     onClosing: Qt.quit()
+    Component.onCompleted: I18nService.initialize()
 
     property real contentPadding: 8
     property int currentPage: 0
     property bool navExpanded: width > 900
     readonly property var pages: [
-        ({ "title": "通用", "icon": "settings", "source": "GeneralPage.qml" }),
-        ({ "title": "壁纸", "icon": "wallpaper", "source": "WallpaperPage.qml" }),
-        ({ "title": "主题", "icon": "palette", "source": "ThemePage.qml" }),
-        ({ "title": "钥石", "icon": "pill", "source": "KeystonePage.qml" }),
-        ({ "title": "天气", "icon": "partly_cloudy_day", "source": "WeatherPage.qml" })
+        ({ "id": "account", "title": qsTr("账户"), "icon": "account_circle", "source": "AccountPage.qml" }),
+        ({ "id": "general", "title": qsTr("通用"), "icon": "settings", "source": "GeneralPage.qml" }),
+        ({ "id": "wallpaper", "title": qsTr("壁纸"), "icon": "wallpaper", "source": "WallpaperPage.qml" }),
+        ({ "id": "theme", "title": qsTr("主题"), "icon": "palette", "source": "ThemePage.qml" }),
+        ({ "id": "keystone", "title": qsTr("钥石"), "icon": "pill", "source": "KeystonePage.qml" }),
+        ({ "id": "weather", "title": qsTr("天气"), "icon": "partly_cloudy_day", "source": "WeatherPage.qml" })
     ]
 
     function pageSource(index) {
         if (index < 0 || index >= pages.length)
-            return Qt.resolvedUrl("GeneralPage.qml");
+            return Qt.resolvedUrl("AccountPage.qml");
         return Qt.resolvedUrl(pages[index].source);
+    }
+
+    function openPage(pageId) {
+        for (let index = 0; index < pages.length; ++index) {
+            if (pages[index].id === pageId) {
+                currentPage = index;
+                return true;
+            }
+        }
+        return false;
     }
 
     function openConfig() {
@@ -68,7 +80,7 @@ ApplicationWindow {
                 id: titleText
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
-                text: "设置"
+                text: qsTr("设置")
                 color: Appearance.colors.colOnLayer0
                 font.family: Sizes.fontFamily
                 font.pixelSize: 24
@@ -154,7 +166,7 @@ ApplicationWindow {
                             property bool justCopied: copiedTimer.running
 
                             iconText: justCopied ? "check" : "edit"
-                            buttonText: justCopied ? "路径已复制" : "配置文件"
+                            buttonText: justCopied ? qsTr("路径已复制") : qsTr("配置文件")
                             expanded: root.navExpanded
                             onClicked: root.openConfig()
                             onAltClicked: root.copyConfigPath()
@@ -200,6 +212,15 @@ ApplicationWindow {
                         id: pageLoader
                         anchors.fill: parent
                         source: root.pageSource(root.currentPage)
+                    }
+
+                    Connections {
+                        target: pageLoader.item
+                        ignoreUnknownSignals: true
+
+                        function onNavigateRequested(pageId) {
+                            root.openPage(pageId);
+                        }
                     }
             }
         }

@@ -96,19 +96,19 @@ Singleton {
             || node.description
             || node.nickname
             || node.name
-            || "未知音频设备";
+            || qsTr("未知音频设备");
     }
 
     function applicationDisplayName(node) {
         if (!node)
-            return "未知应用";
+            return qsTr("未知应用");
 
         const properties = root.nodeProperties(node);
         return properties["application.name"]
             || properties["application.process.binary"]
             || node.nickname
             || node.name
-            || "未知应用";
+            || qsTr("未知应用");
     }
 
     function nodeSupportingText(node) {
@@ -127,7 +127,7 @@ Singleton {
             return profile;
         if (node.name && node.name !== root.nodeDisplayName(node))
             return node.name;
-        return node.isSink ? "音频输出设备" : "音频输入设备";
+        return node.isSink ? qsTr("音频输出设备") : qsTr("音频输入设备");
     }
 
     function nodeIconName(node) {
@@ -144,13 +144,13 @@ Singleton {
 
         if (node.isStream)
             return "music_note";
-        if (descriptor.indexOf("headphone") >= 0 || descriptor.indexOf("headset") >= 0 || descriptor.indexOf("耳机") >= 0)
+        if (descriptor.indexOf("headphone") >= 0 || descriptor.indexOf("headset") >= 0 || descriptor.indexOf(qsTr("耳机")) >= 0)
             return "headphones";
         if (descriptor.indexOf("bluetooth") >= 0 || descriptor.indexOf("bluez") >= 0)
             return node.isSink ? "headphones" : "mic";
         if (descriptor.indexOf("hdmi") >= 0 || descriptor.indexOf("displayport") >= 0)
             return "tv";
-        if (descriptor.indexOf("speaker") >= 0 || descriptor.indexOf("扬声器") >= 0)
+        if (descriptor.indexOf("speaker") >= 0 || descriptor.indexOf(qsTr("扬声器")) >= 0)
             return "speaker";
         return node.isSink ? "volume_up" : "mic";
     }
@@ -204,7 +204,7 @@ Singleton {
     function setDefaultOutput(node) {
         const currentNode = root.resolveNode(node, root.outputDevices);
         if (!currentNode)
-            return root.fail("set-default-output", "所选输出设备已不可用");
+            return root.fail("set-default-output", qsTr("所选输出设备已不可用"));
 
         root.clearError();
         Pipewire.preferredDefaultAudioSink = currentNode;
@@ -214,7 +214,7 @@ Singleton {
     function setDefaultInput(node) {
         const currentNode = root.resolveNode(node, root.inputDevices);
         if (!currentNode)
-            return root.fail("set-default-input", "所选输入设备已不可用");
+            return root.fail("set-default-input", qsTr("所选输入设备已不可用"));
 
         root.clearError();
         Pipewire.preferredDefaultAudioSource = currentNode;
@@ -223,11 +223,11 @@ Singleton {
 
     function setNodeVolume(node, volume) {
         if (!node || !node.audio)
-            return root.fail("set-volume", "音频对象已不可用");
+            return root.fail("set-volume", qsTr("音频对象已不可用"));
 
         const safeVolume = Math.max(0, Math.min(1, Number(volume)));
         if (isNaN(safeVolume))
-            return root.fail("set-volume", "音量数值无效");
+            return root.fail("set-volume", qsTr("音量数值无效"));
 
         root.clearError();
         node.audio.volume = safeVolume;
@@ -238,7 +238,7 @@ Singleton {
 
     function toggleNodeMute(node) {
         if (!node || !node.audio)
-            return root.fail("toggle-mute", "音频对象已不可用");
+            return root.fail("toggle-mute", qsTr("音频对象已不可用"));
 
         root.clearError();
         node.audio.muted = !node.audio.muted;

@@ -13,7 +13,7 @@ import qs.Widgets.common
 Item {
     id: root
 
-    property string pickerTitle: "选择壁纸颜色"
+    property string pickerTitle: qsTr("选择壁纸颜色")
     property color currentColor: Appearance.colors.colPrimary
     property real hue: 0
     property real saturation: 1
@@ -227,7 +227,7 @@ Item {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: "从调色板中选择颜色，或使用自定义滑块"
+                                text: qsTr("从调色板中选择颜色，或使用自定义滑块")
                                 color: Appearance.colors.colSubtext
                                 font.family: Sizes.fontFamily
                                 font.pixelSize: 13
@@ -237,13 +237,13 @@ Item {
 
                         IconButton {
                             iconName: "colorize"
-                            tooltipText: "屏幕取色"
+                            tooltipText: qsTr("屏幕取色")
                             onClicked: root.pickColorFromScreen()
                         }
 
                         IconButton {
                             iconName: "close"
-                            tooltipText: "关闭"
+                            tooltipText: qsTr("关闭")
                             onClicked: root.close()
                         }
                     }
@@ -375,7 +375,7 @@ Item {
                     }
 
                     SectionLabel {
-                        text: "material 配色"
+                        text: qsTr("material 配色")
                     }
 
                     StyledGridView {
@@ -423,7 +423,7 @@ Item {
                             spacing: 8
 
                             SectionLabel {
-                                text: "最近拾取的颜色"
+                                text: qsTr("最近拾取的颜色")
                             }
 
                             RowLayout {
@@ -462,7 +462,7 @@ Item {
                             spacing: 8
 
                             SectionLabel {
-                                text: "透明度"
+                                text: qsTr("透明度")
                             }
 
                             RowLayout {
@@ -538,7 +538,7 @@ Item {
 
                     Button {
                         Layout.alignment: Qt.AlignRight
-                        text: "保存"
+                        text: qsTr("保存")
                         Material.background: Appearance.colors.colPrimary
                         Material.foreground: Appearance.colors.colOnPrimary
                         onClicked: {
@@ -677,7 +677,7 @@ Item {
 
             IconButton {
                 iconName: "content_copy"
-                tooltipText: "复制"
+                tooltipText: qsTr("复制")
                 onClicked: formatField.copyRequested(input.text)
             }
         }

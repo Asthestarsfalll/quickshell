@@ -67,7 +67,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: "逐小时预报"
+                    text: qsTr("逐小时预报")
                     color: Appearance.colors.colOnSurface
                     font.family: "LXGW WenKai GB Screen"
                     font.bold: true
@@ -85,9 +85,9 @@ Rectangle {
                 StyledButtonGroup {
                     currentValue: root.currentTab
                     model: [
-                        ({ "value": 0, "label": "天气情况" }),
-                        ({ "value": 1, "label": "空气质量" }),
-                        ({ "value": 2, "label": "风况" })
+                        ({ "value": 0, "label": qsTr("天气情况") }),
+                        ({ "value": 1, "label": qsTr("空气质量") }),
+                        ({ "value": 2, "label": qsTr("风况") })
                     ]
                     onValueSelected: value => root.currentTab = value
                 }

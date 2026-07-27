@@ -178,15 +178,16 @@ Item {
                 colRipple: TimerService.stopwatchRunning
                     ? Appearance.colors.colSecondaryContainerActive
                     : Appearance.colors.colPrimaryActive
-                Accessible.name: TimerService.stopwatchRunning ? "Pause stopwatch" : "Start stopwatch"
+                Accessible.name: TimerService.stopwatchRunning
+                    ? qsTr("暂停秒表") : qsTr("启动秒表")
                 onClicked: TimerService.toggleStopwatch()
 
                 contentItem: Text {
                     text: TimerService.stopwatchRunning
-                        ? "Pause"
+                        ? qsTr("暂停")
                         : TimerService.stopwatchTime === 0
-                            ? "Start"
-                            : "Resume"
+                            ? qsTr("开始")
+                            : qsTr("继续")
                     color: TimerService.stopwatchRunning
                         ? Appearance.colors.colOnSecondaryContainer
                         : Appearance.colors.colOnPrimary
@@ -212,7 +213,8 @@ Item {
                 colRipple: TimerService.stopwatchRunning
                     ? Appearance.colors.colLayer2Active
                     : Appearance.colors.colErrorContainerActive
-                Accessible.name: TimerService.stopwatchRunning ? "Record lap" : "Reset stopwatch"
+                Accessible.name: TimerService.stopwatchRunning
+                    ? qsTr("记录单圈") : qsTr("重置秒表")
                 onClicked: {
                     if (TimerService.stopwatchRunning)
                         TimerService.stopwatchRecordLap();
@@ -221,7 +223,7 @@ Item {
                 }
 
                 contentItem: Text {
-                    text: TimerService.stopwatchRunning ? "Lap" : "Reset"
+                    text: TimerService.stopwatchRunning ? qsTr("单圈") : qsTr("重置")
                     color: TimerService.stopwatchRunning
                         ? Appearance.colors.colOnLayer2
                         : Appearance.colors.colOnErrorContainer

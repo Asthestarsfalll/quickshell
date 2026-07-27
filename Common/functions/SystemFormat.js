@@ -67,26 +67,26 @@ function duration(seconds) {
     const minutes = Math.floor((total % 3600) / 60);
 
     if (days > 0)
-        return days + " 天 " + hours + " 小时";
+        return days + qsTr(" 天 ") + hours + qsTr(" 小时");
     if (hours > 0)
-        return hours + " 小时 " + minutes + " 分钟";
+        return hours + qsTr(" 小时 ") + minutes + qsTr(" 分钟");
     if (minutes > 0)
-        return minutes + " 分钟";
-    return total + " 秒";
+        return minutes + qsTr(" 分钟");
+    return total + qsTr(" 秒");
 }
 
 function batteryStatus(value) {
     switch (String(value || "").toLowerCase()) {
     case "charging":
-        return "充电中";
+        return qsTr("充电中");
     case "discharging":
-        return "使用电池";
+        return qsTr("使用电池");
     case "full":
-        return "已充满";
+        return qsTr("已充满");
     case "not charging":
-        return "未充电";
+        return qsTr("未充电");
     case "unknown":
-        return "状态未知";
+        return qsTr("状态未知");
     default:
         return value ? String(value) : unavailable();
     }
@@ -95,5 +95,5 @@ function batteryStatus(value) {
 function yesNo(value) {
     if (value === null || value === undefined)
         return unavailable();
-    return value ? "是" : "否";
+    return value ? qsTr("是") : qsTr("否");
 }

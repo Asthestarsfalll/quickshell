@@ -43,6 +43,6 @@ Item {
 
     PopupToolTip {
         extraVisibleCondition: mouseArea.containsMouse
-        text: "电源"
+        text: qsTr("电源")
     }
 }

@@ -56,6 +56,6 @@ Item {
 
     PopupToolTip {
         extraVisibleCondition: mouseArea.containsMouse
-        text: "设置"
+        text: qsTr("设置")
     }
 }

@@ -29,7 +29,11 @@ PanelWindow {
     property int currentMode: 0
     property bool isClosing: false
     property string query: ""
-    readonly property var modeLabels: ["Applications", "Windows", "Wallpapers"]
+    readonly property var modeLabels: [
+        qsTr("应用"),
+        qsTr("窗口"),
+        qsTr("壁纸")
+    ]
 
     property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "")
                                   ? wallpaperPage.currentSelectedPreview
@@ -347,7 +351,7 @@ PanelWindow {
 
                                     Text {
                                         anchors.fill: parent
-                                        text: "Search"
+                text: qsTr("搜索")
                                         color: Appearance.applyAlpha(Appearance.colors.colOnLayer2, 0.65)
                                         font.family: Sizes.fontFamilyMono
                                         font.pixelSize: rofiStyle.fontPixelSize

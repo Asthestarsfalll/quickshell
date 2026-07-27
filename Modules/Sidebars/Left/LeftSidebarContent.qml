@@ -27,9 +27,9 @@ Item {
 
             Repeater {
                 model: [
-                    { id: "info", icon: "info", label: "Info" },
-                    { id: "sys", icon: "monitoring", label: "System" },
-                    { id: "weather", icon: "cloud", label: "Weather" }
+                    { id: "info", icon: "info", label: qsTr("信息") },
+                    { id: "sys", icon: "monitoring", label: qsTr("系统") },
+                    { id: "weather", icon: "cloud", label: qsTr("天气") }
                 ]
                 
                 delegate: Item {

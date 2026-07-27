@@ -14,7 +14,10 @@ import qs.Services
 Item {
     id: root
 
-    Component.onCompleted: WallpaperService.primaryInstance = true
+    Component.onCompleted: {
+        I18nService.initialize();
+        WallpaperService.primaryInstance = true;
+    }
 
     WallpaperBackground {}
 

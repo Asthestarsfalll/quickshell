@@ -41,7 +41,7 @@ QtObject {
         const now = new Date();
         const diffMs = now.getTime() - messageTime.getTime();
         if (diffMs < 60000)
-            return "Now";
+            return qsTr("刚刚");
 
         if (messageTime.toDateString() === now.toDateString()) {
             const diffMinutes = Math.floor(diffMs / 60000);
@@ -50,7 +50,7 @@ QtObject {
         }
 
         if (messageTime.toDateString() === new Date(now.getTime() - 86400000).toDateString())
-            return "Yesterday";
+            return qsTr("昨天");
 
         return Qt.formatDateTime(messageTime, "MMMM dd");
     }

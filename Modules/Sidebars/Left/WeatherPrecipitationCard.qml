@@ -44,9 +44,9 @@ WeatherInsightCard {
 
     function localizedUnit(unit) {
         if (unit === "mm")
-            return "毫米"
+            return qsTr("毫米")
         if (unit === "cm")
-            return "厘米"
+            return qsTr("厘米")
         return unit
     }
 
@@ -54,9 +54,9 @@ WeatherInsightCard {
         let label = (text || "").trim()
         if (label.length === 0)
             return ""
-        label = label.replace("降雨总量", "降水")
-        label = label.replace("总降水", "降水")
-        label = label.replace("总量", "")
+        label = label.replace(qsTr("降雨总量"), qsTr("降水"))
+        label = label.replace(qsTr("总降水"), qsTr("降水"))
+        label = label.replace(qsTr("总量"), "")
         return label
     }
 
@@ -104,7 +104,7 @@ WeatherInsightCard {
         }
 
         Text {
-            text: "降水量"
+            text: qsTr("降水量")
             color: root.mutedInk
             font.pixelSize: 18
             font.bold: true

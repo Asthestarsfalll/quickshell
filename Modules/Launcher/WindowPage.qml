@@ -91,7 +91,7 @@ Item {
 
     Text {
         anchors.centerIn: parent
-        text: "No windows opened."
+            text: qsTr("没有已打开的窗口。")
         color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.68)
         font.family: Sizes.fontFamilyMono
         font.pixelSize: rofiStyle.fontPixelSize
