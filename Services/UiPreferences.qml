@@ -108,6 +108,8 @@ Singleton {
         blockWrites: true
         atomicWrites: true
 
+        onFileChanged: preferencesReloadDebounce.restart()
+
         onLoaded: {
             try {
                 const parsed = JSON.parse(prefsFile.text().trim() || "{}");
@@ -132,6 +134,13 @@ Singleton {
             root.preferencesReady = true;
             root.save();
         }
+    }
+
+    Timer {
+        id: preferencesReloadDebounce
+        interval: 100
+        repeat: false
+        onTriggered: prefsFile.reload()
     }
 
     Process {

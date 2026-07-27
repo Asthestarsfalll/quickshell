@@ -106,6 +106,21 @@ Singleton {
         quotaTimeout.restart();
     }
 
+    function clearCompletedBackupStatus() {
+        if (backupState === "running")
+            return;
+        backupState = "idle";
+        backupMessage = "";
+        backupProgress = -1;
+        backupSource = "";
+        backupDestination = "";
+    }
+
+    function refreshCard() {
+        clearCompletedBackupStatus();
+        refreshQuota();
+    }
+
     function backup(path, isDirectory) {
         const source = String(path || "");
         const remote = selectedRemote;

@@ -19,11 +19,24 @@ Slider {
         implicitHeight: 8
         width: root.availableWidth
         height: implicitHeight
+        readonly property real splitPosition:
+            root.visualPosition * width
+        readonly property real trackGap: 4
+        readonly property real activeEnd: splitPosition <= 0
+            ? 0
+            : splitPosition >= width
+              ? width
+              : Math.max(2, splitPosition - trackGap / 2)
+        readonly property real inactiveStart: splitPosition <= 0
+            ? 0
+            : splitPosition >= width
+              ? width
+              : Math.min(width - 2, splitPosition + trackGap / 2)
 
         Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
+            x: parent.inactiveStart
             anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, parent.width - x)
             height: 2
             radius: Appearance.rounding.full
             color: Appearance.colors.colOutlineVariant
@@ -32,20 +45,12 @@ Slider {
         Rectangle {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(0, root.visualPosition * parent.width)
+            width: parent.activeEnd
             height: 4
             radius: Appearance.rounding.full
             color: Appearance.colors.colPrimary
         }
     }
 
-    handle: Rectangle {
-        x: root.leftPadding
-            + root.visualPosition * (root.availableWidth - width)
-        y: root.topPadding + root.availableHeight / 2 - height / 2
-        implicitWidth: 4
-        implicitHeight: 12
-        radius: Appearance.rounding.full
-        color: Appearance.colors.colPrimary
-    }
+    handle: Item {}
 }

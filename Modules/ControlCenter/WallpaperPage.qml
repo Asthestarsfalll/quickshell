@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Effects
 import QtQuick.Layouts
+import QtQuick.Window
 import qs.Common
 import qs.Services
 import qs.Components
@@ -224,10 +225,16 @@ StyledFlickable {
                         anchors.fill: parent
                         anchors.margins: 1
                         source: root.currentWallpaperIsImage ? Paths.fileUrl(root.currentWallpaperPath) : ""
+                        sourceSize: Qt.size(
+                            Math.max(1, Math.ceil(
+                                width * Screen.devicePixelRatio * 2)),
+                            Math.max(1, Math.ceil(
+                                height * Screen.devicePixelRatio * 2)))
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        cache: false
-                        smooth: true
+                        cache: true
+                        smooth: false
+                        mipmap: false
                         visible: source !== ""
                         layer.enabled: true
                         layer.effect: MultiEffect {

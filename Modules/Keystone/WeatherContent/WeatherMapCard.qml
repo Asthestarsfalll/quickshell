@@ -28,6 +28,7 @@ Rectangle {
     property real dragOffsetY: 0
     property bool dragging: false
     property date layerUpdatedAt
+    property bool showLayerSelector: true
 
     readonly property real maximumMercatorLatitude: 85.05112878
     readonly property int tileSize: 256
@@ -513,6 +514,7 @@ Rectangle {
                 anchors.top: parent.top
                 anchors.leftMargin: 12
                 anchors.topMargin: 12
+                visible: root.showLayerSelector
                 z: 20
                 currentMode: root.selectedMode
                 onModeSelected: mode => root.selectedMode = mode

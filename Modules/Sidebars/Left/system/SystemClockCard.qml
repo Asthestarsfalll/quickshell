@@ -1,5 +1,7 @@
 import QtQuick
 import qs.Common
+import qs.Services
+import "../../../../Common/functions/DateFormat.js" as DateFormat
 
 Item {
     id: root
@@ -38,8 +40,10 @@ Item {
         qsTr("五月"), qsTr("六月"), qsTr("七月"), qsTr("八月"),
         qsTr("九月"), qsTr("十月"), qsTr("十一月"), qsTr("十二月")
     ]
-    readonly property string dateText:
-        dayNames[currentTime.getDay()]
+    readonly property string dateText: I18nService.language.startsWith("zh")
+        ? DateFormat.compactDate(
+            currentTime, I18nService.language, Qt.locale(), "")
+        : dayNames[currentTime.getDay()]
             + " · "
             + String(currentTime.getDate()).padStart(2, "0")
             + " "

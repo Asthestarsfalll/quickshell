@@ -6,6 +6,7 @@ import qs.Common
 import qs.Components
 import qs.Services
 import qs.Widgets.common
+import "../../../../Common/functions/DateFormat.js" as DateFormat
 
 Rectangle {
     id: root
@@ -44,6 +45,11 @@ Rectangle {
         if (index === 2)
             return timerComponent;
         return calendarComponent;
+    }
+
+    function formattedDate(date) {
+        return DateFormat.compactDate(
+            date, I18nService.language, Qt.locale(), "ddd, dd/MM");
     }
 
     function focusCurrentPage() {
@@ -171,7 +177,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.rightMargin: 10
             Layout.alignment: Qt.AlignVCenter
-            text: root.currentDate.toLocaleDateString(Qt.locale(), "ddd, dd/MM")
+            text: root.formattedDate(root.currentDate)
                 + qsTr("   •   %1 项任务").arg(remainingTasks)
             color: Appearance.colors.colOnLayer1
             font.family: Sizes.fontFamily

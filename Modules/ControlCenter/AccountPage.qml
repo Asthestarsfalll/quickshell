@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
+import QtQuick.Window
 import qs.Common
 import qs.Components
 import qs.Modules.FilePicker
@@ -361,10 +362,12 @@ Item {
                         }
 
                         ToolButton {
+                            Layout.preferredWidth: 48
+                            Layout.preferredHeight: 48
                             Accessible.name: qsTr("刷新云存储信息")
                             enabled: RcloneService.selectedRemote !== null
                                 && RcloneService.quotaState !== "loading"
-                            onClicked: RcloneService.refreshQuota()
+                            onClicked: RcloneService.refreshCard()
 
                             contentItem: MaterialSymbol {
                                 text: "refresh"
@@ -463,14 +466,16 @@ Item {
 
                     GridLayout {
                         Layout.fillWidth: true
+                        Layout.leftMargin: Appearance.spacing.medium
+                        Layout.rightMargin: Appearance.spacing.medium
                         columns: 3
-                        columnSpacing: Appearance.spacing.xSmall
-                        rowSpacing: Appearance.spacing.xSmall
+                        columnSpacing: Appearance.spacing.small
+                        rowSpacing: Appearance.spacing.small
 
                         Repeater {
                             model: root.wallpaperChoices
 
-                            delegate: Button {
+                            delegate: MaterialRippleButton {
                                 id: wallpaperChoice
 
                                 required property string modelData
@@ -478,12 +483,18 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: width / 1.25
                                 padding: 0
+                                buttonRadius: Appearance.rounding.extraLarge
+                                colBackground: Appearance.colors.colSurfaceContainer
+                                colBackgroundHover: Appearance.colors.colSurfaceContainer
+                                colRipple: Appearance.colors.colOnSurface
+                                rippleOpacity: 0.18
                                 Accessible.name: qsTr("使用壁纸 %1").arg(
                                     WallpaperService.basename(modelData))
                                 onClicked: WallpaperService.setWallpaper(modelData)
 
-                                background: Rectangle {
-                                    radius: Appearance.rounding.large
+                                backgroundContent: Rectangle {
+                                    anchors.fill: parent
+                                    radius: Appearance.rounding.extraLarge
                                     color: WallpaperService.isColorSource(wallpaperChoice.modelData)
                                         ? wallpaperChoice.modelData
                                         : Appearance.colors.colSurfaceContainer
@@ -496,8 +507,16 @@ Item {
                                         anchors.fill: parent
                                         source: WallpaperService.isColorSource(wallpaperChoice.modelData)
                                             ? "" : Paths.fileUrl(wallpaperChoice.modelData)
+                                        sourceSize: Qt.size(
+                                            Math.max(1, Math.ceil(
+                                                width * Screen.devicePixelRatio * 2)),
+                                            Math.max(1, Math.ceil(
+                                                height * Screen.devicePixelRatio * 2)))
                                         fillMode: Image.PreserveAspectCrop
                                         asynchronous: true
+                                        cache: true
+                                        smooth: false
+                                        mipmap: false
                                     }
                                 }
 
@@ -508,9 +527,10 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.columnSpan: 3
-                            Layout.preferredHeight: width / 3 / 1.25
+                            Layout.preferredHeight:
+                                (width - Appearance.spacing.small * 2) / 3 / 1.25
                             visible: root.wallpaperChoices.length === 0
-                            radius: Appearance.rounding.large
+                            radius: Appearance.rounding.extraLarge
                             color: Appearance.colors.colSurfaceContainer
 
                             MaterialSymbol {

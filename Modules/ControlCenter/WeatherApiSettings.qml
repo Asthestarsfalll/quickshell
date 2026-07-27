@@ -3,9 +3,11 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Quickshell
+import Clavis.Weather 1.0
 import Clavis.WeatherMap 1.0
 import qs.Common
 import qs.Components
+import qs.Modules.Keystone.WeatherContent
 import qs.Services
 import qs.Widgets.common
 
@@ -21,6 +23,12 @@ StyledFlickable {
     property bool revealApiKey: false
     property string feedbackText: ""
     property bool feedbackError: false
+    property string selectedMapMode: "temp"
+
+    Component.onCompleted: {
+        if (!WeatherPlugin.hasValidData && !WeatherPlugin.loading)
+            WeatherPlugin.refresh()
+    }
 
     function applyApiKey() {
         const value = apiKeyField.text.trim()
@@ -82,6 +90,25 @@ StyledFlickable {
         x: Math.max(24, (root.width - width) / 2)
         y: 28
         spacing: 24
+
+        WeatherMapCard {
+            id: weatherMap
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: 320
+            latitude: Number(WeatherPlugin.latitude)
+            longitude: Number(WeatherPlugin.longitude)
+            locationAvailable: WeatherPlugin.hasValidData
+            active: root.visible
+            selectedMode: root.selectedMapMode
+            showLayerSelector: false
+        }
+
+        WeatherMapLayerSelector {
+            Layout.alignment: Qt.AlignHCenter
+            currentMode: root.selectedMapMode
+            onModeSelected: mode => root.selectedMapMode = mode
+        }
 
         RowLayout {
             Layout.fillWidth: true

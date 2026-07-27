@@ -18,7 +18,7 @@ StyledFlickable {
         id: section
 
         property string title: ""
-        property string iconName: "pill"
+        property string iconName: "toggle_off"
         default property alias content: body.data
 
         Layout.fillWidth: true
@@ -127,7 +127,7 @@ StyledFlickable {
 
         Section {
             title: qsTr("钥石样式")
-            iconName: "pill"
+            iconName: "toggle_off"
 
             SearchSelectSettingRow {
                 title: qsTr("样式")

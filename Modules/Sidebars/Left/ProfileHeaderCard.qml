@@ -26,6 +26,7 @@ AccountProfileHeader {
     distroId: SystemIdentityService.distroId
     distroName: SystemIdentityService.distroName
     uptimeText: SystemIdentityService.uptimeText
+    showPackageStats: false
     avatarActionLabel: qsTr("打开设置中心")
 
     onAvatarActivated: {

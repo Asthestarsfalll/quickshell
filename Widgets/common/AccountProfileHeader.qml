@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Effects
 import QtQuick.Layouts
 import qs.Common
@@ -18,6 +17,7 @@ Rectangle {
     property string uptimeText: ""
     property int totalPackageCount: -1
     property int pendingUpdateCount: -1
+    property bool showPackageStats: true
     property string avatarActionLabel: qsTr("更改头像")
     property real coverHeight: Math.max(150, Math.min(220, width * 0.23))
     property real profileAreaHeight: 120
@@ -138,15 +138,12 @@ Rectangle {
         width: root.avatarSize
         height: root.avatarSize
         radius: Appearance.rounding.full
-        color: root.profileSurfaceColor
-        border.width: avatarButton.activeFocus ? 2 : 0
-        border.color: Appearance.colors.colPrimary
+        color: "transparent"
 
         Rectangle {
             id: avatarSurface
 
             anchors.fill: parent
-            anchors.margins: 4
             radius: Appearance.rounding.full
             color: Appearance.colors.colPrimaryContainer
 
@@ -202,7 +199,7 @@ Rectangle {
                 anchors.fill: parent
                 radius: Appearance.rounding.full
                 color: Appearance.applyAlpha(Appearance.m3colors.m3scrim, 0.68)
-                opacity: avatarButton.hovered || avatarButton.activeFocus ? 1 : 0
+                opacity: avatarButton.pointerHovered ? 1 : 0
 
                 Behavior on opacity { NumberAnimation { duration: 160 } }
 
@@ -216,16 +213,24 @@ Rectangle {
             }
         }
 
-        Button {
+        MaterialRippleButton {
             id: avatarButton
 
             anchors.fill: parent
             padding: 0
-            hoverEnabled: true
             focusPolicy: Qt.StrongFocus
+            buttonRadius: Appearance.rounding.full
+            colBackground: Appearance.transparentize(
+                Appearance.colors.colOnImage, 1)
+            colBackgroundHover: Appearance.transparentize(
+                Appearance.colors.colOnImage, 1)
+            colRipple: Appearance.colors.colOnImage
+            rippleOpacity: 0.22
             Accessible.name: root.avatarActionLabel
-            onClicked: root.avatarActivated()
-            background: null
+            onClicked: {
+                focus = false
+                root.avatarActivated()
+            }
             contentItem: Item {}
         }
     }
@@ -293,6 +298,7 @@ Rectangle {
 
         ColumnLayout {
             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+            visible: root.showPackageStats
             spacing: Appearance.spacing.small
 
             RowLayout {

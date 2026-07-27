@@ -4,8 +4,10 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
+import qs.Services
 import qs.Widgets.common
 import "calendar_layout.js" as CalendarLayout
+import "../../../../Common/functions/DateFormat.js" as DateFormat
 
 Item {
     id: root
@@ -13,6 +15,13 @@ Item {
     property int monthShift: 0
     readonly property date viewingDate: CalendarLayout.getDateInXMonthsTime(monthShift)
     readonly property var calendarLayout: CalendarLayout.getCalendarLayout(viewingDate, monthShift === 0)
+    readonly property var weekDays:
+        DateFormat.calendarWeekdays(I18nService.language)
+
+    function monthTitle(date) {
+        return DateFormat.monthTitle(
+            date, I18nService.language, Qt.locale());
+    }
 
     focus: true
 
@@ -54,7 +63,7 @@ Item {
             spacing: 5
 
             HeaderButton {
-                buttonText: `${root.monthShift !== 0 ? "• " : ""}${root.viewingDate.toLocaleDateString(Qt.locale(), "MMMM yyyy")}`
+                buttonText: `${root.monthShift !== 0 ? "• " : ""}${root.monthTitle(root.viewingDate)}`
                 tooltipText: root.monthShift === 0 ? "" : qsTr("跳转到当前月份")
                 onClicked: root.monthShift = 0
             }
@@ -83,7 +92,7 @@ Item {
             spacing: 0
 
             Repeater {
-                model: CalendarLayout.weekDays
+                model: root.weekDays
 
                 delegate: Item {
                     required property string modelData

@@ -1,5 +1,7 @@
 import QtQuick
-import qs.Common 
+import qs.Common
+import qs.Services
+import "../../../Common/functions/DateFormat.js" as DateFormat
 
 Item {
     id: root
@@ -13,6 +15,11 @@ Item {
     property int m0: 0
     property int m1: 0
 
+    function formatDate(date) {
+        return DateFormat.compactDate(
+            date, I18nService.language, Qt.locale(), "ddd dd MMM");
+    }
+
     Timer {
         interval: 1000
         running: true
@@ -20,7 +27,7 @@ Item {
         triggeredOnStart: true
         onTriggered: {
             let d = new Date()
-            root.dateStr = d.toLocaleString(Qt.locale(), "ddd dd MMM")
+            root.dateStr = root.formatDate(d)
             let hStr = d.getHours().toString().padStart(2, '0')
             let mStr = d.getMinutes().toString().padStart(2, '0')
             

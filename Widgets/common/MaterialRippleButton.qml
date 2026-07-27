@@ -16,6 +16,7 @@ Button {
     property int rippleFadeDuration: Appearance.animation.expressiveSlowEffects.duration
     property real rippleOpacity: 0.1
     property bool rippleEnabled: true
+    property alias backgroundContent: backgroundContentHost.data
     property var downAction
     property var releaseAction
     property var doubleClickAction
@@ -95,6 +96,12 @@ Button {
                 height: buttonBackground.height
                 radius: root.buttonEffectiveRadius
             }
+        }
+
+        Item {
+            id: backgroundContentHost
+
+            anchors.fill: parent
         }
 
         Item {

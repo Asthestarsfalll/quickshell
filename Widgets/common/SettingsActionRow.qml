@@ -1,37 +1,24 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
 
-Button {
+MaterialRippleButton {
     id: root
 
     property string iconName: ""
     property string trailingIconName: "open_in_new"
-    property bool showDivider: false
 
     implicitHeight: 56
-    padding: 0
-    flat: true
-    hoverEnabled: true
-
-    background: Rectangle {
-        color: root.down
-            ? Appearance.colors.colLayer2Active
-            : root.hovered
-              ? Appearance.colors.colLayer2Hover
-              : "transparent"
-
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: 1
-            visible: root.showDivider
-            color: Appearance.colors.colOutlineVariant
-        }
-    }
+    leftPadding: Appearance.spacing.small
+    rightPadding: 0
+    topPadding: 0
+    bottomPadding: 0
+    buttonRadius: Appearance.rounding.full
+    colBackground: Appearance.transparentize(
+        Appearance.colors.colLayer2Hover, 1)
+    colBackgroundHover: Appearance.colors.colLayer2Hover
+    colRipple: Appearance.colors.colLayer2Active
 
     contentItem: RowLayout {
         spacing: Appearance.spacing.medium
@@ -53,11 +40,17 @@ Button {
             elide: Text.ElideRight
         }
 
-        MaterialSymbol {
+        Item {
+            Layout.preferredWidth: 48
+            Layout.fillHeight: true
             visible: root.trailingIconName !== ""
-            text: root.trailingIconName
-            iconSize: 20
-            color: Appearance.colors.colOnSurfaceVariant
+
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: root.trailingIconName
+                iconSize: 20
+                color: Appearance.colors.colOnSurfaceVariant
+            }
         }
     }
 }

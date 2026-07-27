@@ -170,7 +170,6 @@ Item {
             anchors.fill: parent
             screen: root.panelScreen
             foreground: WidgetState.qsOpen
-            presentationActive: root.panelActive
         }
     }
 }

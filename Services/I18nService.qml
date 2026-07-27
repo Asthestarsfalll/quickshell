@@ -9,8 +9,8 @@ Singleton {
 
     readonly property var supportedLanguages: [
         ({ code: "en_US", label: "English" }),
-        ({ code: "zh_CN", label: qsTr("简体中文") }),
-        ({ code: "zh_TW", label: qsTr("繁體中文") })
+        ({ code: "zh_CN", label: "\u7b80\u4f53\u4e2d\u6587" }),
+        ({ code: "zh_TW", label: "\u7e41\u9ad4\u4e2d\u6587" })
     ]
     readonly property string language: UiPreferences.language
     property bool ready: false

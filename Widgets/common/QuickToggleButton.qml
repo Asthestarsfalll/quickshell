@@ -63,8 +63,7 @@ Rectangle {
     implicitWidth: down && bounce ? clickedWidth : presentedWidth
     implicitHeight: down && bounce ? clickedHeight : baseHeight
     radius: down ? Appearance.rounding.normal : presentedRadius
-    opacity: (available || editMode ? 1.0 : 0.45)
-        * normalizedPresentationProgress
+    opacity: available || editMode ? 1.0 : 0.45
     clip: true
     enabled: available || editMode
 
