@@ -60,7 +60,7 @@ Item {
             spacing: 4
             Text { 
                 text: "" 
-                color: "#a6e3a1" 
+                color: Appearance.colors.colSecondary
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 16
             }
@@ -84,7 +84,7 @@ Item {
             
             Text { 
                 text: "" 
-                color: "#89b4fa" 
+                color: Appearance.colors.colPrimary
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 16
             }
@@ -107,7 +107,7 @@ Item {
             
             Text { 
                 text: "" 
-                color: "#f9e2af" 
+                color: Appearance.colors.colTertiary
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 16
             }
@@ -130,7 +130,7 @@ Item {
             
             Text { 
                 text: "" 
-                color: "#cba6f7" 
+                color: Appearance.colors.colOnSurfaceVariant
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 16
             }

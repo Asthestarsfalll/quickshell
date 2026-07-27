@@ -124,57 +124,9 @@ StyledFlickable {
         }
     }
 
-    component ActionPillButton: Item {
-        id: pill
-
-        property string text: ""
-        property string iconName: ""
-
-        signal clicked
-
-        implicitWidth: Math.max(78, label.implicitWidth + (iconName !== "" ? 42 : 28))
-        implicitHeight: 34
-        opacity: enabled ? 1 : 0.45
-
-        Rectangle {
-            anchors.fill: parent
-            radius: Appearance.rounding.full
-            color: pillMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
-            border.width: 1
-            border.color: Appearance.colors.colOutlineVariant
-        }
-
-        Row {
-            anchors.centerIn: parent
-            spacing: 6
-
-            MaterialSymbol {
-                text: pill.iconName
-                iconSize: 18
-                color: Appearance.colors.colOnLayer2
-                visible: pill.iconName !== ""
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text {
-                id: label
-                text: pill.text
-                color: Appearance.colors.colOnLayer2
-                font.family: Sizes.fontFamily
-                font.pixelSize: 13
-                font.weight: Font.Medium
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        MouseArea {
-            id: pillMouse
-            anchors.fill: parent
-            enabled: pill.enabled
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: pill.clicked()
-        }
+    component FlatSettingsSection: SettingsSection {
+        color: "transparent"
+        radius: 0
     }
 
     component HoverActionButton: Item {
@@ -187,6 +139,7 @@ StyledFlickable {
 
         width: 32
         height: 32
+        opacity: enabled ? 1 : 0.45
 
         Rectangle {
             anchors.fill: parent
@@ -207,14 +160,132 @@ StyledFlickable {
         MouseArea {
             id: actionMouse
             anchors.fill: parent
+            enabled: action.enabled
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: action.enabled
+                ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: action.clicked()
         }
 
         StyledToolTip {
             extraVisibleCondition: actionMouse.containsMouse && action.tooltipText !== ""
             text: action.tooltipText
+        }
+    }
+
+    component WallpaperPreview: Item {
+        id: preview
+
+        property string sourcePath: ""
+        property bool actionsEnabled: true
+        readonly property bool sourceIsColor:
+            WallpaperService.isColorSource(sourcePath)
+        readonly property bool sourceIsImage:
+            sourcePath !== "" && !sourceIsColor
+
+        signal chooseFile
+        signal chooseColor
+        signal clearWallpaper
+
+        implicitWidth: 340
+        implicitHeight: 200
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Appearance.rounding.normal
+            color: preview.sourceIsColor
+                ? preview.sourcePath
+                : Appearance.colors.colLayer2
+        }
+
+        Image {
+            anchors.fill: parent
+            anchors.margins: 1
+            source: preview.sourceIsImage
+                ? Paths.fileUrl(preview.sourcePath) : ""
+            sourceSize: Qt.size(
+                Math.max(1, Math.ceil(
+                    width * Screen.devicePixelRatio * 2)),
+                Math.max(1, Math.ceil(
+                    height * Screen.devicePixelRatio * 2)))
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            cache: true
+            smooth: false
+            mipmap: false
+            visible: source !== ""
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: previewMask
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1
+            }
+        }
+
+        Rectangle {
+            id: previewMask
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: Appearance.rounding.normal - 1
+            color: Appearance.m3colors.m3scrim
+            visible: false
+            layer.enabled: true
+        }
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            text: "image"
+            iconSize: 34
+            color: Appearance.colors.colOnSurfaceVariant
+            visible: preview.sourcePath === ""
+        }
+
+        HoverHandler {
+            id: previewHover
+            acceptedDevices:
+                PointerDevice.Mouse | PointerDevice.TouchPad
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Appearance.rounding.normal
+            color: Appearance.applyAlpha(
+                Appearance.m3colors.m3scrim, 0.7)
+            opacity: previewHover.hovered ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 160
+                    easing.type: Easing.OutSine
+                }
+            }
+
+            Row {
+                anchors.centerIn: parent
+                spacing: 4
+
+                HoverActionButton {
+                    iconName: "folder_open"
+                    tooltipText: qsTr("选择文件夹")
+                    enabled: preview.actionsEnabled
+                    onClicked: preview.chooseFile()
+                }
+
+                HoverActionButton {
+                    iconName: "palette"
+                    tooltipText: qsTr("选择颜色")
+                    enabled: preview.actionsEnabled
+                    onClicked: preview.chooseColor()
+                }
+
+                HoverActionButton {
+                    iconName: "clear"
+                    tooltipText: qsTr("清除壁纸")
+                    enabled: preview.actionsEnabled
+                    onClicked: preview.clearWallpaper()
+                }
+            }
         }
     }
 
@@ -255,15 +326,15 @@ StyledFlickable {
         y: 24
         spacing: 30
 
-        Section {
-            title: qsTr("桌面壁纸管理器")
-            iconName: "display_settings"
+        Component {
+            id: desktopManagerSectionComponent
 
-            SettingsSection {
-                Layout.fillWidth: true
+            Section {
                 title: qsTr("桌面壁纸管理器")
-                supportingText: qsTr(
-                    "仅决定普通桌面壁纸由谁渲染；niri overview 背景始终由 Quickshell 独立管理。")
+                iconName: "display_settings"
+
+                FlatSettingsSection {
+                Layout.fillWidth: true
 
                 MaterialRadioGroup {
                     Layout.fillWidth: true
@@ -274,15 +345,11 @@ StyledFlickable {
                         ({
                             "value": "quickshell",
                             "label": "Quickshell",
-                            "supportingText": qsTr(
-                                "使用当前 DMS shader 转场并支持桌面视差。"),
                             "enabled": true
                         }),
                         ({
                             "value": "awww",
                             "label": "awww",
-                            "supportingText": qsTr(
-                                "使用 clavis-desktop namespace 渲染普通桌面壁纸。"),
                             "enabled": AwwwWallpaperService.available,
                             "tooltip": AwwwWallpaperService.probeComplete
                                 ? qsTr("缺少 awww 或 awww-daemon 命令")
@@ -299,63 +366,37 @@ StyledFlickable {
 
                 InlineStatusBanner {
                     Layout.fillWidth: true
-                    tone: AwwwWallpaperService.lastError !== ""
-                        ? "error" : "info"
-                    message: {
-                        const backend =
-                            AwwwWallpaperService.effectiveBackend
-                                === "awww" ? "awww" : "Quickshell";
-                        const availability =
-                            AwwwWallpaperService.available
-                                ? qsTr("awww 可用")
-                                : qsTr("awww 不可用");
-                        const daemon =
-                            AwwwWallpaperService.daemonRunning
-                                ? qsTr("daemon 运行中")
-                                : qsTr("daemon 未运行");
-                        const status = qsTr("当前桌面后端：")
-                            + backend + " · " + availability
-                            + " · " + daemon;
-                        return AwwwWallpaperService.lastError !== ""
-                            ? status + "\n"
-                                + AwwwWallpaperService.lastError
-                            : status;
-                    }
-                }
-
-                InlineStatusBanner {
-                    Layout.fillWidth: true
-                    visible:
-                        WallpaperService.lastDesktopError !== ""
+                    visible: AwwwWallpaperService.lastError !== ""
+                        || WallpaperService.lastDesktopError !== ""
                     tone: "error"
-                    message:
-                        WallpaperService.lastDesktopError
+                    message: AwwwWallpaperService.lastError !== ""
+                        ? AwwwWallpaperService.lastError
+                        : WallpaperService.lastDesktopError
+                }
                 }
             }
         }
 
-        Section {
-            title: qsTr("当前壁纸")
-            iconName: "wallpaper"
+        Component {
+            id: currentWallpaperSectionComponent
 
-            SettingsSection {
+            Section {
+                title: qsTr("当前壁纸")
+                iconName: "wallpaper"
+
+                FlatSettingsSection {
                 Layout.fillWidth: true
-                title: qsTr("多显示器桌面壁纸")
-                supportingText: qsTr(
-                    "选择“全局”或为某个实际输出保存独立壁纸与填充模式。")
 
                 SettingsRow {
                     Layout.fillWidth: true
                     iconName: "splitscreen"
-                    title: qsTr("每显示器使用不同桌面壁纸")
-                    supportingText: qsTr(
-                        "输出移除后会保留其持久化映射。")
+                    title: qsTr("每显示器独立壁纸")
 
                     trailing: StyledSwitch {
                         checked:
                             PersonalizationConfig.perMonitorWallpaper
                         Accessible.name:
-                            qsTr("每显示器使用不同桌面壁纸")
+                            qsTr("每显示器独立壁纸")
                         onToggled:
                             PersonalizationConfig
                                 .setPerMonitorWallpaper(checked)
@@ -366,178 +407,98 @@ StyledFlickable {
                     Layout.fillWidth: true
                     options: root.outputOptions
                     value: root.selectedDesktopOutput
-                    placeholder: qsTr("选择桌面壁纸输出")
+                    placeholder: qsTr("选择输出")
                     Accessible.name: qsTr("桌面壁纸输出")
                     onAccepted: value =>
                         root.selectedDesktopOutput = value
                 }
-            }
+                }
 
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 24
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 24
 
-                Item {
-                    id: wallpaperPreview
-
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: 340
-                    Layout.preferredHeight: 200
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Appearance.rounding.normal
-                        color: root.currentWallpaperIsColor ? root.currentWallpaperPath : Appearance.colors.colLayer2
+                    WallpaperPreview {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: 340
+                        Layout.preferredHeight: 200
+                        sourcePath: root.currentWallpaperPath
+                        onChooseFile: root.chooseWallpaperFile()
+                        onChooseColor: root.chooseWallpaperColor()
+                        onClearWallpaper:
+                            WallpaperService.clearWallpaper(
+                                root.selectedDesktopOutput)
                     }
 
-                    Image {
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        source: root.currentWallpaperIsImage ? Paths.fileUrl(root.currentWallpaperPath) : ""
-                        sourceSize: Qt.size(
-                            Math.max(1, Math.ceil(
-                                width * Screen.devicePixelRatio * 2)),
-                            Math.max(1, Math.ceil(
-                                height * Screen.devicePixelRatio * 2)))
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: true
-                        smooth: false
-                        mipmap: false
-                        visible: source !== ""
-                        layer.enabled: true
-                        layer.effect: MultiEffect {
-                            maskEnabled: true
-                            maskSource: wallpaperMask
-                            maskThresholdMin: 0.5
-                            maskSpreadAtMin: 1
-                        }
-                    }
+                    ColumnLayout {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: Math.min(
+                            450, Math.max(330, root.width - 420))
+                        spacing: 12
 
-                    Rectangle {
-                        id: wallpaperMask
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        radius: Appearance.rounding.normal - 1
-                        color: Appearance.m3colors.m3scrim
-                        visible: false
-                        layer.enabled: true
-                    }
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "image"
-                        iconSize: 34
-                        color: Appearance.colors.colOnSurfaceVariant
-                        visible: root.currentWallpaperPath === ""
-                    }
-
-                    HoverHandler {
-                        id: previewHover
-                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Appearance.rounding.normal
-                        color: Appearance.applyAlpha(
-                            Appearance.m3colors.m3scrim, 0.7)
-                        opacity: previewHover.hovered ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: 160
-                                easing.type: Easing.OutSine
-                            }
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.currentWallpaperPath !== ""
+                                ? WallpaperService.basename(
+                                    root.currentWallpaperPath)
+                                : qsTr("未选择壁纸")
+                            color: Appearance.colors.colOnSurface
+                            font.family: Sizes.fontFamily
+                            font.pixelSize: 22
+                            font.weight: Font.Medium
+                            horizontalAlignment: Text.AlignLeft
+                            elide: Text.ElideMiddle
                         }
 
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: 4
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.currentWallpaperPath
+                            color: Appearance.colors.colSubtext
+                            font.family: Sizes.fontFamilyMono
+                            font.pixelSize: 14
+                            horizontalAlignment: Text.AlignLeft
+                            elide: Text.ElideMiddle
+                            visible: root.currentWallpaperPath !== ""
+                        }
 
-                            HoverActionButton {
-                                iconName: "folder_open"
-                                tooltipText: qsTr("选择文件夹")
-                                onClicked: root.chooseWallpaperFile()
-                            }
-
-                            HoverActionButton {
-                                iconName: "palette"
-                                tooltipText: qsTr("选择颜色")
-                                onClicked: root.chooseWallpaperColor()
-                            }
-
-                            HoverActionButton {
-                                iconName: "clear"
-                                tooltipText: qsTr("清除壁纸")
-                                onClicked:
-                                    WallpaperService.clearWallpaper(
-                                        root.selectedDesktopOutput)
+                        StyledButtonGroup {
+                            Layout.alignment: Qt.AlignLeft
+                            model: [
+                                ({ "value": "previous",
+                                    "label": qsTr("上一张") }),
+                                ({ "value": "random",
+                                    "label": qsTr("随机") }),
+                                ({ "value": "next",
+                                    "label": qsTr("下一张") })
+                            ]
+                            currentValue: ""
+                            onValueSelected: value => {
+                                if (value === "previous")
+                                    WallpaperService.cyclePrevious();
+                                else if (value === "random")
+                                    WallpaperService.cycleRandom();
+                                else
+                                    WallpaperService.cycleNext();
                             }
                         }
                     }
                 }
 
-                ColumnLayout {
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: Math.min(450, Math.max(330, root.width - 420))
-                    spacing: 12
+                StyledButtonGroup {
+                    id: fillModeButtonGroup
 
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.currentWallpaperPath !== "" ? WallpaperService.basename(root.currentWallpaperPath) : qsTr("未选择壁纸")
-                        color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: 22
-                        font.weight: Font.Medium
-                        horizontalAlignment: Text.AlignLeft
-                        elide: Text.ElideMiddle
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: root.currentWallpaperPath
-                        color: Appearance.colors.colSubtext
-                        font.family: Sizes.fontFamilyMono
-                        font.pixelSize: 14
-                        horizontalAlignment: Text.AlignLeft
-                        elide: Text.ElideMiddle
-                        visible: root.currentWallpaperPath !== ""
-                    }
-
-                    StyledButtonGroup {
-                        Layout.alignment: Qt.AlignLeft
-                        model: [
-                            ({ "value": "previous", "label": qsTr("上一张") }),
-                            ({ "value": "random", "label": qsTr("随机") }),
-                            ({ "value": "next", "label": qsTr("下一张") })
-                        ]
-                        currentValue: ""
-                        onValueSelected: value => {
-                            if (value === "previous")
-                                WallpaperService.cyclePrevious();
-                            else if (value === "random")
-                                WallpaperService.cycleRandom();
-                            else
-                                WallpaperService.cycleNext();
-                        }
-                    }
+                    Layout.alignment: Qt.AlignHCenter
+                    model: PersonalizationConfig.fillModes
+                    currentValue: root.selectedDesktopOutput !== ""
+                        ? PersonalizationConfig.monitorFillMode(
+                            root.selectedDesktopOutput)
+                        : PersonalizationConfig.wallpaperFillMode
+                    Component.onCompleted:
+                        root.fillModeGroupRestingWidth = implicitWidth
+                    onValueSelected: value =>
+                        WallpaperService.setWallpaperFillModeForScreen(
+                            root.selectedDesktopOutput, value)
                 }
-            }
-
-            StyledButtonGroup {
-                id: fillModeButtonGroup
-
-                Layout.alignment: Qt.AlignHCenter
-                model: PersonalizationConfig.fillModes
-                currentValue: root.selectedDesktopOutput !== ""
-                    ? PersonalizationConfig.monitorFillMode(
-                        root.selectedDesktopOutput)
-                    : PersonalizationConfig.wallpaperFillMode
-                Component.onCompleted: root.fillModeGroupRestingWidth = implicitWidth
-                onValueSelected: value =>
-                    WallpaperService.setWallpaperFillModeForScreen(
-                        root.selectedDesktopOutput, value)
             }
         }
 
@@ -551,9 +512,7 @@ StyledFlickable {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.desktopUsesAwww
-                        ? qsTr("awww 转场类型")
-                        : qsTr("Quickshell DMS 动画效果")
+                    text: qsTr("转场类型")
                     color: Appearance.colors.colOnSurface
                     font.family: Sizes.fontFamily
                     font.pixelSize: 15
@@ -680,8 +639,7 @@ StyledFlickable {
                             || !root.awwwStepSupported)
                     text: root.desktopUsesAwww
                         ? qsTr("none 转场不会使用 FPS。")
-                        : qsTr(
-                            "Quickshell 壁纸动画由 Qt Quick 渲染循环驱动，不提供独立 FPS 参数。")
+                        : qsTr("独立 FPS 仅适用于 awww。")
                 }
             }
 
@@ -732,8 +690,7 @@ StyledFlickable {
                         ? qsTr("过渡步长仅适用于 awww 桌面后端。")
                         : !root.awwwStepSupported
                             ? qsTr("none 转场不会使用过渡步长。")
-                            : qsTr(
-                                "数值越大，每帧越快接近新图片，变化更直接；数值越小，颜色过渡更缓慢。它与 FPS 和持续时间不是同一个参数。")
+                            : qsTr("步长控制每帧的变化幅度。")
                 }
             }
 
@@ -916,10 +873,7 @@ StyledFlickable {
                     extraVisibleCondition:
                         durationHover.hovered
                         && !root.sharedTransitionParametersEnabled
-                    text: root.desktopUsesAwww
-                        ? qsTr(
-                            "当前 awww 转场不会使用持续时间；切换到 fade、grow、wipe 等转场后可继续编辑共享值。")
-                        : qsTr("none 转场不会使用持续时间。")
+                    text: qsTr("当前转场不使用持续时间。")
                 }
             }
 
@@ -1109,25 +1063,29 @@ StyledFlickable {
                     extraVisibleCondition:
                         bezierHover.hovered
                         && !root.sharedTransitionParametersEnabled
-                    text: root.desktopUsesAwww
-                        ? qsTr(
-                            "当前 awww 转场不会使用缓动或贝塞尔曲线；切换到 fade、grow、wipe 等转场后可继续编辑共享值。")
-                        : qsTr("none 转场不会使用缓动或贝塞尔曲线。")
+                    text: qsTr("当前转场不使用缓动曲线。")
                 }
             }
+        }
+
+        Loader {
+            Layout.fillWidth: true
+            sourceComponent: desktopManagerSectionComponent
+        }
+
+        Loader {
+            Layout.fillWidth: true
+            sourceComponent: currentWallpaperSectionComponent
         }
 
         Section {
             title: qsTr("视差效果")
             iconName: "view_in_ar"
 
-            SettingsSection {
+            FlatSettingsSection {
                 id: parallaxSection
 
                 Layout.fillWidth: true
-                title: qsTr("桌面视差")
-                supportingText: qsTr(
-                    "仅移动 Quickshell 桌面壁纸的 X/Y 取景，不影响 overview。")
                 opacity: root.desktopUsesAwww ? 0.45 : 1
 
                 HoverHandler {
@@ -1140,8 +1098,6 @@ StyledFlickable {
                     Layout.fillWidth: true
                     iconName: "swap_vert"
                     title: qsTr("垂直视差")
-                    supportingText: qsTr(
-                        "允许壁纸在垂直溢出范围内移动。")
 
                     trailing: StyledSwitch {
                         enabled: !root.desktopUsesAwww
@@ -1157,12 +1113,12 @@ StyledFlickable {
                     Layout.fillWidth: true
                     iconName: "workspaces"
                     title: qsTr("随工作区移动")
-                    supportingText: qsTr(
-                        "每块显示器按自己的活动工作区位置计算。")
 
                     trailing: Item {
-                        Layout.preferredWidth: 52
-                        Layout.preferredHeight: 36
+                        Layout.preferredWidth:
+                            workspaceParallaxSwitch.implicitWidth
+                        Layout.preferredHeight:
+                            workspaceParallaxSwitch.implicitHeight
 
                         HoverHandler {
                             id: workspaceParallaxHover
@@ -1171,6 +1127,8 @@ StyledFlickable {
                         }
 
                         StyledSwitch {
+                            id: workspaceParallaxSwitch
+
                             anchors.centerIn: parent
                             enabled: !root.desktopUsesAwww
                                 && PersonalizationConfig
@@ -1197,8 +1155,6 @@ StyledFlickable {
                     Layout.fillWidth: true
                     iconName: "dock_to_left"
                     title: qsTr("随侧边栏移动")
-                    supportingText: qsTr(
-                        "左侧栏向右偏移，右侧栏向左偏移。")
 
                     trailing: StyledSwitch {
                         enabled: !root.desktopUsesAwww
@@ -1213,16 +1169,14 @@ StyledFlickable {
                 SettingsRow {
                     Layout.fillWidth: true
                     iconName: "view_column"
-                    title: qsTr("随横向平铺窗口焦点移动")
-                    supportingText: qsTr(
-                        "根据当前聚焦的横向平铺窗口位置调整壁纸。浮动窗口以及同一列中上下堆叠的窗口不会改变横向位置。")
+                    title: qsTr("随平铺窗口焦点移动")
 
                     trailing: StyledSwitch {
                         enabled: !root.desktopUsesAwww
                         checked: PersonalizationConfig
                             .parallaxFollowTiledColumns
                         Accessible.name:
-                            qsTr("随横向平铺窗口焦点移动")
+                            qsTr("随平铺窗口焦点移动")
                         onToggled: PersonalizationConfig
                             .setParallaxFollowTiledColumns(checked)
                     }
@@ -1234,7 +1188,7 @@ StyledFlickable {
 
                     Text {
                         Layout.fillWidth: true
-                        text: qsTr("首选壁纸缩放比例")
+                        text: qsTr("壁纸缩放")
                         color: Appearance.colors.colOnSurface
                         font.family: Sizes.fontFamily
                         font.pixelSize: Sizes.typeBodyMedium
@@ -1250,7 +1204,7 @@ StyledFlickable {
                         value: PersonalizationConfig
                             .parallaxPreferredScale
                         accessibleName:
-                            qsTr("首选壁纸缩放比例")
+                            qsTr("壁纸缩放")
                         valueFormatter: sliderValue =>
                             Number(sliderValue).toFixed(2)
                         onMoved: PersonalizationConfig
@@ -1264,7 +1218,7 @@ StyledFlickable {
 
                     Text {
                         Layout.fillWidth: true
-                        text: qsTr("横向完整行程列数")
+                        text: qsTr("横向行程列数")
                         color: Appearance.colors.colOnSurface
                         font.family: Sizes.fontFamily
                         font.pixelSize: Sizes.typeBodyMedium
@@ -1280,7 +1234,7 @@ StyledFlickable {
                         value: PersonalizationConfig
                             .parallaxTiledColumnSpan
                         accessibleName:
-                            qsTr("横向完整行程列数")
+                            qsTr("横向行程列数")
                         valueFormatter: sliderValue =>
                             Math.round(sliderValue).toString()
                         onMoved: PersonalizationConfig
@@ -1293,8 +1247,7 @@ StyledFlickable {
                     extraVisibleCondition:
                         parallaxHover.hovered
                         && root.desktopUsesAwww
-                    text: qsTr(
-                        "awww 当前未提供持续修改壁纸取景偏移的接口，因此桌面视差仅适用于 Quickshell 后端。")
+                    text: qsTr("桌面视差仅适用于 Quickshell。")
                 }
             }
         }
@@ -1303,11 +1256,8 @@ StyledFlickable {
             title: qsTr("Overview 背景")
             iconName: "overview"
 
-            SettingsSection {
+            FlatSettingsSection {
                 Layout.fillWidth: true
-                title: qsTr("niri overview 背景")
-                supportingText: qsTr(
-                    "该表面始终由 Quickshell 管理，与桌面壁纸管理器无关。")
 
                 InlineStatusBanner {
                     Layout.fillWidth: true
@@ -1317,7 +1267,7 @@ StyledFlickable {
                             .overviewBackdropRuleDetected
                     tone: "error"
                     message: qsTr(
-                        "未检测到 clavis-overview-wallpaper 的 niri backdrop 规则。当前表面会停留在普通 Background 层，因此这里的参数看起来会改变桌面背景。请由人工将文档中的 layer-rule 加入 niri 配置。")
+                        "缺少 niri backdrop 规则，请按文档手动配置 clavis-overview-wallpaper。")
                 }
 
                 InlineStatusBanner {
@@ -1328,19 +1278,19 @@ StyledFlickable {
                             .niriTransparentBackgroundDetected
                     tone: "error"
                     message: qsTr(
-                        "niri workspace 背景仍不透明，会遮住 kitty 等窗口的透明与 xray 模糊背景。请由人工在 layout 中设置 background-color \"transparent\"。")
+                        "niri 工作区背景不透明，请在 layout 中手动设置 background-color \"transparent\"。")
                 }
 
                 SettingsRow {
                     Layout.fillWidth: true
                     iconName: "visibility"
-                    title: qsTr("启用 overview 背景")
+                    title: qsTr("启用背景")
 
                     trailing: StyledSwitch {
                         checked:
                             PersonalizationConfig.overviewEnabled
                         Accessible.name:
-                            qsTr("启用 overview 背景")
+                            qsTr("启用背景")
                         onToggled: PersonalizationConfig
                             .setOverviewEnabled(checked)
                     }
@@ -1350,8 +1300,6 @@ StyledFlickable {
                     Layout.fillWidth: true
                     iconName: "sync"
                     title: qsTr("使用桌面壁纸")
-                    supportingText: qsTr(
-                        "读取 Clavis 保存的原始路径，不读取 awww surface 或缓存。")
 
                     trailing: StyledSwitch {
                         checked: PersonalizationConfig
@@ -1365,15 +1313,13 @@ StyledFlickable {
                 SettingsRow {
                     Layout.fillWidth: true
                     iconName: "splitscreen"
-                    title: qsTr("每显示器使用不同 overview 壁纸")
-                    supportingText: qsTr(
-                        "每个输出保持独立的路径与填充模式。")
+                    title: qsTr("每显示器独立壁纸")
 
                     trailing: StyledSwitch {
                         checked: PersonalizationConfig
                             .overviewPerMonitorWallpaper
                         Accessible.name:
-                            qsTr("每显示器使用不同 overview 壁纸")
+                            qsTr("每显示器独立壁纸")
                         onToggled: PersonalizationConfig
                             .setOverviewPerMonitorWallpaper(checked)
                     }
@@ -1383,54 +1329,24 @@ StyledFlickable {
                     Layout.fillWidth: true
                     options: root.outputOptions
                     value: root.selectedOverviewOutput
-                    placeholder: qsTr("选择 overview 输出")
+                    placeholder: qsTr("选择输出")
                     Accessible.name: qsTr("overview 壁纸输出")
                     onAccepted: value =>
                         root.selectedOverviewOutput = value
                 }
 
-                Text {
-                    Layout.fillWidth: true
-                    text: root.currentOverviewPath !== ""
-                        ? root.currentOverviewPath
-                        : qsTr("未选择 overview 壁纸")
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeBodySmall
-                    elide: Text.ElideMiddle
-                }
-
-                RowLayout {
+                WallpaperPreview {
                     Layout.alignment: Qt.AlignHCenter
-                    spacing: Appearance.spacing.small
-                    opacity: PersonalizationConfig
-                        .overviewUseDesktopWallpaper ? 0.45 : 1
-
-                    ActionPillButton {
-                        text: qsTr("选择独立壁纸")
-                        iconName: "folder_open"
-                        enabled: !PersonalizationConfig
-                            .overviewUseDesktopWallpaper
-                        onClicked: root.chooseOverviewFile()
-                    }
-
-                    ActionPillButton {
-                        text: qsTr("选择颜色")
-                        iconName: "palette"
-                        enabled: !PersonalizationConfig
-                            .overviewUseDesktopWallpaper
-                        onClicked: root.chooseOverviewColor()
-                    }
-
-                    ActionPillButton {
-                        text: qsTr("清除")
-                        iconName: "clear"
-                        enabled: !PersonalizationConfig
-                            .overviewUseDesktopWallpaper
-                        onClicked:
-                            WallpaperService.clearOverviewWallpaper(
-                                root.selectedOverviewOutput)
-                    }
+                    Layout.preferredWidth: 300
+                    Layout.preferredHeight: 176
+                    sourcePath: root.currentOverviewPath
+                    actionsEnabled: !PersonalizationConfig
+                        .overviewUseDesktopWallpaper
+                    onChooseFile: root.chooseOverviewFile()
+                    onChooseColor: root.chooseOverviewColor()
+                    onClearWallpaper:
+                        WallpaperService.clearOverviewWallpaper(
+                            root.selectedOverviewOutput)
                 }
 
                 StyledButtonGroup {
@@ -1450,11 +1366,9 @@ StyledFlickable {
                 }
             }
 
-            SettingsSection {
+            FlatSettingsSection {
                 Layout.fillWidth: true
-                title: qsTr("overview 转场")
-                supportingText: qsTr(
-                    "使用 DMS shader，并与桌面共享持续时间、缓动和贝塞尔曲线。")
+                title: qsTr("转场类型")
 
                 StyledButtonGroup {
                     Layout.alignment: Qt.AlignHCenter
@@ -1479,11 +1393,9 @@ StyledFlickable {
                 }
             }
 
-            SettingsSection {
+            FlatSettingsSection {
                 Layout.fillWidth: true
-                title: qsTr("overview 图像效果")
-                supportingText: qsTr(
-                    "所有输出共享效果参数；源图实时处理，不生成缓存图片。")
+                title: qsTr("图像效果")
                 opacity:
                     PersonalizationConfig.overviewEnabled ? 1 : 0.45
 
@@ -1600,15 +1512,10 @@ StyledFlickable {
 
                 InlineStatusBanner {
                     Layout.fillWidth: true
-                    tone: WallpaperService.lastOverviewError !== ""
-                        ? "error" : "info"
-                    message: WallpaperService.lastOverviewError !== ""
-                        ? WallpaperService.lastOverviewError
-                        : (PersonalizationConfig.overviewEnabled
-                            ? (WallpaperService.overviewReady
-                                ? qsTr("overview Quickshell 表面已就绪")
-                                : qsTr("overview Quickshell 表面正在加载"))
-                            : qsTr("overview Quickshell 表面已加载但当前禁用"))
+                    visible:
+                        WallpaperService.lastOverviewError !== ""
+                    tone: "error"
+                    message: WallpaperService.lastOverviewError
                 }
             }
         }
