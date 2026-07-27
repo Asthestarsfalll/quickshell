@@ -48,7 +48,7 @@ ShellRoot {
                     === "quickshell"
                 && AwwwWallpaperService.effectiveBackend
                     === "quickshell"
-                && AwwwWallpaperService.quickshellSurfaceRequested
+                && AwwwWallpaperService.quickshellContentVisible
                 && !AwwwWallpaperService.daemonRunning;
             stop();
             root.finish(passed,

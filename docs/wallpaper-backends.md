@@ -14,11 +14,17 @@ Quickshell
 
 ```text
 Quickshell
+├── Bottom: clavis-wallpaper（表面常驻，壁纸内容隐藏）
 └── Background: clavis-overview-wallpaper
 
 awww-daemon --layer bottom --namespace clavis-desktop --no-cache
 └── 普通桌面壁纸
 ```
+
+`clavis-wallpaper` 的 PanelWindow 不随桌面后端销毁。切到 awww 时，Clavis
+先等待所有输出的 `awww img` 成功，再隐藏 Quickshell 桌面内容；切回时先
+恢复已加载的 Quickshell 静态壁纸，再停止 `clavis-desktop`。隐藏期间不会
+运行 DMS shader 转场。
 
 overview 表面始终按输出由 Quickshell 创建，不参与桌面后端选择，也不继承
 桌面的工作区、平铺列或侧边栏视差。
@@ -88,3 +94,7 @@ awww kill -n clavis-desktop
 
 所有命令都以参数数组执行。Clavis 不使用默认 namespace，不调用
 `killall`，也不会停止其他 awww 实例。
+
+awww 的 FPS 和过渡步长保存于 `wallpaper.awww`。持续时间、缓动模式和
+贝塞尔曲线与 Quickshell overview 共用 `wallpaper.transition` 中的现有
+配置；overview 仅单独保存转场类型。

@@ -13,6 +13,7 @@ Item {
     property string transitionEasingMode: "customBezier"
     property var transitionBezierCurve:
         [0.43, 1.19, 1.0, 0.4, 1.0, 1.0]
+    property bool transitionsEnabled: true
     property int textureWidth:
         Math.min(Math.max(1, Math.round(width)), 8192)
     property int textureHeight:
@@ -140,6 +141,10 @@ Item {
     }
 
     function startTransition() {
+        if (!root.transitionsEnabled) {
+            root.setImmediate(root.nextSource);
+            return;
+        }
         root.activeTransitionDurationMs = root.transitionDurationMs;
         root.activeTransitionEasingType =
             root.easingType(root.transitionEasingMode);
@@ -196,6 +201,7 @@ Item {
         root.nextIsImmediate = root.currentSource === ""
             || root.isColorSource(root.currentSource)
             || immediate
+            || !root.transitionsEnabled
             || root.transitionType === "none"
             || root.transitionDurationMs <= 0;
         root.activeTransition = root.nextIsImmediate
@@ -211,6 +217,15 @@ Item {
     }
 
     onSourcePathChanged: requestWallpaper(sourcePath, false)
+    onTransitionsEnabledChanged: {
+        if (!root.transitionsEnabled && root.effectActive) {
+            const target = root.nextSource !== ""
+                ? root.nextSource
+                : (root.pendingSource !== ""
+                    ? root.pendingSource : root.currentSource);
+            root.setImmediate(target);
+        }
+    }
     Component.onCompleted: requestWallpaper(sourcePath, true)
 
     Rectangle {

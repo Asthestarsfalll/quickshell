@@ -109,6 +109,7 @@ Singleton {
 
     property string awwwDesktopTransitionType: "fade"
     property int awwwTransitionFps: 60
+    property int awwwTransitionStep: 90
     property real awwwTransitionAngle: 45
     property string awwwTransitionPosition: "center"
     property string awwwTransitionWave: "20,20"
@@ -449,6 +450,11 @@ Singleton {
             normalizedBoundedInt(value, 60, 10, 240));
     }
 
+    function setAwwwTransitionStep(value) {
+        setValue("awwwTransitionStep",
+            normalizedBoundedInt(value, 90, 0, 255));
+    }
+
     function setAwwwTransitionAngle(value) {
         setValue("awwwTransitionAngle",
             normalizedBoundedReal(value, 45, 0, 360));
@@ -654,6 +660,7 @@ Singleton {
                 "awww": {
                     "transitionType": root.awwwDesktopTransitionType,
                     "transitionFps": root.awwwTransitionFps,
+                    "transitionStep": root.awwwTransitionStep,
                     "transitionAngle": root.awwwTransitionAngle,
                     "transitionPosition": root.awwwTransitionPosition,
                     "transitionWave": root.awwwTransitionWave
@@ -759,6 +766,8 @@ Singleton {
             normalizedAwwwTransition(awww.transitionType || "fade");
         root.awwwTransitionFps =
             normalizedBoundedInt(awww.transitionFps, 60, 10, 240);
+        root.awwwTransitionStep =
+            normalizedBoundedInt(awww.transitionStep, 90, 0, 255);
         root.awwwTransitionAngle =
             normalizedBoundedReal(awww.transitionAngle, 45, 0, 360);
         root.awwwTransitionPosition =

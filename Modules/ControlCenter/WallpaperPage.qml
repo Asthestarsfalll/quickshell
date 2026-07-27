@@ -21,14 +21,19 @@ StyledFlickable {
     property string selectedOverviewOutput: ""
     readonly property bool desktopUsesAwww:
         PersonalizationConfig.desktopWallpaperBackend === "awww"
+    readonly property bool awwwStepSupported:
+        AwwwWallpaperService.supportsStep(
+            PersonalizationConfig.awwwDesktopTransitionType)
     readonly property bool awwwDurationSupported:
-        !desktopUsesAwww
-        || AwwwWallpaperService.supportsDuration(
+        AwwwWallpaperService.supportsDuration(
             PersonalizationConfig.awwwDesktopTransitionType)
     readonly property bool awwwBezierSupported:
-        !desktopUsesAwww
-        || AwwwWallpaperService.supportsBezier(
+        AwwwWallpaperService.supportsBezier(
             PersonalizationConfig.awwwDesktopTransitionType)
+    readonly property bool sharedTransitionParametersEnabled:
+        desktopUsesAwww
+            ? awwwDurationSupported && awwwBezierSupported
+            : PersonalizationConfig.wallpaperTransitionType !== "none"
     readonly property var outputOptions: {
         const result = [
             ({ "value": "", "label": qsTr("全局") })
@@ -633,7 +638,8 @@ StyledFlickable {
 
                 Layout.fillWidth: true
                 spacing: 6
-                opacity: root.desktopUsesAwww ? 1 : 0.45
+                opacity: root.desktopUsesAwww
+                    && root.awwwStepSupported ? 1 : 0.45
 
                 HoverHandler {
                     id: fpsHover
@@ -659,6 +665,7 @@ StyledFlickable {
                     stepSize: 5
                     value: PersonalizationConfig.awwwTransitionFps
                     enabled: root.desktopUsesAwww
+                        && root.awwwStepSupported
                     accessibleName: qsTr("awww 转场 FPS")
                     valueFormatter: sliderValue =>
                         Math.round(sliderValue) + " FPS"
@@ -668,9 +675,65 @@ StyledFlickable {
 
                 StyledToolTip {
                     extraVisibleCondition:
-                        fpsHover.hovered && !root.desktopUsesAwww
-                    text: qsTr(
-                        "Quickshell 壁纸动画由 Qt Quick 渲染循环驱动，不提供独立 FPS 参数。")
+                        fpsHover.hovered
+                        && (!root.desktopUsesAwww
+                            || !root.awwwStepSupported)
+                    text: root.desktopUsesAwww
+                        ? qsTr("none 转场不会使用 FPS。")
+                        : qsTr(
+                            "Quickshell 壁纸动画由 Qt Quick 渲染循环驱动，不提供独立 FPS 参数。")
+                }
+            }
+
+            ColumnLayout {
+                id: stepSetting
+
+                Layout.fillWidth: true
+                spacing: 6
+                opacity: root.desktopUsesAwww
+                    && root.awwwStepSupported ? 1 : 0.45
+
+                HoverHandler {
+                    id: stepHover
+                    acceptedDevices:
+                        PointerDevice.Mouse | PointerDevice.TouchPad
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("过渡步长 · %1").arg(
+                        PersonalizationConfig.awwwTransitionStep)
+                    color: Appearance.colors.colOnSurface
+                    font.family: Sizes.fontFamily
+                    font.pixelSize: 15
+                    font.weight: Font.Medium
+                }
+
+                MaterialAccessibleSlider {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: Math.min(
+                        520, root.pageContentWidth - 60)
+                    from: 0
+                    to: 255
+                    stepSize: 1
+                    value: PersonalizationConfig.awwwTransitionStep
+                    enabled: root.desktopUsesAwww
+                        && root.awwwStepSupported
+                    accessibleName: qsTr("awww 过渡步长")
+                    valueFormatter: sliderValue =>
+                        Math.round(sliderValue).toString()
+                    onMoved: PersonalizationConfig
+                        .setAwwwTransitionStep(Math.round(value))
+                }
+
+                StyledToolTip {
+                    extraVisibleCondition: stepHover.hovered
+                    text: !root.desktopUsesAwww
+                        ? qsTr("过渡步长仅适用于 awww 桌面后端。")
+                        : !root.awwwStepSupported
+                            ? qsTr("none 转场不会使用过渡步长。")
+                            : qsTr(
+                                "数值越大，每帧越快接近新图片，变化更直接；数值越小，颜色过渡更缓慢。它与 FPS 和持续时间不是同一个参数。")
                 }
             }
 
@@ -679,6 +742,8 @@ StyledFlickable {
 
                 Layout.fillWidth: true
                 spacing: 6
+                opacity: root.sharedTransitionParametersEnabled
+                    ? 1 : 0.45
 
                 HoverHandler {
                     id: durationHover
@@ -696,8 +761,11 @@ StyledFlickable {
                 }
 
                 RowLayout {
+                    id: durationControls
+
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 12
+                    enabled: root.sharedTransitionParametersEnabled
 
                     MaterialAccessibleSlider {
                         id: transitionDurationSlider
@@ -708,6 +776,7 @@ StyledFlickable {
                         to: 5000
                         stepSize: 50
                         value: PersonalizationConfig.transitionDurationMs
+                        enabled: root.sharedTransitionParametersEnabled
                         accessibleName: qsTr("壁纸过渡时间")
                         valueFormatter: sliderValue => Math.round(sliderValue).toString()
                         onMoved: WallpaperService.setTransitionDurationMs(Math.round(transitionDurationSlider.value))
@@ -835,6 +904,7 @@ StyledFlickable {
 
                             anchors.fill: parent
                             enabled: !transitionDurationEditor.editing
+                                && root.sharedTransitionParametersEnabled
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: transitionDurationEditor.startEdit()
@@ -845,9 +915,11 @@ StyledFlickable {
                 StyledToolTip {
                     extraVisibleCondition:
                         durationHover.hovered
-                        && !root.awwwDurationSupported
-                    text: qsTr(
-                        "当前 awww 转场不会使用持续时间，但该共享值仍会用于 overview 转场。")
+                        && !root.sharedTransitionParametersEnabled
+                    text: root.desktopUsesAwww
+                        ? qsTr(
+                            "当前 awww 转场不会使用持续时间；切换到 fade、grow、wipe 等转场后可继续编辑共享值。")
+                        : qsTr("none 转场不会使用持续时间。")
                 }
             }
 
@@ -856,6 +928,8 @@ StyledFlickable {
 
                 Layout.fillWidth: true
                 spacing: 10
+                opacity: root.sharedTransitionParametersEnabled
+                    ? 1 : 0.45
 
                 HoverHandler {
                     id: bezierHover
@@ -873,8 +947,11 @@ StyledFlickable {
                 }
 
                 RowLayout {
+                    id: bezierControls
+
                     Layout.fillWidth: true
                     spacing: 20
+                    enabled: root.sharedTransitionParametersEnabled
 
                     property real controlsWidth: 172
                     property real chartSide: Math.min(420, Math.max(360, root.pageContentWidth - controlsWidth - spacing))
@@ -1031,9 +1108,11 @@ StyledFlickable {
                 StyledToolTip {
                     extraVisibleCondition:
                         bezierHover.hovered
-                        && !root.awwwBezierSupported
-                    text: qsTr(
-                        "当前 awww 转场不会使用贝塞尔曲线，但该共享值仍会用于 overview 转场。")
+                        && !root.sharedTransitionParametersEnabled
+                    text: root.desktopUsesAwww
+                        ? qsTr(
+                            "当前 awww 转场不会使用缓动或贝塞尔曲线；切换到 fade、grow、wipe 等转场后可继续编辑共享值。")
+                        : qsTr("none 转场不会使用缓动或贝塞尔曲线。")
                 }
             }
         }

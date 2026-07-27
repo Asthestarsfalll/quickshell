@@ -67,7 +67,8 @@ ShellRoot {
                     desktopBackend: "awww",
                     awww: {
                         transitionType: "wave",
-                        transitionFps: 120
+                        transitionFps: 120,
+                        transitionStep: 177
                     },
                     overview: {
                         enabled: false,
@@ -99,6 +100,9 @@ ShellRoot {
                 PersonalizationConfig.awwwTransitionFps === 120,
                 "FPS round trip");
             root.verify(
+                PersonalizationConfig.awwwTransitionStep === 177,
+                "step round trip");
+            root.verify(
                 PersonalizationConfig.overviewWallpaperPath
                     === "#112233",
                 "overview path round trip");
@@ -121,7 +125,8 @@ ShellRoot {
                         durationMs: 999999
                     },
                     awww: {
-                        transitionFps: "invalid"
+                        transitionFps: "invalid",
+                        transitionStep: "invalid"
                     },
                     overview: {
                         blurRadius: 999,
@@ -142,6 +147,9 @@ ShellRoot {
             root.verify(
                 PersonalizationConfig.awwwTransitionFps === 60,
                 "invalid FPS fallback");
+            root.verify(
+                PersonalizationConfig.awwwTransitionStep === 90,
+                "invalid step fallback");
             root.verify(
                 PersonalizationConfig.transitionDurationMs === 5000,
                 "transition duration clamp");

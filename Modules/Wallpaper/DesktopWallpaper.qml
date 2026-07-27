@@ -37,12 +37,11 @@ Variants {
 
             anchors.fill: parent
             clip: true
+            visible: AwwwWallpaperService.quickshellContentVisible
 
             property int serviceRevision: WallpaperService.revision
             property int settingsRevision:
                 WallpaperService.settingsRevision
-            property int backendSurfaceGeneration:
-                AwwwWallpaperService.surfaceGeneration
             property var outputWorkspaces: []
             property var activeWorkspace: ({})
 
@@ -145,14 +144,6 @@ Variants {
                 return WallpaperMath.clamp01(value);
             }
 
-            function reportSurface() {
-                AwwwWallpaperService.reportQuickshellSurface(
-                    modelData.name,
-                    root.backendSurfaceGeneration,
-                    renderer.ready,
-                    renderer.lastError);
-            }
-
             function refreshNiriState() {
                 root.outputWorkspaces =
                     Niri.workspacesForOutput(modelData.name);
@@ -160,13 +151,7 @@ Variants {
                     Niri.activeWorkspaceForOutput(modelData.name);
             }
 
-            onBackendSurfaceGenerationChanged:
-                Qt.callLater(root.reportSurface)
-            onTargetSourceChanged: Qt.callLater(root.reportSurface)
-            Component.onCompleted: {
-                root.refreshNiriState();
-                Qt.callLater(root.reportSurface)
-            }
+            Component.onCompleted: root.refreshNiriState()
 
             Connections {
                 target: Niri
@@ -223,13 +208,13 @@ Variants {
                     PersonalizationConfig.transitionEasingMode
                 transitionBezierCurve:
                     PersonalizationConfig.transitionBezierCurve
+                transitionsEnabled:
+                    AwwwWallpaperService.quickshellContentVisible
                 textureWidth: Math.min(
                     Math.max(1, Math.round(root.width)), 8192)
                 textureHeight: Math.min(
                     Math.max(1, Math.round(root.height)), 8192)
 
-                onReadyChanged: root.reportSurface()
-                onLastErrorChanged: root.reportSurface()
                 onLoadFailed: (source, message) => {
                     WallpaperService.reportDesktopError(
                         modelData.name, message);

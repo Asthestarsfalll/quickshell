@@ -80,6 +80,20 @@ function transition(value) {
         ? requested : "fade";
 }
 
+function supportsDuration(transitionType) {
+    const type = transition(transitionType);
+    return type !== "none" && type !== "simple";
+}
+
+function supportsBezier(transitionType) {
+    const type = transition(transitionType);
+    return type !== "none" && type !== "simple";
+}
+
+function supportsStep(transitionType) {
+    return transition(transitionType) !== "none";
+}
+
 function image(commandPath, namespaceName, outputName, source,
                fillMode, options) {
     const settings = options || {};
@@ -93,18 +107,20 @@ function image(commandPath, namespaceName, outputName, source,
     args.push("--resize", resizeMode(fillMode));
     args.push("--transition-type", transitionType);
 
-    if (transitionType !== "none") {
+    if (supportsStep(transitionType)) {
         args.push("--transition-fps",
             String(Math.round(clamp(settings.fps, 60, 10, 240))));
+        args.push("--transition-step",
+            String(Math.round(clamp(settings.step, 90, 0, 255))));
     }
 
-    if (transitionType !== "none" && transitionType !== "simple") {
+    if (supportsDuration(transitionType)) {
         const durationMs = clamp(settings.durationMs, 1000, 0, 60000);
         args.push("--transition-duration",
             (durationMs / 1000).toFixed(3));
     }
 
-    if (transitionType === "fade")
+    if (supportsBezier(transitionType))
         args.push("--transition-bezier", bezier(settings.bezierCurve));
 
     if (transitionType === "wipe" || transitionType === "wave") {
@@ -141,12 +157,4 @@ function apply(commandPath, namespaceName, outputName, source,
         return clear(commandPath, namespaceName, outputName, source);
     return image(commandPath, namespaceName, outputName, source,
         fillMode, options);
-}
-
-function supportsDuration(transitionType) {
-    return transitionType !== "none" && transitionType !== "simple";
-}
-
-function supportsBezier(transitionType) {
-    return transitionType === "fade";
 }

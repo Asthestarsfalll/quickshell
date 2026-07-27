@@ -6,6 +6,37 @@ import "../../Common/functions/WallpaperMath.js" as WallpaperMath
 TestCase {
     name: "WallpaperMathAndAwwwCommand"
 
+    function transitionCommand(type, overrides) {
+        const settings = {
+            type: type,
+            fps: 60,
+            step: 90,
+            durationMs: 1200,
+            bezierCurve: [0.22, 1, 0.36, 1, 1, 1],
+            angle: 45,
+            position: "center",
+            wave: "20,20"
+        };
+        const extra = overrides || {};
+        for (let key in extra)
+            settings[key] = extra[key];
+        return AwwwCommand.apply(
+            "mock-awww", "clavis-desktop", "eDP-1",
+            "/tmp/a.png", "Fill", settings);
+    }
+
+    function verifyContains(command, argument) {
+        verify(command.indexOf(argument) !== -1,
+            "missing argument " + argument + " in "
+                + JSON.stringify(command));
+    }
+
+    function verifyOmits(command, argument) {
+        verify(command.indexOf(argument) === -1,
+            "unexpected argument " + argument + " in "
+                + JSON.stringify(command));
+    }
+
     function test_coverScaleAndOverflow() {
         const geometry = WallpaperMath.coverGeometry(
             1920, 1080, 1920, 1080, 1.10);
@@ -80,6 +111,7 @@ TestCase {
             "mock-awww", "clavis-desktop", "DP-1", path, "Fill", {
                 type: "wipe",
                 fps: 60,
+                step: 90,
                 durationMs: 1250,
                 bezierCurve: [0.1, 0.2, 0.3, 0.4, 1, 1],
                 angle: 90,
@@ -97,6 +129,10 @@ TestCase {
             "90");
         compare(command[command.indexOf("--transition-duration") + 1],
             "1.250");
+        compare(command[command.indexOf("--transition-step") + 1],
+            "90");
+        compare(command[command.indexOf("--transition-bezier") + 1],
+            "0.1,0.2,0.3,0.4");
         verify(command.indexOf("portal") === -1);
     }
 
@@ -134,47 +170,94 @@ TestCase {
             "0,4,1,-4");
     }
 
-    function test_awwwTransitionSpecificArgumentsAndClamps() {
-        const wave = AwwwCommand.apply(
-            "mock-awww", "clavis-desktop", "DP-1",
-            "/tmp/a.png", "Fill", {
-                type: "wave",
-                fps: 999,
-                durationMs: 999999,
-                angle: -20,
-                wave: "30,10"
-            });
+    function test_awwwTransitionCapabilities() {
+        verify(!AwwwCommand.supportsDuration("none"));
+        verify(!AwwwCommand.supportsDuration("simple"));
+        verify(AwwwCommand.supportsDuration("fade"));
+        verify(AwwwCommand.supportsDuration("grow"));
+        verify(!AwwwCommand.supportsBezier("none"));
+        verify(!AwwwCommand.supportsBezier("simple"));
+        verify(AwwwCommand.supportsBezier("wipe"));
+        verify(AwwwCommand.supportsBezier("random"));
+        verify(!AwwwCommand.supportsStep("none"));
+        verify(AwwwCommand.supportsStep("simple"));
+        verify(AwwwCommand.supportsStep("outer"));
+    }
+
+    function test_awwwNoneArguments() {
+        const command = transitionCommand("none");
+        verifyOmits(command, "--transition-fps");
+        verifyOmits(command, "--transition-step");
+        verifyOmits(command, "--transition-duration");
+        verifyOmits(command, "--transition-bezier");
+    }
+
+    function test_awwwSimpleArguments() {
+        const command = transitionCommand("simple");
+        verifyContains(command, "--transition-fps");
+        verifyContains(command, "--transition-step");
+        verifyOmits(command, "--transition-duration");
+        verifyOmits(command, "--transition-bezier");
+    }
+
+    function test_awwwFadeArguments() {
+        const command = transitionCommand("fade");
+        verifyContains(command, "--transition-fps");
+        verifyContains(command, "--transition-step");
+        verifyContains(command, "--transition-duration");
+        verifyContains(command, "--transition-bezier");
+    }
+
+    function test_awwwGrowArguments() {
+        const command = transitionCommand("grow", {
+            position: "bottom-right"
+        });
+        verifyContains(command, "--transition-step");
+        verifyContains(command, "--transition-duration");
+        verifyContains(command, "--transition-bezier");
+        verifyContains(command, "--transition-pos");
+        compare(command[command.indexOf("--transition-pos") + 1],
+            "bottom-right");
+    }
+
+    function test_awwwWipeArguments() {
+        const command = transitionCommand("wipe");
+        verifyContains(command, "--transition-step");
+        verifyContains(command, "--transition-duration");
+        verifyContains(command, "--transition-bezier");
+        verifyContains(command, "--transition-angle");
+    }
+
+    function test_awwwWaveArgumentsAndClamps() {
+        const wave = transitionCommand("wave", {
+            fps: 999,
+            step: 999,
+            durationMs: 999999,
+            angle: -20,
+            wave: "30,10"
+        });
         compare(wave[wave.indexOf("--transition-fps") + 1], "240");
+        compare(wave[wave.indexOf("--transition-step") + 1], "255");
         compare(
             wave[wave.indexOf("--transition-duration") + 1],
             "60.000");
+        verifyContains(wave, "--transition-bezier");
         compare(
             wave[wave.indexOf("--transition-angle") + 1], "0");
         compare(
             wave[wave.indexOf("--transition-wave") + 1], "30,10");
+    }
 
-        const grow = AwwwCommand.apply(
-            "mock-awww", "clavis-desktop", "DP-1",
-            "/tmp/a.png", "Fill", {
-                type: "grow",
-                fps: 1,
-                durationMs: 500,
-                position: "bottom-right"
-            });
-        compare(grow[grow.indexOf("--transition-fps") + 1], "10");
-        compare(
-            grow[grow.indexOf("--transition-pos") + 1],
-            "bottom-right");
-
-        const simple = AwwwCommand.apply(
-            "mock-awww", "clavis-desktop", "DP-1",
-            "/tmp/a.png", "Fill", {
-                type: "simple",
-                fps: 60,
-                durationMs: 1000
-            });
-        verify(simple.indexOf("--transition-duration") === -1);
-        verify(simple.indexOf("--transition-bezier") === -1);
+    function test_awwwOuterAndRandomArguments() {
+        const types = ["outer", "random"];
+        for (let index = 0; index < types.length; index += 1) {
+            const command = transitionCommand(types[index]);
+            verifyContains(command, "--transition-step");
+            verifyContains(command, "--transition-duration");
+            verifyContains(command, "--transition-bezier");
+        }
+        verifyContains(transitionCommand("outer"),
+            "--transition-pos");
     }
 
     function test_awwwRejectsDmsOnlyTransitionNames() {
