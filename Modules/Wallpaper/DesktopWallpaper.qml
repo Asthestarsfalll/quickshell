@@ -115,33 +115,27 @@ Variants {
             readonly property bool parallaxRequested:
                 hasHorizontalDriver || hasVerticalDriver
             readonly property bool parallaxSupported:
-                targetFillMode === Image.PreserveAspectCrop
-                && !WallpaperService.isColorSource(targetSource)
-                && imageMetadata.status === Image.Ready
-                && imageMetadata.sourceSize.width > 1
-                && imageMetadata.sourceSize.height > 1
+                WallpaperMath.supportsParallaxCanvas(
+                    targetFillMode === Image.PreserveAspectCrop,
+                    targetSource,
+                    WallpaperService.isColorSource(targetSource))
             readonly property bool manualParallaxActive:
                 parallaxRequested && parallaxSupported
             readonly property real preferredScale:
                 manualParallaxActive
                     ? PersonalizationConfig.parallaxPreferredScale : 1
-            readonly property real coverScale: manualParallaxActive
-                ? WallpaperMath.coverGeometry(
-                    width, height,
-                    imageMetadata.sourceSize.width,
-                    imageMetadata.sourceSize.height,
-                    preferredScale).coverScale
-                : 1
-            readonly property real effectiveScale:
-                coverScale * preferredScale
-            readonly property real scaledWidth: manualParallaxActive
-                ? imageMetadata.sourceSize.width * effectiveScale : width
-            readonly property real scaledHeight: manualParallaxActive
-                ? imageMetadata.sourceSize.height * effectiveScale : height
+            readonly property var parallaxCanvas:
+                WallpaperMath.parallaxCanvasGeometry(
+                    width, height, preferredScale,
+                    manualParallaxActive)
+            readonly property real scaledWidth:
+                parallaxCanvas.scaledWidth
+            readonly property real scaledHeight:
+                parallaxCanvas.scaledHeight
             readonly property real overflowX:
-                Math.max(0, scaledWidth - width)
+                parallaxCanvas.overflowX
             readonly property real overflowY:
-                Math.max(0, scaledHeight - height)
+                parallaxCanvas.overflowY
             readonly property real tiledProgress: {
                 if (!PersonalizationConfig
                         .parallaxFollowTiledColumns)
@@ -224,19 +218,6 @@ Variants {
                 function onOutputsChanged() {
                     root.refreshNiriState();
                 }
-            }
-
-            Image {
-                id: imageMetadata
-
-                visible: false
-                source: root.parallaxRequested
-                    && root.targetSource !== ""
-                    && !WallpaperService
-                        .isColorSource(root.targetSource)
-                    ? Paths.fileUrl(root.targetSource) : ""
-                asynchronous: true
-                cache: true
             }
 
             WallpaperTransitionSurface {

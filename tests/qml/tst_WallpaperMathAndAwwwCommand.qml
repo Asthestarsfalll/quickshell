@@ -38,14 +38,114 @@ TestCase {
                 + JSON.stringify(command));
     }
 
-    function test_coverScaleAndOverflow() {
-        const geometry = WallpaperMath.coverGeometry(
-            1920, 1080, 1920, 1080, 1.10);
-        compare(geometry.coverScale, 1);
+    function test_fixedParallaxCanvasGeometry() {
+        const geometry = WallpaperMath.parallaxCanvasGeometry(
+            1920, 1080, 1.10, true);
         compare(Math.round(geometry.scaledWidth), 2112);
         compare(Math.round(geometry.scaledHeight), 1188);
         compare(Math.round(geometry.overflowX), 192);
         compare(Math.round(geometry.overflowY), 108);
+
+        const inactive = WallpaperMath.parallaxCanvasGeometry(
+            1920, 1080, 1.10, false);
+        compare(inactive.scaledWidth, 1920);
+        compare(inactive.scaledHeight, 1080);
+        compare(inactive.overflowX, 0);
+        compare(inactive.overflowY, 0);
+    }
+
+    function test_parallaxCanvasIgnoresWallpaperAspectAndStatus() {
+        const wallpaperStates = [
+            { source: "wide.jpg", width: 3440, height: 1440,
+                status: Image.Loading },
+            { source: "wide.jpg", width: 3440, height: 1440,
+                status: Image.Ready },
+            { source: "portrait.jpg", width: 1080, height: 1920,
+                status: Image.Loading },
+            { source: "portrait.jpg", width: 1080, height: 1920,
+                status: Image.Ready }
+        ];
+        const horizontalProgress = 0.4;
+        const verticalProgress = 0.5;
+        let expectedGeometry = "";
+        let expectedX = 0;
+        let expectedY = 0;
+
+        for (let index = 0; index < wallpaperStates.length;
+                index += 1) {
+            const state = wallpaperStates[index];
+            const supported = WallpaperMath.supportsParallaxCanvas(
+                true, state.source, false);
+            const geometry = WallpaperMath.parallaxCanvasGeometry(
+                1920, 1080, 1.10, supported);
+            const serialized = JSON.stringify(geometry);
+            const x = WallpaperMath.wallpaperPosition(
+                geometry.overflowX, horizontalProgress);
+            const y = WallpaperMath.wallpaperPosition(
+                geometry.overflowY, verticalProgress);
+            if (index === 0) {
+                expectedGeometry = serialized;
+                expectedX = x;
+                expectedY = y;
+            } else {
+                compare(serialized, expectedGeometry);
+                compare(x, expectedX);
+                compare(y, expectedY);
+            }
+        }
+
+        verify(!WallpaperMath.supportsParallaxCanvas(
+            false, "wide.jpg", false));
+        verify(!WallpaperMath.supportsParallaxCanvas(
+            true, "#112233", true));
+        verify(!WallpaperMath.supportsParallaxCanvas(
+            true, "", false));
+    }
+
+    function test_currentAndNextWallpaperShareParallaxCanvas() {
+        const geometry = WallpaperMath.parallaxCanvasGeometry(
+            1920, 1080, 1.10, true);
+        const currentSource = {
+            source: "current-16x9.jpg",
+            canvasWidth: geometry.scaledWidth,
+            canvasHeight: geometry.scaledHeight
+        };
+        const nextSource = {
+            source: "next-ultrawide.jpg",
+            canvasWidth: geometry.scaledWidth,
+            canvasHeight: geometry.scaledHeight
+        };
+        compare(currentSource.canvasWidth, nextSource.canvasWidth);
+        compare(currentSource.canvasHeight, nextSource.canvasHeight);
+    }
+
+    function test_fixedCanvasStillMovesWithParallaxDrivers() {
+        const geometry = WallpaperMath.parallaxCanvasGeometry(
+            1920, 1080, 1.10, true);
+        const columns = [1, 2, 3, 4, 5, 6];
+        const firstX = WallpaperMath.wallpaperPosition(
+            geometry.overflowX,
+            WallpaperMath.focusedColumnProgress(columns, 1, 6));
+        const lastX = WallpaperMath.wallpaperPosition(
+            geometry.overflowX,
+            WallpaperMath.focusedColumnProgress(columns, 6, 6));
+        compare(Math.round(firstX), 0);
+        compare(Math.round(lastX), -192);
+
+        const topY = WallpaperMath.wallpaperPosition(
+            geometry.overflowY,
+            WallpaperMath.workspaceProgress([
+                { isActive: true },
+                { isActive: false }
+            ]));
+        const bottomY = WallpaperMath.wallpaperPosition(
+            geometry.overflowY,
+            WallpaperMath.workspaceProgress([
+                { isActive: false },
+                { isActive: true }
+            ]));
+        compare(Math.round(topY), 0);
+        compare(Math.round(bottomY), -108);
     }
 
     function test_tiledColumnProgress() {

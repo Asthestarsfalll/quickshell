@@ -2,24 +2,24 @@ function clamp01(value) {
     return Math.max(0, Math.min(1, Number(value) || 0));
 }
 
-function coverGeometry(screenWidth, screenHeight,
-                       imageWidth, imageHeight, preferredScale) {
+function supportsParallaxCanvas(preserveAspectCrop, source,
+                                 sourceIsColor) {
+    return !!preserveAspectCrop
+        && String(source || "") !== ""
+        && !sourceIsColor;
+}
+
+function parallaxCanvasGeometry(screenWidth, screenHeight,
+                                preferredScale, active) {
     const safeScreenWidth = Math.max(1, Number(screenWidth) || 1);
     const safeScreenHeight = Math.max(1, Number(screenHeight) || 1);
-    const safeImageWidth = Math.max(1, Number(imageWidth) || 1);
-    const safeImageHeight = Math.max(1, Number(imageHeight) || 1);
-    const safePreferredScale = Math.max(
-        1, Number(preferredScale) || 1);
-    const coverScale = Math.max(
-        safeScreenWidth / safeImageWidth,
-        safeScreenHeight / safeImageHeight);
-    const effectiveScale = coverScale * safePreferredScale;
-    const scaledWidth = safeImageWidth * effectiveScale;
-    const scaledHeight = safeImageHeight * effectiveScale;
+    const safePreferredScale = active
+        ? Math.max(1, Number(preferredScale) || 1) : 1;
+    const scaledWidth = safeScreenWidth * safePreferredScale;
+    const scaledHeight = safeScreenHeight * safePreferredScale;
 
     return {
-        coverScale: coverScale,
-        effectiveScale: effectiveScale,
+        scale: safePreferredScale,
         scaledWidth: scaledWidth,
         scaledHeight: scaledHeight,
         overflowX: Math.max(0, scaledWidth - safeScreenWidth),
