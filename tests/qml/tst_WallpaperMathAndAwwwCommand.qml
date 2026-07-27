@@ -12,6 +12,7 @@ TestCase {
             fps: 60,
             step: 90,
             durationMs: 1200,
+            easingMode: "customBezier",
             bezierCurve: [0.22, 1, 0.36, 1, 1, 1],
             angle: 45,
             position: "center",
@@ -53,6 +54,110 @@ TestCase {
         compare(WallpaperMath.tiledColumnProgress(2, 6), 0.2);
         compare(WallpaperMath.tiledColumnProgress(6, 6), 1);
         compare(WallpaperMath.tiledColumnProgress(12, 6), 1);
+    }
+
+    function test_focusedHorizontalColumnProgress() {
+        const columns = [1, 2, 3, 4, 5, 6];
+        compare(WallpaperMath.focusedColumnProgress(
+            columns, 1, 6), 0);
+        compare(WallpaperMath.focusedColumnProgress(
+            columns, 3, 6), 0.4);
+        compare(WallpaperMath.focusedColumnProgress(
+            columns, 6, 6), 1);
+        compare(WallpaperMath.focusedColumnProgress(
+            [], 0, 6), 0.5);
+        compare(WallpaperMath.focusedColumnProgress(
+            [3], 3, 6), 0);
+    }
+
+    function test_horizontalColumnsIgnoreRowsAndFloatingWindows() {
+        const windows = [
+            { workspaceId: 1, isFloating: false,
+                layoutColumn: 1, layoutRow: 1 },
+            { workspaceId: 1, isFloating: false,
+                layoutColumn: 3, layoutRow: 1 },
+            { workspaceId: 1, isFloating: false,
+                layoutColumn: 3, layoutRow: 2 },
+            { workspaceId: 1, isFloating: false,
+                layoutColumn: 6, layoutRow: 1 },
+            { workspaceId: 1, isFloating: true,
+                layoutColumn: 4, layoutRow: 1 }
+        ];
+        const columns = WallpaperMath.horizontalColumns(windows);
+        compare(JSON.stringify(columns), JSON.stringify([1, 3, 6]));
+
+        const progressA = WallpaperMath.focusedColumnProgress(
+            columns, windows[1].layoutColumn, 6);
+        const progressB = WallpaperMath.focusedColumnProgress(
+            columns, windows[2].layoutColumn, 6);
+        compare(progressA, progressB);
+
+        const vertical = WallpaperMath.workspaceProgress([
+            { isActive: true },
+            { isActive: false }
+        ]);
+        compare(vertical, 0);
+        compare(
+            WallpaperMath.wallpaperPosition(100, vertical),
+            WallpaperMath.wallpaperPosition(100, vertical));
+    }
+
+    function test_floatingFocusKeepsTiledMemory() {
+        let memory = {};
+        memory = WallpaperMath.rememberFocusedHorizontalColumn(
+            memory, {
+                workspaceId: 7,
+                isFloating: false,
+                layoutColumn: 4,
+                layoutRow: 1
+            });
+        const afterTiled = memory;
+        memory = WallpaperMath.rememberFocusedHorizontalColumn(
+            memory, {
+                workspaceId: 7,
+                isFloating: true,
+                layoutColumn: 9,
+                layoutRow: 1
+            });
+        compare(memory, afterTiled);
+        compare(memory["7"], 4);
+        compare(WallpaperMath.focusedColumnProgress(
+            [1, 2, 3, 4, 5, 6], memory["7"], 6), 0.6);
+    }
+
+    function test_closedColumnUsesNearestRemainingSlot() {
+        compare(WallpaperMath.nearestHorizontalColumn(
+            [1, 2, 3, 5], 4), 3);
+        compare(WallpaperMath.focusedColumnProgress(
+            [1, 2, 3, 5], 4, 6), 0.4);
+        compare(WallpaperMath.nearestHorizontalColumn([], 4), 0);
+    }
+
+    function test_workspaceHorizontalMemoryIsIndependent() {
+        let memory = {};
+        memory = WallpaperMath.rememberFocusedHorizontalColumn(
+            memory, {
+                workspaceId: 11,
+                isFloating: false,
+                layoutColumn: 2
+            });
+        memory = WallpaperMath.rememberFocusedHorizontalColumn(
+            memory, {
+                workspaceId: 22,
+                isFloating: false,
+                layoutColumn: 5
+            });
+        compare(memory["11"], 2);
+        compare(memory["22"], 5);
+
+        const unchanged = WallpaperMath
+            .rememberFocusedHorizontalColumn(memory, {
+                workspaceId: 22,
+                isFloating: true,
+                layoutColumn: 8
+            });
+        compare(unchanged["11"], 2);
+        compare(unchanged["22"], 5);
     }
 
     function test_workspaceProgressIsPerOutputList() {
@@ -113,6 +218,7 @@ TestCase {
                 fps: 60,
                 step: 90,
                 durationMs: 1250,
+                easingMode: "customBezier",
                 bezierCurve: [0.1, 0.2, 0.3, 0.4, 1, 1],
                 angle: 90,
                 position: "center",
@@ -153,6 +259,7 @@ TestCase {
                 type: "fade",
                 fps: 60,
                 durationMs: 1000,
+                easingMode: "customBezier",
                 bezierCurve: [0.43, 1.19, 1, 0.4, 1, 1]
             });
         compare(
@@ -163,11 +270,93 @@ TestCase {
             "mock-awww", "clavis-desktop", "DP-1",
             "/tmp/a.png", "Fill", {
                 type: "fade",
+                easingMode: "customBezier",
                 bezierCurve: [-1, 99, 2, -99, 1, 1]
             });
         compare(
             clamped[clamped.indexOf("--transition-bezier") + 1],
             "0,4,1,-4");
+    }
+
+    function test_awwwPresetBezierMappings() {
+        const expected = {
+            linear: "0,0,1,1",
+            quad: "0.455,0.03,0.515,0.955",
+            cubic: "0.645,0.045,0.355,1",
+            quart: "0.77,0,0.175,1",
+            quint: "0.86,0,0.07,1",
+            sine: "0.445,0.05,0.55,0.95",
+            expo: "1,0,0,1",
+            circ: "0.785,0.135,0.15,0.86"
+        };
+        for (let mode in expected) {
+            const command = transitionCommand("grow", {
+                easingMode: mode
+            });
+            compare(command[
+                command.indexOf("--transition-bezier") + 1],
+                expected[mode]);
+        }
+    }
+
+    function test_awwwCustomAndFallbackBezierMappings() {
+        const customCurve = [0.22, 1, 0.36, 1, 1, 1];
+        const customBefore = JSON.stringify(customCurve);
+        const custom = transitionCommand("fade", {
+            easingMode: "customBezier",
+            bezierCurve: customCurve
+        });
+        compare(custom[
+            custom.indexOf("--transition-bezier") + 1],
+            "0.22,1,0.36,1");
+
+        const linear = transitionCommand("fade", {
+            easingMode: "linear",
+            bezierCurve: customCurve
+        });
+        compare(linear[
+            linear.indexOf("--transition-bezier") + 1],
+            "0,0,1,1");
+        compare(JSON.stringify(customCurve), customBefore);
+
+        const restored = transitionCommand("fade", {
+            easingMode: "customBezier",
+            bezierCurve: customCurve
+        });
+        compare(restored[
+            restored.indexOf("--transition-bezier") + 1],
+            "0.22,1,0.36,1");
+
+        const unknown = transitionCommand("fade", {
+            easingMode: "unknown",
+            bezierCurve: customCurve
+        });
+        compare(unknown[
+            unknown.indexOf("--transition-bezier") + 1],
+            "0.43,1.19,1,0.4");
+
+        const invalid = transitionCommand("fade", {
+            easingMode: "customBezier",
+            bezierCurve: [0.2, NaN, 0.8, 1]
+        });
+        compare(invalid[
+            invalid.indexOf("--transition-bezier") + 1],
+            "0.43,1.19,1,0.4");
+    }
+
+    function test_awwwNextCommandUsesCurrentEasingMode() {
+        const quad = transitionCommand("left", {
+            easingMode: "quad"
+        });
+        const cubic = transitionCommand("left", {
+            easingMode: "cubic"
+        });
+        compare(quad[
+            quad.indexOf("--transition-bezier") + 1],
+            "0.455,0.03,0.515,0.955");
+        compare(cubic[
+            cubic.indexOf("--transition-bezier") + 1],
+            "0.645,0.045,0.355,1");
     }
 
     function test_awwwTransitionCapabilities() {
@@ -249,7 +438,11 @@ TestCase {
     }
 
     function test_awwwOuterAndRandomArguments() {
-        const types = ["outer", "random"];
+        const types = [
+            "fade", "left", "right", "top", "bottom",
+            "wipe", "wave", "grow", "center", "any",
+            "outer", "random"
+        ];
         for (let index = 0; index < types.length; index += 1) {
             const command = transitionCommand(types[index]);
             verifyContains(command, "--transition-step");

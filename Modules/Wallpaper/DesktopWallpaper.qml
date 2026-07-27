@@ -10,6 +10,51 @@ Variants {
     id: variants
 
     model: Quickshell.screens
+    property var lastFocusedHorizontalColumnByWorkspace: ({})
+
+    function rememberFocusedWindow() {
+        const next = WallpaperMath.rememberFocusedHorizontalColumn(
+            variants.lastFocusedHorizontalColumnByWorkspace,
+            Niri.focusedWindow);
+        if (next !== variants.lastFocusedHorizontalColumnByWorkspace)
+            variants.lastFocusedHorizontalColumnByWorkspace = next;
+    }
+
+    function resolveHorizontalColumn(workspace, columns) {
+        const workspaceId = workspace && workspace.id
+            ? workspace.id : 0;
+        if (!workspaceId || !columns || columns.length === 0)
+            return 0;
+
+        variants.rememberFocusedWindow();
+        const workspaceKey = String(workspaceId);
+        let preferred = Number(
+            variants.lastFocusedHorizontalColumnByWorkspace[
+                workspaceKey]);
+
+        if (!isFinite(preferred) || preferred <= 0) {
+            const activeWindow = Niri.windowById(
+                workspace.activeWindowId || 0);
+            if (WallpaperMath.isHorizontalTiledWindow(activeWindow))
+                preferred = Number(activeWindow.layoutColumn);
+        }
+
+        const resolved = WallpaperMath.nearestHorizontalColumn(
+            columns, preferred);
+        const remembered =
+            variants.lastFocusedHorizontalColumnByWorkspace[
+                workspaceKey];
+        if (Number(remembered) !== resolved) {
+            const next = {};
+            const current =
+                variants.lastFocusedHorizontalColumnByWorkspace;
+            for (let key in current)
+                next[key] = current[key];
+            next[workspaceKey] = resolved;
+            variants.lastFocusedHorizontalColumnByWorkspace = next;
+        }
+        return resolved;
+    }
 
     PanelWindow {
         id: wallpaperWindow
@@ -44,6 +89,8 @@ Variants {
                 WallpaperService.settingsRevision
             property var outputWorkspaces: []
             property var activeWorkspace: ({})
+            property var horizontalColumns: []
+            property int focusedHorizontalColumn: 0
 
             readonly property string targetSource:
                 serviceRevision >= 0
@@ -59,8 +106,6 @@ Variants {
                 WallpaperService.qtFillMode(targetFillModeName)
             readonly property real targetShaderFillMode:
                 WallpaperService.shaderFillMode(targetFillModeName)
-            readonly property int tiledColumnCount:
-                Number(activeWorkspace.tiledColumnCount || 0)
             readonly property bool hasHorizontalDriver:
                 PersonalizationConfig.parallaxFollowTiledColumns
                 || PersonalizationConfig.parallaxFollowSidebars
@@ -101,8 +146,9 @@ Variants {
                 if (!PersonalizationConfig
                         .parallaxFollowTiledColumns)
                     return 0.5;
-                return WallpaperMath.tiledColumnProgress(
-                    tiledColumnCount,
+                return WallpaperMath.focusedColumnProgress(
+                    horizontalColumns,
+                    focusedHorizontalColumn,
                     PersonalizationConfig.parallaxTiledColumnSpan);
             }
             readonly property bool leftSidebarOnThisScreen:
@@ -149,6 +195,17 @@ Variants {
                     Niri.workspacesForOutput(modelData.name);
                 root.activeWorkspace =
                     Niri.activeWorkspaceForOutput(modelData.name);
+                const workspaceId = root.activeWorkspace
+                    && root.activeWorkspace.id
+                    ? root.activeWorkspace.id : 0;
+                const windows = workspaceId
+                    ? Niri.windowsForWorkspace(workspaceId) : [];
+                root.horizontalColumns =
+                    WallpaperMath.horizontalColumns(windows);
+                root.focusedHorizontalColumn =
+                    variants.resolveHorizontalColumn(
+                        root.activeWorkspace,
+                        root.horizontalColumns);
             }
 
             Component.onCompleted: root.refreshNiriState()

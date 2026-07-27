@@ -450,12 +450,12 @@
 <context>
     <name>AwwwWallpaperService</name>
     <message>
-        <location filename="../Services/AwwwWallpaperService.qml" line="146"/>
+        <location filename="../Services/AwwwWallpaperService.qml" line="148"/>
         <source>awww 桌面后端启动失败</source>
         <translation>awww 桌面后端启动失败</translation>
     </message>
     <message>
-        <location filename="../Services/AwwwWallpaperService.qml" line="97"/>
+        <location filename="../Services/AwwwWallpaperService.qml" line="99"/>
         <source>未找到 awww 或 awww-daemon，已回退到 Quickshell</source>
         <translation>未找到 awww 或 awww-daemon，已回退到 Quickshell</translation>
     </message>
@@ -464,22 +464,22 @@
         <translation type="vanished">Quickshell 桌面壁纸未能就绪，继续使用 awww</translation>
     </message>
     <message>
-        <location filename="../Services/AwwwWallpaperService.qml" line="225"/>
+        <location filename="../Services/AwwwWallpaperService.qml" line="227"/>
         <source>没有可应用到 %1 的桌面壁纸</source>
         <translation>没有可应用到 %1 的桌面壁纸</translation>
     </message>
     <message>
-        <location filename="../Services/AwwwWallpaperService.qml" line="349"/>
+        <location filename="../Services/AwwwWallpaperService.qml" line="351"/>
         <source>awww-daemon 意外退出，退出码 %1</source>
         <translation>awww-daemon 意外退出，退出码 %1</translation>
     </message>
     <message>
-        <location filename="../Services/AwwwWallpaperService.qml" line="382"/>
+        <location filename="../Services/AwwwWallpaperService.qml" line="384"/>
         <source>awww namespace clavis-desktop 未在超时前就绪</source>
         <translation>awww namespace clavis-desktop 未在超时前就绪</translation>
     </message>
     <message>
-        <location filename="../Services/AwwwWallpaperService.qml" line="435"/>
+        <location filename="../Services/AwwwWallpaperService.qml" line="437"/>
         <source>停止 clavis-desktop awww namespace 失败，退出码 %1</source>
         <translation>停止 clavis-desktop awww namespace 失败，退出码 %1</translation>
     </message>
@@ -488,7 +488,7 @@
         <translation type="vanished">Quickshell 桌面壁纸未在超时前就绪，继续使用 awww</translation>
     </message>
     <message>
-        <location filename="../Services/AwwwWallpaperService.qml" line="414"/>
+        <location filename="../Services/AwwwWallpaperService.qml" line="416"/>
         <source>awww 无法为 %1 应用桌面壁纸，退出码 %2</source>
         <translation>awww 无法为 %1 应用桌面壁纸，退出码 %2</translation>
     </message>
@@ -4837,7 +4837,7 @@
     </message>
     <message>
         <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="466"/>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1417"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1418"/>
         <source>选择颜色</source>
         <translation>选择颜色</translation>
     </message>
@@ -4900,6 +4900,17 @@
         <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="683"/>
         <source>Quickshell 壁纸动画由 Qt Quick 渲染循环驱动，不提供独立 FPS 参数。</source>
         <translation>Quickshell 壁纸动画由 Qt Quick 渲染循环驱动，不提供独立 FPS 参数。</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1216"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1225"/>
+        <source>随横向平铺窗口焦点移动</source>
+        <translation>随横向平铺窗口焦点移动</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1217"/>
+        <source>根据当前聚焦的横向平铺窗口位置调整壁纸。浮动窗口以及同一列中上下堆叠的窗口不会改变横向位置。</source>
+        <translation>根据当前聚焦的横向平铺窗口位置调整壁纸。浮动窗口以及同一列中上下堆叠的窗口不会改变横向位置。</translation>
     </message>
     <message>
         <source>当前 awww 转场不会使用贝塞尔曲线，但该共享值仍会用于 overview 转场。</source>
@@ -5004,183 +5015,180 @@
         <translation>左侧栏向右偏移，右侧栏向左偏移。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1216"/>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1224"/>
         <source>随平铺窗口移动</source>
-        <translation>随平铺窗口移动</translation>
+        <translation type="vanished">随平铺窗口移动</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1217"/>
         <source>仅使用活动工作区去重后的平铺列数。</source>
-        <translation>仅使用活动工作区去重后的平铺列数。</translation>
+        <translation type="vanished">仅使用活动工作区去重后的平铺列数。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1236"/>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1252"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1237"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1253"/>
         <source>首选壁纸缩放比例</source>
         <translation>首选壁纸缩放比例</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1266"/>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1282"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1267"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1283"/>
         <source>横向完整行程列数</source>
         <translation>横向完整行程列数</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1295"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1296"/>
         <source>awww 当前未提供持续修改壁纸取景偏移的接口，因此桌面视差仅适用于 Quickshell 后端。</source>
         <translation>awww 当前未提供持续修改壁纸取景偏移的接口，因此桌面视差仅适用于 Quickshell 后端。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1302"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1303"/>
         <source>Overview 背景</source>
         <translation>Overview 背景</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1307"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1308"/>
         <source>niri overview 背景</source>
         <translation>niri overview 背景</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1308"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1309"/>
         <source>该表面始终由 Quickshell 管理，与桌面壁纸管理器无关。</source>
         <translation>该表面始终由 Quickshell 管理，与桌面壁纸管理器无关。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1318"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1319"/>
         <source>未检测到 clavis-overview-wallpaper 的 niri backdrop 规则。当前表面会停留在普通 Background 层，因此这里的参数看起来会改变桌面背景。请由人工将文档中的 layer-rule 加入 niri 配置。</source>
         <translation>未检测到 clavis-overview-wallpaper 的 niri backdrop 规则。当前表面会停留在普通 Background 层，因此这里的参数看起来会改变桌面背景。请由人工将文档中的 layer-rule 加入 niri 配置。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1329"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1330"/>
         <source>niri workspace 背景仍不透明，会遮住 kitty 等窗口的透明与 xray 模糊背景。请由人工在 layout 中设置 background-color &quot;transparent&quot;。</source>
         <translation>niri workspace 背景仍不透明，会遮住 kitty 等窗口的透明与 xray 模糊背景。请由人工在 layout 中设置 background-color &quot;transparent&quot;。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1336"/>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1342"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1337"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1343"/>
         <source>启用 overview 背景</source>
         <translation>启用 overview 背景</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1351"/>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1358"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1352"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1359"/>
         <source>使用桌面壁纸</source>
         <translation>使用桌面壁纸</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1352"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1353"/>
         <source>读取 Clavis 保存的原始路径，不读取 awww surface 或缓存。</source>
         <translation>读取 Clavis 保存的原始路径，不读取 awww surface 或缓存。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1367"/>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1375"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1368"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1376"/>
         <source>每显示器使用不同 overview 壁纸</source>
         <translation>每显示器使用不同 overview 壁纸</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1368"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1369"/>
         <source>每个输出保持独立的路径与填充模式。</source>
         <translation>每个输出保持独立的路径与填充模式。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1385"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1386"/>
         <source>选择 overview 输出</source>
         <translation>选择 overview 输出</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1386"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1387"/>
         <source>overview 壁纸输出</source>
         <translation>overview 壁纸输出</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1395"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1396"/>
         <source>未选择 overview 壁纸</source>
         <translation>未选择 overview 壁纸</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1409"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1410"/>
         <source>选择独立壁纸</source>
         <translation>选择独立壁纸</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1425"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1426"/>
         <source>清除</source>
         <translation>清除</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1454"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1455"/>
         <source>overview 转场</source>
         <translation>overview 转场</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1455"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1456"/>
         <source>使用 DMS shader，并与桌面共享持续时间、缓动和贝塞尔曲线。</source>
         <translation>使用 DMS shader，并与桌面共享持续时间、缓动和贝塞尔曲线。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1483"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1484"/>
         <source>overview 图像效果</source>
         <translation>overview 图像效果</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1484"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1485"/>
         <source>所有输出共享效果参数；源图实时处理，不生成缓存图片。</source>
         <translation>所有输出共享效果参数；源图实时处理，不生成缓存图片。</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1494"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1495"/>
         <source>模糊</source>
         <translation>模糊</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1509"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1510"/>
         <source>overview 模糊</source>
         <translation>overview 模糊</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1522"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1523"/>
         <source>暗化</source>
         <translation>暗化</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1536"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1537"/>
         <source>overview 暗化</source>
         <translation>overview 暗化</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1549"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1550"/>
         <source>饱和度</source>
         <translation>饱和度</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1564"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1565"/>
         <source>overview 饱和度</source>
         <translation>overview 饱和度</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1577"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1578"/>
         <source>对比度</source>
         <translation>对比度</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1592"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1593"/>
         <source>overview 对比度</source>
         <translation>overview 对比度</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1608"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1609"/>
         <source>overview Quickshell 表面已就绪</source>
         <translation>overview Quickshell 表面已就绪</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1609"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1610"/>
         <source>overview Quickshell 表面正在加载</source>
         <translation>overview Quickshell 表面正在加载</translation>
     </message>
     <message>
-        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1610"/>
+        <location filename="../Modules/ControlCenter/WallpaperPage.qml" line="1611"/>
         <source>overview Quickshell 表面已加载但当前禁用</source>
         <translation>overview Quickshell 表面已加载但当前禁用</translation>
     </message>

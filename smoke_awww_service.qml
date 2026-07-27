@@ -85,6 +85,8 @@ ShellRoot {
                     PersonalizationConfig.awwwTransitionFps = 65;
                     PersonalizationConfig.awwwTransitionStep = 137;
                     PersonalizationConfig.transitionDurationMs = 1234;
+                    PersonalizationConfig.transitionEasingMode =
+                        "cubic";
                     PersonalizationConfig.transitionBezierCurve =
                         [0.22, 1, 0.36, 1, 1, 1];
                     root.selectBackend("awww");

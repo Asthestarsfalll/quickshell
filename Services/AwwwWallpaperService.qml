@@ -56,6 +56,8 @@ Singleton {
             fps: PersonalizationConfig.awwwTransitionFps,
             step: PersonalizationConfig.awwwTransitionStep,
             durationMs: PersonalizationConfig.transitionDurationMs,
+            easingMode:
+                PersonalizationConfig.transitionEasingMode,
             bezierCurve:
                 PersonalizationConfig.transitionBezierCurve,
             angle: PersonalizationConfig.awwwTransitionAngle,

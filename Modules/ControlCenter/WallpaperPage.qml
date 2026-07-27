@@ -1213,15 +1213,16 @@ StyledFlickable {
                 SettingsRow {
                     Layout.fillWidth: true
                     iconName: "view_column"
-                    title: qsTr("随平铺窗口移动")
+                    title: qsTr("随横向平铺窗口焦点移动")
                     supportingText: qsTr(
-                        "仅使用活动工作区去重后的平铺列数。")
+                        "根据当前聚焦的横向平铺窗口位置调整壁纸。浮动窗口以及同一列中上下堆叠的窗口不会改变横向位置。")
 
                     trailing: StyledSwitch {
                         enabled: !root.desktopUsesAwww
                         checked: PersonalizationConfig
                             .parallaxFollowTiledColumns
-                        Accessible.name: qsTr("随平铺窗口移动")
+                        Accessible.name:
+                            qsTr("随横向平铺窗口焦点移动")
                         onToggled: PersonalizationConfig
                             .setParallaxFollowTiledColumns(checked)
                     }

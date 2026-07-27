@@ -44,20 +44,48 @@ function resizeMode(fillMode) {
     }
 }
 
-function bezier(curve) {
-    const fallback = [0.43, 1.19, 1.0, 0.4];
-    const source = Array.isArray(curve) && curve.length >= 4
-        ? curve : fallback;
+function defaultBezier() {
+    return [0.43, 1.19, 1.0, 0.4];
+}
+
+function normalizedBezier(curve) {
+    const fallback = defaultBezier();
+    if (!Array.isArray(curve) || curve.length < 4)
+        return fallback;
+
     const result = [];
     for (let index = 0; index < 4; index += 1) {
-        const value = Number(source[index]);
-        const safeValue = isFinite(value)
-            ? value : fallback[index];
+        const value = Number(curve[index]);
+        if (!isFinite(value))
+            return fallback;
         result.push(index === 0 || index === 2
-            ? Math.max(0, Math.min(1, safeValue))
-            : Math.max(-4, Math.min(4, safeValue)));
+            ? Math.max(0, Math.min(1, value))
+            : Math.max(-4, Math.min(4, value)));
     }
-    return result.join(",");
+    return result;
+}
+
+function effectiveBezier(easingMode, customCurve) {
+    const presets = {
+        linear: [0, 0, 1, 1],
+        quad: [0.455, 0.03, 0.515, 0.955],
+        cubic: [0.645, 0.045, 0.355, 1],
+        quart: [0.77, 0, 0.175, 1],
+        quint: [0.86, 0, 0.07, 1],
+        sine: [0.445, 0.05, 0.55, 0.95],
+        expo: [1, 0, 0, 1],
+        circ: [0.785, 0.135, 0.15, 0.86]
+    };
+    const mode = String(easingMode || "");
+    if (mode === "customBezier")
+        return normalizedBezier(customCurve);
+    if (presets[mode])
+        return presets[mode].slice();
+    return defaultBezier();
+}
+
+function bezier(curve) {
+    return normalizedBezier(curve).join(",");
 }
 
 function isColorSource(source) {
@@ -120,8 +148,11 @@ function image(commandPath, namespaceName, outputName, source,
             (durationMs / 1000).toFixed(3));
     }
 
-    if (supportsBezier(transitionType))
-        args.push("--transition-bezier", bezier(settings.bezierCurve));
+    if (supportsBezier(transitionType)) {
+        const effectiveCurve = effectiveBezier(
+            settings.easingMode, settings.bezierCurve);
+        args.push("--transition-bezier", bezier(effectiveCurve));
+    }
 
     if (transitionType === "wipe" || transitionType === "wave") {
         args.push("--transition-angle",
