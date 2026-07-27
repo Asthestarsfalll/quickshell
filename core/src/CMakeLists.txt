@@ -70,6 +70,8 @@ target_sources(ClavisNiriCore PRIVATE
     niri_icon_lookup.cpp
     niri_ipc_client.h
     niri_ipc_client.cpp
+    niri_workspace_deriver.h
+    niri_workspace_deriver.cpp
     niri_workspace_model.h
     niri_workspace_model.cpp
     niri_window_model.h

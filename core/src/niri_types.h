@@ -14,6 +14,8 @@ struct NiriWorkspace {
     bool isUrgent = false;
     quint64 activeWindowId = 0;
     int windowCount = 0;
+    int tiledWindowCount = 0;
+    int tiledColumnCount = 0;
     QVariantList icons;
 };
 

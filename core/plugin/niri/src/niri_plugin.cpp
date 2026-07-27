@@ -1,4 +1,5 @@
 #include "niri_plugin.h"
+#include "niri_workspace_deriver.h"
 
 #include <QJsonArray>
 #include <QJsonObject>
@@ -534,13 +535,11 @@ void NiriPlugin::publishState(bool workspaceChanged, bool windowChanged, bool ou
 
 void NiriPlugin::recomputeDerivedState()
 {
-    QHash<quint64, int> windowCounts;
     QHash<quint64, QVariantList> iconsByWorkspace;
     QHash<quint64, QHash<QString, int>> countsByApp;
     QHash<quint64, QHash<QString, NiriWindow>> representativeByApp;
 
     for (const NiriWindow &window : m_windows) {
-        windowCounts[window.workspaceId]++;
         const QString key = window.appId.isEmpty() ? QStringLiteral("unknown") : window.appId;
         countsByApp[window.workspaceId][key]++;
         if (!representativeByApp[window.workspaceId].contains(key) || window.isFocused)
@@ -556,11 +555,12 @@ void NiriPlugin::recomputeDerivedState()
         iconsByWorkspace[wsIt.key()] = icons;
     }
 
+    NiriWorkspaceDeriver::recomputeWindowCounts(m_workspaces, m_windows);
+
     m_focusedWindow.clear();
     m_focusedWorkspace.clear();
     m_currentOutput.clear();
     for (NiriWorkspace &workspace : m_workspaces) {
-        workspace.windowCount = windowCounts.value(workspace.id);
         workspace.icons = iconsByWorkspace.value(workspace.id);
         if (workspace.isFocused) {
             m_focusedWorkspace = workspaceToMap(workspace);
@@ -650,6 +650,8 @@ QVariantMap NiriPlugin::workspaceToMap(const NiriWorkspace &workspace) const
         {QStringLiteral("isUrgent"), workspace.isUrgent},
         {QStringLiteral("activeWindowId"), QVariant::fromValue(workspace.activeWindowId)},
         {QStringLiteral("windowCount"), workspace.windowCount},
+        {QStringLiteral("tiledWindowCount"), workspace.tiledWindowCount},
+        {QStringLiteral("tiledColumnCount"), workspace.tiledColumnCount},
         {QStringLiteral("icons"), workspace.icons},
     };
 }

@@ -130,6 +130,11 @@ Singleton {
 
         readonly property QtObject expressiveEffects: expressiveDefaultEffects
         readonly property QtObject elementMoveFast: expressiveFastSpatial
+        readonly property QtObject wallpaperParallax: QtObject {
+            readonly property int duration: root.durations.large
+            readonly property int type: Easing.OutCubic
+            readonly property var bezierCurve: []
+        }
         readonly property QtObject elementResize: QtObject {
             readonly property int duration: 300
             readonly property int type: Easing.BezierSpline

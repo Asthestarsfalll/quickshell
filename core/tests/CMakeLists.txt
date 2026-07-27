@@ -13,6 +13,21 @@ target_link_libraries(clavis_core_tests PRIVATE
 
 add_test(NAME clavis_core_tests COMMAND clavis_core_tests)
 
+qt_add_executable(niri_workspace_deriver_tests
+    niri_workspace_deriver_test.cpp
+)
+
+target_link_libraries(niri_workspace_deriver_tests PRIVATE
+    ClavisNiriCore
+    Qt6::Core
+    Qt6::Test
+)
+
+add_test(
+    NAME niri_workspace_deriver_tests
+    COMMAND niri_workspace_deriver_tests
+)
+
 qt_add_executable(audio_visual_analyzer_tests
     audio_visual_analyzer_test.cpp
 )

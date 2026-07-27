@@ -33,6 +33,23 @@ Singleton {
         ({ "value": "portal", "label": qsTr("门户") })
     ]
 
+    readonly property var awwwTransitionTypes: [
+        ({ "value": "none", "label": qsTr("无") }),
+        ({ "value": "simple", "label": qsTr("简单") }),
+        ({ "value": "fade", "label": qsTr("淡入淡出") }),
+        ({ "value": "left", "label": qsTr("从左侧") }),
+        ({ "value": "right", "label": qsTr("从右侧") }),
+        ({ "value": "top", "label": qsTr("从顶部") }),
+        ({ "value": "bottom", "label": qsTr("从底部") }),
+        ({ "value": "wipe", "label": qsTr("擦除") }),
+        ({ "value": "wave", "label": qsTr("波浪") }),
+        ({ "value": "grow", "label": qsTr("扩散") }),
+        ({ "value": "center", "label": qsTr("中心扩散") }),
+        ({ "value": "any", "label": qsTr("随机位置扩散") }),
+        ({ "value": "outer", "label": qsTr("向内收缩") }),
+        ({ "value": "random", "label": qsTr("随机") })
+    ]
+
     readonly property var transitionEasingModes: [
         ({ "value": "linear", "label": qsTr("线性") }),
         ({ "value": "quad", "label": qsTr("二次方") }),
@@ -77,6 +94,7 @@ Singleton {
     property var monitorWallpaperFillModes: ({})
     property var recentWallpaperColors: []
     property string wallpaperFillMode: "Fill"
+    property string desktopWallpaperBackend: "quickshell"
 
     property bool autoCycleEnabled: false
     property string autoCycleMode: "interval"
@@ -88,6 +106,32 @@ Singleton {
     property int transitionDurationMs: 1000
     property string transitionEasingMode: "customBezier"
     property var transitionBezierCurve: [0.43, 1.19, 1.0, 0.4, 1.0, 1.0]
+
+    property string awwwDesktopTransitionType: "fade"
+    property int awwwTransitionFps: 60
+    property real awwwTransitionAngle: 45
+    property string awwwTransitionPosition: "center"
+    property string awwwTransitionWave: "20,20"
+
+    property bool overviewEnabled: true
+    property bool overviewUseDesktopWallpaper: true
+    property string overviewWallpaperPath: ""
+    property string overviewWallpaperFillMode: "Fill"
+    property bool overviewPerMonitorWallpaper: false
+    property var overviewMonitorWallpapers: ({})
+    property var overviewMonitorFillModes: ({})
+    property string overviewTransitionType: "fade"
+    property real overviewBlurRadius: 0
+    property real overviewDim: 0
+    property real overviewSaturation: 1
+    property real overviewContrast: 1
+
+    property bool parallaxVerticalEnabled: false
+    property bool parallaxFollowWorkspaces: true
+    property bool parallaxFollowSidebars: false
+    property bool parallaxFollowTiledColumns: false
+    property real parallaxPreferredScale: 1.10
+    property int parallaxTiledColumnSpan: 6
 
     property string matugenScheme: "scheme-tonal-spot"
     property string themeMode: "dark"
@@ -123,6 +167,10 @@ Singleton {
         return normalizedOption(root.transitionTypes, value, "fade");
     }
 
+    function normalizedAwwwTransition(value) {
+        return normalizedOption(root.awwwTransitionTypes, value, "fade");
+    }
+
     function normalizedEasingMode(value) {
         return normalizedOption(root.transitionEasingModes, value, "customBezier");
     }
@@ -141,14 +189,16 @@ Singleton {
     }
 
     function normalizedBezier(raw) {
+        const fallback =
+            [0.43, 1.19, 1.0, 0.4, 1.0, 1.0];
         if (!Array.isArray(raw) || raw.length < 4)
-            return [0.43, 1.19, 1.0, 0.4, 1.0, 1.0];
+            return fallback.slice();
 
         const source = raw.length === 4 ? [raw[0], raw[1], raw[2], raw[3], 1, 1] : raw;
         const result = [];
         for (let i = 0; i < 6; i += 1) {
             const value = Number(source[i]);
-            result.push(isNaN(value) ? (i === 5 ? 1 : 0) : value);
+            result.push(isFinite(value) ? value : fallback[i]);
         }
         return result;
     }
@@ -160,6 +210,27 @@ Singleton {
 
         for (let key in map)
             result[key] = map[key];
+        return result;
+    }
+
+    function normalizedStringMap(raw) {
+        const result = {};
+        if (!raw || typeof raw !== "object" || Array.isArray(raw))
+            return result;
+
+        for (let key in raw)
+            result[String(key)] = String(raw[key] || "");
+        return result;
+    }
+
+    function normalizedFillModeMap(raw) {
+        const result = {};
+        if (!raw || typeof raw !== "object" || Array.isArray(raw))
+            return result;
+
+        for (let key in raw)
+            result[String(key)] =
+                normalizedOption(root.fillModes, raw[key], "Fill");
         return result;
     }
 
@@ -204,6 +275,11 @@ Singleton {
 
     function setPerMonitorWallpaper(value) {
         setValue("perMonitorWallpaper", !!value);
+    }
+
+    function setDesktopWallpaperBackend(value) {
+        setValue("desktopWallpaperBackend",
+            value === "awww" ? "awww" : "quickshell");
     }
 
     function setMonitorWallpaper(screenName, value) {
@@ -296,11 +372,18 @@ Singleton {
     }
 
     function normalizedDurationMs(value, fallback) {
+        if (value === null || value === undefined || value === "")
+            return fallback;
         const numberValue = Number(value);
-        return isNaN(numberValue) ? fallback : Math.max(0, Math.round(numberValue));
+        return !isFinite(numberValue)
+            ? fallback
+            : Math.max(0, Math.min(5000,
+                Math.round(numberValue)));
     }
 
     function normalizedBoundedInt(value, fallback, minValue, maxValue) {
+        if (value === null || value === undefined || value === "")
+            return fallback;
         const numberValue = Number(value);
         if (isNaN(numberValue))
             return fallback;
@@ -322,6 +405,165 @@ Singleton {
 
     function setTransitionBezierControlPoints(x1, y1, x2, y2) {
         root.setTransitionBezierCurve([x1, y1, x2, y2, 1, 1]);
+    }
+
+    function normalizedBoundedReal(value, fallback, minValue, maxValue) {
+        if (value === null || value === undefined || value === "")
+            return fallback;
+        const numberValue = Number(value);
+        if (!isFinite(numberValue))
+            return fallback;
+        return Math.max(minValue, Math.min(maxValue, numberValue));
+    }
+
+    function normalizedAwwwPosition(value) {
+        const position = String(value || "").trim();
+        const aliases = [
+            "center", "top", "left", "right", "bottom",
+            "top-left", "top-right", "bottom-left", "bottom-right"
+        ];
+        if (aliases.indexOf(position) !== -1)
+            return position;
+        if (/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(position))
+            return position;
+        return "center";
+    }
+
+    function normalizedAwwwWave(value) {
+        const match = String(value || "").trim()
+            .match(/^(\d+(\.\d+)?),(\d+(\.\d+)?)$/);
+        if (!match)
+            return "20,20";
+        const width = normalizedBoundedReal(match[1], 20, 1, 1000);
+        const height = normalizedBoundedReal(match[3], 20, 1, 1000);
+        return width + "," + height;
+    }
+
+    function setAwwwDesktopTransitionType(value) {
+        setValue("awwwDesktopTransitionType",
+            normalizedAwwwTransition(value));
+    }
+
+    function setAwwwTransitionFps(value) {
+        setValue("awwwTransitionFps",
+            normalizedBoundedInt(value, 60, 10, 240));
+    }
+
+    function setAwwwTransitionAngle(value) {
+        setValue("awwwTransitionAngle",
+            normalizedBoundedReal(value, 45, 0, 360));
+    }
+
+    function setAwwwTransitionPosition(value) {
+        setValue("awwwTransitionPosition",
+            normalizedAwwwPosition(value));
+    }
+
+    function setAwwwTransitionWave(value) {
+        setValue("awwwTransitionWave", normalizedAwwwWave(value));
+    }
+
+    function setOverviewEnabled(value) {
+        setValue("overviewEnabled", !!value);
+    }
+
+    function setOverviewUseDesktopWallpaper(value) {
+        setValue("overviewUseDesktopWallpaper", !!value);
+    }
+
+    function setOverviewWallpaperPath(value) {
+        setValue("overviewWallpaperPath", value || "");
+    }
+
+    function setOverviewWallpaperFillMode(value) {
+        setValue("overviewWallpaperFillMode",
+            normalizedOption(root.fillModes, value, "Fill"));
+    }
+
+    function setOverviewPerMonitorWallpaper(value) {
+        setValue("overviewPerMonitorWallpaper", !!value);
+    }
+
+    function setOverviewMonitorWallpaper(screenName, value) {
+        if (!screenName)
+            return;
+        const next = cloneMap(root.overviewMonitorWallpapers);
+        next[screenName] = value || "";
+        root.overviewMonitorWallpapers = next;
+        root.save();
+    }
+
+    function overviewMonitorWallpaper(screenName) {
+        if (!screenName || !root.overviewMonitorWallpapers)
+            return "";
+        return root.overviewMonitorWallpapers[screenName] || "";
+    }
+
+    function setOverviewMonitorFillMode(screenName, value) {
+        if (!screenName)
+            return;
+        const next = cloneMap(root.overviewMonitorFillModes);
+        next[screenName] =
+            normalizedOption(root.fillModes, value, "Fill");
+        root.overviewMonitorFillModes = next;
+        root.save();
+    }
+
+    function overviewMonitorFillMode(screenName) {
+        if (!screenName || !root.overviewMonitorFillModes)
+            return root.overviewWallpaperFillMode;
+        return root.overviewMonitorFillModes[screenName]
+            || root.overviewWallpaperFillMode;
+    }
+
+    function setOverviewTransitionType(value) {
+        setValue("overviewTransitionType", normalizedTransition(value));
+    }
+
+    function setOverviewBlurRadius(value) {
+        setValue("overviewBlurRadius",
+            normalizedBoundedReal(value, 0, 0, 100));
+    }
+
+    function setOverviewDim(value) {
+        setValue("overviewDim",
+            normalizedBoundedReal(value, 0, 0, 1));
+    }
+
+    function setOverviewSaturation(value) {
+        setValue("overviewSaturation",
+            normalizedBoundedReal(value, 1, 0, 2));
+    }
+
+    function setOverviewContrast(value) {
+        setValue("overviewContrast",
+            normalizedBoundedReal(value, 1, 0.5, 2));
+    }
+
+    function setParallaxVerticalEnabled(value) {
+        setValue("parallaxVerticalEnabled", !!value);
+    }
+
+    function setParallaxFollowWorkspaces(value) {
+        setValue("parallaxFollowWorkspaces", !!value);
+    }
+
+    function setParallaxFollowSidebars(value) {
+        setValue("parallaxFollowSidebars", !!value);
+    }
+
+    function setParallaxFollowTiledColumns(value) {
+        setValue("parallaxFollowTiledColumns", !!value);
+    }
+
+    function setParallaxPreferredScale(value) {
+        setValue("parallaxPreferredScale",
+            normalizedBoundedReal(value, 1.10, 1, 1.35));
+    }
+
+    function setParallaxTiledColumnSpan(value) {
+        setValue("parallaxTiledColumnSpan",
+            normalizedBoundedInt(value, 6, 2, 12));
     }
 
     function setMatugenScheme(value) {
@@ -395,6 +637,7 @@ Singleton {
                 "monitorFillModes": root.monitorWallpaperFillModes,
                 "recentColors": root.recentWallpaperColors,
                 "fillMode": root.wallpaperFillMode,
+                "desktopBackend": root.desktopWallpaperBackend,
                 "autoCycle": {
                     "enabled": root.autoCycleEnabled,
                     "mode": root.autoCycleMode,
@@ -407,6 +650,41 @@ Singleton {
                     "durationMs": root.transitionDurationMs,
                     "easingMode": root.transitionEasingMode,
                     "bezierCurve": root.transitionBezierCurve
+                },
+                "awww": {
+                    "transitionType": root.awwwDesktopTransitionType,
+                    "transitionFps": root.awwwTransitionFps,
+                    "transitionAngle": root.awwwTransitionAngle,
+                    "transitionPosition": root.awwwTransitionPosition,
+                    "transitionWave": root.awwwTransitionWave
+                },
+                "overview": {
+                    "enabled": root.overviewEnabled,
+                    "useDesktopWallpaper":
+                        root.overviewUseDesktopWallpaper,
+                    "path": root.overviewWallpaperPath,
+                    "fillMode": root.overviewWallpaperFillMode,
+                    "perMonitor": root.overviewPerMonitorWallpaper,
+                    "monitorWallpapers":
+                        root.overviewMonitorWallpapers,
+                    "monitorFillModes":
+                        root.overviewMonitorFillModes,
+                    "transitionType": root.overviewTransitionType,
+                    "blurRadius": root.overviewBlurRadius,
+                    "dim": root.overviewDim,
+                    "saturation": root.overviewSaturation,
+                    "contrast": root.overviewContrast
+                },
+                "parallax": {
+                    "verticalEnabled": root.parallaxVerticalEnabled,
+                    "followWorkspaces":
+                        root.parallaxFollowWorkspaces,
+                    "followSidebars": root.parallaxFollowSidebars,
+                    "followTiledColumns":
+                        root.parallaxFollowTiledColumns,
+                    "preferredScale": root.parallaxPreferredScale,
+                    "tiledColumnSpan":
+                        root.parallaxTiledColumnSpan
                 }
             },
             "theme": {
@@ -447,6 +725,9 @@ Singleton {
         const interactions = parsed.interactions || {};
         const scrolling = interactions.scrolling || {};
         const transition = wallpaper.transition || {};
+        const awww = wallpaper.awww || {};
+        const overview = wallpaper.overview || {};
+        const parallax = wallpaper.parallax || {};
         const autoCycle = wallpaper.autoCycle || {};
 
         root.wallpaperFolder = wallpaper.folder || Paths.homeDir + "/.config/wallpaper";
@@ -455,10 +736,15 @@ Singleton {
         root.wallpaperPathDark = wallpaper.pathDark || "";
         root.perModeWallpaper = !!wallpaper.perMode;
         root.perMonitorWallpaper = !!wallpaper.perMonitor;
-        root.monitorWallpapers = cloneMap(wallpaper.monitorWallpapers);
-        root.monitorWallpaperFillModes = cloneMap(wallpaper.monitorFillModes);
+        root.monitorWallpapers =
+            normalizedStringMap(wallpaper.monitorWallpapers);
+        root.monitorWallpaperFillModes =
+            normalizedFillModeMap(wallpaper.monitorFillModes);
         root.recentWallpaperColors = normalizedRecentColors(wallpaper.recentColors);
         root.wallpaperFillMode = normalizedOption(root.fillModes, wallpaper.fillMode, "Fill");
+        root.desktopWallpaperBackend =
+            wallpaper.desktopBackend === "awww"
+                ? "awww" : "quickshell";
         root.autoCycleEnabled = !!autoCycle.enabled;
         root.autoCycleMode = autoCycle.mode === "time" ? "time" : "interval";
         root.autoCycleInterval = Math.max(5, Math.round(Number(autoCycle.interval) || 300));
@@ -468,6 +754,55 @@ Singleton {
         root.transitionDurationMs = normalizedDurationMs(transition.durationMs, 1000);
         root.transitionEasingMode = normalizedEasingMode(transition.easingMode || "customBezier");
         root.transitionBezierCurve = normalizedBezier(transition.bezierCurve);
+
+        root.awwwDesktopTransitionType =
+            normalizedAwwwTransition(awww.transitionType || "fade");
+        root.awwwTransitionFps =
+            normalizedBoundedInt(awww.transitionFps, 60, 10, 240);
+        root.awwwTransitionAngle =
+            normalizedBoundedReal(awww.transitionAngle, 45, 0, 360);
+        root.awwwTransitionPosition =
+            normalizedAwwwPosition(awww.transitionPosition);
+        root.awwwTransitionWave =
+            normalizedAwwwWave(awww.transitionWave);
+
+        root.overviewEnabled = overview.enabled === undefined
+            ? true : !!overview.enabled;
+        root.overviewUseDesktopWallpaper =
+            overview.useDesktopWallpaper === undefined
+                ? true : !!overview.useDesktopWallpaper;
+        root.overviewWallpaperPath = String(overview.path || "");
+        root.overviewWallpaperFillMode =
+            normalizedOption(root.fillModes, overview.fillMode, "Fill");
+        root.overviewPerMonitorWallpaper = !!overview.perMonitor;
+        root.overviewMonitorWallpapers =
+            normalizedStringMap(overview.monitorWallpapers);
+        root.overviewMonitorFillModes =
+            normalizedFillModeMap(overview.monitorFillModes);
+        root.overviewTransitionType =
+            normalizedTransition(overview.transitionType || "fade");
+        root.overviewBlurRadius =
+            normalizedBoundedReal(overview.blurRadius, 0, 0, 100);
+        root.overviewDim =
+            normalizedBoundedReal(overview.dim, 0, 0, 1);
+        root.overviewSaturation =
+            normalizedBoundedReal(overview.saturation, 1, 0, 2);
+        root.overviewContrast =
+            normalizedBoundedReal(overview.contrast, 1, 0.5, 2);
+
+        root.parallaxVerticalEnabled = !!parallax.verticalEnabled;
+        root.parallaxFollowWorkspaces =
+            parallax.followWorkspaces === undefined
+                ? true : !!parallax.followWorkspaces;
+        root.parallaxFollowSidebars = !!parallax.followSidebars;
+        root.parallaxFollowTiledColumns =
+            !!parallax.followTiledColumns;
+        root.parallaxPreferredScale =
+            normalizedBoundedReal(parallax.preferredScale,
+                1.10, 1, 1.35);
+        root.parallaxTiledColumnSpan =
+            normalizedBoundedInt(parallax.tiledColumnSpan,
+                6, 2, 12);
 
         root.matugenScheme = normalizedOption(root.matugenSchemes, theme.matugenScheme, "scheme-tonal-spot");
         root.themeMode = theme.mode === "light" ? "light" : "dark";
@@ -484,6 +819,16 @@ Singleton {
         root.scrollMouseFactor = normalizedBoundedInt(scrolling.mouseFactor, 50, 10, 240);
         root.scrollTouchpadFactor = normalizedBoundedInt(scrolling.touchpadFactor, 100, 10, 300);
         root.scrollMouseDeltaThreshold = normalizedBoundedInt(scrolling.mouseDeltaThreshold, 120, 60, 240);
+    }
+
+    function needsWallpaperMigration(parsed) {
+        const wallpaper = parsed && parsed.wallpaper;
+        if (!wallpaper || typeof wallpaper !== "object")
+            return true;
+        return wallpaper.desktopBackend === undefined
+            || wallpaper.awww === undefined
+            || wallpaper.overview === undefined
+            || wallpaper.parallax === undefined;
     }
 
     function save() {
@@ -522,9 +867,16 @@ Singleton {
 
         onLoaded: {
             let shouldRepair = false;
+            let parsed = {};
             root.loading = true;
             try {
-                root.loadFromObject(JSON.parse(configFile.text().trim() || "{}"));
+                parsed = JSON.parse(configFile.text().trim() || "{}");
+                shouldRepair = root.needsWallpaperMigration(parsed);
+                root.loadFromObject(parsed);
+                shouldRepair = shouldRepair
+                    || JSON.stringify(parsed.wallpaper || {})
+                        !== JSON.stringify(
+                            root.toJson().wallpaper);
             } catch (error) {
                 console.log("PersonalizationConfig failed to load:", error);
                 shouldRepair = true;

@@ -19,6 +19,8 @@ public:
         IsUrgentRole,
         ActiveWindowIdRole,
         WindowCountRole,
+        TiledWindowCountRole,
+        TiledColumnCountRole,
         IconsRole
     };
 

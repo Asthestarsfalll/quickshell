@@ -37,6 +37,10 @@ QVariant NiriWorkspaceModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue(workspace.activeWindowId);
     case WindowCountRole:
         return workspace.windowCount;
+    case TiledWindowCountRole:
+        return workspace.tiledWindowCount;
+    case TiledColumnCountRole:
+        return workspace.tiledColumnCount;
     case IconsRole:
         return workspace.icons;
     default:
@@ -56,6 +60,8 @@ QHash<int, QByteArray> NiriWorkspaceModel::roleNames() const
         {IsUrgentRole, "isUrgent"},
         {ActiveWindowIdRole, "activeWindowId"},
         {WindowCountRole, "windowCount"},
+        {TiledWindowCountRole, "tiledWindowCount"},
+        {TiledColumnCountRole, "tiledColumnCount"},
         {IconsRole, "icons"},
     };
 }
@@ -86,6 +92,8 @@ void NiriWorkspaceModel::setWorkspaces(const QList<NiriWorkspace> &workspaces)
                 IsUrgentRole,
                 ActiveWindowIdRole,
                 WindowCountRole,
+                TiledWindowCountRole,
+                TiledColumnCountRole,
                 IconsRole,
             });
         }
@@ -136,6 +144,8 @@ QVariantMap NiriWorkspaceModel::toMap(const NiriWorkspace &workspace) const
         {QStringLiteral("isUrgent"), workspace.isUrgent},
         {QStringLiteral("activeWindowId"), QVariant::fromValue(workspace.activeWindowId)},
         {QStringLiteral("windowCount"), workspace.windowCount},
+        {QStringLiteral("tiledWindowCount"), workspace.tiledWindowCount},
+        {QStringLiteral("tiledColumnCount"), workspace.tiledColumnCount},
         {QStringLiteral("icons"), workspace.icons},
     };
 }
