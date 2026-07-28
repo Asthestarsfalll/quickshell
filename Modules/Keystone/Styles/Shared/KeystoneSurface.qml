@@ -248,7 +248,9 @@ Variants {
             samples: 32
             color: "#80000000" 
             cached: true
-            opacity: styleSurface.detached && root.recordingPresentationActive ? 0 : 1
+            opacity: root.color.a
+                * (styleSurface.detached
+                    && root.recordingPresentationActive ? 0 : 1)
         }
 
         // ============================================================
@@ -709,34 +711,6 @@ Variants {
                     }
                 }
 
-                Rectangle {
-                    id: solidRootBg
-                    anchors.fill: parent
-                    topLeftRadius: styleSurface.detached ? parent.radius : 0
-                    topRightRadius: styleSurface.detached ? parent.radius : 0
-                    bottomLeftRadius: parent.radius
-                    bottomRightRadius: parent.radius
-                    color: root.color
-                    visible: false 
-                }
-
-                Item {
-                    id: rootHoleWrapper
-                    anchors.fill: parent
-                    visible: false
-                    Rectangle {
-                        // 【同步对齐】
-                        width: 340
-                        height: 456
-                        anchors.left: parent.horizontalCenter
-                        anchors.leftMargin: 48
-                        anchors.top: parent.top
-                        anchors.topMargin: 132
-                        radius: 24
-                        color: root.showDashboardHole ? "black" : "transparent"
-                    }
-                }
-
                 Item {
                     id: dashboardBlurCutout
 
@@ -750,14 +724,104 @@ Variants {
                     property real radius: 24
                 }
 
-                OpacityMask {
+                Canvas {
                     id: rootSurface
 
                     anchors.fill: parent
-                    source: solidRootBg
-                    maskSource: rootHoleWrapper
-                    invert: true 
-                    opacity: styleSurface.detached && root.recordingPresentationActive ? 0 : 1
+                    antialiasing: true
+                    opacity: styleSurface.detached
+                        && root.recordingPresentationActive ? 0 : 1
+
+                    readonly property color surfaceColor: root.color
+                    readonly property real outerRadius: root.radius
+                    readonly property bool roundedTop:
+                        styleSurface.detached
+                    readonly property bool cutoutVisible:
+                        root.showDashboardHole
+                    readonly property real cutoutX:
+                        dashboardBlurCutout.x
+                    readonly property real cutoutY:
+                        dashboardBlurCutout.y
+                    readonly property real cutoutWidth:
+                        dashboardBlurCutout.width
+                    readonly property real cutoutHeight:
+                        dashboardBlurCutout.height
+                    readonly property real cutoutRadius:
+                        dashboardBlurCutout.radius
+
+                    function addRoundedRect(
+                            context, x, y, width, height,
+                            topLeft, topRight,
+                            bottomRight, bottomLeft) {
+                        const maxRadius = Math.min(
+                            width / 2, height / 2);
+                        const tl = Math.min(topLeft, maxRadius);
+                        const tr = Math.min(topRight, maxRadius);
+                        const br = Math.min(bottomRight, maxRadius);
+                        const bl = Math.min(bottomLeft, maxRadius);
+
+                        context.beginPath();
+                        context.moveTo(x + tl, y);
+                        context.lineTo(x + width - tr, y);
+                        context.quadraticCurveTo(
+                            x + width, y,
+                            x + width, y + tr);
+                        context.lineTo(
+                            x + width, y + height - br);
+                        context.quadraticCurveTo(
+                            x + width, y + height,
+                            x + width - br, y + height);
+                        context.lineTo(x + bl, y + height);
+                        context.quadraticCurveTo(
+                            x, y + height,
+                            x, y + height - bl);
+                        context.lineTo(x, y + tl);
+                        context.quadraticCurveTo(
+                            x, y, x + tl, y);
+                        context.closePath();
+                    }
+
+                    onPaint: {
+                        const context = getContext("2d");
+                        context.reset();
+                        context.clearRect(0, 0, width, height);
+
+                        const topRadius = roundedTop
+                            ? outerRadius : 0;
+                        addRoundedRect(
+                            context, 0, 0, width, height,
+                            topRadius, topRadius,
+                            outerRadius, outerRadius);
+                        context.fillStyle = surfaceColor;
+                        context.fill();
+
+                        if (cutoutVisible) {
+                            context.globalCompositeOperation =
+                                "destination-out";
+                            addRoundedRect(
+                                context,
+                                cutoutX, cutoutY,
+                                cutoutWidth, cutoutHeight,
+                                cutoutRadius, cutoutRadius,
+                                cutoutRadius, cutoutRadius);
+                            context.fillStyle = "white";
+                            context.fill();
+                            context.globalCompositeOperation =
+                                "source-over";
+                        }
+                    }
+
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    onSurfaceColorChanged: requestPaint()
+                    onOuterRadiusChanged: requestPaint()
+                    onRoundedTopChanged: requestPaint()
+                    onCutoutVisibleChanged: requestPaint()
+                    onCutoutXChanged: requestPaint()
+                    onCutoutYChanged: requestPaint()
+                    onCutoutWidthChanged: requestPaint()
+                    onCutoutHeightChanged: requestPaint()
+                    onCutoutRadiusChanged: requestPaint()
                 }
 
                 onTargetWChanged: {

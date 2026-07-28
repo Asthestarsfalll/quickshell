@@ -54,13 +54,33 @@ require_text Modules/Sidebars/SidebarHostWindow.qml \
 require_text Modules/ControlCenter/ControlCenterWindow.qml \
     'color: "transparent"'
 require_text Modules/ControlCenter/ControlCenterWindow.qml \
+    'FloatingWindow {'
+reject_text Modules/ControlCenter/ControlCenterWindow.qml \
+    'ApplicationWindow {'
+reject_text Modules/ControlCenter/ControlCenterWindow.qml \
     'flags: Qt.Window | Qt.FramelessWindowHint'
+require_text controlcenter.qml \
+    '//@ pragma Env QT_WAYLAND_DISABLE_WINDOWDECORATION=1'
 require_text Modules/FilePicker/FilePickerWindow.qml \
     'color: "transparent"'
 require_text Modules/FilePicker/FilePickerWindow.qml \
     'flags: Qt.Window | Qt.FramelessWindowHint'
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'subtractedBackgroundItems: [dashboardBlurCutout]'
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'property color color: BlurService.backgroundColor('
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'context.globalCompositeOperation ='
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    '"destination-out";'
+reject_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'id: solidRootBg'
+require_text Modules/Lock/LockSurface.qml \
+    'color: BlurService.backgroundColor('
+require_text Modules/Lock/LockSurface.qml \
+    'id: desktopSnapshotFallback'
+require_text Modules/Lock/LockSurface.qml \
+    'blur: root.backgroundBlur'
 require_text Widgets/common/StyledToolTip.qml \
     'PopupToolTip {'
 require_text Widgets/common/PopupToolTip.qml \
@@ -69,6 +89,10 @@ require_text Widgets/common/CompositorBlurRegion.qml \
     'combinedRegion.regions = combinedRegions'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'intersection: Intersection.Subtract'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'Qt.callLater(root.commit)'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'targetWindow.BackgroundEffect.blurRegion = null'
 
 if rg -n '(^|\\s)(PanelWindow|window|root|sidebar|controlCenter|Loader)\\.opacity\\s*[:=].*shellBackgroundOpacity' \
         Modules Widgets Services >/dev/null; then

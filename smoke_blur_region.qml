@@ -11,6 +11,8 @@ ShellRoot {
 
     property int phase: 0
     property int regionChangeCount: 0
+    property int blurRegionPublishCount: 0
+    property int blurToggleCount: 0
 
     function verify(condition, message) {
         if (!condition)
@@ -158,6 +160,11 @@ ShellRoot {
                         "region radii");
                     blurController.regionObjects[0].changed
                         .connect(() => ++root.regionChangeCount);
+                    testWindow.BackgroundEffect.blurRegionChanged
+                        .connect(function() {
+                            ++root.blurRegionPublishCount;
+                        });
+                    root.blurRegionPublishCount = 0;
                     firstPill.x = 32;
                     firstPill.width = 124;
                     firstPill.radius = 18;
@@ -168,6 +175,8 @@ ShellRoot {
                 if (root.phase === 1) {
                     root.verify(root.regionChangeCount > 0,
                         "region did not react to geometry");
+                    root.verify(root.blurRegionPublishCount > 0,
+                        "changed geometry was not republished");
                     root.verify(
                         blurController.regionObjects[0].radius
                             === 18,
@@ -208,21 +217,36 @@ ShellRoot {
                     return;
                 }
 
-                root.verify(
-                    testWindow.BackgroundEffect.blurRegion
-                        === blurController.region,
-                    "remapped window did not restore region");
-                for (let index = 0; index < 20; ++index) {
+                if (root.phase === 5) {
+                    root.verify(
+                        testWindow.BackgroundEffect.blurRegion
+                            === blurController.region,
+                        "remapped window did not restore region");
                     blurController.blurEnabled = false;
                     root.verify(
                         testWindow.BackgroundEffect.blurRegion
                             === null,
                         "disabled blur did not clear region");
                     blurController.blurEnabled = true;
+                    root.phase = 6;
+                    return;
+                }
+
+                if (root.phase === 6) {
                     root.verify(
                         testWindow.BackgroundEffect.blurRegion
                             === blurController.region,
                         "re-enabled blur did not restore region");
+                    ++root.blurToggleCount;
+                    if (root.blurToggleCount < 20) {
+                        blurController.blurEnabled = false;
+                        root.verify(
+                            testWindow.BackgroundEffect.blurRegion
+                                === null,
+                            "disabled blur did not clear region");
+                        blurController.blurEnabled = true;
+                        return;
+                    }
                 }
                 stop();
                 console.log("BLUR_REGION_SMOKE_PASS");

@@ -208,7 +208,8 @@ WlSessionLockSurface {
         radius: root.compactRadius + (root.panelRadius - root.compactRadius) * root.morphProgress
         rotation: root.containerRotation
         scale: root.containerScale
-        color: Appearance.colors.colLayer0
+        color: BlurService.backgroundColor(
+            Appearance.colors.colLayer0)
 
         layer.enabled: true
         layer.effect: MultiEffect {

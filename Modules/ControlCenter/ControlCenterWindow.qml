@@ -10,20 +10,18 @@ import qs.Services
 import qs.Components
 import qs.Widgets.common
 
-ApplicationWindow {
+FloatingWindow {
     id: root
 
     visible: true
     title: "clavis-control-center"
-    flags: Qt.Window | Qt.FramelessWindowHint
-    width: 1100
-    height: 750
-    minimumWidth: 760
-    minimumHeight: 520
+    implicitWidth: 1100
+    implicitHeight: 750
+    minimumSize: Qt.size(760, 520)
     color: "transparent"
     Material.theme: PersonalizationConfig.themeMode === "light" ? Material.Light : Material.Dark
     Material.accent: Appearance.colors.colPrimary
-    onClosing: Qt.quit()
+    onClosed: Qt.quit()
     Component.onCompleted: I18nService.initialize()
 
     property real contentPadding: 8

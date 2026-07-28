@@ -16,6 +16,7 @@ Item {
     property Item clipItem: null
 
     property bool surfaceReady: false
+    property bool publishPending: false
     property var _regionObjects: []
     property var _subtractionRegionObjects: []
 
@@ -86,8 +87,10 @@ Item {
         for (let index = 0; index < items.length; ++index) {
             const region = itemRegionComponent.createObject(
                 combinedRegion, { "sourceItem": items[index] });
-            if (region)
+            if (region) {
+                region.changed.connect(root.publish);
                 regions.push(region);
+            }
         }
         root._regionObjects = regions;
 
@@ -97,8 +100,10 @@ Item {
             const region = subtractionRegionComponent.createObject(
                 combinedRegion,
                 { "sourceItem": subtractedItems[index] });
-            if (region)
+            if (region) {
+                region.changed.connect(root.publish);
                 subtractionRegions.push(region);
+            }
         }
         root._subtractionRegionObjects = subtractionRegions;
 
@@ -115,8 +120,24 @@ Item {
     function publish() {
         if (!root.targetWindow)
             return;
-        root.targetWindow.BackgroundEffect.blurRegion =
-            root.submittedRegion;
+        if (!root.submittedRegion) {
+            root.clear();
+            return;
+        }
+        if (root.publishPending)
+            return;
+        root.publishPending = true;
+        Qt.callLater(root.commit);
+    }
+
+    function commit() {
+        root.publishPending = false;
+        if (!root.targetWindow)
+            return;
+        root.targetWindow.BackgroundEffect.blurRegion = null;
+        if (root.submittedRegion)
+            root.targetWindow.BackgroundEffect.blurRegion =
+                root.submittedRegion;
     }
 
     function clear() {
@@ -155,6 +176,17 @@ Item {
 
         function onVisibleChanged() {
             root.surfaceReady = root.targetWindow.visible;
+            if (root.surfaceReady)
+                root.publish();
+            else
+                root.clear();
+        }
+    }
+
+    Connections {
+        target: clipRegion
+
+        function onChanged() {
             root.publish();
         }
     }
