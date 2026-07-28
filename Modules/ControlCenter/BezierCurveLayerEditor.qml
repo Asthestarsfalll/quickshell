@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Common
 import qs.Components
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -478,7 +479,7 @@ Item {
         }
 
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "clavis-bezier-curve-editor"
+        WlrLayershell.namespace: "clavis-shell-bezier-curve-editor"
         WlrLayershell.keyboardFocus: modalWindow.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
@@ -504,12 +505,20 @@ Item {
             clip: true
 
             Rectangle {
+                id: dialogBackground
+
                 anchors.fill: parent
                 radius: Appearance.rounding.normal
-                color: Appearance.m3colors.m3surfaceContainerLow
+                color: BlurService.backgroundColor(
+                    Appearance.m3colors.m3surfaceContainerLow)
                 border.width: 1
                 border.color: Appearance.m3colors.m3outlineVariant
                 antialiasing: true
+            }
+
+            CompositorBlurRegion {
+                targetWindow: modalWindow
+                backgroundItem: dialogBackground
             }
 
             MouseArea {

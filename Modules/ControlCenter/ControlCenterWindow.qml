@@ -4,21 +4,23 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtQuick.Window
 import Quickshell
+import Quickshell.Wayland
 import qs.Common
 import qs.Services
 import qs.Components
+import qs.Widgets.common
 
 ApplicationWindow {
     id: root
 
     visible: true
-    title: qsTr("设置")
+    title: "clavis-control-center"
     flags: Qt.Window | Qt.FramelessWindowHint
     width: 1100
     height: 750
     minimumWidth: 760
     minimumHeight: 520
-    color: Appearance.m3colors.m3background
+    color: "transparent"
     Material.theme: PersonalizationConfig.themeMode === "light" ? Material.Light : Material.Dark
     Material.accent: Appearance.colors.colPrimary
     onClosing: Qt.quit()
@@ -64,6 +66,23 @@ ApplicationWindow {
     Timer {
         id: copiedTimer
         interval: 1400
+    }
+
+    Rectangle {
+        id: outerBackground
+
+        anchors.fill: parent
+        radius: Appearance.rounding.large
+        color: BlurService.backgroundColor(
+            Appearance.m3colors.m3background)
+        border.width: 1
+        border.color: Appearance.colors.colOutlineVariant
+    }
+
+    CompositorBlurRegion {
+        targetWindow: root
+        backgroundItem: outerBackground
+        radius: outerBackground.radius
     }
 
     ColumnLayout {
@@ -116,7 +135,10 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.close()
+                    onClicked: {
+                        root.visible = false;
+                        Qt.quit();
+                    }
                 }
             }
 

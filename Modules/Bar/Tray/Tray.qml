@@ -111,7 +111,8 @@ Item {
         id: bgRect
 
         anchors.fill: parent
-        color: Appearance.colors.colLayer0
+        color: BlurService.backgroundColor(
+            Appearance.colors.colLayer0)
         radius: height / 2
         visible: false
     }
@@ -215,7 +216,7 @@ Item {
         }
 
         WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.namespace: "clavis-tray-overflow"
+        WlrLayershell.namespace: "clavis-shell-tray-overflow"
         WlrLayershell.keyboardFocus: overflowPopup.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
@@ -291,7 +292,8 @@ Item {
                     y: 10
                     implicitWidth: overflowLayout.implicitWidth + popupPadding * 2
                     implicitHeight: overflowLayout.implicitHeight + popupPadding * 2
-                    color: Appearance.colors.colLayer0
+                    color: BlurService.backgroundColor(
+                        Appearance.colors.colLayer0)
                     radius: 18
                     border.width: 1
                     border.color: Appearance.colors.colLayer0Border
@@ -344,6 +346,11 @@ Item {
                     }
                 }
             }
+        }
+
+        CompositorBlurRegion {
+            targetWindow: overflowPopup
+            backgroundItem: popupBackground
         }
     }
 }

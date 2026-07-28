@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell
+import qs.Common
 import qs.Widgets.common
 
 Item {
@@ -14,25 +16,51 @@ Item {
     property real verticalMargin: verticalPadding
     property var anchorEdges: Edges.Bottom
     property var anchorGravity: anchorEdges
+    property bool respectParentHierarchy: false
+    property font font
 
-    readonly property bool internalVisibleCondition: (extraVisibleCondition && (parent === null || parent.hovered === undefined || parent.hovered)) || alternativeVisibleCondition
+    font {
+        family: Sizes.fontFamily
+        pixelSize: 12
+        hintingPreference: Font.PreferNoHinting
+    }
+
+    function hierarchyAvailable(item) {
+        let current = item;
+        while (current !== null && current !== undefined) {
+            if (current.enabled !== undefined && !current.enabled)
+                return false;
+            if (current.visible !== undefined && !current.visible)
+                return false;
+            if (current.opacity !== undefined
+                    && current.opacity <= 0.001)
+                return false;
+            current = current.parent;
+        }
+        return true;
+    }
+
+    readonly property bool parentHierarchyAvailable:
+        !root.respectParentHierarchy
+        || root.hierarchyAvailable(root)
+    readonly property var anchorWindow: root.QsWindow.window
+    readonly property bool anchorWindowReady:
+        root.anchorWindow !== null
+        && root.anchorWindow !== undefined
+        && root.anchorWindow.backingWindowVisible
+    readonly property bool usingFallback: fallbackTooltip.visible
+    readonly property bool internalVisibleCondition:
+        root.parentHierarchyAvailable
+        && ((extraVisibleCondition
+                && (parent === null
+                    || parent.hovered === undefined
+                    || parent.hovered))
+            || alternativeVisibleCondition)
+    readonly property var popupWindow: tooltipLoader.item
 
     function updateAnchor() {
         if (tooltipLoader.item)
             tooltipLoader.item.anchor.updateAnchor();
-    }
-
-    onInternalVisibleConditionChanged: {
-        if (!internalVisibleCondition)
-            contentItem.shown = false;
-    }
-
-    property Item contentItem: StyledToolTipContent {
-        anchors.centerIn: parent
-        text: root.text
-        shown: false
-        horizontalPadding: root.horizontalPadding
-        verticalPadding: root.verticalPadding
     }
 
     Loader {
@@ -40,17 +68,24 @@ Item {
 
         anchors.fill: parent
         active: root.internalVisibleCondition
+            && root.anchorWindowReady
 
         sourceComponent: PopupWindow {
+            id: tooltipWindow
+
+            readonly property alias tooltipContentItem: tooltipContent
+
             visible: true
             color: "transparent"
-            implicitWidth: root.contentItem.implicitWidth + root.horizontalMargin * 2
-            implicitHeight: root.contentItem.implicitHeight + root.verticalMargin * 2
+            implicitWidth: tooltipContent.implicitWidth
+                + root.horizontalMargin * 2
+            implicitHeight: tooltipContent.implicitHeight
+                + root.verticalMargin * 2
 
-            Component.onCompleted: root.contentItem.shown = true
+            Component.onCompleted: tooltipContent.shown = true
 
             anchor {
-                window: root.QsWindow.window
+                window: root.anchorWindow
                 item: root.parent
                 edges: root.anchorEdges
                 gravity: root.anchorGravity
@@ -60,7 +95,42 @@ Item {
                 item: null
             }
 
-            data: [root.contentItem]
+            StyledToolTipContent {
+                id: tooltipContent
+
+                x: root.horizontalMargin
+                y: root.verticalMargin
+                text: root.text
+                shown: false
+                horizontalPadding: root.horizontalPadding
+                verticalPadding: root.verticalPadding
+                font: root.font
+            }
+
+            CompositorBlurRegion {
+                targetWindow: tooltipWindow
+                backgroundItem: tooltipContent.blurBackgroundItem
+                blurEnabled: tooltipContent.shown
+            }
+        }
+    }
+
+    ToolTip {
+        id: fallbackTooltip
+
+        visible: root.internalVisibleCondition
+            && (root.anchorWindow === null
+                || root.anchorWindow === undefined)
+        delay: 0
+        padding: 0
+        background: null
+
+        contentItem: StyledToolTipContent {
+            text: root.text
+            shown: fallbackTooltip.visible
+            horizontalPadding: root.horizontalPadding
+            verticalPadding: root.verticalPadding
+            font: root.font
         }
     }
 }

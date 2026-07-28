@@ -8,6 +8,7 @@ Item {
     property var panelScreen: null
     property int sidebarWidth: 540
     property int gap: 24
+    readonly property alias blurBackgroundItem: panelSurface
     readonly property int sidebarY: Sizes.barHeight + gap
     readonly property real closedSlideOffset: -(sidebarWidth + gap)
     readonly property int enterDuration: Animations.durations.large
@@ -139,7 +140,8 @@ Item {
         y: root.sidebarY
         width: root.sidebarWidth
         height: root.qsTargetHeight
-        color: Appearance.colors.colLayer0
+        color: BlurService.backgroundColor(
+            Appearance.colors.colLayer0)
         radius: Appearance.rounding.large
     }
 

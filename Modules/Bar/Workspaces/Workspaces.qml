@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Clavis.Niri 1.0
 import qs.Common
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -26,7 +27,8 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Appearance.colors.colLayer0
+        color: BlurService.backgroundColor(
+            Appearance.colors.colLayer0)
         radius: height / 2
         visible: false
     }

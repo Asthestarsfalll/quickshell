@@ -1346,6 +1346,29 @@ Scroll to adjust</translation>
     </message>
 </context>
 <context>
+    <name>BlurService</name>
+    <message>
+        <location filename="../Services/BlurService.qml" line="131" />
+        <source>当前 Niri 版本不支持背景模糊</source>
+        <translation>The current Niri version does not support background blur</translation>
+    </message>
+    <message>
+        <location filename="../Services/BlurService.qml" line="133" />
+        <source>无法检测 Niri 版本</source>
+        <translation>Unable to detect the Niri version</translation>
+    </message>
+    <message>
+        <location filename="../Services/BlurService.qml" line="157" />
+        <source>无法写入 Niri 效果配置</source>
+        <translation>Unable to write the Niri effects configuration</translation>
+    </message>
+    <message>
+        <location filename="../Services/BlurService.qml" line="177" />
+        <source>无法配置 Niri 集成</source>
+        <translation>Unable to configure Niri integration</translation>
+    </message>
+</context>
+<context>
     <name>GeneralPage</name>
     <message>
         <location filename="../Modules/ControlCenter/GeneralPage.qml" line="315" />
@@ -1376,6 +1399,41 @@ Scroll to adjust</translation>
         <location filename="../Modules/ControlCenter/GeneralPage.qml" line="332" />
         <source>再次打开更快，但会增加内存占用</source>
         <translation>Faster reopening, but uses more memory</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="354" />
+        <source>透明与模糊</source>
+        <translation>Transparency and blur</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="358" />
+        <source>背景不透明度</source>
+        <translation>Background opacity</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="371" />
+        <source>背景模糊</source>
+        <translation>Background blur</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="380" />
+        <source>仅模糊壁纸</source>
+        <translation>Blur wallpaper only</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="381" />
+        <source>关闭后会模糊窗口，开销更高</source>
+        <translation>When off, windows are also blurred at a higher cost</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="399" />
+        <source>Niri 集成</source>
+        <translation>Niri integration</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="425" />
+        <source>配置</source>
+        <translation>Configure</translation>
     </message>
     <message>
         <location filename="../Modules/ControlCenter/GeneralPage.qml" line="339" />

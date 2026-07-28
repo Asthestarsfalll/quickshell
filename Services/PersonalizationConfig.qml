@@ -8,8 +8,17 @@ import qs.Common
 Singleton {
     id: root
 
-    readonly property string configDir: Paths.homeDir + "/.cache/quickshell"
-    readonly property string filePath: configDir + "/personalization.json"
+    readonly property string configOverride:
+        Quickshell.env("CLAVIS_PERSONALIZATION_CONFIG") || ""
+    readonly property string filePath: root.configOverride !== ""
+        ? root.configOverride
+        : Paths.homeDir + "/.cache/quickshell/personalization.json"
+    readonly property string configDir: {
+        const separator = root.filePath.lastIndexOf("/");
+        return separator > 0
+            ? root.filePath.slice(0, separator)
+            : Paths.homeDir + "/.cache/quickshell";
+    }
 
     readonly property var fillModes: [
         ({ "value": "Stretch", "label": qsTr("拉伸") }),
@@ -145,6 +154,10 @@ Singleton {
     property int cursorHideAfterInactiveMs: 0
     property string iconTheme: ""
     property string keystoneStyle: "bangs"
+
+    property real shellBackgroundOpacity: 1.0
+    property bool shellBlurEnabled: false
+    property bool shellBlurXray: true
 
     property bool pomodoroSoundEnabled: false
 
@@ -612,6 +625,19 @@ Singleton {
         setValue("keystoneStyle", normalizedOption(root.keystoneStyles, value, "bangs"));
     }
 
+    function setShellBackgroundOpacity(value) {
+        setValue("shellBackgroundOpacity",
+            normalizedBoundedReal(value, 1.0, 0.0, 1.0));
+    }
+
+    function setShellBlurEnabled(value) {
+        setValue("shellBlurEnabled", !!value);
+    }
+
+    function setShellBlurXray(value) {
+        setValue("shellBlurXray", !!value);
+    }
+
     function setPomodoroSoundEnabled(value) {
         setValue("pomodoroSoundEnabled", !!value);
     }
@@ -709,6 +735,12 @@ Singleton {
                 "cursorHideAfterInactiveMs": root.cursorHideAfterInactiveMs,
                 "iconTheme": root.iconTheme
             },
+            "effects": {
+                "shellBackgroundOpacity":
+                    root.shellBackgroundOpacity,
+                "shellBlurEnabled": root.shellBlurEnabled,
+                "shellBlurXray": root.shellBlurXray
+            },
             "keystone": {
                 "style": root.keystoneStyle
             },
@@ -732,6 +764,7 @@ Singleton {
     function loadFromObject(parsed) {
         const wallpaper = parsed.wallpaper || {};
         const theme = parsed.theme || {};
+        const effects = parsed.effects || {};
         const keystone = parsed.keystone || {};
         const sounds = parsed.sounds || {};
         const sidebar = parsed.sidebar || {};
@@ -828,6 +861,14 @@ Singleton {
         root.cursorHideWhenTyping = !!theme.cursorHideWhenTyping;
         root.cursorHideAfterInactiveMs = Math.max(0, Math.min(5000, Math.round(Number(theme.cursorHideAfterInactiveMs) || 0)));
         root.iconTheme = theme.iconTheme || "";
+        root.shellBackgroundOpacity = normalizedBoundedReal(
+            effects.shellBackgroundOpacity, 1.0, 0.0, 1.0);
+        root.shellBlurEnabled =
+            typeof effects.shellBlurEnabled === "boolean"
+                ? effects.shellBlurEnabled : false;
+        root.shellBlurXray =
+            typeof effects.shellBlurXray === "boolean"
+                ? effects.shellBlurXray : true;
         root.keystoneStyle = normalizedOption(root.keystoneStyles, keystone.style, "bangs");
         root.pomodoroSoundEnabled = !!sounds.pomodoro;
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
@@ -846,6 +887,16 @@ Singleton {
             || wallpaper.awww === undefined
             || wallpaper.overview === undefined
             || wallpaper.parallax === undefined;
+    }
+
+    function needsEffectsMigration(parsed) {
+        const effects = parsed && parsed.effects;
+        if (!effects || typeof effects !== "object"
+                || Array.isArray(effects))
+            return true;
+        return effects.shellBackgroundOpacity === undefined
+            || effects.shellBlurEnabled === undefined
+            || effects.shellBlurXray === undefined;
     }
 
     function save() {
@@ -888,12 +939,16 @@ Singleton {
             root.loading = true;
             try {
                 parsed = JSON.parse(configFile.text().trim() || "{}");
-                shouldRepair = root.needsWallpaperMigration(parsed);
+                shouldRepair = root.needsWallpaperMigration(parsed)
+                    || root.needsEffectsMigration(parsed);
                 root.loadFromObject(parsed);
                 shouldRepair = shouldRepair
                     || JSON.stringify(parsed.wallpaper || {})
                         !== JSON.stringify(
-                            root.toJson().wallpaper);
+                            root.toJson().wallpaper)
+                    || JSON.stringify(parsed.effects || {})
+                        !== JSON.stringify(
+                            root.toJson().effects);
             } catch (error) {
                 console.log("PersonalizationConfig failed to load:", error);
                 shouldRepair = true;

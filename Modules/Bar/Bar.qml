@@ -10,6 +10,8 @@ import qs.Modules.Bar.PowerButton
 import qs.Modules.Bar.SysMonitor
 import qs.Modules.Bar.QuickSettings
 import qs.Common
+import qs.Services
+import qs.Widgets.common
 
 Variants {
     model: Quickshell.screens
@@ -30,6 +32,7 @@ Variants {
         exclusiveZone: barHeight
         
         WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "clavis-shell-bar"
 
         mask: Region {
             Region { item: leftInputRegion }
@@ -51,10 +54,17 @@ Variants {
                 height: implicitHeight
                 spacing: 8
 
-                Workspaces { screenName: barWindow.screen.name }
-                SidebarButton {}
-                ActiveWindow {}
-                
+                Workspaces {
+                    id: workspaces
+                    screenName: barWindow.screen.name
+                }
+                SidebarButton {
+                    id: sidebarButton
+                }
+                ActiveWindow {
+                    id: activeWindow
+                }
+
             }
 
             // --- 右侧组件 ---
@@ -65,11 +75,17 @@ Variants {
                 height: implicitHeight
                 spacing: 8
 
-                Tray { screen: barWindow.screen }
-                SysMonitor { Layout.alignment: Qt.AlignVCenter }
-                
+                Tray {
+                    id: tray
+                    screen: barWindow.screen
+                }
+                SysMonitor {
+                    id: sysMonitor
+                    Layout.alignment: Qt.AlignVCenter
+                }
 
                 QuickSettings {
+                    id: quickSettings
                     screen: barWindow.screen
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -92,6 +108,19 @@ Variants {
                 anchors.top: rightSection.top
                 anchors.bottom: rightSection.bottom
             }
+        }
+
+        CompositorBlurRegion {
+            targetWindow: barWindow
+            backgroundItem: workspaces
+            additionalBackgroundItems: [
+                sidebarButton,
+                activeWindow,
+                tray,
+                sysMonitor,
+                quickSettings
+            ]
+            radius: 18
         }
     }
 }

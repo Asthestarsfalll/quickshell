@@ -602,7 +602,7 @@ Item {
     FilePickerWindow {
         id: avatarPicker
 
-        title: qsTr("选择头像")
+        dialogTitle: qsTr("选择头像")
         onAccepted: (path, isDirectory) => {
             if (!isDirectory)
                 AvatarService.setAvatar(path);
@@ -613,7 +613,7 @@ Item {
         id: backupPicker
 
         selectionMode: FilePickerWindow.FilesAndFolders
-        title: qsTr("选择要备份的文件或文件夹")
+        dialogTitle: qsTr("选择要备份的文件或文件夹")
         description: qsTr("备份到所选云存储的 Clavis Backups 文件夹")
         startPath: homeDir
         nameFilters: []

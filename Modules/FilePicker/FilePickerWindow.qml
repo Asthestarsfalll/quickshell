@@ -9,8 +9,10 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Window
 import Quickshell
+import Quickshell.Wayland
 import qs.Common
 import qs.Components
+import qs.Services
 import qs.Widgets.common
 
 ApplicationWindow {
@@ -25,6 +27,7 @@ ApplicationWindow {
     property var targetScreen: null
     property int selectionMode: FilePickerWindow.Files
     property string description: qsTr("选择一张图片作为用户头像")
+    property string dialogTitle: qsTr("选择图片")
     property string startPath: picturesDir
     property var nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.bmp", "*.gif"]
     property string windowIconName: "add_photo_alternate"
@@ -54,7 +57,7 @@ ApplicationWindow {
     signal rejected()
 
     visible: false
-    title: qsTr("选择图片")
+    title: "clavis-file-picker"
     flags: Qt.Window | Qt.FramelessWindowHint
     width: 920
     height: 600
@@ -163,23 +166,23 @@ ApplicationWindow {
         Qt.callLater(() => fileGrid.forceActiveFocus());
     }
 
+    function qtScreenFor(shellScreen) {
+        if (!shellScreen)
+            return null;
+        for (let index = 0; index < Application.screens.length; ++index) {
+            const candidate = Application.screens[index];
+            if (candidate.name === shellScreen.name)
+                return candidate;
+        }
+        return null;
+    }
+
     function commitPathEditing() {
         const normalized = normalizePath(pathDraft);
         if (normalized !== "")
             navigateTo(normalized);
         else
             cancelPathEditing();
-    }
-
-    function qtScreenFor(shellScreen) {
-        if (!shellScreen)
-            return null;
-        for (let i = 0; i < Application.screens.length; ++i) {
-            const candidate = Application.screens[i];
-            if (candidate.name === shellScreen.name)
-                return candidate;
-        }
-        return null;
     }
 
     function openAt(path) {
@@ -336,10 +339,18 @@ ApplicationWindow {
         }
 
         Rectangle {
+            id: outerBackground
+
             anchors.fill: parent
             z: -2
             radius: Appearance.rounding.veryLarge
-            color: Appearance.m3colors.m3surface
+            color: BlurService.backgroundColor(
+                Appearance.m3colors.m3surface)
+        }
+
+        CompositorBlurRegion {
+            targetWindow: root
+            backgroundItem: outerBackground
         }
 
         MouseArea {
@@ -409,7 +420,7 @@ ApplicationWindow {
 
                         Text {
                             Layout.fillWidth: true
-                            text: root.title
+                            text: root.dialogTitle
                             color: Appearance.colors.colOnSurface
                             font.family: Sizes.fontFamily
                             font.pixelSize: 19

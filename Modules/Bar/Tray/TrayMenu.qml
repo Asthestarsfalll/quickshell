@@ -42,7 +42,7 @@ PanelWindow {
     }
 
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "clavis-tray-menu"
+    WlrLayershell.namespace: "clavis-shell-tray-menu"
     WlrLayershell.keyboardFocus: root.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
@@ -260,7 +260,8 @@ PanelWindow {
                 y: root.padding
                 implicitWidth: menuContent.implicitWidth + popupPadding * 2
                 implicitHeight: menuContent.implicitHeight + popupPadding * 2
-                color: Appearance.colors.colLayer0
+                color: BlurService.backgroundColor(
+                    Appearance.colors.colLayer0)
                 radius: 18
                 border.width: 1
                 border.color: Appearance.colors.colLayer0Border
@@ -307,6 +308,11 @@ PanelWindow {
                 }
             }
         }
+    }
+
+    CompositorBlurRegion {
+        targetWindow: root
+        backgroundItem: popupBackground
     }
 
     component MenuContent: ColumnLayout {

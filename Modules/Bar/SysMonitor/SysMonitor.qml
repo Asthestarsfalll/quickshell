@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import qs.Common 
+import qs.Services
 
 // 新增引入我们的 C++ 高性能监控库
 import Clavis.Sysmon 1.0
@@ -29,7 +30,8 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Appearance.colors.colLayer0
+        color: BlurService.backgroundColor(
+            Appearance.colors.colLayer0)
         radius: height / 2 
         visible: false 
     }

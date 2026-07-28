@@ -8,6 +8,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Common
 import qs.Components
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -111,7 +112,7 @@ Item {
         }
 
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "clavis-wallpaper-file-browser"
+        WlrLayershell.namespace: "clavis-shell-wallpaper-file-browser"
         WlrLayershell.keyboardFocus: modalWindow.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
@@ -136,11 +137,19 @@ Item {
         focus: root.shouldBeVisible
 
         Rectangle {
+            id: dialogBackground
+
             anchors.fill: parent
             radius: Appearance.rounding.normal
-            color: Appearance.m3colors.m3surfaceContainerLow
+            color: BlurService.backgroundColor(
+                Appearance.m3colors.m3surfaceContainerLow)
             border.width: 1
             border.color: Appearance.m3colors.m3outlineVariant
+        }
+
+        CompositorBlurRegion {
+            targetWindow: modalWindow
+            backgroundItem: dialogBackground
         }
 
         MouseArea {

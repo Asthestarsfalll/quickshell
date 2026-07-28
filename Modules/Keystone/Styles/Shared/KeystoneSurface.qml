@@ -7,6 +7,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 import qs.Services
 import qs.Common
+import qs.Widgets.common
 
 import qs.Modules.Keystone.ClockContent
 import qs.Modules.Keystone.MediaContent  
@@ -110,7 +111,7 @@ Variants {
         
         color: "transparent"
         exclusiveZone: -1
-        WlrLayershell.namespace: "clavis-keystone"
+        WlrLayershell.namespace: "clavis-shell-keystone"
         WlrLayershell.layer: WlrLayer.Top
 
         WlrLayershell.keyboardFocus: root.hasClosablePopup
@@ -277,7 +278,7 @@ Variants {
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.reset();
-                    ctx.fillStyle = Appearance.colors.colLayer0;
+                    ctx.fillStyle = root.color;
                     ctx.beginPath();
                     ctx.moveTo(0, 0);
                     ctx.lineTo(width, 0);
@@ -288,8 +289,10 @@ Variants {
                     ctx.fill();
                 }
                 Connections {
-                    target: Appearance.colors
-                    function onColLayer0Changed() { leftTopCurve.requestPaint() }
+                    target: root
+                    function onColorChanged() {
+                        leftTopCurve.requestPaint();
+                    }
                 }
             }
 
@@ -362,7 +365,8 @@ Variants {
                 property int audioW: KeystoneMotion.audioRecordingWidth
                 property int audioH: KeystoneMotion.audioRecordingHeight
                 
-                property color color: Appearance.colors.colLayer0
+                property color color: BlurService.backgroundColor(
+                    Appearance.colors.colLayer0)
                 clip: true
                 z: 100
 
@@ -712,7 +716,7 @@ Variants {
                     topRightRadius: styleSurface.detached ? parent.radius : 0
                     bottomLeftRadius: parent.radius
                     bottomRightRadius: parent.radius
-                    color: Appearance.colors.colLayer0
+                    color: root.color
                     visible: false 
                 }
 
@@ -731,6 +735,19 @@ Variants {
                         radius: 24
                         color: root.showDashboardHole ? "black" : "transparent"
                     }
+                }
+
+                Item {
+                    id: dashboardBlurCutout
+
+                    width: 340
+                    height: 456
+                    anchors.left: parent.horizontalCenter
+                    anchors.leftMargin: 48
+                    anchors.top: parent.top
+                    anchors.topMargin: 132
+                    visible: root.showDashboardHole
+                    property real radius: 24
                 }
 
                 OpacityMask {
@@ -1239,7 +1256,7 @@ Variants {
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.reset();
-                    ctx.fillStyle = Appearance.colors.colLayer0;
+                    ctx.fillStyle = root.color;
                     ctx.beginPath();
                     ctx.moveTo(width, 0);
                     ctx.lineTo(0, 0);
@@ -1250,9 +1267,18 @@ Variants {
                     ctx.fill();
                 }
                 Connections {
-                    target: Appearance.colors
-                    function onColLayer0Changed() { rightTopCurve.requestPaint() }
+                    target: root
+                    function onColorChanged() {
+                        rightTopCurve.requestPaint();
+                    }
                 }
+            }
+
+            CompositorBlurRegion {
+                targetWindow: keystoneWindow
+                backgroundItem: root
+                subtractedBackgroundItems: [dashboardBlurCutout]
+                radius: root.radius
             }
         }
 

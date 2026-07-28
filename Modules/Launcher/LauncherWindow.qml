@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import qs.Common
 import qs.Services
+import qs.Widgets.common
 
 PanelWindow {
     id: root
@@ -21,7 +22,7 @@ PanelWindow {
         right: true
     }
 
-    WlrLayershell.namespace: "rofi-launcher-overlay"
+    WlrLayershell.namespace: "clavis-shell-launcher"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
@@ -249,7 +250,8 @@ PanelWindow {
             }
         }
 
-        color: Appearance.colors.colLayer0
+        color: BlurService.backgroundColor(
+            Appearance.colors.colLayer0)
         radius: rofiStyle.windowRadius
         focus: true
 
@@ -486,5 +488,11 @@ PanelWindow {
             border.width: rofiStyle.borderWidth
             radius: rofiStyle.windowRadius
         }
+    }
+
+    CompositorBlurRegion {
+        targetWindow: root
+        backgroundItem: mainUI
+        blurEnabled: mainUI.opacity > 0
     }
 }

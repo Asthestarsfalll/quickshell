@@ -5,6 +5,7 @@ import qs.Common
 import qs.Modules.Sidebars.Left
 import qs.Modules.Sidebars.Right
 import qs.Services
+import qs.Widgets.common
 
 PanelWindow {
     id: root
@@ -33,7 +34,7 @@ PanelWindow {
     }
 
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "clavis-persistent-sidebars"
+    WlrLayershell.namespace: "clavis-shell-sidebars"
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.keyboardFocus: root.anySidebarOpen
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -105,6 +106,14 @@ PanelWindow {
 
         anchors.fill: parent
         panelScreen: root.screen
+    }
+
+    CompositorBlurRegion {
+        targetWindow: root
+        backgroundItem: leftSidebar.blurBackgroundItem
+        additionalBackgroundItems: [
+            rightSidebar.blurBackgroundItem
+        ]
     }
 
     Item {

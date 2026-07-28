@@ -16,6 +16,17 @@ StyledFlickable {
 
     readonly property real pageContentWidth: 600
 
+    Component.onCompleted: BlurService.writeEffectsConfig()
+
+    Connections {
+        target: BlurService
+
+        function onAvailableChanged() {
+            if (BlurService.available)
+                BlurService.writeEffectsConfig();
+        }
+    }
+
     component Section: ColumnLayout {
         id: section
 
@@ -68,6 +79,7 @@ StyledFlickable {
 
         Layout.fillWidth: true
         Layout.preferredHeight: Math.max(58, toggleLabelColumn.implicitHeight + 16)
+        opacity: enabled ? 1 : 0.45
 
         RowLayout {
             anchors.fill: parent
@@ -102,6 +114,7 @@ StyledFlickable {
 
             StyledSwitch {
                 Layout.alignment: Qt.AlignVCenter
+                enabled: toggleRow.enabled
                 checked: toggleRow.checked
                 onToggled: toggleRow.toggled(checked)
             }
@@ -123,6 +136,7 @@ StyledFlickable {
 
         Layout.fillWidth: true
         spacing: 6
+        opacity: enabled ? 1 : 0.45
 
         function formatValue(displayValue) {
             return Math.round(displayValue).toString() + (suffix !== "" ? " " + suffix : "");
@@ -297,6 +311,7 @@ StyledFlickable {
             to: sliderRow.to
             stepSize: sliderRow.stepSize
             value: sliderRow.value
+            enabled: sliderRow.enabled
             accessibleName: sliderRow.title
             valueFormatter: sliderValue => Math.round(sliderValue).toString()
             onMoved: sliderRow.moved(Math.round(settingSlider.value))
@@ -332,6 +347,99 @@ StyledFlickable {
                 description: qsTr("再次打开更快，但会增加内存占用")
                 checked: PersonalizationConfig.keepSidebarsLoaded
                 onToggled: checked => PersonalizationConfig.setKeepSidebarsLoaded(checked)
+            }
+        }
+
+        Section {
+            title: qsTr("透明与模糊")
+            iconName: "blur_on"
+
+            SliderSettingRow {
+                title: qsTr("背景不透明度")
+                from: 0
+                to: 100
+                stepSize: 1
+                suffix: "%"
+                value: PersonalizationConfig
+                    .shellBackgroundOpacity * 100
+                onMoved: value =>
+                    PersonalizationConfig
+                        .setShellBackgroundOpacity(value / 100)
+            }
+
+            ToggleSettingRow {
+                title: qsTr("背景模糊")
+                checked: PersonalizationConfig.shellBlurEnabled
+                enabled: BlurService.available
+                onToggled: checked =>
+                    PersonalizationConfig
+                        .setShellBlurEnabled(checked)
+            }
+
+            ToggleSettingRow {
+                title: qsTr("仅模糊壁纸")
+                description: qsTr("关闭后会模糊窗口，开销更高")
+                checked: PersonalizationConfig.shellBlurXray
+                enabled: BlurService.available
+                    && BlurService.niriIntegrationReady
+                onToggled: checked =>
+                    PersonalizationConfig
+                        .setShellBlurXray(checked)
+            }
+
+            RowLayout {
+                visible: BlurService.available
+                    && !BlurService.niriIntegrationReady
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible ? 48 : 0
+                spacing: 16
+
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("Niri 集成")
+                    color: Appearance.colors.colOnSurface
+                    font.family: Sizes.fontFamily
+                    font.pixelSize: 15
+                    font.weight: Font.Medium
+                }
+
+                MaterialRippleButton {
+                    id: configureNiriButton
+
+                    Layout.preferredWidth: 88
+                    Layout.preferredHeight: 36
+                    enabled: !BlurService.integrationBusy
+                    buttonRadius: Appearance.rounding.full
+                    colBackground:
+                        Appearance.colors.colSecondaryContainer
+                    colBackgroundHover:
+                        Appearance.colors
+                            .colSecondaryContainerHover
+                    colRipple:
+                        Appearance.colors
+                            .colSecondaryContainerActive
+                    releaseAction: () =>
+                        BlurService.configureNiriIntegration()
+
+                    contentItem: Text {
+                        text: qsTr("配置")
+                        color:
+                            Appearance.colors
+                                .colOnSecondaryContainer
+                        font.family: Sizes.fontFamily
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    PopupToolTip {
+                        extraVisibleCondition:
+                            configureNiriButton.hovered
+                            && BlurService.lastError !== ""
+                        text: BlurService.lastError
+                    }
+                }
             }
         }
 

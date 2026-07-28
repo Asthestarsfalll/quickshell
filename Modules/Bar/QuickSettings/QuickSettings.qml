@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import qs.Common
+import qs.Services as Services
 
 Item {
     id: root
@@ -15,7 +16,8 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Appearance.colors.colLayer0
+        color: Services.BlurService.backgroundColor(
+            Appearance.colors.colLayer0)
         radius: height / 2 
         visible: false 
     }

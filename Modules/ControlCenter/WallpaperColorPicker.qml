@@ -154,7 +154,7 @@ Item {
         }
 
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "clavis-wallpaper-color-picker"
+        WlrLayershell.namespace: "clavis-shell-wallpaper-color-picker"
         WlrLayershell.keyboardFocus: modalWindow.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
@@ -179,11 +179,19 @@ Item {
             focus: root.shouldBeVisible
 
             Rectangle {
+                id: dialogBackground
+
                 anchors.fill: parent
                 radius: Appearance.rounding.normal
-                color: Appearance.m3colors.m3surfaceContainerLow
+                color: BlurService.backgroundColor(
+                    Appearance.m3colors.m3surfaceContainerLow)
                 border.width: 1
                 border.color: Appearance.m3colors.m3outlineVariant
+            }
+
+            CompositorBlurRegion {
+                targetWindow: modalWindow
+                backgroundItem: dialogBackground
             }
 
             MouseArea {
