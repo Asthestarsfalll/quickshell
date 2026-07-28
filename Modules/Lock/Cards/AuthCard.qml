@@ -3,13 +3,41 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtQuick.Shapes
+import M3Shapes
 import qs.Common
-import qs.Widgets.common
 
 FocusScope {
     id: root
 
     property var context: null
+    readonly property var passwordShapeQueue: {
+        const shapes = [
+            MaterialShape.Slanted,
+            MaterialShape.Arch,
+            MaterialShape.Fan,
+            MaterialShape.Arrow,
+            MaterialShape.SemiCircle,
+            MaterialShape.Triangle,
+            MaterialShape.Diamond,
+            MaterialShape.ClamShell,
+            MaterialShape.Pentagon,
+            MaterialShape.Gem,
+            MaterialShape.Sunny,
+            MaterialShape.VerySunny,
+            MaterialShape.Cookie4Sided,
+            MaterialShape.Ghostish,
+            MaterialShape.SoftBurst
+        ];
+
+        for (let i = shapes.length - 1; i > 0; --i) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const shape = shapes[i];
+            shapes[i] = shapes[j];
+            shapes[j] = shape;
+        }
+
+        return shapes;
+    }
     readonly property bool hasText: input.text.length > 0
     readonly property bool busy: context && context.unlockInProgress
     readonly property bool enterEnabled: hasText && !busy
@@ -297,10 +325,20 @@ FocusScope {
                     id: dotsModel
                 }
 
-                StyledListView {
+                ListView {
                     id: dotsList
 
-                    readonly property int fullWidth: count === 0 ? 0 : count * (dotSize + spacing) - spacing
+                    readonly property real fullWidth: {
+                        if (count === 0)
+                            return 0;
+
+                        let width = (count - 1) * spacing + dotSize;
+                        for (let i = 0; i < count; ++i) {
+                            const item = itemAtIndex(i);
+                            width += (item ? item.nonAnimatedWidthScale : 1) * dotSize;
+                        }
+                        return width;
+                    }
                     property int dotSize: 17
 
                     function bindImplicitWidth() {
@@ -316,10 +354,6 @@ FocusScope {
                     orientation: ListView.Horizontal
                     spacing: Math.round(Sizes.lockCardGap / 2)
                     interactive: false
-                    animateAppearance: false
-                    animateMovement: false
-                    showVerticalScrollBar: false
-                    smoothWheelEnabled: false
                     model: dotsModel
 
                     Behavior on implicitWidth {
@@ -332,71 +366,182 @@ FocusScope {
                         }
                     }
 
-                    delegate: Rectangle {
-                        id: dot
+                    delegate: Item {
+                        id: character
 
-                        width: dotsList.dotSize
+                        required property int index
+                        property real nonAnimatedWidthScale: 1
+
+                        implicitWidth: dotsList.dotSize
+                        width: implicitWidth
                         height: dotsList.dotSize
-                        radius: Sizes.lockCardRadiusSmall / 2
-                        color: Appearance.colors.colOnSurface
-                        opacity: 0
-                        scale: 0
 
-                        Component.onCompleted: {
-                            opacity = 1;
-                            scale = 1;
+                        ListView.onRemove: {
+                            appearAnimation.stop();
+                            removeAnimation.start();
                         }
 
-                        ListView.onRemove: removeAnim.start()
+                        MaterialShape {
+                            id: characterShape
 
-                        SequentialAnimation {
-                            id: removeAnim
+                            anchors.centerIn: parent
+                            implicitSize: dotsList.dotSize * 1.5
+                            shape: root.passwordShapeQueue[
+                                character.index
+                                % root.passwordShapeQueue.length
+                            ] ?? MaterialShape.Circle
+                            color: Appearance.colors.colOnSurface
+                            animationDuration:
+                                Appearance.animation.expressiveFastSpatial.duration
 
-                            PropertyAction {
-                                target: dot
-                                property: "ListView.delayRemove"
-                                value: true
-                            }
-
-                            ParallelAnimation {
-                                NumberAnimation {
-                                    target: dot
-                                    property: "opacity"
-                                    to: 0
-                                    duration: Appearance.animation.expressiveEffects.duration
-                                    easing.type: Appearance.animation.expressiveEffects.type
-                                    easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                                }
-                                NumberAnimation {
-                                    target: dot
-                                    property: "scale"
-                                    to: 0.5
-                                    duration: Appearance.animation.expressiveFastSpatial.duration
-                                    easing.type: Appearance.animation.expressiveFastSpatial.type
-                                    easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration:
+                                        Appearance.animation.expressiveSlowEffects.duration
+                                    easing.type:
+                                        Appearance.animation.expressiveSlowEffects.type
+                                    easing.bezierCurve:
+                                        Appearance.animation.expressiveSlowEffects.bezierCurve
                                 }
                             }
 
-                            PropertyAction {
-                                target: dot
-                                property: "ListView.delayRemove"
-                                value: false
-                            }
-                        }
+                            SequentialAnimation {
+                                id: appearAnimation
 
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Appearance.animation.expressiveEffects.duration
-                                easing.type: Appearance.animation.expressiveEffects.type
-                                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                            }
-                        }
+                                running: true
 
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: Appearance.animation.expressiveFastSpatial.duration
-                                easing.type: Appearance.animation.expressiveFastSpatial.type
-                                easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                                ParallelAnimation {
+                                    NumberAnimation {
+                                        target: characterShape
+                                        property: "opacity"
+                                        from: 0
+                                        to: 1
+                                        duration:
+                                            Appearance.animation.expressiveEffects.duration
+                                        easing.type:
+                                            Appearance.animation.expressiveEffects.type
+                                        easing.bezierCurve:
+                                            Appearance.animation.expressiveEffects.bezierCurve
+                                    }
+
+                                    NumberAnimation {
+                                        target: characterShape
+                                        property: "scale"
+                                        from: 0
+                                        to: 1
+                                        duration:
+                                            Appearance.animation.expressiveFastSpatial.duration
+                                        easing.type:
+                                            Appearance.animation.expressiveFastSpatial.type
+                                        easing.bezierCurve:
+                                            Appearance.animation.expressiveFastSpatial.bezierCurve
+                                    }
+
+                                    NumberAnimation {
+                                        target: character
+                                        property: "implicitWidth"
+                                        from: dotsList.dotSize
+                                        to: dotsList.dotSize * 1.3
+                                        duration:
+                                            Appearance.animation.expressiveDefaultSpatial.duration
+                                        easing.type:
+                                            Appearance.animation.expressiveDefaultSpatial.type
+                                        easing.bezierCurve:
+                                            Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                                    }
+
+                                    PropertyAction {
+                                        target: character
+                                        property: "nonAnimatedWidthScale"
+                                        value: 1.5
+                                    }
+                                }
+
+                                PauseAnimation {
+                                    duration:
+                                        Appearance.animation.expressiveEffects.duration
+                                        * 0.9
+                                }
+
+                                PropertyAction {
+                                    target: characterShape
+                                    property: "shape"
+                                    value: MaterialShape.Circle
+                                }
+
+                                ParallelAnimation {
+                                    NumberAnimation {
+                                        target: characterShape
+                                        property: "scale"
+                                        to: 2 / 3
+                                        duration:
+                                            Appearance.animation.expressiveFastSpatial.duration
+                                        easing.type:
+                                            Appearance.animation.expressiveFastSpatial.type
+                                        easing.bezierCurve:
+                                            Appearance.animation.expressiveFastSpatial.bezierCurve
+                                    }
+
+                                    NumberAnimation {
+                                        target: character
+                                        property: "implicitWidth"
+                                        to: dotsList.dotSize
+                                        duration:
+                                            Appearance.animation.expressiveDefaultSpatial.duration
+                                        easing.type:
+                                            Appearance.animation.expressiveDefaultSpatial.type
+                                        easing.bezierCurve:
+                                            Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                                    }
+
+                                    PropertyAction {
+                                        target: character
+                                        property: "nonAnimatedWidthScale"
+                                        value: 1
+                                    }
+                                }
+                            }
+
+                            SequentialAnimation {
+                                id: removeAnimation
+
+                                PropertyAction {
+                                    target: character
+                                    property: "ListView.delayRemove"
+                                    value: true
+                                }
+
+                                ParallelAnimation {
+                                    NumberAnimation {
+                                        target: characterShape
+                                        property: "opacity"
+                                        to: 0
+                                        duration:
+                                            Appearance.animation.expressiveEffects.duration
+                                        easing.type:
+                                            Appearance.animation.expressiveEffects.type
+                                        easing.bezierCurve:
+                                            Appearance.animation.expressiveEffects.bezierCurve
+                                    }
+
+                                    NumberAnimation {
+                                        target: characterShape
+                                        property: "scale"
+                                        to: 0.5
+                                        duration:
+                                            Appearance.animation.expressiveFastSpatial.duration
+                                        easing.type:
+                                            Appearance.animation.expressiveFastSpatial.type
+                                        easing.bezierCurve:
+                                            Appearance.animation.expressiveFastSpatial.bezierCurve
+                                    }
+                                }
+
+                                PropertyAction {
+                                    target: character
+                                    property: "ListView.delayRemove"
+                                    value: false
+                                }
                             }
                         }
                     }
