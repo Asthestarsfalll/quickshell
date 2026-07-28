@@ -15,11 +15,12 @@ FocusScope {
     property string supportingTextRole: "supportingText"
     property string enabledRole: "enabled"
     property string tooltipRole: "tooltip"
+    property bool horizontal: false
 
     signal valueSelected(string value)
 
-    implicitWidth: column.implicitWidth
-    implicitHeight: column.implicitHeight
+    implicitWidth: optionLayout.implicitWidth
+    implicitHeight: optionLayout.implicitHeight
     Accessible.role: Accessible.Grouping
     Accessible.name: accessibleName
 
@@ -57,12 +58,15 @@ FocusScope {
         exclusive: true
     }
 
-    ColumnLayout {
-        id: column
+    GridLayout {
+        id: optionLayout
 
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: Appearance.spacing.xSmall
+        columns: root.horizontal
+            ? Math.max(1, root.model.length) : 1
+        columnSpacing: Appearance.spacing.medium
+        rowSpacing: Appearance.spacing.xSmall
 
         Repeater {
             id: repeater
@@ -102,27 +106,6 @@ FocusScope {
                         PointerDevice.Mouse | PointerDevice.TouchPad
                 }
 
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Appearance.rounding.normal
-                    color: radio.down || optionMouse.pressed
-                        ? Appearance.colors.colLayer2Active
-                        : hover.hovered
-                            ? Appearance.colors.colLayer2Hover
-                            : "transparent"
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Appearance.animation
-                                .expressiveFastEffects.duration
-                            easing.type: Appearance.animation
-                                .expressiveFastEffects.type
-                            easing.bezierCurve: Appearance.animation
-                                .expressiveFastEffects.bezierCurve
-                        }
-                    }
-                }
-
                 RowLayout {
                     id: content
 
@@ -138,6 +121,8 @@ FocusScope {
                     RadioButton {
                         id: radio
 
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
                         ButtonGroup.group: exclusiveGroup
                         checked:
                             root.currentValue === option.optionValue
@@ -145,11 +130,47 @@ FocusScope {
                         focusPolicy: Qt.StrongFocus
                         hoverEnabled: true
                         Accessible.name: option.optionLabel
-                        Material.theme: Material.System
                         Material.accent:
                             Appearance.colors.colPrimary
                         Material.foreground:
                             Appearance.colors.colOnSurface
+                        indicator: Rectangle {
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            x: (radio.width - width) / 2
+                            y: (radio.height - height) / 2
+                            radius: width / 2
+                            color: "transparent"
+                            border.width: radio.checked ? 2 : 1.5
+                            border.color: radio.checked
+                                || hover.hovered
+                                || radio.activeFocus
+                                ? Appearance.colors.colPrimary
+                                : Appearance.colors
+                                    .colOnSurfaceVariant
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: radio.checked ? 10 : 0
+                                height: width
+                                radius: width / 2
+                                color: Appearance.colors.colPrimary
+
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: Appearance.animation
+                                            .expressiveFastEffects
+                                            .duration
+                                        easing.type: Appearance.animation
+                                            .expressiveFastEffects.type
+                                        easing.bezierCurve:
+                                            Appearance.animation
+                                                .expressiveFastEffects
+                                                .bezierCurve
+                                    }
+                                }
+                            }
+                        }
                         onClicked:
                             root.valueSelected(option.optionValue)
 
@@ -174,7 +195,12 @@ FocusScope {
                         Text {
                             Layout.fillWidth: true
                             text: option.optionLabel
-                            color: Appearance.colors.colOnSurface
+                            color: option.optionEnabled
+                                ? radio.checked || hover.hovered
+                                    ? Appearance.colors.colPrimary
+                                    : Appearance.colors.colOnSurface
+                                : Appearance.colors
+                                    .colOnSurfaceVariant
                             font.family: Sizes.fontFamily
                             font.pixelSize: Sizes.typeBodyMedium
                             font.weight: Font.Medium

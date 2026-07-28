@@ -85,7 +85,9 @@ Singleton {
             root.niriConfigPath,
             root.effectsConfigPath,
             root.xray ? "true" : "false",
-            "niri"
+            "niri",
+            PersonalizationConfig.shellBlurEnabled
+                ? "true" : "false"
         ];
         effectsWriteProcess.running = true;
     }
@@ -101,7 +103,9 @@ Singleton {
             root.niriConfigPath,
             root.effectsConfigPath,
             root.xray ? "true" : "false",
-            "niri"
+            "niri",
+            PersonalizationConfig.shellBlurEnabled
+                ? "true" : "false"
         ];
         integrationProcess.running = true;
     }
@@ -110,6 +114,10 @@ Singleton {
         target: PersonalizationConfig
 
         function onShellBlurXrayChanged() {
+            root.writeEffectsConfig();
+        }
+
+        function onShellBlurEnabledChanged() {
             root.writeEffectsConfig();
         }
     }

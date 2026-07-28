@@ -16,81 +16,171 @@ Item {
         anchors.margins: Appearance.spacing.panelPadding
         spacing: Appearance.spacing.panelPadding
 
-        RowLayout {
-            Layout.fillWidth: true
-            
-            Layout.preferredHeight: 50 
-            Layout.maximumHeight: 50 
-            Layout.alignment: Qt.AlignTop
-            
-            spacing: 15
+        Item {
+            id: tabToolbar
 
-            Repeater {
-                model: [
-                    { id: "info", icon: "info", label: qsTr("信息") },
-                    { id: "sys", icon: "monitoring", label: qsTr("系统") },
-                    { id: "weather", icon: "cloud", label: qsTr("天气") }
-                ]
-                
-                delegate: Item {
-                    id: tabBtn
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true 
-                    
-                    property bool isActive: WidgetState.leftSidebarView === modelData.id
-                    property bool isHovered: hoverArea.containsMouse
-                    
-                    property color contentColor: isActive ? Appearance.colors.colOnLayer0 : (isHovered ? Appearance.colors.colOnLayer0 : Qt.rgba(Appearance.colors.colOnLayer0.r, Appearance.colors.colOnLayer0.g, Appearance.colors.colOnLayer0.b, 0.45))
+            readonly property var tabs: [
+                { id: "info", icon: "info", label: qsTr("信息") },
+                { id: "sys", icon: "monitoring", label: qsTr("系统") },
+                { id: "weather", icon: "cloud", label: qsTr("天气") }
+            ]
+            readonly property int currentIndex: Math.max(0,
+                tabs.findIndex(tab =>
+                    tab.id === WidgetState.leftSidebarView))
+            readonly property real buttonWidth: 112
+            readonly property real targetLeft:
+                Appearance.spacing.small
+                    + currentIndex * buttonWidth
+            readonly property real targetRight:
+                targetLeft + buttonWidth
+            property real leftFast: targetLeft
+            property real leftSlow: targetLeft
+            property real rightFast: targetRight
+            property real rightSlow: targetRight
 
-                    Column {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -4
-                        spacing: 4 
-                        
-                        MaterialSymbol {
-                            text: modelData.icon
-                            iconSize: 20
-                            fill: tabBtn.isActive ? 1 : 0
-                            color: tabBtn.contentColor
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            Behavior on color { ColorAnimation { duration: 200 } }
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+            Layout.preferredWidth:
+                buttonWidth * tabs.length
+                    + Appearance.spacing.small * 2
+            Layout.preferredHeight: 56
+
+            Behavior on leftFast {
+                NumberAnimation {
+                    duration: 50
+                    easing.type: Easing.OutSine
+                }
+            }
+            Behavior on rightFast {
+                NumberAnimation {
+                    duration: 50
+                    easing.type: Easing.OutSine
+                }
+            }
+            Behavior on leftSlow {
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutSine
+                }
+            }
+            Behavior on rightSlow {
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutSine
+                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                color: Appearance.colors.colSurfaceContainer
+            }
+
+            Rectangle {
+                id: activeIndicator
+
+                z: 1
+                x: Math.min(tabToolbar.leftFast,
+                    tabToolbar.leftSlow)
+                y: Appearance.spacing.small
+                width: Math.max(tabToolbar.rightFast,
+                    tabToolbar.rightSlow) - x
+                height: parent.height
+                    - Appearance.spacing.small * 2
+                radius: height / 2
+                color: Appearance.colors.colSecondaryContainer
+            }
+
+            Row {
+                z: 2
+                x: Appearance.spacing.small
+                y: Appearance.spacing.small
+                height: parent.height
+                    - Appearance.spacing.small * 2
+
+                Repeater {
+                    model: tabToolbar.tabs
+
+                    delegate: Item {
+                        id: tabButton
+
+                        required property var modelData
+                        readonly property bool active:
+                            WidgetState.leftSidebarView
+                                === modelData.id
+
+                        width: tabToolbar.buttonWidth
+                        height: parent.height
+                        Accessible.role: Accessible.PageTab
+                        Accessible.name: modelData.label
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: height / 2
+                            color: tabHover.containsMouse
+                                && !tabButton.active
+                                ? Appearance.applyAlpha(
+                                    Appearance.colors.colOnSurface,
+                                    0.05)
+                                : "transparent"
                         }
-                        
-                        Text {
-                            text: modelData.label
-                            font.family: "LXGW WenKai GB Screen"
-                            font.bold: tabBtn.isActive
-                            font.pixelSize: 13 
-                            color: tabBtn.contentColor
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            Behavior on color { ColorAnimation { duration: 200 } }
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: Appearance.spacing.small
+
+                            MaterialSymbol {
+                                anchors.verticalCenter:
+                                    parent.verticalCenter
+                                text: tabButton.modelData.icon
+                                iconSize: 22
+                                fill: tabButton.active ? 1 : 0
+                                color: tabButton.active
+                                    ? Appearance.colors
+                                        .colOnSecondaryContainer
+                                    : Appearance.colors
+                                        .colOnSurfaceVariant
+                            }
+
+                            Text {
+                                anchors.verticalCenter:
+                                    parent.verticalCenter
+                                text: tabButton.modelData.label
+                                color: tabButton.active
+                                    ? Appearance.colors
+                                        .colOnSecondaryContainer
+                                    : Appearance.colors
+                                        .colOnSurfaceVariant
+                                font.family: Sizes.fontFamily
+                                font.pixelSize: Sizes.typeBodyMedium
+                                font.weight: tabButton.active
+                                    ? Font.DemiBold : Font.Medium
+                            }
+                        }
+
+                        MouseArea {
+                            id: tabHover
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked:
+                                WidgetState.leftSidebarView
+                                    = tabButton.modelData.id
                         }
                     }
+                }
+            }
 
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: tabBtn.isActive ? 40 : 0
-                        height: 3
-                        radius: 1.5
-                        color: Appearance.colors.colOnLayer0
-                        opacity: tabBtn.isActive ? 1.0 : 0.0
-                        
-                        Behavior on width { 
-                            NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 0.5 } 
-                        }
-                        Behavior on opacity { 
-                            NumberAnimation { duration: 200 } 
-                        }
-                    }
-
-                    MouseArea {
-                        id: hoverArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: WidgetState.leftSidebarView = modelData.id
-                    }
+            WheelHandler {
+                acceptedDevices:
+                    PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: event => {
+                    const delta = event.angleDelta.y < 0 ? 1 : -1;
+                    const next = (tabToolbar.currentIndex + delta
+                        + tabToolbar.tabs.length)
+                        % tabToolbar.tabs.length;
+                    WidgetState.leftSidebarView
+                        = tabToolbar.tabs[next].id;
                 }
             }
         }

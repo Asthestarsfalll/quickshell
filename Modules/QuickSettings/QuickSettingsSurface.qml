@@ -304,8 +304,11 @@ WidgetPanel {
             cellSpacing: root.headerButtonSpacing
             padding: root.headerButtonPadding
             iconName: "power_settings_new"
-            tooltipText: qsTr("会话")
-            onTriggered: Quickshell.execDetached(["wlogout", "-p", "layer-shell", "-b", "2"])
+            tooltipText: qsTr("电源菜单")
+            onTriggered: Quickshell.execDetached([
+                Paths.systemScriptsDir + "/power-menu.sh",
+                PersonalizationConfig.powerMenuStyle
+            ])
         }
     }
 

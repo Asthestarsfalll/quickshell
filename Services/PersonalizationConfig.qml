@@ -92,6 +92,10 @@ Singleton {
         ({ "value": "bangs", "label": qsTr("刘海") }),
         ({ "value": "pill", "label": qsTr("药丸") })
     ]
+    readonly property var powerMenuStyles: [
+        ({ "value": "grid", "label": qsTr("四宫格") }),
+        ({ "value": "row", "label": qsTr("横向六项") })
+    ]
 
     property bool storeReady: false
     property bool loading: false
@@ -154,6 +158,7 @@ Singleton {
     property int cursorHideAfterInactiveMs: 0
     property string iconTheme: ""
     property string keystoneStyle: "bangs"
+    property string powerMenuStyle: "grid"
 
     property real shellBackgroundOpacity: 1.0
     property bool shellBlurEnabled: false
@@ -625,6 +630,11 @@ Singleton {
         setValue("keystoneStyle", normalizedOption(root.keystoneStyles, value, "bangs"));
     }
 
+    function setPowerMenuStyle(value) {
+        setValue("powerMenuStyle", normalizedOption(
+            root.powerMenuStyles, value, "grid"));
+    }
+
     function setShellBackgroundOpacity(value) {
         setValue("shellBackgroundOpacity",
             normalizedBoundedReal(value, 1.0, 0.0, 1.0));
@@ -733,7 +743,8 @@ Singleton {
                 "cursorSize": root.cursorSize,
                 "cursorHideWhenTyping": root.cursorHideWhenTyping,
                 "cursorHideAfterInactiveMs": root.cursorHideAfterInactiveMs,
-                "iconTheme": root.iconTheme
+                "iconTheme": root.iconTheme,
+                "powerMenuStyle": root.powerMenuStyle
             },
             "effects": {
                 "shellBackgroundOpacity":
@@ -861,6 +872,8 @@ Singleton {
         root.cursorHideWhenTyping = !!theme.cursorHideWhenTyping;
         root.cursorHideAfterInactiveMs = Math.max(0, Math.min(5000, Math.round(Number(theme.cursorHideAfterInactiveMs) || 0)));
         root.iconTheme = theme.iconTheme || "";
+        root.powerMenuStyle = normalizedOption(
+            root.powerMenuStyles, theme.powerMenuStyle, "grid");
         root.shellBackgroundOpacity = normalizedBoundedReal(
             effects.shellBackgroundOpacity, 1.0, 0.0, 1.0);
         root.shellBlurEnabled =
@@ -897,6 +910,13 @@ Singleton {
         return effects.shellBackgroundOpacity === undefined
             || effects.shellBlurEnabled === undefined
             || effects.shellBlurXray === undefined;
+    }
+
+    function needsThemeMigration(parsed) {
+        const theme = parsed && parsed.theme;
+        return !theme || typeof theme !== "object"
+            || Array.isArray(theme)
+            || theme.powerMenuStyle === undefined;
     }
 
     function save() {
@@ -940,7 +960,8 @@ Singleton {
             try {
                 parsed = JSON.parse(configFile.text().trim() || "{}");
                 shouldRepair = root.needsWallpaperMigration(parsed)
-                    || root.needsEffectsMigration(parsed);
+                    || root.needsEffectsMigration(parsed)
+                    || root.needsThemeMigration(parsed);
                 root.loadFromObject(parsed);
                 shouldRepair = shouldRepair
                     || JSON.stringify(parsed.wallpaper || {})
@@ -948,7 +969,9 @@ Singleton {
                             root.toJson().wallpaper)
                     || JSON.stringify(parsed.effects || {})
                         !== JSON.stringify(
-                            root.toJson().effects);
+                            root.toJson().effects)
+                    || JSON.stringify(parsed.theme || {})
+                        !== JSON.stringify(root.toJson().theme);
             } catch (error) {
                 console.log("PersonalizationConfig failed to load:", error);
                 shouldRepair = true;

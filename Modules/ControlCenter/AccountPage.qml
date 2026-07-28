@@ -171,6 +171,8 @@ Item {
                     width: root.columnWidth
                     title: qsTr("语言")
                     iconName: "translate"
+                    containerColor:
+                        Appearance.m3colors.m3surfaceContainerHigh
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -206,6 +208,8 @@ Item {
                     width: root.columnWidth
                     title: qsTr("蓝牙设备")
                     iconName: BluetoothService.enabled ? "bluetooth" : "bluetooth_disabled"
+                    containerColor:
+                        Appearance.m3colors.m3surfaceContainerHigh
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -226,84 +230,120 @@ Item {
                         }
                     }
 
-                    Repeater {
-                        model: root.pairedBluetoothDevices
+                    Flickable {
+                        id: pairedDeviceList
 
-                        delegate: Rectangle {
-                            id: deviceRow
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.min(
+                            pairedDeviceColumn.implicitHeight,
+                            56 * 3 + Appearance.spacing.small * 2)
+                        Layout.maximumHeight: 56 * 3
+                            + Appearance.spacing.small * 2
+                        contentWidth: width
+                        contentHeight: pairedDeviceColumn.implicitHeight
+                        clip: true
+                        interactive: contentHeight > height
 
-                            required property var modelData
+                        Column {
+                            id: pairedDeviceColumn
 
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 56
-                            radius: Appearance.rounding.normal
-                            color: Appearance.colors.colSurfaceContainer
+                            width: pairedDeviceList.width
+                            spacing: Appearance.spacing.small
 
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Appearance.spacing.medium
-                                anchors.rightMargin: Appearance.spacing.small
-                                spacing: Appearance.spacing.small
+                            Repeater {
+                                model: root.pairedBluetoothDevices
 
-                                MaterialSymbol {
-                                    text: root.bluetoothIcon(deviceRow.modelData)
-                                    iconSize: 22
-                                    color: Appearance.colors.colPrimary
-                                }
+                                delegate: Rectangle {
+                                    id: deviceRow
 
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 0
+                                    required property var modelData
 
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: deviceRow.modelData.name || qsTr("未命名设备")
-                                        color: Appearance.colors.colOnSurface
-                                        font.family: Sizes.fontFamily
-                                        font.pixelSize: Sizes.typeBodyMedium
-                                        elide: Text.ElideRight
-                                    }
+                                    width: pairedDeviceColumn.width
+                                    height: 56
+                                    radius: Appearance.rounding.normal
+                                    color: Appearance.colors.colSurfaceContainer
 
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: root.bluetoothState(deviceRow.modelData)
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                        font.family: Sizes.fontFamily
-                                        font.pixelSize: Sizes.typeBodySmall
-                                    }
-                                }
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Appearance.spacing.medium
+                                        anchors.rightMargin: Appearance.spacing.small
+                                        spacing: Appearance.spacing.small
 
-                                Button {
-                                    text: root.bluetoothActionText(deviceRow.modelData)
-                                    flat: true
-                                    enabled: BluetoothService.enabled
-                                        && !BluetoothService.busy
-                                    onClicked: root.bluetoothAction(deviceRow.modelData)
-                                }
+                                        MaterialSymbol {
+                                            text: root.bluetoothIcon(deviceRow.modelData)
+                                            iconSize: 22
+                                            color: Appearance.colors.colPrimary
+                                        }
 
-                                ToolButton {
-                                    id: moreButton
+                                        ColumnLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 0
 
-                                    enabled: !BluetoothService.busy
-                                    Accessible.name: qsTr("%1 的更多选项").arg(
-                                        deviceRow.modelData.name || qsTr("未命名设备"))
-                                    onClicked: forgetMenu.open()
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: deviceRow.modelData.name
+                                                    || qsTr("未命名设备")
+                                                color: Appearance.colors.colOnSurface
+                                                font.family: Sizes.fontFamily
+                                                font.pixelSize: Sizes.typeBodyMedium
+                                                elide: Text.ElideRight
+                                            }
 
-                                    contentItem: MaterialSymbol {
-                                        text: "more_horiz"
-                                        iconSize: 22
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                    }
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: root.bluetoothState(
+                                                    deviceRow.modelData)
+                                                color: Appearance.colors.colOnSurfaceVariant
+                                                font.family: Sizes.fontFamily
+                                                font.pixelSize: Sizes.typeBodySmall
+                                            }
+                                        }
 
-                                    Menu {
-                                        id: forgetMenu
-
-                                        y: moreButton.height
-
-                                        MenuItem {
-                                            text: qsTr("遗忘设备")
-                                            onTriggered: BluetoothService.forgetDevice(
+                                        Button {
+                                            text: root.bluetoothActionText(
                                                 deviceRow.modelData)
+                                            flat: true
+                                            enabled: BluetoothService.enabled
+                                                && !BluetoothService.busy
+                                            Material.accent:
+                                                Appearance.colors.colPrimary
+                                            Material.foreground: enabled
+                                                ? Appearance.colors.colPrimary
+                                                : Appearance.applyAlpha(
+                                                    Appearance.colors.colOnSurface,
+                                                    0.38)
+                                            onClicked: root.bluetoothAction(
+                                                deviceRow.modelData)
+                                        }
+
+                                        ToolButton {
+                                            id: moreButton
+
+                                            enabled: !BluetoothService.busy
+                                            Accessible.name:
+                                                qsTr("%1 的更多选项").arg(
+                                                    deviceRow.modelData.name
+                                                        || qsTr("未命名设备"))
+                                            onClicked: forgetMenu.open()
+
+                                            contentItem: MaterialSymbol {
+                                                text: "more_horiz"
+                                                iconSize: 22
+                                                color: Appearance.colors.colOnSurfaceVariant
+                                            }
+
+                                            Menu {
+                                                id: forgetMenu
+
+                                                y: moreButton.height
+
+                                                MenuItem {
+                                                    text: qsTr("遗忘设备")
+                                                    onTriggered:
+                                                        BluetoothService.forgetDevice(
+                                                            deviceRow.modelData)
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -338,6 +378,8 @@ Item {
                     width: root.columnWidth
                     title: qsTr("云存储")
                     iconName: "cloud"
+                    containerColor:
+                        Appearance.m3colors.m3surfaceContainerHigh
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -463,6 +505,8 @@ Item {
                     width: root.columnWidth
                     title: qsTr("个性化")
                     iconName: "palette"
+                    containerColor:
+                        Appearance.m3colors.m3surfaceContainerHigh
 
                     GridLayout {
                         Layout.fillWidth: true

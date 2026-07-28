@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Common
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -38,11 +39,14 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: Quickshell.execDetached(["wlogout", "-p", "layer-shell", "-b", "2"])
+        onClicked: Quickshell.execDetached([
+            Paths.systemScriptsDir + "/power-menu.sh",
+            PersonalizationConfig.powerMenuStyle
+        ])
     }
 
     PopupToolTip {
         extraVisibleCondition: mouseArea.containsMouse
-        text: qsTr("电源")
+        text: qsTr("电源菜单")
     }
 }

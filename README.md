@@ -58,6 +58,10 @@
 
 Meteocons 资源不纳入 Git；动画图标可从 npm 包 [`@meteocons/lottie`](https://www.npmjs.com/package/@meteocons/lottie) 下载，并将包内容放入 `assets/icons/weather/meteocons/lottie/`。
 
+### 电源菜单
+
+电源菜单依赖 `wlogout` 和 `envsubst`（通常由 gettext 提供）。控制中心“主题”页可在 HyDE 风格的四宫格与横向六项布局之间切换。按钮透明度跟随 Clavis 的 Shell 背景透明度；在 niri 26.04 及以上开启 Shell 背景模糊时，Clavis 会为 wlogout 的 `logout_dialog` layer surface 启用全屏背景模糊。wlogout 本身不支持提交精确的 `ext-background-effect` Region，因此其模糊范围是整个电源菜单背景，而不是每个按钮分别提交的区域。
+
 ## `key` 与系统监测
 
 系统监测由 `core/src/sysmon/` 中的共享 C++ 核心提供。QML plugin
@@ -152,6 +156,7 @@ CLAVIS_SMOKE_OPEN_TOP=1 TERMINAL=/usr/bin/true \
 4. [qml-niri](https://github.com/imiric/qml-niri)：Niri IPC、工作区/窗口模型和 QML 插件封装的实现参考。
 5. [Breezy Weather](https://github.com/breezy-weather/breezy-weather)：天气界面、天气信息组织和 Material 3 天气可视化设计参考。
 6. [soramanew/m3shapes](https://github.com/soramanew/m3shapes)：提供 Material 3 Expressive 形状、形变算法与解析抗锯齿 QML 原生模块。
+7. [HyDE](https://github.com/HyDE-Project/HyDE)：电源菜单直接使用 `wlogout`，其四宫格与横向六项布局、图标和悬停形变基于 HyDE 的 wlogout 配置移植，并适配了 Clavis 配色、字体与 niri 会话动作。
 
 
 
@@ -168,5 +173,6 @@ CLAVIS_SMOKE_OPEN_TOP=1 TERMINAL=/usr/bin/true \
 - `Breezy Weather`：LGPL-3.0 及附加条款，见 [`licenses/BreezyWeather-LGPL-3.0.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/BreezyWeather-LGPL-3.0.txt) 和 [`licenses/BreezyWeather-LICENSE_ADDITIONAL.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/BreezyWeather-LICENSE_ADDITIONAL.txt)。
 - `Animated Weather Cards`：MIT，见 [`licenses/AnimatedWeatherCards-MIT.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/AnimatedWeatherCards-MIT.txt)。
 - `soramanew/m3shapes`：Apache-2.0，见 [`licenses/M3Shapes-Apache-2.0.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/M3Shapes-Apache-2.0.txt)。
+- `HyDE`：GPL-3.0，见 [`licenses/HyDE-GPL-3.0.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/HyDE-GPL-3.0.txt)。
 
 若某个文件中保留了更具体的版权或许可证声明，以该文件内声明和对应上游许可证为准。

@@ -41,8 +41,17 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton) {
+                Quickshell.execDetached([
+                    "qs",
+                    "--path",
+                    Paths.shellDir + "/controlcenter.qml"
+                ]);
+                return;
+            }
             if (root.screen && root.screen.name)
                 WidgetState.qsScreenName = root.screen.name;
             if (root.active) {
@@ -56,6 +65,6 @@ Item {
 
     PopupToolTip {
         extraVisibleCondition: mouseArea.containsMouse
-        text: qsTr("设置")
+        text: qsTr("左键：快捷设置\n右键：控制中心")
     }
 }

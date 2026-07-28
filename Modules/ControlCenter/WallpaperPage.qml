@@ -361,6 +361,7 @@ StyledFlickable {
 
                 MaterialRadioGroup {
                     Layout.fillWidth: true
+                    horizontal: true
                     accessibleName: qsTr("桌面壁纸管理器")
                     currentValue:
                         PersonalizationConfig.desktopWallpaperBackend
