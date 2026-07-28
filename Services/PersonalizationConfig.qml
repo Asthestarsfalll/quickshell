@@ -20,6 +20,9 @@ Singleton {
         ({ "value": "TileHorizontally", "label": qsTr("水平平铺") }),
         ({ "value": "Pad", "label": qsTr("覆盖") })
     ]
+    readonly property var desktopFillModes: root.fillModes.concat([
+        ({ "value": "panorama", "label": qsTr("全景") })
+    ])
 
     readonly property var transitionTypes: [
         ({ "value": "random", "label": qsTr("随机") }),
@@ -224,14 +227,15 @@ Singleton {
         return result;
     }
 
-    function normalizedFillModeMap(raw) {
+    function normalizedFillModeMap(raw, options) {
         const result = {};
         if (!raw || typeof raw !== "object" || Array.isArray(raw))
             return result;
 
+        const validOptions = options || root.desktopFillModes;
         for (let key in raw)
-            result[String(key)] =
-                normalizedOption(root.fillModes, raw[key], "Fill");
+            result[String(key)] = normalizedOption(
+                validOptions, raw[key], "Fill");
         return result;
     }
 
@@ -299,14 +303,16 @@ Singleton {
     }
 
     function setWallpaperFillMode(value) {
-        setValue("wallpaperFillMode", normalizedOption(root.fillModes, value, "Fill"));
+        setValue("wallpaperFillMode", normalizedOption(
+            root.desktopFillModes, value, "Fill"));
     }
 
     function setMonitorWallpaperFillMode(screenName, value) {
         if (!screenName)
             return;
         const next = cloneMap(root.monitorWallpaperFillModes);
-        next[screenName] = normalizedOption(root.fillModes, value, "Fill");
+        next[screenName] = normalizedOption(
+            root.desktopFillModes, value, "Fill");
         root.monitorWallpaperFillModes = next;
         root.save();
     }
@@ -748,7 +754,8 @@ Singleton {
         root.monitorWallpaperFillModes =
             normalizedFillModeMap(wallpaper.monitorFillModes);
         root.recentWallpaperColors = normalizedRecentColors(wallpaper.recentColors);
-        root.wallpaperFillMode = normalizedOption(root.fillModes, wallpaper.fillMode, "Fill");
+        root.wallpaperFillMode = normalizedOption(
+            root.desktopFillModes, wallpaper.fillMode, "Fill");
         root.desktopWallpaperBackend =
             wallpaper.desktopBackend === "awww"
                 ? "awww" : "quickshell";
@@ -787,7 +794,8 @@ Singleton {
         root.overviewMonitorWallpapers =
             normalizedStringMap(overview.monitorWallpapers);
         root.overviewMonitorFillModes =
-            normalizedFillModeMap(overview.monitorFillModes);
+            normalizedFillModeMap(
+                overview.monitorFillModes, root.fillModes);
         root.overviewTransitionType =
             normalizedTransition(overview.transitionType || "fade");
         root.overviewBlurRadius =

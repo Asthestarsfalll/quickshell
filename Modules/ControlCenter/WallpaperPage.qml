@@ -52,6 +52,25 @@ StyledFlickable {
             selectedOverviewOutput)
     readonly property bool currentWallpaperIsColor: WallpaperService.isColorSource(currentWallpaperPath)
     readonly property bool currentWallpaperIsImage: currentWallpaperPath !== "" && !currentWallpaperIsColor
+    readonly property string currentDesktopFillMode:
+        selectedDesktopOutput !== ""
+            ? PersonalizationConfig.monitorFillMode(
+                selectedDesktopOutput)
+            : PersonalizationConfig.wallpaperFillMode
+    readonly property bool panoramaSelected:
+        currentDesktopFillMode === "panorama"
+    readonly property real effectivePreferredScale:
+        panoramaSelected
+            ? 1 : PersonalizationConfig.parallaxPreferredScale
+    readonly property bool preferredScaleControlEnabled:
+        !desktopUsesAwww && !panoramaSelected
+    readonly property var desktopFillModeOptions:
+        PersonalizationConfig.desktopFillModes.map(option => ({
+            "value": option.value,
+            "label": option.label,
+            "enabled": root.desktopFillModeOptionEnabled(
+                option.value, root.desktopUsesAwww)
+        }))
     readonly property real pageContentWidth: 600
     property real fillModeGroupRestingWidth: 0
 
@@ -82,6 +101,10 @@ StyledFlickable {
         overviewColorPicker.showWithColor(
             WallpaperService.isColorSource(source)
                 ? source : Appearance.colors.colPrimary);
+    }
+
+    function desktopFillModeOptionEnabled(value, usesAwww) {
+        return value !== "panorama" || !usesAwww;
     }
 
     component Section: ColumnLayout {
@@ -460,11 +483,8 @@ StyledFlickable {
                     id: fillModeButtonGroup
 
                     Layout.alignment: Qt.AlignHCenter
-                    model: PersonalizationConfig.fillModes
-                    currentValue: root.selectedDesktopOutput !== ""
-                        ? PersonalizationConfig.monitorFillMode(
-                            root.selectedDesktopOutput)
-                        : PersonalizationConfig.wallpaperFillMode
+                    model: root.desktopFillModeOptions
+                    currentValue: root.currentDesktopFillMode
                     Component.onCompleted:
                         root.fillModeGroupRestingWidth = implicitWidth
                     onValueSelected: value =>
@@ -1199,12 +1219,11 @@ StyledFlickable {
 
                     MaterialAccessibleSlider {
                         Layout.fillWidth: true
-                        enabled: !root.desktopUsesAwww
+                        enabled: root.preferredScaleControlEnabled
                         from: 1
                         to: 1.35
                         stepSize: 0.01
-                        value: PersonalizationConfig
-                            .parallaxPreferredScale
+                        value: root.effectivePreferredScale
                         accessibleName:
                             qsTr("壁纸缩放")
                         valueFormatter: sliderValue =>

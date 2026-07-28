@@ -54,6 +54,67 @@ TestCase {
         compare(inactive.overflowY, 0);
     }
 
+    function test_panoramaGeometryUsesNaturalHorizontalOverflow() {
+        const geometry = WallpaperMath.panoramaGeometry(
+            1920, 1080, 2048, 576, true);
+        verify(geometry.active);
+        compare(geometry.scale, 1.875);
+        compare(geometry.canvasWidth, 3840);
+        compare(geometry.canvasHeight, 1080);
+        compare(geometry.overflowX, 1920);
+        compare(geometry.overflowY, 0);
+        compare(WallpaperMath.wallpaperPosition(
+            geometry.overflowX, 0), 0);
+        compare(WallpaperMath.wallpaperPosition(
+            geometry.overflowX, 0.5), -960);
+        compare(WallpaperMath.wallpaperPosition(
+            geometry.overflowX, 1), -1920);
+    }
+
+    function test_panoramaFallsBackForNonWideImages() {
+        const sameAspect = WallpaperMath.panoramaGeometry(
+            1920, 1080, 1920, 1080, true);
+        verify(!sameAspect.active);
+        compare(sameAspect.canvasWidth, 1920);
+        compare(sameAspect.canvasHeight, 1080);
+        compare(sameAspect.overflowX, 0);
+        compare(sameAspect.overflowY, 0);
+
+        const portrait = WallpaperMath.panoramaGeometry(
+            1920, 1080, 1080, 1920, true);
+        verify(!portrait.active);
+        compare(portrait.canvasWidth, 1920);
+        compare(portrait.canvasHeight, 1080);
+        compare(portrait.overflowX, 0);
+        compare(portrait.overflowY, 0);
+    }
+
+    function test_panoramaCurrentAndNextUseIndependentGeometry() {
+        const current = WallpaperMath.panoramaGeometry(
+            1920, 1080, 2048, 576, true);
+        const next = WallpaperMath.panoramaGeometry(
+            1920, 1080, 3072, 576, true);
+        compare(current.canvasWidth, 3840);
+        compare(next.canvasWidth, 5760);
+        compare(current.canvasHeight, 1080);
+        compare(next.canvasHeight, 1080);
+        compare(WallpaperMath.wallpaperPosition(
+            current.overflowX, 0.4), -768);
+        compare(WallpaperMath.wallpaperPosition(
+            next.overflowX, 0.4), -1536);
+    }
+
+    function test_panoramaGeometryIsPerScreen() {
+        const laptop = WallpaperMath.panoramaGeometry(
+            1920, 1080, 2048, 576, true);
+        const ultrawide = WallpaperMath.panoramaGeometry(
+            3440, 1440, 2048, 576, true);
+        compare(laptop.canvasWidth, 3840);
+        compare(laptop.overflowX, 1920);
+        compare(ultrawide.canvasWidth, 5120);
+        compare(ultrawide.overflowX, 1680);
+    }
+
     function test_parallaxCanvasIgnoresWallpaperAspectAndStatus() {
         const wallpaperStates = [
             { source: "wide.jpg", width: 3440, height: 1440,

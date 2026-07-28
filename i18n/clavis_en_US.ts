@@ -2528,6 +2528,11 @@ Click to open network settings</translation>
         <translation>Cover</translation>
     </message>
     <message>
+        <location filename="../Services/PersonalizationConfig.qml" line="24" />
+        <source>全景</source>
+        <translation>Panorama</translation>
+    </message>
+    <message>
         <location filename="../Services/PersonalizationConfig.qml" line="25" />
         <location filename="../Services/PersonalizationConfig.qml" line="50" />
         <source>随机</source>

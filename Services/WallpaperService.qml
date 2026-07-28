@@ -89,6 +89,7 @@ Singleton {
             return Image.PreserveAspectFit;
         case "Fill":
         case "PreserveAspectCrop":
+        case "panorama":
             return Image.PreserveAspectCrop;
         case "Tile":
             return Image.Tile;
@@ -112,6 +113,7 @@ Singleton {
             return 1;
         case "Fill":
         case "PreserveAspectCrop":
+        case "panorama":
             return 2;
         case "Tile":
             return 3;

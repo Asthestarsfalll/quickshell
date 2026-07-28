@@ -106,6 +106,8 @@ Variants {
                 WallpaperService.qtFillMode(targetFillModeName)
             readonly property real targetShaderFillMode:
                 WallpaperService.shaderFillMode(targetFillModeName)
+            readonly property bool panoramaSelected:
+                targetFillModeName === "panorama"
             readonly property bool hasHorizontalDriver:
                 PersonalizationConfig.parallaxFollowTiledColumns
                 || PersonalizationConfig.parallaxFollowSidebars
@@ -116,13 +118,16 @@ Variants {
                 hasHorizontalDriver || hasVerticalDriver
             readonly property bool parallaxSupported:
                 WallpaperMath.supportsParallaxCanvas(
-                    targetFillMode === Image.PreserveAspectCrop,
+                    !panoramaSelected
+                        && targetFillMode === Image.PreserveAspectCrop,
                     targetSource,
                     WallpaperService.isColorSource(targetSource))
             readonly property bool manualParallaxActive:
                 parallaxRequested && parallaxSupported
             readonly property real preferredScale:
-                manualParallaxActive
+                panoramaSelected
+                    ? 1
+                    : manualParallaxActive
                     ? PersonalizationConfig.parallaxPreferredScale : 1
             readonly property var parallaxCanvas:
                 WallpaperMath.parallaxCanvasGeometry(
@@ -171,6 +176,8 @@ Variants {
                         && rightSidebarOnThisScreen,
                     sidebarStep);
             }
+            property real panoramaHorizontalProgress:
+                horizontalProgress
             readonly property real verticalProgress: {
                 if (!PersonalizationConfig.parallaxVerticalEnabled
                         || !PersonalizationConfig
@@ -178,6 +185,17 @@ Variants {
                     return 0.5;
                 return WallpaperMath.workspaceProgress(
                     outputWorkspaces);
+            }
+
+            Behavior on panoramaHorizontalProgress {
+                enabled: root.panoramaSelected
+
+                NumberAnimation {
+                    duration: Appearance.animation
+                        .wallpaperParallax.duration
+                    easing.type: Appearance.animation
+                        .wallpaperParallax.type
+                }
             }
 
             function clamp01(value) {
@@ -223,19 +241,27 @@ Variants {
             WallpaperTransitionSurface {
                 id: renderer
 
-                x: root.overflowX > 0
+                x: !root.panoramaSelected && root.overflowX > 0
                     ? WallpaperMath.wallpaperPosition(
                         root.overflowX, root.horizontalProgress)
-                    : (root.width - width) / 2
-                y: root.overflowY > 0
+                    : 0
+                y: !root.panoramaSelected && root.overflowY > 0
                     ? WallpaperMath.wallpaperPosition(
                         root.overflowY, root.verticalProgress)
-                    : (root.height - height) / 2
-                width: Math.max(1, root.scaledWidth)
-                height: Math.max(1, root.scaledHeight)
+                    : 0
+                width: root.panoramaSelected
+                    ? Math.max(1, root.width)
+                    : Math.max(1, root.scaledWidth)
+                height: root.panoramaSelected
+                    ? Math.max(1, root.height)
+                    : Math.max(1, root.scaledHeight)
                 sourcePath: root.targetSource
                 imageFillMode: root.targetFillMode
                 shaderFillMode: root.targetShaderFillMode
+                panoramaEnabled: root.panoramaSelected
+                    && !WallpaperService.isColorSource(root.targetSource)
+                horizontalProgress:
+                    root.panoramaHorizontalProgress
                 transitionType:
                     PersonalizationConfig.wallpaperTransitionType
                 includedTransitions:

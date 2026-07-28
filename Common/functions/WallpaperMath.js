@@ -27,6 +27,43 @@ function parallaxCanvasGeometry(screenWidth, screenHeight,
     };
 }
 
+function panoramaGeometry(screenWidth, screenHeight,
+                          imageWidth, imageHeight, enabled) {
+    const safeScreenWidth = Math.max(1, Number(screenWidth) || 1);
+    const safeScreenHeight = Math.max(1, Number(screenHeight) || 1);
+    const safeImageWidth = Math.max(0, Number(imageWidth) || 0);
+    const safeImageHeight = Math.max(0, Number(imageHeight) || 0);
+    const screenAspect = safeScreenWidth / safeScreenHeight;
+    const imageAspect = safeImageHeight > 0
+        ? safeImageWidth / safeImageHeight : 0;
+    const active = !!enabled
+        && safeImageWidth > 0
+        && safeImageHeight > 0
+        && imageAspect > screenAspect;
+
+    if (!active) {
+        return {
+            active: false,
+            scale: 1,
+            canvasWidth: safeScreenWidth,
+            canvasHeight: safeScreenHeight,
+            overflowX: 0,
+            overflowY: 0
+        };
+    }
+
+    const scale = safeScreenHeight / safeImageHeight;
+    const canvasWidth = safeImageWidth * scale;
+    return {
+        active: true,
+        scale: scale,
+        canvasWidth: canvasWidth,
+        canvasHeight: safeScreenHeight,
+        overflowX: Math.max(0, canvasWidth - safeScreenWidth),
+        overflowY: 0
+    };
+}
+
 function tiledColumnProgress(columnCount, fullSpan) {
     const columns = Math.max(0, Math.round(Number(columnCount) || 0));
     const span = Math.max(2, Math.round(Number(fullSpan) || 6));

@@ -1,5 +1,4 @@
 import QtQuick
-import qs.Common
 
 Item {
     id: root
@@ -14,17 +13,33 @@ Item {
     property var transitionBezierCurve:
         [0.43, 1.19, 1.0, 0.4, 1.0, 1.0]
     property bool transitionsEnabled: true
+    property bool panoramaEnabled: false
+    property real horizontalProgress: 0.5
     property int textureWidth:
         Math.min(Math.max(1, Math.round(width)), 8192)
     property int textureHeight:
         Math.min(Math.max(1, Math.round(height)), 8192)
 
-    property string currentSource: ""
-    property string nextSource: ""
+    property int currentViewportIndex: 0
+    readonly property Item currentViewport:
+        currentViewportIndex === 0 ? viewportA : viewportB
+    readonly property Item nextViewport:
+        currentViewportIndex === 0 ? viewportB : viewportA
+    readonly property string currentSource:
+        currentViewport ? currentViewport.sourcePath : ""
+    readonly property string nextSource:
+        nextViewport ? nextViewport.sourcePath : ""
+    readonly property var currentViewportGeometry:
+        currentViewport ? currentViewport.panoramaGeometry : ({})
+    readonly property var nextViewportGeometry:
+        nextViewport ? nextViewport.panoramaGeometry : ({})
+    readonly property real currentViewportX:
+        currentViewport ? currentViewport.wallpaperX : 0
+    readonly property real nextViewportX:
+        nextViewport ? nextViewport.wallpaperX : 0
     property string activeTransition: "none"
     property real transitionProgress: 0
     property bool effectActive: false
-    property bool useNextForEffect: false
     property string pendingSource: ""
     property bool nextIsImmediate: false
     property vector4d fillColor: Qt.vector4d(0, 0, 0, 1)
@@ -49,26 +64,22 @@ Item {
             return false;
         if (root.isColorSource(root.currentSource))
             return true;
-        return currentImage.status === Image.Ready;
+        return root.currentViewport.ready;
     }
     readonly property real imagePixelWidth: {
-        if (nextImage.status === Image.Ready
+        if (root.nextViewport.ready
                 && root.nextSource !== "")
-            return Math.max(1, nextImage.sourceSize.width);
-        return Math.max(1, currentImage.sourceSize.width);
+            return root.nextViewport.imagePixelWidth;
+        return root.currentViewport.imagePixelWidth;
     }
     readonly property real imagePixelHeight: {
-        if (nextImage.status === Image.Ready
+        if (root.nextViewport.ready
                 && root.nextSource !== "")
-            return Math.max(1, nextImage.sourceSize.height);
-        return Math.max(1, currentImage.sourceSize.height);
+            return root.nextViewport.imagePixelHeight;
+        return root.currentViewport.imagePixelHeight;
     }
 
     signal loadFailed(string source, string message)
-
-    function imageUrl(path) {
-        return path && path !== "" ? Paths.fileUrl(path) : "";
-    }
 
     function isColorSource(path) {
         return /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/
@@ -112,13 +123,21 @@ Item {
 
     function setImmediate(path) {
         transitionAnimation.stop();
-        root.currentSource = path || "";
-        root.nextSource = "";
+        const requested = path || "";
+        if (requested !== ""
+                && requested === root.nextSource
+                && root.nextViewport.ready) {
+            root.currentViewportIndex =
+                root.currentViewportIndex === 0 ? 1 : 0;
+            root.nextViewport.sourcePath = "";
+        } else {
+            root.currentViewport.sourcePath = requested;
+            root.nextViewport.sourcePath = "";
+        }
         root.pendingSource = "";
         root.activeTransition = "none";
         root.transitionProgress = 0;
         root.effectActive = false;
-        root.useNextForEffect = false;
         root.nextIsImmediate = false;
     }
 
@@ -153,13 +172,12 @@ Item {
                 ? root.transitionBezierCurve
                 : [0, 0, 1, 1, 1, 1];
         root.effectActive = true;
-        root.useNextForEffect = true;
         transitionDelayTimer.restart();
     }
 
     function acceptPreparedImage() {
         if (root.nextSource === ""
-                || nextImage.status !== Image.Ready)
+                || !root.nextViewport.ready)
             return;
         root.lastError = "";
         if (root.nextIsImmediate) {
@@ -211,9 +229,28 @@ Item {
         else
             root.prepareTransition(root.activeTransition);
         root.transitionProgress = 0;
-        root.nextSource = requested;
-        if (nextImage.status === Image.Ready)
+        root.nextViewport.sourcePath = requested;
+        if (root.nextViewport.ready)
             root.acceptPreparedImage();
+    }
+
+    function handleViewportReady(viewport) {
+        if (viewport !== root.nextViewport
+                || root.nextSource === ""
+                || transitionAnimation.running
+                || root.effectActive)
+            return;
+        root.acceptPreparedImage();
+    }
+
+    function handleViewportFailure(viewport, source) {
+        const message = qsTr("无法解码壁纸：") + source;
+        root.lastError = message;
+        if (viewport === root.nextViewport) {
+            root.nextViewport.sourcePath = "";
+            root.nextIsImmediate = false;
+        }
+        root.loadFailed(source, message);
     }
 
     onSourcePathChanged: requestWallpaper(sourcePath, false)
@@ -228,74 +265,48 @@ Item {
     }
     Component.onCompleted: requestWallpaper(sourcePath, true)
 
-    Rectangle {
+    WallpaperImageViewport {
+        id: viewportA
+
         anchors.fill: parent
-        color: root.currentSource
-        visible: root.isColorSource(root.currentSource)
+        sourcePath: ""
+        imageFillMode: root.imageFillMode
+        panoramaEnabled: root.panoramaEnabled
+        horizontalProgress: root.horizontalProgress
+        textureWidth: root.textureWidth
+        textureHeight: root.textureHeight
+        visible: root.currentViewport === viewportA
+            || (root.effectActive
+                && root.nextViewport === viewportA)
+
+        onReadyChanged: root.handleViewportReady(viewportA)
+        onLoadFailed: source =>
+            root.handleViewportFailure(viewportA, source)
     }
 
-    Image {
-        id: currentImage
+    WallpaperImageViewport {
+        id: viewportB
 
         anchors.fill: parent
-        source: !root.isColorSource(root.currentSource)
-            ? root.imageUrl(root.currentSource) : ""
-        fillMode: root.imageFillMode
-        asynchronous: true
-        cache: true
-        retainWhileLoading: true
-        smooth: true
-        visible: source !== ""
-            && !root.isColorSource(root.currentSource)
-        sourceSize: Qt.size(root.textureWidth, root.textureHeight)
+        sourcePath: ""
+        imageFillMode: root.imageFillMode
+        panoramaEnabled: root.panoramaEnabled
+        horizontalProgress: root.horizontalProgress
+        textureWidth: root.textureWidth
+        textureHeight: root.textureHeight
+        visible: root.currentViewport === viewportB
+            || (root.effectActive
+                && root.nextViewport === viewportB)
 
-        onStatusChanged: {
-            if (status === Image.Error
-                    && root.currentSource !== "") {
-                root.lastError = qsTr("无法解码壁纸：")
-                    + root.currentSource;
-                root.loadFailed(root.currentSource, root.lastError);
-            }
-        }
-    }
-
-    Image {
-        id: nextImage
-
-        anchors.fill: parent
-        source: !root.isColorSource(root.nextSource)
-            ? root.imageUrl(root.nextSource) : ""
-        fillMode: root.imageFillMode
-        asynchronous: true
-        cache: true
-        retainWhileLoading: true
-        smooth: true
-        visible: source !== ""
-            && !root.isColorSource(root.nextSource)
-        sourceSize: Qt.size(root.textureWidth, root.textureHeight)
-
-        onStatusChanged: {
-            if (status === Image.Ready
-                    && root.nextSource !== ""
-                    && !transitionAnimation.running
-                    && root.effectActive === false) {
-                root.acceptPreparedImage();
-            } else if (status === Image.Error
-                    && root.nextSource !== "") {
-                const failedSource = root.nextSource;
-                root.lastError = qsTr("无法解码壁纸：")
-                    + failedSource;
-                root.nextSource = "";
-                root.nextIsImmediate = false;
-                root.loadFailed(failedSource, root.lastError);
-            }
-        }
+        onReadyChanged: root.handleViewportReady(viewportB)
+        onLoadFailed: source =>
+            root.handleViewportFailure(viewportB, source)
     }
 
     ShaderEffectSource {
         id: srcCurrent
 
-        sourceItem: root.effectActive ? currentImage : null
+        sourceItem: root.effectActive ? root.currentViewport : null
         hideSource: root.effectActive
         live: root.effectActive
         mipmap: false
@@ -306,7 +317,7 @@ Item {
     ShaderEffectSource {
         id: srcNext
 
-        sourceItem: root.effectActive ? nextImage : null
+        sourceItem: root.effectActive ? root.nextViewport : null
         hideSource: root.effectActive
         live: root.effectActive
         mipmap: false
@@ -536,11 +547,11 @@ Item {
         easing.type: root.activeTransitionEasingType
         easing.bezierCurve: root.activeTransitionBezierCurve
         onFinished: {
-            root.currentSource = root.nextSource;
-            root.nextSource = "";
+            root.currentViewportIndex =
+                root.currentViewportIndex === 0 ? 1 : 0;
+            root.nextViewport.sourcePath = "";
             root.transitionProgress = 0;
             root.effectActive = false;
-            root.useNextForEffect = false;
 
             if (root.pendingSource !== "") {
                 const pending = root.pendingSource;

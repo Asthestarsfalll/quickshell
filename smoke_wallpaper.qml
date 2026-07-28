@@ -54,6 +54,13 @@ ShellRoot {
                     === "/tmp/desktop.png",
                 "legacy monitor map");
             root.verify(
+                PersonalizationConfig.wallpaperFillMode
+                    === "Fill"
+                && PersonalizationConfig
+                    .monitorWallpaperFillModes["DP-1"]
+                    === "Fit",
+                "legacy fill modes");
+            root.verify(
                 PersonalizationConfig.parallaxPreferredScale === 1.1,
                 "parallax scale default");
             root.verify(
@@ -65,6 +72,12 @@ ShellRoot {
             PersonalizationConfig.loadFromObject({
                 wallpaper: {
                     desktopBackend: "awww",
+                    perMonitor: true,
+                    fillMode: "panorama",
+                    monitorFillModes: {
+                        "DP-1": "panorama",
+                        "HDMI-A-1": "Fit"
+                    },
                     awww: {
                         transitionType: "wave",
                         transitionFps: 120,
@@ -103,6 +116,16 @@ ShellRoot {
                 PersonalizationConfig.awwwTransitionStep === 177,
                 "step round trip");
             root.verify(
+                PersonalizationConfig.wallpaperFillMode
+                    === "panorama"
+                && PersonalizationConfig
+                    .monitorWallpaperFillModes["DP-1"]
+                    === "panorama"
+                && PersonalizationConfig
+                    .monitorWallpaperFillModes["HDMI-A-1"]
+                    === "Fit",
+                "panorama fill modes round trip");
+            root.verify(
                 PersonalizationConfig.overviewWallpaperPath
                     === "#112233",
                 "overview path round trip");
@@ -132,7 +155,11 @@ ShellRoot {
                         blurRadius: 999,
                         dim: -1,
                         saturation: "invalid",
-                        contrast: 99
+                        contrast: 99,
+                        fillMode: "panorama",
+                        monitorFillModes: {
+                            "DP-1": "panorama"
+                        }
                     },
                     parallax: {
                         preferredScale: 9,
@@ -159,6 +186,13 @@ ShellRoot {
                     && PersonalizationConfig.overviewSaturation === 1
                     && PersonalizationConfig.overviewContrast === 2,
                 "overview numeric clamp");
+            root.verify(
+                PersonalizationConfig.overviewWallpaperFillMode
+                    === "Fill"
+                && PersonalizationConfig
+                    .overviewMonitorFillModes["DP-1"]
+                    === "Fill",
+                "overview rejects panorama");
             root.verify(
                 PersonalizationConfig.parallaxPreferredScale === 1.35
                     && PersonalizationConfig.parallaxTiledColumnSpan === 2,
