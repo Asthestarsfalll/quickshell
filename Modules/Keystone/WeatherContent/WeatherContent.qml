@@ -10,8 +10,8 @@ import qs.Widgets.common
 Item {
     id: root
 
-    width: 820
-    height: 560
+    width: 960
+    height: 570
 
     property bool active: false
     property real latitude: 0
@@ -41,19 +41,19 @@ Item {
         property color contentColor: Appearance.colors.colOnPrimary
         property color accentColor: Appearance.colors.colOnPrimary
 
-        implicitHeight: 44
+        implicitHeight: 32
         radius: Appearance.rounding.small
         color: containerColor
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            spacing: 6
+            anchors.leftMargin: 6
+            anchors.rightMargin: 6
+            spacing: 4
 
             MaterialSymbol {
                 text: parent.parent.iconName
-                iconSize: 17
+                iconSize: 15
                 color: parent.parent.accentColor
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -61,7 +61,7 @@ Item {
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
-                spacing: 0
+                spacing: -2
 
                 Text {
                     Layout.fillWidth: true
@@ -71,7 +71,7 @@ Item {
                         0.72
                     )
                     font.family: Sizes.fontFamily
-                    font.pixelSize: 10
+                    font.pixelSize: 9
                     elide: Text.ElideRight
                     textFormat: Text.PlainText
                 }
@@ -81,7 +81,7 @@ Item {
                     text: parent.parent.parent.value
                     color: parent.parent.parent.contentColor
                     font.family: Sizes.fontFamilyMono
-                    font.pixelSize: 12
+                    font.pixelSize: 11
                     font.weight: Font.Medium
                     elide: Text.ElideRight
                     textFormat: Text.PlainText
@@ -155,21 +155,10 @@ Item {
         return bottom - normalized * (bottom - top)
     }
 
-    function stopRefreshAnimation() {
-        forceStopTimer.stop()
-        if (spinAnimation.running)
-            spinAnimation.stop()
-        resetAnimation.start()
-    }
-
     function fetchData() {
         if (WeatherPlugin.loading)
             return
 
-        resetAnimation.stop()
-        refreshIcon.rotation = 0
-        spinAnimation.start()
-        forceStopTimer.restart()
         WeatherPlugin.refresh()
         if (weatherMapLoader.status === Loader.Ready
             && weatherMapLoader.item) {
@@ -220,7 +209,7 @@ Item {
         root.hourlyData = nextHourly
 
         const nextDaily = []
-        const dailyCount = Math.min(7, WeatherPlugin.dailyForecast.count())
+        const dailyCount = Math.min(5, WeatherPlugin.dailyForecast.count())
         for (let dayIndex = 0; dayIndex < dailyCount; ++dayIndex) {
             const item = WeatherPlugin.dailyForecast.get(dayIndex)
             const dateObject = item.date
@@ -254,20 +243,7 @@ Item {
 
         function onDataChanged() {
             root.syncWeatherData()
-            root.stopRefreshAnimation()
         }
-
-        function onLoadingChanged() {
-            if (!WeatherPlugin.loading)
-                root.stopRefreshAnimation()
-        }
-    }
-
-    Timer {
-        id: forceStopTimer
-
-        interval: 5000
-        onTriggered: root.stopRefreshAnimation()
     }
 
     Timer {
@@ -280,804 +256,158 @@ Item {
         }
     }
 
-    ColumnLayout {
+    RowLayout {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 16
+        anchors.margins: 24
+        spacing: 24
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.minimumHeight: 292
-            Layout.preferredHeight: 292
-            Layout.maximumHeight: 292
+        // Left Column (Master)
+        ColumnLayout {
+            Layout.preferredWidth: 380
+            Layout.fillHeight: true
             spacing: 16
 
-            Rectangle {
-                id: currentCard
-
-                Layout.preferredWidth: 272
+            StackLayout {
+                Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: Appearance.rounding.large
-                color: root.hasWeather
-                    ? Appearance.colors.colPrimaryContainer
-                    : Appearance.colors.colSurfaceContainerHigh
-                clip: true
+                currentIndex: root.hasWeather ? 0 : 1
 
-                Accessible.name: root.hasWeather
-                    ? root.locationName + ", " + root.currentDesc + ", " + root.currentTemp
-                    : root.weatherErrorText()
+                // Normal Weather Content
+                ScrollView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    contentWidth: availableWidth
+                    clip: true
+                    
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 24
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 8
+                        WeatherCurrent {
+                            Layout.fillWidth: true
+                            onRefreshRequested: root.fetchData()
+                        }
+                        
+                        WeatherFiveDayForecast { Layout.fillWidth: true }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.minimumHeight: 48
-                        Layout.preferredHeight: 48
-                        Layout.maximumHeight: 48
-                        spacing: 8
+                        WeatherAQIIndicator { Layout.fillWidth: true }
+                        WeatherSunriseSunset { Layout.fillWidth: true }
+                    }
+                }
+
+                // Error / Loading State
+                Item {
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 10
+
+                        BusyIndicator {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: 42
+                            Layout.preferredHeight: 42
+                            running: WeatherPlugin.loading
+                            visible: running
+                            Material.accent: Appearance.colors.colPrimary
+                        }
 
                         MaterialSymbol {
-                            text: "location_on"
-                            iconSize: 20
-                            fill: 1
-                            color: root.hasWeather
-                                ? Appearance.colors.colOnPrimaryContainer
-                                : Appearance.colors.colPrimary
-                            Layout.alignment: Qt.AlignVCenter
+                            Layout.alignment: Qt.AlignHCenter
+                            text: "cloud_off"
+                            iconSize: 38
+                            color: Appearance.colors.colError
+                            visible: !WeatherPlugin.loading
                         }
 
-                        ColumnLayout {
+                        Text {
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.alignment: Qt.AlignVCenter
-                            spacing: 0
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.locationName
-                                color: root.hasWeather
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : Appearance.colors.colOnSurface
-                                font.family: Sizes.fontFamily
-                                font.pixelSize: 15
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                                textFormat: Text.PlainText
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.updatedText()
-                                color: root.hasWeather
-                                    ? Appearance.applyAlpha(
-                                        Appearance.colors.colOnPrimaryContainer,
-                                        0.72
-                                    )
-                                    : Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamilyMono
-                                font.pixelSize: 10
-                                elide: Text.ElideRight
-                                textFormat: Text.PlainText
-                            }
+                            text: WeatherPlugin.loading
+                                ? qsTr("正在加载天气")
+                                : qsTr("天气不可用")
+                            color: Appearance.colors.colOnSurface
+                            font.family: Sizes.fontFamily
+                            font.pixelSize: 16
+                            font.weight: Font.Medium
+                            horizontalAlignment: Text.AlignHCenter
                         }
 
-                        ToolButton {
-                            id: refreshButton
-
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            Layout.alignment: Qt.AlignVCenter
-                            enabled: !WeatherPlugin.loading
-                            hoverEnabled: true
-                            focusPolicy: Qt.StrongFocus
-
-                            Accessible.name: qsTr("刷新天气")
-
-                            onClicked: root.fetchData()
-
-                            background: Rectangle {
-                                radius: Appearance.rounding.full
-                                color: refreshButton.down
-                                    ? root.hasWeather
-                                        ? Appearance.colors.colPrimaryContainerActive
-                                        : Appearance.colors.colLayer4Active
-                                    : refreshButton.hovered || refreshButton.activeFocus
-                                        ? root.hasWeather
-                                            ? Appearance.colors.colPrimaryContainerHover
-                                            : Appearance.colors.colLayer4
-                                        : Appearance.transparentize(
-                                            root.hasWeather
-                                                ? Appearance.colors.colPrimaryContainer
-                                                : Appearance.colors.colLayer4,
-                                            1
-                                        )
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Appearance.animation.expressiveEffects.duration
-                                        easing.type: Appearance.animation.expressiveEffects.type
-                                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                                    }
-                                }
-                            }
-
-                            contentItem: MaterialSymbol {
-                                id: refreshIcon
-
-                                text: "refresh"
-                                iconSize: 21
-                                color: refreshButton.enabled
-                                    ? root.hasWeather
-                                        ? Appearance.colors.colOnPrimaryContainer
-                                        : Appearance.colors.colOnSurfaceVariant
-                                    : Appearance.applyAlpha(
-                                        root.hasWeather
-                                            ? Appearance.colors.colOnPrimaryContainer
-                                            : Appearance.colors.colOnSurface,
-                                        0.38
-                                    )
-                            }
-
-                            StyledToolTip {
-                                extraVisibleCondition: refreshButton.hovered
-                                text: WeatherPlugin.loading
-                                    ? qsTr("正在刷新天气")
-                                    : qsTr("刷新天气")
-                            }
-
-                            RotationAnimation {
-                                id: spinAnimation
-
-                                target: refreshIcon
-                                property: "rotation"
-                                from: 0
-                                to: 360
-                                duration: 800
-                                loops: Animation.Infinite
-                            }
-
-                            RotationAnimation {
-                                id: resetAnimation
-
-                                target: refreshIcon
-                                property: "rotation"
-                                to: 0
-                                duration: Appearance.animation.expressiveEffects.duration
-                                direction: RotationAnimation.Shortest
-                                easing.type: Appearance.animation.expressiveEffects.type
-                                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                            }
-                        }
-                    }
-
-                    StackLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        currentIndex: root.hasWeather ? 0 : 1
-
-                        ColumnLayout {
-                            spacing: 8
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 72
-                                spacing: 10
-
-                                MaterialSymbol {
-                                    text: root.currentIcon
-                                    iconSize: 52
-                                    fill: 1
-                                    color: Appearance.colors.colOnPrimaryContainer
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: -2
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: root.currentDesc
-                                        color: Appearance.colors.colOnPrimaryContainer
-                                        font.family: Sizes.fontFamily
-                                        font.pixelSize: 16
-                                        font.weight: Font.Medium
-                                        elide: Text.ElideRight
-                                        textFormat: Text.PlainText
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: root.currentTemp
-                                        color: Appearance.colors.colOnPrimaryContainer
-                                        font.family: Sizes.fontFamilyMono
-                                        font.pixelSize: 46
-                                        font.weight: Font.DemiBold
-                                        elide: Text.ElideRight
-                                        textFormat: Text.PlainText
-                                    }
-                                }
-                            }
-
-                            GridLayout {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                columns: 2
-                                columnSpacing: 8
-                                rowSpacing: 8
-
-                                MetricTile {
-                                    Layout.fillWidth: true
-                                    iconName: "thermostat"
-                                    label: qsTr("体感温度")
-                                    value: root.feelsLike
-                                    containerColor: Appearance.colors.colPrimary
-                                    contentColor: Appearance.colors.colOnPrimary
-                                    accentColor: Appearance.colors.colOnPrimary
-                                }
-
-                                MetricTile {
-                                    Layout.fillWidth: true
-                                    iconName: "water_drop"
-                                    label: qsTr("湿度")
-                                    value: root.humidity
-                                    containerColor: Appearance.colors.colPrimary
-                                    contentColor: Appearance.colors.colOnPrimary
-                                    accentColor: Appearance.colors.colOnPrimary
-                                }
-
-                                MetricTile {
-                                    Layout.fillWidth: true
-                                    iconName: "air"
-                                    label: qsTr("风速")
-                                    value: root.windSpeed
-                                    containerColor: Appearance.colors.colPrimary
-                                    contentColor: Appearance.colors.colOnPrimary
-                                    accentColor: Appearance.colors.colOnPrimary
-                                }
-
-                                MetricTile {
-                                    Layout.fillWidth: true
-                                    iconName: "compress"
-                                    label: qsTr("气压")
-                                    value: root.pressure
-                                    containerColor: Appearance.colors.colPrimary
-                                    contentColor: Appearance.colors.colOnPrimary
-                                    accentColor: Appearance.colors.colOnPrimary
-                                }
-                            }
-                        }
-
-                        Item {
-                            ColumnLayout {
-                                anchors.centerIn: parent
-                                width: Math.min(parent.width, 210)
-                                spacing: 10
-
-                                BusyIndicator {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 42
-                                    Layout.preferredHeight: 42
-                                    running: WeatherPlugin.loading
-                                    visible: running
-                                    Material.accent: Appearance.colors.colPrimary
-                                }
-
-                                MaterialSymbol {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: "cloud_off"
-                                    iconSize: 38
-                                    color: Appearance.colors.colError
-                                    visible: !WeatherPlugin.loading
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: WeatherPlugin.loading
-                                        ? qsTr("正在加载天气")
-                                        : qsTr("天气不可用")
-                                    color: Appearance.colors.colOnSurface
-                                    font.family: Sizes.fontFamily
-                                    font.pixelSize: 16
-                                    font.weight: Font.Medium
-                                    horizontalAlignment: Text.AlignHCenter
-                                    textFormat: Text.PlainText
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: WeatherPlugin.loading
-                                        ? qsTr("正在查找本地天气预报…")
-                                        : root.weatherErrorText()
-                                    color: Appearance.colors.colOnSurfaceVariant
-                                    font.family: Sizes.fontFamily
-                                    font.pixelSize: 12
-                                    horizontalAlignment: Text.AlignHCenter
-                                    wrapMode: Text.Wrap
-                                    maximumLineCount: 3
-                                    elide: Text.ElideRight
-                                    textFormat: Text.PlainText
-                                }
-                            }
+                        Text {
+                            Layout.fillWidth: true
+                            text: WeatherPlugin.loading
+                                ? qsTr("正在查找本地天气预报…")
+                                : root.weatherErrorText()
+                            color: Appearance.colors.colOnSurfaceVariant
+                            font.family: Sizes.fontFamily
+                            font.pixelSize: 12
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.Wrap
+                            maximumLineCount: 3
+                            elide: Text.ElideRight
                         }
                     }
                 }
-            }
-
-            Loader {
-                id: weatherMapLoader
-
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                active: root.active
-                asynchronous: true
-                source: active
-                    ? Qt.resolvedUrl("WeatherMapCard.qml")
-                    : ""
-            }
-
-            Binding {
-                target: weatherMapLoader.item
-                property: "latitude"
-                value: root.latitude
-                when: weatherMapLoader.status === Loader.Ready
-            }
-
-            Binding {
-                target: weatherMapLoader.item
-                property: "longitude"
-                value: root.longitude
-                when: weatherMapLoader.status === Loader.Ready
-            }
-
-            Binding {
-                target: weatherMapLoader.item
-                property: "locationAvailable"
-                value: root.hasCoordinates()
-                when: weatherMapLoader.status === Loader.Ready
-            }
-
-            Binding {
-                target: weatherMapLoader.item
-                property: "active"
-                value: root.active && root.visible
-                when: weatherMapLoader.status === Loader.Ready
             }
         }
 
-        Rectangle {
-            id: forecastCard
-
+        // Right Column (Stack 1, 2, 3)
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.minimumHeight: 220
-            Layout.preferredHeight: 220
-            Layout.maximumHeight: 220
-            radius: Appearance.rounding.large
-            color: Appearance.colors.colSurfaceContainerHigh
-            clip: true
+            Layout.fillHeight: true
+            spacing: 12
 
-            Accessible.name: root.isHourly
-                ? qsTr("八小时天气预报")
-                : qsTr("七天天气预报")
+            // Map Area (Stack 1)
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 500
+                Layout.preferredWidth: 500
+                Layout.minimumHeight: 292
+                Layout.preferredHeight: 292
+                radius: Appearance.rounding.large
+                color: Appearance.colors.colSurfaceContainerHigh
+                clip: true
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 8
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: root.isHourly ? "schedule" : "calendar_month"
-                        iconSize: 22
-                        fill: 1
-                        color: Appearance.colors.colPrimary
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    Text {
-                        text: qsTr("天气预报")
-                        color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: 18
-                        font.weight: Font.DemiBold
-                        textFormat: Text.PlainText
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
-                    StyledButtonGroup {
-                        currentValue: root.isHourly ? "hourly" : "daily"
-                        style: StyledButtonGroup.Style.Primary
-                        buttonHeight: 40
-                        horizontalPadding: 20
-                        textPixelSize: 13
-                        model: [
-                            ({
-                                "value": "hourly",
-                                "label": qsTr("8 小时"),
-                                "tooltip": qsTr("显示未来八小时")
-                            }),
-                            ({
-                                "value": "daily",
-                                "label": qsTr("7 天"),
-                                "tooltip": qsTr("显示未来七天")
-                            })
-                        ]
-                        Accessible.name: qsTr("预报范围")
-                        onValueSelected: value => root.isHourly = value === "hourly"
-                    }
+                Loader {
+                    id: weatherMapLoader
+                    anchors.fill: parent
+                    active: root.active
+                    asynchronous: true
+                    source: active ? Qt.resolvedUrl("WeatherMapCard.qml") : ""
                 }
 
-                Item {
-                    id: forecastBody
-
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    Item {
-                        id: hourlyPane
-
-                        anchors.fill: parent
-                        opacity: root.isHourly ? 1 : 0
-                        visible: opacity > 0
-
-                        readonly property real chartTop: 50
-                        readonly property real chartBottom: Math.max(
-                            chartTop + 24,
-                            height - 24
-                        )
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Appearance.animation.expressiveEffects.duration
-                                easing.type: Appearance.animation.expressiveEffects.type
-                                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                            }
-                        }
-
-                        Canvas {
-                            id: hourlyCanvas
-
-                            anchors.fill: parent
-                            antialiasing: true
-                            renderTarget: Canvas.FramebufferObject
-                            visible: root.hourlyData && root.hourlyData.length >= 2
-
-                            property color lineColor: Appearance.colors.colPrimary
-
-                            onLineColorChanged: requestPaint()
-                            onWidthChanged: requestPaint()
-                            onHeightChanged: requestPaint()
-
-                            onPaint: {
-                                const ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                const count = root.hourlyData
-                                    ? root.hourlyData.length
-                                    : 0
-                                if (count < 2)
-                                    return
-
-                                const columnWidth = width / count
-
-                                function pointX(index) {
-                                    return columnWidth * index + columnWidth / 2
-                                }
-
-                                function pointY(index) {
-                                    return root.hourlyPointY(
-                                        root.hourlyData[index].temp,
-                                        hourlyPane.chartTop,
-                                        hourlyPane.chartBottom
-                                    )
-                                }
-
-                                const fillGradient = ctx.createLinearGradient(
-                                    0,
-                                    hourlyPane.chartTop,
-                                    0,
-                                    hourlyPane.chartBottom
-                                )
-                                fillGradient.addColorStop(
-                                    0,
-                                    root.cssColor(lineColor, 0.20)
-                                )
-                                fillGradient.addColorStop(
-                                    1,
-                                    root.cssColor(lineColor, 0.02)
-                                )
-
-                                ctx.beginPath()
-                                ctx.moveTo(pointX(0), hourlyPane.chartBottom)
-                                ctx.lineTo(pointX(0), pointY(0))
-                                for (let index = 1; index < count; ++index)
-                                    ctx.lineTo(pointX(index), pointY(index))
-                                ctx.lineTo(
-                                    pointX(count - 1),
-                                    hourlyPane.chartBottom
-                                )
-                                ctx.closePath()
-                                ctx.fillStyle = fillGradient
-                                ctx.fill()
-
-                                ctx.beginPath()
-                                ctx.moveTo(pointX(0), pointY(0))
-                                for (let lineIndex = 1; lineIndex < count; ++lineIndex)
-                                    ctx.lineTo(pointX(lineIndex), pointY(lineIndex))
-                                ctx.strokeStyle = lineColor
-                                ctx.lineWidth = 3
-                                ctx.lineCap = "round"
-                                ctx.lineJoin = "round"
-                                ctx.stroke()
-
-                                for (let pointIndex = 0; pointIndex < count; ++pointIndex) {
-                                    const x = pointX(pointIndex)
-                                    const y = pointY(pointIndex)
-                                    ctx.beginPath()
-                                    ctx.arc(x, y, 4.5, 0, Math.PI * 2)
-                                    ctx.fillStyle = lineColor
-                                    ctx.fill()
-                                }
-                            }
-                        }
-
-                        Repeater {
-                            model: root.hourlyData
-
-                            delegate: Item {
-                                required property int index
-                                required property var modelData
-
-                                width: hourlyPane.width / Math.max(
-                                    1,
-                                    root.hourlyData.length
-                                )
-                                height: hourlyPane.height
-                                x: index * width
-
-                                readonly property real pointY: root.hourlyPointY(
-                                    modelData.temp,
-                                    hourlyPane.chartTop,
-                                    hourlyPane.chartBottom
-                                )
-
-                                Accessible.name: modelData.time
-                                    + ", " + modelData.description
-                                    + qsTr("，%1 度").arg(modelData.temp)
-
-                                MaterialSymbol {
-                                    anchors.top: parent.top
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: parent.modelData.icon
-                                    iconSize: 22
-                                    fill: 0
-                                    color: Appearance.colors.colOnSurfaceVariant
-                                }
-
-                                Text {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    y: Math.max(25, parent.pointY - implicitHeight - 6)
-                                    text: parent.modelData.temp + "°"
-                                    color: Appearance.colors.colOnSurface
-                                    font.family: Sizes.fontFamilyMono
-                                    font.pixelSize: 12
-                                    font.weight: Font.DemiBold
-                                    textFormat: Text.PlainText
-                                }
-
-                                Text {
-                                    anchors.bottom: parent.bottom
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: parent.modelData.time
-                                    color: Appearance.colors.colOnSurfaceVariant
-                                    font.family: Sizes.fontFamilyMono
-                                    font.pixelSize: 11
-                                    textFormat: Text.PlainText
-                                }
-                            }
-                        }
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 8
-                            visible: !root.hourlyData || root.hourlyData.length === 0
-
-                            MaterialSymbol {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: "hourglass_empty"
-                                iconSize: 30
-                                color: Appearance.colors.colOnSurfaceVariant
-                            }
-
-                            Text {
-                                text: qsTr("逐小时预报不可用")
-                                color: Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
-                                font.pixelSize: 13
-                                textFormat: Text.PlainText
-                            }
-                        }
-                    }
-
-                    Item {
-                        id: dailyPane
-
-                        anchors.fill: parent
-                        opacity: root.isHourly ? 0 : 1
-                        visible: opacity > 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Appearance.animation.expressiveEffects.duration
-                                easing.type: Appearance.animation.expressiveEffects.type
-                                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                            }
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            spacing: 8
-                            visible: root.dailyData && root.dailyData.length > 0
-
-                            Repeater {
-                                model: root.dailyData
-
-                                delegate: Rectangle {
-                                    id: dayCard
-
-                                    required property int index
-                                    required property var modelData
-
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.minimumWidth: 84
-                                    radius: Appearance.rounding.normal
-                                    color: index === 0
-                                        ? Appearance.colors.colSecondaryContainer
-                                        : Appearance.colors.colSurfaceContainerHighest
-
-                                    Accessible.name: modelData.day
-                                        + ", " + modelData.date
-                                        + ", " + modelData.description
-                                        + qsTr("，最高 %1").arg(modelData.maxTemp)
-                                        + qsTr("，最低 %1").arg(modelData.minTemp)
-
-                                    ColumnLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: 10
-                                        spacing: 1
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: dayCard.modelData.day
-                                            color: dayCard.index === 0
-                                                ? Appearance.colors.colOnSecondaryContainer
-                                                : Appearance.colors.colOnSurface
-                                            font.family: Sizes.fontFamily
-                                            font.pixelSize: 16
-                                            font.weight: Font.DemiBold
-                                            horizontalAlignment: Text.AlignHCenter
-                                            elide: Text.ElideRight
-                                            textFormat: Text.PlainText
-                                        }
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: dayCard.modelData.date
-                                            color: dayCard.index === 0
-                                                ? Appearance.applyAlpha(
-                                                    Appearance.colors.colOnSecondaryContainer,
-                                                    0.72
-                                                )
-                                                : Appearance.colors.colOnSurfaceVariant
-                                            font.family: Sizes.fontFamily
-                                            font.pixelSize: 12
-                                            horizontalAlignment: Text.AlignHCenter
-                                            elide: Text.ElideRight
-                                            textFormat: Text.PlainText
-                                        }
-
-                                        Item {
-                                            Layout.fillHeight: true
-                                            Layout.minimumHeight: 2
-                                        }
-
-                                        MaterialSymbol {
-                                            Layout.alignment: Qt.AlignHCenter
-                                            Layout.preferredWidth: 38
-                                            Layout.preferredHeight: 38
-                                            text: dayCard.modelData.icon
-                                            iconSize: 34
-                                            fill: 0
-                                            color: dayCard.index === 0
-                                                ? Appearance.colors.colOnSecondaryContainer
-                                                : Appearance.colors.colOnSurfaceVariant
-                                        }
-
-                                        Item {
-                                            Layout.fillHeight: true
-                                            Layout.minimumHeight: 2
-                                        }
-
-                                        Row {
-                                            Layout.alignment: Qt.AlignHCenter
-                                            spacing: 4
-
-                                            Text {
-                                                text: dayCard.modelData.minTemp
-                                                color: dayCard.index === 0
-                                                    ? Appearance.applyAlpha(
-                                                        Appearance.colors.colOnSecondaryContainer,
-                                                        0.76
-                                                    )
-                                                    : Appearance.colors.colOnSurfaceVariant
-                                                font.family: Sizes.fontFamilyMono
-                                                font.pixelSize: 13
-                                                font.weight: Font.DemiBold
-                                                textFormat: Text.PlainText
-                                            }
-
-                                            Text {
-                                                text: "/"
-                                                color: dayCard.index === 0
-                                                    ? Appearance.applyAlpha(
-                                                        Appearance.colors.colOnSecondaryContainer,
-                                                        0.64
-                                                    )
-                                                    : Appearance.colors.colOnSurfaceVariant
-                                                font.family: Sizes.fontFamilyMono
-                                                font.pixelSize: 13
-                                                textFormat: Text.PlainText
-                                            }
-
-                                            Text {
-                                                text: dayCard.modelData.maxTemp
-                                                color: dayCard.index === 0
-                                                    ? Appearance.colors.colOnSecondaryContainer
-                                                    : Appearance.colors.colOnSurface
-                                                font.family: Sizes.fontFamilyMono
-                                                font.pixelSize: 13
-                                                font.weight: Font.DemiBold
-                                                textFormat: Text.PlainText
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 8
-                            visible: !root.dailyData || root.dailyData.length === 0
-
-                            MaterialSymbol {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: "event_busy"
-                                iconSize: 30
-                                color: Appearance.colors.colOnSurfaceVariant
-                            }
-
-                            Text {
-                                text: qsTr("每日预报不可用")
-                                color: Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
-                                font.pixelSize: 13
-                                textFormat: Text.PlainText
-                            }
-                        }
-                    }
+                Binding {
+                    target: weatherMapLoader.item
+                    property: "latitude"
+                    value: root.latitude
+                    when: weatherMapLoader.status === Loader.Ready
                 }
+
+                Binding {
+                    target: weatherMapLoader.item
+                    property: "longitude"
+                    value: root.longitude
+                    when: weatherMapLoader.status === Loader.Ready
+                }
+
+                Binding {
+                    target: weatherMapLoader.item
+                    property: "locationAvailable"
+                    value: root.hasCoordinates()
+                    when: weatherMapLoader.status === Loader.Ready
+                }
+
+                Binding {
+                    target: weatherMapLoader.item
+                    property: "active"
+                    value: root.active && root.visible
+                    when: weatherMapLoader.status === Loader.Ready
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+            
+            // Parameters (Stack 2)
+            WeatherParameters {
+                Layout.fillWidth: true
+                visible: root.hasWeather
             }
         }
     }

@@ -30,7 +30,7 @@ Item {
     
     implicitWidth: currentIndex === 0 ? 860 :
                    currentIndex === 2 ? 960 :
-                   currentIndex === 3 ? 860 :
+                   currentIndex === 3 ? 960 :
                    760
     Behavior on implicitWidth { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
     
@@ -38,7 +38,7 @@ Item {
         currentIndex === 0 ? 520 : 
         currentIndex === 1 ? 480 : 
         currentIndex === 2 ? 300 :
-        560
+        570
     )
     Behavior on implicitHeight { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
 

@@ -369,7 +369,14 @@ Singleton {
                 queryRetry.stop();
                 root.daemonRunning = true;
                 root.queryAttempts = 0;
-                root.scheduleApplyAll();
+                if (root.daemonStartAttempted) {
+                    root.scheduleApplyAll();
+                } else {
+                    root.lastError = "";
+                    root.effectiveBackend = "awww";
+                    root.quickshellContentVisible = false;
+                    root.state = "ready";
+                }
                 return;
             }
 

@@ -351,9 +351,11 @@ StyledFlickable {
                             "value": "awww",
                             "label": "awww",
                             "enabled": AwwwWallpaperService.available,
-                            "tooltip": AwwwWallpaperService.probeComplete
-                                ? qsTr("缺少 awww 或 awww-daemon 命令")
-                                : qsTr("正在检测 awww…")
+                            "tooltip": AwwwWallpaperService.available
+                                ? ""
+                                : AwwwWallpaperService.probeComplete
+                                    ? qsTr("缺少 awww 或 awww-daemon 命令")
+                                    : qsTr("正在检测 awww…")
                         })
                     ]
                     onValueSelected: value => {
@@ -383,36 +385,6 @@ StyledFlickable {
             Section {
                 title: qsTr("当前壁纸")
                 iconName: "wallpaper"
-
-                FlatSettingsSection {
-                Layout.fillWidth: true
-
-                SettingsRow {
-                    Layout.fillWidth: true
-                    iconName: "splitscreen"
-                    title: qsTr("每显示器独立壁纸")
-
-                    trailing: StyledSwitch {
-                        checked:
-                            PersonalizationConfig.perMonitorWallpaper
-                        Accessible.name:
-                            qsTr("每显示器独立壁纸")
-                        onToggled:
-                            PersonalizationConfig
-                                .setPerMonitorWallpaper(checked)
-                    }
-                }
-
-                SearchSelectMenuField {
-                    Layout.fillWidth: true
-                    options: root.outputOptions
-                    value: root.selectedDesktopOutput
-                    placeholder: qsTr("选择输出")
-                    Accessible.name: qsTr("桌面壁纸输出")
-                    onAccepted: value =>
-                        root.selectedDesktopOutput = value
-                }
-                }
 
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
@@ -499,7 +471,47 @@ StyledFlickable {
                         WallpaperService.setWallpaperFillModeForScreen(
                             root.selectedDesktopOutput, value)
                 }
+
+                FlatSettingsSection {
+                Layout.fillWidth: true
+
+                SettingsRow {
+                    Layout.fillWidth: true
+                    iconName: "splitscreen"
+                    title: qsTr("每显示器独立壁纸")
+
+                    trailing: StyledSwitch {
+                        checked:
+                            PersonalizationConfig.perMonitorWallpaper
+                        Accessible.name:
+                            qsTr("每显示器独立壁纸")
+                        onToggled:
+                            PersonalizationConfig
+                                .setPerMonitorWallpaper(checked)
+                    }
+                }
+
+                SearchSelectMenuField {
+                    Layout.fillWidth: true
+                    options: root.outputOptions
+                    value: root.selectedDesktopOutput
+                    placeholder: qsTr("选择输出")
+                    Accessible.name: qsTr("桌面壁纸输出")
+                    onAccepted: value =>
+                        root.selectedDesktopOutput = value
+                }
+                }
             }
+        }
+
+        Loader {
+            Layout.fillWidth: true
+            sourceComponent: currentWallpaperSectionComponent
+        }
+
+        Loader {
+            Layout.fillWidth: true
+            sourceComponent: desktopManagerSectionComponent
         }
 
         Section {
@@ -1068,16 +1080,6 @@ StyledFlickable {
             }
         }
 
-        Loader {
-            Layout.fillWidth: true
-            sourceComponent: desktopManagerSectionComponent
-        }
-
-        Loader {
-            Layout.fillWidth: true
-            sourceComponent: currentWallpaperSectionComponent
-        }
-
         Section {
             title: qsTr("视差效果")
             iconName: "view_in_ar"
@@ -1281,6 +1283,36 @@ StyledFlickable {
                         "niri 工作区背景不透明，请在 layout 中手动设置 background-color \"transparent\"。")
                 }
 
+                WallpaperPreview {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 300
+                    Layout.preferredHeight: 176
+                    sourcePath: root.currentOverviewPath
+                    actionsEnabled: !PersonalizationConfig
+                        .overviewUseDesktopWallpaper
+                    onChooseFile: root.chooseOverviewFile()
+                    onChooseColor: root.chooseOverviewColor()
+                    onClearWallpaper:
+                        WallpaperService.clearOverviewWallpaper(
+                            root.selectedOverviewOutput)
+                }
+
+                StyledButtonGroup {
+                    Layout.alignment: Qt.AlignHCenter
+                    model: PersonalizationConfig.fillModes
+                    currentValue:
+                        root.selectedOverviewOutput !== ""
+                            ? PersonalizationConfig
+                                .overviewMonitorFillMode(
+                                    root.selectedOverviewOutput)
+                            : PersonalizationConfig
+                                .overviewWallpaperFillMode
+                    onValueSelected: value =>
+                        WallpaperService
+                            .setOverviewFillModeForScreen(
+                                root.selectedOverviewOutput, value)
+                }
+
                 SettingsRow {
                     Layout.fillWidth: true
                     iconName: "visibility"
@@ -1333,36 +1365,6 @@ StyledFlickable {
                     Accessible.name: qsTr("overview 壁纸输出")
                     onAccepted: value =>
                         root.selectedOverviewOutput = value
-                }
-
-                WallpaperPreview {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: 300
-                    Layout.preferredHeight: 176
-                    sourcePath: root.currentOverviewPath
-                    actionsEnabled: !PersonalizationConfig
-                        .overviewUseDesktopWallpaper
-                    onChooseFile: root.chooseOverviewFile()
-                    onChooseColor: root.chooseOverviewColor()
-                    onClearWallpaper:
-                        WallpaperService.clearOverviewWallpaper(
-                            root.selectedOverviewOutput)
-                }
-
-                StyledButtonGroup {
-                    Layout.alignment: Qt.AlignHCenter
-                    model: PersonalizationConfig.fillModes
-                    currentValue:
-                        root.selectedOverviewOutput !== ""
-                            ? PersonalizationConfig
-                                .overviewMonitorFillMode(
-                                    root.selectedOverviewOutput)
-                            : PersonalizationConfig
-                                .overviewWallpaperFillMode
-                    onValueSelected: value =>
-                        WallpaperService
-                            .setOverviewFillModeForScreen(
-                                root.selectedOverviewOutput, value)
                 }
             }
 
