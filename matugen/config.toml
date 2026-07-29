@@ -23,7 +23,7 @@ post_hook = "kitten themes --reload-in=all Matugen >/dev/null 2>&1 || true"
 [templates.fcitx5]
 input_path = "templates/fcitx5-theme.conf"
 output_path = "~/.local/share/fcitx5/themes/Matugen/theme.conf"
-post_hook = "fcitx5-remote -r >/dev/null 2>&1 || true"
+post_hook = "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 ReloadAddonConfig s classicui >/dev/null 2>&1 || true"
 
 [templates.niri]
 input_path = "templates/niri-colors.kdl"

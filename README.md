@@ -110,12 +110,17 @@ Yazi 会自动读取 `~/.config/yazi/theme.toml`，无需修改主配置。自�
 | --- | --- |
 | Kitty | `kitten themes --reload-in=all Matugen` |
 | Cava | `pkill -USR1 cava`，重新读取主配置和 `theme = 'matugen'` |
-| Fcitx5 | 调用 `fcitx5-remote -r` 重载配置和 ClassicUI 主题 |
+| Fcitx5 | 通过 D-Bus 调用 `ReloadAddonConfig("classicui")`，直接重载 ClassicUI 配置和主题 |
 | Niri | 调用 `niri msg action load-config-file` 重新加载 `colors.kdl` |
 
 Kitty 首次启用时运行一次 `kitten themes --reload-in=all Matugen`，让
 themes kitten 创建 `current-theme.conf` 并维护 `kitty.conf` 的主题引用。各
 hook 末尾使用 `|| true`，因此目标程序没有运行时不会阻断其他模板生成。
+
+控制中心最后一页“高级”可以分别启用或停用 btop、Cava、Kitty、Fcitx5、
+Niri、Yazi 和 Zsh prompt 的模板生成。Quickshell 配色始终生成；关闭某个
+开关只会停止后续生成和热重载，不会删除该程序已有的配色文件。重新开启时会
+立即使用当前壁纸和配色方案补生成。
 
 也可以从仓库根目录手动验证生成流程：
 
@@ -124,6 +129,7 @@ bash scripts/theme/generate_matugen_colors.sh \
   --color '#6750a4' \
   --mode dark \
   --scheme scheme-tonal-spot \
+  --templates 'kitty,fcitx5,niri' \
   --dry-run
 ```
 

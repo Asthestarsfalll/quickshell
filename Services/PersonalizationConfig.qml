@@ -87,6 +87,15 @@ Singleton {
         ({ "value": "scheme-neutral", "label": qsTr("中性") }),
         ({ "value": "scheme-rainbow", "label": qsTr("彩虹") })
     ]
+    readonly property var matugenTemplateIds: [
+        "btop",
+        "cava",
+        "kitty",
+        "fcitx5",
+        "niri",
+        "yazi",
+        "zsh_prompt"
+    ]
 
     readonly property var keystoneStyles: [
         ({ "value": "bangs", "label": qsTr("刘海") }),
@@ -151,6 +160,15 @@ Singleton {
     property int parallaxTiledColumnSpan: 6
 
     property string matugenScheme: "scheme-tonal-spot"
+    property var matugenTemplates: ({
+        "btop": true,
+        "cava": true,
+        "kitty": true,
+        "fcitx5": true,
+        "niri": true,
+        "yazi": true,
+        "zsh_prompt": true
+    })
     property string themeMode: "dark"
     property string cursorTheme: ""
     property int cursorSize: 24
@@ -242,6 +260,17 @@ Singleton {
 
         for (let key in raw)
             result[String(key)] = String(raw[key] || "");
+        return result;
+    }
+
+    function normalizedMatugenTemplates(raw) {
+        const source = raw && typeof raw === "object"
+            && !Array.isArray(raw) ? raw : {};
+        const result = {};
+        for (let i = 0; i < root.matugenTemplateIds.length; i += 1) {
+            const id = root.matugenTemplateIds[i];
+            result[id] = source[id] === undefined ? true : !!source[id];
+        }
         return result;
     }
 
@@ -600,6 +629,27 @@ Singleton {
         setValue("matugenScheme", normalizedOption(root.matugenSchemes, value, "scheme-tonal-spot"));
     }
 
+    function isMatugenTemplateEnabled(id) {
+        if (root.matugenTemplateIds.indexOf(id) === -1)
+            return false;
+        return root.matugenTemplates[id] !== false;
+    }
+
+    function setMatugenTemplateEnabled(id, enabled) {
+        if (root.matugenTemplateIds.indexOf(id) === -1)
+            return false;
+
+        const nextEnabled = !!enabled;
+        if (root.isMatugenTemplateEnabled(id) === nextEnabled)
+            return false;
+
+        const next = root.cloneMap(root.matugenTemplates);
+        next[id] = nextEnabled;
+        root.matugenTemplates = next;
+        root.save();
+        return true;
+    }
+
     function setThemeMode(value) {
         setValue("themeMode", value === "light" ? "light" : "dark");
     }
@@ -738,6 +788,8 @@ Singleton {
             },
             "theme": {
                 "matugenScheme": root.matugenScheme,
+                "matugenTemplates":
+                    root.cloneMap(root.matugenTemplates),
                 "mode": root.themeMode,
                 "cursorTheme": root.cursorTheme,
                 "cursorSize": root.cursorSize,
@@ -866,6 +918,8 @@ Singleton {
                 6, 2, 12);
 
         root.matugenScheme = normalizedOption(root.matugenSchemes, theme.matugenScheme, "scheme-tonal-spot");
+        root.matugenTemplates =
+            normalizedMatugenTemplates(theme.matugenTemplates);
         root.themeMode = theme.mode === "light" ? "light" : "dark";
         root.cursorTheme = theme.cursorTheme || "";
         root.cursorSize = Math.max(12, Math.min(128, Math.round(Number(theme.cursorSize) || 24)));
@@ -916,7 +970,8 @@ Singleton {
         const theme = parsed && parsed.theme;
         return !theme || typeof theme !== "object"
             || Array.isArray(theme)
-            || theme.powerMenuStyle === undefined;
+            || theme.powerMenuStyle === undefined
+            || theme.matugenTemplates === undefined;
     }
 
     function save() {

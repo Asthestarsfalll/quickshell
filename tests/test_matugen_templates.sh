@@ -24,7 +24,7 @@ command -v zsh >/dev/null 2>&1 || fail "zsh is required"
 expected_hooks=(
     'post_hook = "pkill -USR1 cava >/dev/null 2>&1 || true"'
     'post_hook = "kitten themes --reload-in=all Matugen >/dev/null 2>&1 || true"'
-    'post_hook = "fcitx5-remote -r >/dev/null 2>&1 || true"'
+    'post_hook = "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 ReloadAddonConfig s classicui >/dev/null 2>&1 || true"'
     'post_hook = "niri msg action load-config-file >/dev/null 2>&1 || true"'
 )
 for expected_hook in "${expected_hooks[@]}"; do
@@ -49,6 +49,12 @@ if HOME="$test_home" "$generator" \
     >/dev/null 2>&1; then
     fail "generator unexpectedly accepted an invalid mode"
 fi
+if HOME="$test_home" "$generator" \
+    --color "#6750a4" \
+    --templates "kitty,unknown" \
+    >/dev/null 2>&1; then
+    fail "generator unexpectedly accepted an unknown template"
+fi
 
 # Exercise the production config without creating outputs or running hooks.
 HOME="$test_home" "$generator" \
@@ -56,6 +62,46 @@ HOME="$test_home" "$generator" \
     --mode dark \
     --scheme scheme-tonal-spot \
     --dry-run
+
+filtered_home="$test_dir/filtered-home"
+HOME="$filtered_home" "$generator" \
+    --color "#6750a4" \
+    --mode dark \
+    --scheme scheme-tonal-spot \
+    --templates "yazi,zsh_prompt"
+
+filtered_outputs=(
+    "$filtered_home/.cache/quickshell-dev-colorscheme/colors.json"
+    "$filtered_home/.cache/quickshell-dev-colorscheme/zsh-prompt-colors.zsh"
+    "$filtered_home/.config/yazi/theme.toml"
+)
+for output in "${filtered_outputs[@]}"; do
+    [[ -s "$output" ]] || fail "missing filtered output: $output"
+done
+
+disabled_outputs=(
+    "$filtered_home/.config/btop/themes/matugen.theme"
+    "$filtered_home/.config/cava/themes/matugen"
+    "$filtered_home/.config/kitty/themes/Matugen.conf"
+    "$filtered_home/.local/share/fcitx5/themes/Matugen/theme.conf"
+    "$filtered_home/.config/niri/colors.kdl"
+)
+for output in "${disabled_outputs[@]}"; do
+    [[ ! -e "$output" ]] || fail "disabled template generated output: $output"
+done
+
+quickshell_only_home="$test_dir/quickshell-only-home"
+HOME="$quickshell_only_home" "$generator" \
+    --color "#6750a4" \
+    --mode dark \
+    --scheme scheme-tonal-spot \
+    --templates ""
+[[ -s "$quickshell_only_home/.cache/quickshell-dev-colorscheme/colors.json" ]] \
+    || fail "Quickshell output is missing when all external templates are disabled"
+[[ ! -e "$quickshell_only_home/.config" ]] \
+    || fail "external template directories were created for an empty selection"
+[[ ! -e "$quickshell_only_home/.cache/quickshell-dev-colorscheme/zsh-prompt-colors.zsh" ]] \
+    || fail "Zsh prompt output was generated for an empty selection"
 
 mock_bin="$test_dir/bin"
 mkdir -p "$mock_bin"

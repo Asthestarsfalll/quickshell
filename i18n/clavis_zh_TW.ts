@@ -1,6 +1,39 @@
 <?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="zh_TW" sourcelanguage="zh_CN">
 <context>
+    <name>AdvancedPage</name>
+    <message>
+        <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="65" />
+        <source>正在为已启用的程序生成 Matugen 配色…</source>
+        <translation>正在為已啟用的程式產生 Matugen 配色…</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="71" />
+        <source>Matugen 模板生成</source>
+        <translation>Matugen 範本產生</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="72" />
+        <source>壁纸或主题变化时，仅为已启用的程序生成模板。Quickshell 配色始终生成。关闭开关不会删除已有配色文件。</source>
+        <translation>桌布或主題變更時，只為已啟用的程式產生範本。Quickshell 配色一律產生。關閉開關不會刪除現有配色檔案。</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="86" />
+        <source>生成并更新 Matugen 配色</source>
+        <translation>產生並更新 Matugen 配色</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="87" />
+        <source>已停止后续生成；现有配色文件会保留</source>
+        <translation>已停止後續產生；現有配色檔案會保留</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="94" />
+        <source>启用 %1 Matugen 模板</source>
+        <translation>啟用 %1 Matugen 範本</translation>
+    </message>
+</context>
+<context>
     <name>AccountPage</name>
     <message>
         <location filename="../Modules/ControlCenter/AccountPage.qml" line="60" />
@@ -910,6 +943,11 @@
         <location filename="../Modules/ControlCenter/ControlCenterWindow.qml" line="36" />
         <source>天气</source>
         <translation>天氣</translation>
+    </message>
+    <message>
+        <location filename="../Modules/ControlCenter/ControlCenterWindow.qml" line="37" />
+        <source>高级</source>
+        <translation>進階</translation>
     </message>
     <message>
         <location filename="../Modules/ControlCenter/ControlCenterWindow.qml" line="169" />

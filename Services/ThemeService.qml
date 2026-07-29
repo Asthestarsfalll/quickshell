@@ -30,6 +30,25 @@ Singleton {
         root.regenerateFromCurrentWallpaper();
     }
 
+    function enabledMatugenTemplates() {
+        const enabled = [];
+        for (let i = 0;
+             i < PersonalizationConfig.matugenTemplateIds.length;
+             i += 1) {
+            const id = PersonalizationConfig.matugenTemplateIds[i];
+            if (PersonalizationConfig.isMatugenTemplateEnabled(id))
+                enabled.push(id);
+        }
+        return enabled;
+    }
+
+    function setMatugenTemplateEnabled(id, enabled) {
+        const changed =
+            PersonalizationConfig.setMatugenTemplateEnabled(id, enabled);
+        if (changed && enabled)
+            root.regenerateFromCurrentWallpaper();
+    }
+
     function setThemeMode(value) {
         PersonalizationConfig.setThemeMode(value);
         root.applyConfigToAppearance();
@@ -277,12 +296,14 @@ cursor {
 
         root.applyConfigToAppearance();
         root.lastSource = path;
-        generateColorsProcess.command = [
+        const command = [
             "bash", Paths.scriptPath("theme", "generate_matugen_colors.sh"),
             "--image", path,
             "--scheme", PersonalizationConfig.matugenScheme,
-            "--mode", PersonalizationConfig.themeMode
+            "--mode", PersonalizationConfig.themeMode,
+            "--templates", root.enabledMatugenTemplates().join(",")
         ];
+        generateColorsProcess.command = command;
         generateColorsProcess.running = false;
         generateColorsProcess.running = true;
     }
@@ -302,12 +323,14 @@ cursor {
         const sourceColor = root.opaqueHexFromColor(value);
         root.applyConfigToAppearance();
         root.lastSource = value;
-        generateColorsProcess.command = [
+        const command = [
             "bash", Paths.scriptPath("theme", "generate_matugen_colors.sh"),
             "--color", sourceColor,
             "--scheme", PersonalizationConfig.matugenScheme,
-            "--mode", PersonalizationConfig.themeMode
+            "--mode", PersonalizationConfig.themeMode,
+            "--templates", root.enabledMatugenTemplates().join(",")
         ];
+        generateColorsProcess.command = command;
         generateColorsProcess.running = false;
         generateColorsProcess.running = true;
     }
