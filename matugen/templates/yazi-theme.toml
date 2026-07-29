@@ -28,7 +28,7 @@ border_style  = { fg = "{{colors.surface_tint.default.hex}}" }
 # : Indicator [[[
 
 [indicator]
-padding = { open = "█", close = "█" }
+padding = { open = "", close = "" }
 
 # : ]]]
 
@@ -64,8 +64,8 @@ unset_alt  = { bg = "{{colors.surface_variant.default.hex}}", fg = "{{colors.on_
 # : Status [[[
 
 [status]
-sep_left  = { open = "🭁", close = "🭠" }
-sep_right = { open = "🭁", close = "🭠" }
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
 
 # Permissions
 perm_type  = { fg = "{{colors.secondary.default.hex | auto_lightness: 30.0}}" }
