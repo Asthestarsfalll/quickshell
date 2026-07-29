@@ -278,7 +278,7 @@ cursor {
         root.applyConfigToAppearance();
         root.lastSource = path;
         generateColorsProcess.command = [
-            "bash", Paths.scriptPath("theme", "generate_quickshell_colors.sh"),
+            "bash", Paths.scriptPath("theme", "generate_matugen_colors.sh"),
             "--image", path,
             "--scheme", PersonalizationConfig.matugenScheme,
             "--mode", PersonalizationConfig.themeMode
@@ -303,7 +303,7 @@ cursor {
         root.applyConfigToAppearance();
         root.lastSource = value;
         generateColorsProcess.command = [
-            "bash", Paths.scriptPath("theme", "generate_quickshell_colors.sh"),
+            "bash", Paths.scriptPath("theme", "generate_matugen_colors.sh"),
             "--color", sourceColor,
             "--scheme", PersonalizationConfig.matugenScheme,
             "--mode", PersonalizationConfig.themeMode
@@ -364,9 +364,12 @@ cursor {
     Process {
         id: generateColorsProcess
         onRunningChanged: if (running) root.generating = true
-        onExited: {
+        onExited: exitCode => {
             root.generating = false;
-            Appearance.reloadColors();
+            if (exitCode === 0)
+                Appearance.reloadColors();
+            else
+                console.error("Matugen color generation failed with exit code", exitCode);
         }
     }
 }

@@ -54,6 +54,79 @@
   <img src="https://raw.githubusercontent.com/Archirithm/picture/main/system.gif" width="500">
 </p>
 
+### 动态配色
+
+Clavis 使用 [Matugen](https://github.com/InioX/matugen) 从当前壁纸或源颜色生成
+Material 配色。项目自己的 `matugen/config.toml` 和 `matugen/templates/` 是唯一的
+模板来源；运行时不会读取或修改 `~/.config/matugen/config.toml` 和
+`~/.config/matugen/templates/`。
+
+每次切换壁纸、明暗模式或 Matugen 配色方案时，会同时更新：
+
+| 程序 | 生成文件 |
+| --- | --- |
+| Quickshell | `~/.cache/quickshell-dev-colorscheme/colors.json` |
+| btop | `~/.config/btop/themes/matugen.theme` |
+| Cava | `~/.config/cava/themes/matugen` |
+| Kitty | `~/.config/kitty/themes/Matugen.conf` |
+| Fcitx5 | `~/.local/share/fcitx5/themes/Matugen/theme.conf` |
+| Niri | `~/.config/niri/colors.kdl` |
+| Yazi | `~/.config/yazi/theme.toml` |
+| Zsh prompt | `~/.cache/quickshell-dev-colorscheme/zsh-prompt-colors.zsh` |
+
+Clavis 只生成配色文件并通知正在运行的程序重载，不会修改这些程序的主配置。
+Kitty、Cava、Fcitx5 和 Niri 会在文件生成后立即热重载；Zsh prompt 会在下一次
+显示提示行时读取新配色；Yazi 会在下次启动时读取新主题。
+首次使用时需要手工启用以下程序：
+
+```ini
+# ~/.config/btop/btop.conf
+color_theme = "matugen.theme"
+
+# ~/.config/cava/config 的 [color] 段
+theme = 'matugen'
+
+# ~/.config/kitty/kitty.conf
+include current-theme.conf
+
+# ~/.config/fcitx5/conf/classicui.conf
+Theme=Matugen
+```
+
+Niri 的 `~/.config/niri/config.kdl` 需要包含：
+
+```kdl
+include "colors.kdl"
+```
+
+Yazi 会自动读取 `~/.config/yazi/theme.toml`，无需修改主配置。自制 Zsh prompt
+需要在 `.zshrc` 的 `precmd` 中加载生成的配色片段；对应源码仓库内维护了
+完整示例配置。
+
+热重载直接由 `matugen/config.toml` 中各模板的官方 `post_hook` 处理，不需要
+额外脚本：
+
+| 程序 | 运行时重载 |
+| --- | --- |
+| Kitty | `kitten themes --reload-in=all Matugen` |
+| Cava | `pkill -USR1 cava`，重新读取主配置和 `theme = 'matugen'` |
+| Fcitx5 | 调用 `fcitx5-remote -r` 重载配置和 ClassicUI 主题 |
+| Niri | 调用 `niri msg action load-config-file` 重新加载 `colors.kdl` |
+
+Kitty 首次启用时运行一次 `kitten themes --reload-in=all Matugen`，让
+themes kitten 创建 `current-theme.conf` 并维护 `kitty.conf` 的主题引用。各
+hook 末尾使用 `|| true`，因此目标程序没有运行时不会阻断其他模板生成。
+
+也可以从仓库根目录手动验证生成流程：
+
+```bash
+bash scripts/theme/generate_matugen_colors.sh \
+  --color '#6750a4' \
+  --mode dark \
+  --scheme scheme-tonal-spot \
+  --dry-run
+```
+
 ### 天气图标
 
 Meteocons 资源不纳入 Git；动画图标可从 npm 包 [`@meteocons/lottie`](https://www.npmjs.com/package/@meteocons/lottie) 下载，并将包内容放入 `assets/icons/weather/meteocons/lottie/`。
@@ -174,5 +247,8 @@ CLAVIS_SMOKE_OPEN_TOP=1 TERMINAL=/usr/bin/true \
 - `Animated Weather Cards`：MIT，见 [`licenses/AnimatedWeatherCards-MIT.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/AnimatedWeatherCards-MIT.txt)。
 - `soramanew/m3shapes`：Apache-2.0，见 [`licenses/M3Shapes-Apache-2.0.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/M3Shapes-Apache-2.0.txt)。
 - `HyDE`：GPL-3.0，见 [`licenses/HyDE-GPL-3.0.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/HyDE-GPL-3.0.txt)。
+- `matugen-themes`：MIT，模板基于提交
+  `21c77e1d279e5f94cbdf044d55f3de0ee95c8e09`，见
+  [`licenses/matugen-themes-MIT.txt`](https://github.com/StatIndet/quickshell/blob/main/licenses/matugen-themes-MIT.txt)。
 
 若某个文件中保留了更具体的版权或许可证声明，以该文件内声明和对应上游许可证为准。
