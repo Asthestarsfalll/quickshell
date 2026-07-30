@@ -33,6 +33,7 @@ private slots:
     void clipboardRestoresOriginalBytes();
     void clipboardDeleteAndClearAreSafe();
     void clipboardReportsMissingDependencies();
+    void clipboardReportsInactiveWatcher();
 
 private:
     struct KeyResult {
@@ -65,6 +66,9 @@ void KeyIntegrationTest::init()
     m_environment.insert(QStringLiteral("XDG_RUNTIME_DIR"),
                          m_temporary->filePath(QStringLiteral("runtime")));
     m_environment.insert(QStringLiteral("HOME"), m_temporary->path());
+    m_environment.insert(
+        QStringLiteral("CLAVIS_CLIPBOARD_WATCHER_RUNNING"),
+        QStringLiteral("1"));
 }
 
 void KeyIntegrationTest::cleanup()
@@ -311,6 +315,27 @@ void KeyIntegrationTest::clipboardReportsMissingDependencies()
     QCOMPARE(result.json.value(QStringLiteral("error")).toObject()
                  .value(QStringLiteral("code")).toString(),
              QStringLiteral("cliphist_unavailable"));
+}
+
+void KeyIntegrationTest::clipboardReportsInactiveWatcher()
+{
+    m_environment.insert(
+        QStringLiteral("CLAVIS_CLIPBOARD_WATCHER_RUNNING"),
+        QStringLiteral("0"));
+    const KeyResult result = runKey({
+        QStringLiteral("clipboard"),
+        QStringLiteral("status"),
+        QStringLiteral("--format"),
+        QStringLiteral("json"),
+    });
+    QCOMPARE(result.exitCode, 3);
+    QCOMPARE(result.json.value(QStringLiteral("available")).toBool(), false);
+    QCOMPARE(
+        result.json.value(QStringLiteral("watcherRunning")).toBool(),
+        false);
+    QCOMPARE(result.json.value(QStringLiteral("error")).toObject()
+                 .value(QStringLiteral("code")).toString(),
+             QStringLiteral("cliphist_watcher_inactive"));
 }
 
 void KeyIntegrationTest::reportsMissingDependencies()

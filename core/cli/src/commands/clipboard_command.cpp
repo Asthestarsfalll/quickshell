@@ -1,5 +1,7 @@
 #include "clipboard_command.h"
 
+#include <QDir>
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QProcess>
@@ -125,6 +127,48 @@ QString dependencyMessage(bool cliphistAvailable, bool wlCopyAvailable)
     return {};
 }
 
+bool clipboardWatcherRunning()
+{
+    const QString overrideValue =
+        qEnvironmentVariable("CLAVIS_CLIPBOARD_WATCHER_RUNNING").trimmed();
+    if (overrideValue == QStringLiteral("1")
+        || overrideValue.compare(QStringLiteral("true"),
+                                 Qt::CaseInsensitive) == 0) {
+        return true;
+    }
+    if (overrideValue == QStringLiteral("0")
+        || overrideValue.compare(QStringLiteral("false"),
+                                 Qt::CaseInsensitive) == 0) {
+        return false;
+    }
+
+    const QDir proc(QStringLiteral("/proc"));
+    const QStringList processDirectories =
+        proc.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    static const QRegularExpression numericName(QStringLiteral("^[0-9]+$"));
+    for (const QString &directory : processDirectories) {
+        if (!numericName.match(directory).hasMatch())
+            continue;
+        QFile commandLine(
+            proc.filePath(directory + QStringLiteral("/cmdline")));
+        if (!commandLine.open(QIODevice::ReadOnly))
+            continue;
+        const QList<QByteArray> arguments =
+            commandLine.readAll().split('\0');
+        bool hasCliphist = false;
+        bool hasStore = false;
+        for (const QByteArray &argument : arguments) {
+            const QString value = QString::fromLocal8Bit(argument);
+            hasCliphist = hasCliphist
+                || QFileInfo(value).fileName() == QStringLiteral("cliphist");
+            hasStore = hasStore || value == QStringLiteral("store");
+        }
+        if (hasCliphist && hasStore)
+            return true;
+    }
+    return false;
+}
+
 QJsonObject parseEntry(const QByteArray &line)
 {
     const qsizetype separator = line.indexOf('\t');
@@ -175,6 +219,8 @@ CommandResult ClipboardCommand::run(const QStringList &arguments) const
     const QString wlCopy = QStandardPaths::findExecutable(QStringLiteral("wl-copy"));
     const bool cliphistAvailable = !cliphist.isEmpty();
     const bool wlCopyAvailable = !wlCopy.isEmpty();
+    const bool watcherRunning =
+        cliphistAvailable && clipboardWatcherRunning();
     const QJsonObject dependencies = dependencyObject(cliphist, wlCopy);
 
     if (subcommand == QStringLiteral("status")) {
@@ -191,18 +237,33 @@ CommandResult ClipboardCommand::run(const QStringList &arguments) const
                 QStringLiteral("Unknown clipboard status option: %1").arg(argument),
                 jsonRequested);
         }
-        const bool available = cliphistAvailable && wlCopyAvailable;
-        const QString message = dependencyMessage(cliphistAvailable, wlCopyAvailable);
+        const bool dependenciesAvailable =
+            cliphistAvailable && wlCopyAvailable;
+        const bool available = dependenciesAvailable && watcherRunning;
+        const QString message = !dependenciesAvailable
+            ? dependencyMessage(cliphistAvailable, wlCopyAvailable)
+            : watcherRunning
+                ? QString()
+                : QStringLiteral("cliphist watcher is inactive");
         return resultFor(
             QStringLiteral("clipboard.status"),
             jsonRequested,
-            Success,
+            available ? Success : DependencyFailure,
             {{QStringLiteral("available"), available},
              {QStringLiteral("canList"), cliphistAvailable},
-             {QStringLiteral("canRestore"), available},
-             {QStringLiteral("dependencies"), dependencies}},
+             {QStringLiteral("canRestore"), dependenciesAvailable},
+             {QStringLiteral("watcherRunning"), watcherRunning},
+             {QStringLiteral("dependencies"), dependencies},
+             {QStringLiteral("error"),
+              available
+                  ? QJsonValue(QJsonValue::Null)
+                  : QJsonValue(errorObject(
+                      dependenciesAvailable
+                          ? QStringLiteral("cliphist_watcher_inactive")
+                          : QStringLiteral("clipboard_dependency_unavailable"),
+                      message))}},
             available ? QStringLiteral("available") : message,
-            false);
+            !available);
     }
 
     if (subcommand == QStringLiteral("list")) {
@@ -241,6 +302,7 @@ CommandResult ClipboardCommand::run(const QStringList &arguments) const
                 {{QStringLiteral("available"), false},
                  {QStringLiteral("canList"), false},
                  {QStringLiteral("canRestore"), false},
+                 {QStringLiteral("watcherRunning"), false},
                  {QStringLiteral("dependencies"), dependencies},
                  {QStringLiteral("entries"), QJsonArray{}},
                  {QStringLiteral("error"),
@@ -277,6 +339,26 @@ CommandResult ClipboardCommand::run(const QStringList &arguments) const
                 entries.append(entry);
         }
         const bool canRestore = wlCopyAvailable;
+        if (entries.isEmpty() && !watcherRunning) {
+            const QString message =
+                QStringLiteral("cliphist watcher is inactive");
+            return resultFor(
+                QStringLiteral("clipboard.list"),
+                jsonRequested,
+                DependencyFailure,
+                {{QStringLiteral("available"), false},
+                 {QStringLiteral("canList"), true},
+                 {QStringLiteral("canRestore"), canRestore},
+                 {QStringLiteral("watcherRunning"), false},
+                 {QStringLiteral("dependencies"), dependencies},
+                 {QStringLiteral("entries"), entries},
+                 {QStringLiteral("error"),
+                  errorObject(
+                      QStringLiteral("cliphist_watcher_inactive"),
+                      message)}},
+                message,
+                true);
+        }
         return resultFor(
             QStringLiteral("clipboard.list"),
             jsonRequested,
@@ -284,6 +366,7 @@ CommandResult ClipboardCommand::run(const QStringList &arguments) const
             {{QStringLiteral("available"), canRestore},
              {QStringLiteral("canList"), true},
              {QStringLiteral("canRestore"), canRestore},
+             {QStringLiteral("watcherRunning"), watcherRunning},
              {QStringLiteral("dependencies"), dependencies},
              {QStringLiteral("entries"), entries}},
             QStringLiteral("%1 clipboard entries").arg(entries.size()),

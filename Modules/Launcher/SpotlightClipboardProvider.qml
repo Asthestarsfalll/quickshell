@@ -8,6 +8,8 @@ Item {
     property var results: []
     readonly property bool loading: ClipboardService.loading
     readonly property bool available: ClipboardService.canList
+        && (ClipboardService.watcherRunning
+            || ClipboardService.entries.length > 0)
     readonly property bool canRestore: ClipboardService.canRestore
     readonly property var error: ClipboardService.error
 

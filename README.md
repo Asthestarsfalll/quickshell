@@ -186,7 +186,14 @@ qs ipc call keystone currentStyle
 ### 剪贴板历史
 
 剪贴板功能依赖 `cliphist` 和 `wl-clipboard`。Clavis 不会在每次打开
-Spotlight 时启动 watcher，必须由用户会话启动一次。可以创建模板用户服务
+Spotlight 时启动 watcher，必须由用户会话持久启动一次。若发行版已经提供
+`cliphist.service`，直接启用它：
+
+```bash
+systemctl --user enable --now cliphist.service
+```
+
+若发行版没有提供该单元，可以创建模板用户服务
 `~/.config/systemd/user/cliphist-watcher@.service`：
 
 ```ini
@@ -213,7 +220,11 @@ systemctl --user enable --now \
 ```
 
 若发行版中的可执行文件不位于 `/usr/bin`，请相应修改 `ExecStart`。CLI
-安全包装层支持：
+会在历史为空时检测 watcher；未运行会返回
+`cliphist_watcher_inactive`，而不再把它误报为普通的“没有匹配结果”。
+Clipse 和 cliphist 使用不同的历史数据库，Clipse 中存在记录不代表
+Spotlight 能读到它；两个 watcher 可以同时监听 Wayland 剪贴板，不构成
+数据库冲突。安全包装层支持：
 
 ```bash
 key clipboard status --format json

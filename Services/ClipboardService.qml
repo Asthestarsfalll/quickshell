@@ -22,6 +22,7 @@ Singleton {
     property bool available: false
     property bool canList: false
     property bool canRestore: false
+    property bool watcherRunning: false
     property var dependencies: ({ cliphist: false, wlCopy: false })
     property var entries: []
     property var error: null
@@ -37,12 +38,33 @@ Singleton {
     signal actionFailed(string action, string code, string message)
 
     function normalizedError(value, fallbackCode, fallbackMessage) {
-        if (value && typeof value === "object")
+        const code = value && typeof value === "object"
+            ? String(value.code || fallbackCode) : fallbackCode;
+        if (code === "cliphist_watcher_inactive") {
             return {
-                code: String(value.code || fallbackCode),
-                message: String(value.message || fallbackMessage)
+                code: code,
+                message: qsTr(
+                    "cliphist 监听服务未运行；请启用 cliphist.service 后重新复制内容")
             };
-        return { code: fallbackCode, message: fallbackMessage };
+        }
+        if (code === "cliphist_unavailable") {
+            return {
+                code: code,
+                message: qsTr("缺少 cliphist，无法读取剪贴板历史")
+            };
+        }
+        if (code === "clipboard_dependency_unavailable") {
+            return {
+                code: code,
+                message: qsTr("缺少 cliphist 或 wl-copy，剪贴板历史不可用")
+            };
+        }
+        return {
+            code: code,
+            message: value && typeof value === "object"
+                ? String(value.message || fallbackMessage)
+                : fallbackMessage
+        };
     }
 
     function applyListResponse(text) {
@@ -57,6 +79,7 @@ Singleton {
             root.available = false;
             root.canList = false;
             root.canRestore = false;
+            root.watcherRunning = false;
             root.entries = [];
             root.error = {
                 code: "invalid_clipboard_response",
@@ -69,6 +92,7 @@ Singleton {
         root.available = response.available === true;
         root.canList = response.canList === true;
         root.canRestore = response.canRestore === true;
+        root.watcherRunning = response.watcherRunning === true;
         root.dependencies = response.dependencies || {
             cliphist: false,
             wlCopy: false

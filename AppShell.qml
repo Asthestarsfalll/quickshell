@@ -17,6 +17,7 @@ Item {
     Component.onCompleted: {
         I18nService.initialize();
         WallpaperService.primaryInstance = true;
+        AwwwWallpaperService.primaryInstance = true;
     }
 
     WallpaperBackground {}
@@ -94,28 +95,42 @@ Item {
     IpcHandler {
         target: "wallpaper"
 
-        function set(path, screenName) {
-            return WallpaperService.setWallpaper(path || "", screenName || "", true) ? "OK" : "PENDING";
+        function set(path: string): string {
+            return WallpaperService.setWallpaper(path || "", "", true)
+                ? "OK" : "INVALID";
         }
 
-        function clear(screenName) {
-            return WallpaperService.clearWallpaper(screenName || "", true) ? "OK" : "PENDING";
+        function setForScreen(path: string, screenName: string): string {
+            return WallpaperService.setWallpaper(
+                path || "", screenName || "", true)
+                ? "OK" : "INVALID";
         }
 
-        function previous() {
+        function clear(): string {
+            return WallpaperService.clearWallpaper("", true)
+                ? "OK" : "INVALID";
+        }
+
+        function clearForScreen(screenName: string): string {
+            return WallpaperService.clearWallpaper(screenName || "", true)
+                ? "OK" : "INVALID";
+        }
+
+        function previous(): string {
             return WallpaperService.cyclePrevious(true) ? "OK" : "PENDING";
         }
 
-        function next() {
+        function next(): string {
             return WallpaperService.cycleNext(true) ? "OK" : "PENDING";
         }
 
-        function random() {
+        function random(): string {
             return WallpaperService.cycleRandom(true) ? "OK" : "PENDING";
         }
 
-        function setFolder(path) {
-            return WallpaperService.setWallpaperFolder(path || "", true) ? "OK" : "PENDING";
+        function setFolder(path: string): string {
+            return WallpaperService.setWallpaperFolder(path || "", true)
+                ? "OK" : "INVALID";
         }
     }
 
