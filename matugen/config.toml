@@ -37,3 +37,11 @@ output_path = "~/.config/yazi/theme.toml"
 [templates.zsh_prompt]
 input_path = "templates/zsh-prompt-colors.zsh"
 output_path = "~/.cache/quickshell-dev-colorscheme/zsh-prompt-colors.zsh"
+
+[templates.fcitx5_panel_svg]
+input_path = "templates/fcitx5-panel.svg"
+output_path = "~/.local/share/fcitx5/themes/Matugen/panel.svg"
+
+[templates.fcitx5_highlight_svg]
+input_path = "templates/fcitx5-highlight.svg"
+output_path = "~/.local/share/fcitx5/themes/Matugen/highlight.svg"

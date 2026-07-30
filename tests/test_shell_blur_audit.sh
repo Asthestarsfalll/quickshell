@@ -67,6 +67,10 @@ require_text Modules/FilePicker/FilePickerWindow.qml \
     'flags: Qt.Window | Qt.FramelessWindowHint'
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'subtractedBackgroundItems: [dashboardBlurCutout]'
+require_text Modules/Launcher/LauncherWindow.qml \
+    'CompositorBlurRegion {'
+require_text Modules/Launcher/LauncherWindow.qml \
+    'searchBar.blurRegionItems.slice(1).concat(['
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'property color color: BlurService.backgroundColor('
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \

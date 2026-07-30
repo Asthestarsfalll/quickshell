@@ -56,15 +56,38 @@ Item {
     }
 
     LauncherWindow {
-        id: rofiLauncher
+        id: spotlightLauncher
     }
 
     IpcHandler {
-        target: "launcher"
+        target: "spotlight"
 
         function toggle(): string {
-            rofiLauncher.toggleWindow();
-            return "LAUNCHER_TOGGLED";
+            spotlightLauncher.toggleWindow();
+            return spotlightLauncher.windowPhase.toUpperCase();
+        }
+
+        function open(): string {
+            spotlightLauncher.openSpotlight();
+            return spotlightLauncher.windowPhase.toUpperCase();
+        }
+
+        function close(): string {
+            spotlightLauncher.requestClose();
+            return spotlightLauncher.windowPhase.toUpperCase();
+        }
+
+        function web(): string {
+            spotlightLauncher.openSpotlight();
+            spotlightLauncher.enterWeb();
+            return "WEB";
+        }
+
+        function openMode(mode: string): string {
+            if (spotlightLauncher.normalizedMode(mode || "") === "")
+                return "INVALID_MODE";
+            spotlightLauncher.openSpotlight(mode);
+            return String(mode).toUpperCase();
         }
     }
 
