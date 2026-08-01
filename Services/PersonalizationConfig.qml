@@ -95,8 +95,7 @@ Singleton {
         "fcitx5_panel_svg",
         "fcitx5_highlight_svg",
         "niri",
-        "yazi",
-        "zsh_prompt"
+        "yazi"
     ]
 
     readonly property var keystoneStyles: [
@@ -163,15 +162,14 @@ Singleton {
 
     property string matugenScheme: "scheme-tonal-spot"
     property var matugenTemplates: ({
-        "btop": false,
-        "cava": false,
-        "kitty": false,
-        "fcitx5": false,
-        "fcitx5_panel_svg": false,
-        "fcitx5_highlight_svg": false,
-        "niri": false,
-        "yazi": false,
-        "zsh_prompt": false
+        "btop": true,
+        "cava": true,
+        "kitty": true,
+        "fcitx5": true,
+        "fcitx5_panel_svg": true,
+        "fcitx5_highlight_svg": true,
+        "niri": true,
+        "yazi": true
     })
     property string themeMode: "dark"
     property string cursorTheme: ""
@@ -273,7 +271,7 @@ Singleton {
         const result = {};
         for (let i = 0; i < root.matugenTemplateIds.length; i += 1) {
             const id = root.matugenTemplateIds[i];
-            result[id] = source[id] === undefined ? false : !!source[id];
+            result[id] = source[id] === undefined ? true : !!source[id];
         }
         return result;
     }
@@ -636,7 +634,7 @@ Singleton {
     function isMatugenTemplateEnabled(id) {
         if (root.matugenTemplateIds.indexOf(id) === -1)
             return false;
-        return root.matugenTemplates[id] === true;
+        return root.matugenTemplates[id] !== false;
     }
 
     function setMatugenTemplateEnabled(id, enabled) {

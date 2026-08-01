@@ -10,7 +10,6 @@
 ```bash
 ./setup.sh install
 ~/.local/bin/key doctor legacy --json
-~/.local/bin/key doctor services --json
 ```
 
 若 `command -v key` 仍显示 `/usr/local/bin/key`，先把 `$HOME/.local/bin` 放到
@@ -41,12 +40,11 @@ idle policy 文件到 `$XDG_CONFIG_HOME/clavis`。目标已存在时报告 confl
 key version --json
 key shell
 key top
-key doctor services
-key export kitty --status
 ```
 
 确认 `key` 来自 `~/.local/bin`，Shell 能加载 current release 的私有 plugin，剪贴板与
-sysmon 协议兼容。若旧 user unit 仍活跃，先启用/重启新 unit 后再次运行 doctor。
+sysmon 协议兼容。新安装会删除 Clavis 旧 user unit；会话服务由 Niri 的
+`startup.kdl` 直接启动。
 
 旧 root-owned 文件只应在审计其来源后手动清理；普通安装和迁移不会请求 sudo。示例
 路径必须以 doctor 实际报告为准，不要盲目复制命令：
@@ -75,6 +73,5 @@ codex resume --all
 
 ## 5. 旧外部主题
 
-旧 Matugen 输出和用户应用配置的所有权通常无法可靠确认，因此迁移器只报告。新系统
-默认只生成 Clavis/profile 资源。如需继续同步，逐一使用 `key export APP --dry-run`
-审查目标；已有目标会冲突，只有明确 `--replace` 才备份并原子替换。
+旧 Matugen 输出仍由 legacy doctor 报告，不会自动删除。新系统根据设置中心开关直接
+更新各应用的标准主题文件；它不会复制或托管这些应用的完整配置。

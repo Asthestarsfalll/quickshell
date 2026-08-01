@@ -62,7 +62,7 @@ Directory 解析。路径覆盖值必须是绝对路径；内部协议不使用 
 4. 检查必要文件、`release.json`、协议和可执行权限；
 5. 执行暂存 `key version --json` smoke test；
 6. 原子重命名为不可变 release；
-7. 冲突预检后更新稳定 launcher、user units、active-release 与 manifest；
+7. 冲突预检后更新稳定 launcher、active-release 与 manifest，并移除旧 user units；
 8. 最后原子替换 `current` symlink；
 9. 任一步失败时恢复上述可变文件，并移除尚未激活的新 release。
 
@@ -75,28 +75,24 @@ launcher、unit、manifest 与 `current`。失败会清理 `.partial`，不会�
 ## Manifest 与所有权
 
 `$XDG_STATE_HOME/clavis/install-manifest.json` 记录 release 中每个文件的相对路径、
-SHA-256 与模式，以及 launcher、user units、profile、外部导出、备份、协议和可选
+SHA-256 与模式，以及 launcher、profile、协议和可选
 系统集成。release 在发布后去掉 owner write bit。
 
-`key rollback` 只切换通过 metadata 与所有文件校验的 release；随后重启活跃的
-`clavis-shell.service`、`clavis-cliphist.service` 和手工启动的 Shell。
+`key rollback` 只切换通过 metadata 与所有文件校验的 release；随后重启手工运行的 Shell。
 `key release remove` 拒绝删除 active release，并拒绝删除含未记录文件的目录。
 
 `key uninstall` 按 manifest 删除。默认保留配置、profile、壁纸、缓存和用户修改过的
 导出；`--purge-cache`、`--purge-config`、`--purge-data` 必须显式选择。CPU helper
 位于独立系统安全边界，只由 `key setup cpu-power --disable` 撤销；若仍处于已安装状态，
 程序卸载会要求先完成该独立撤销步骤。purge 拒绝 `/`、HOME、安装前缀、符号链接或
-其他过宽目标，即使这些路径来自显式环境覆盖。若 release 或导出文件已被用户修改，
+其他过宽目标，即使这些路径来自显式环境覆盖。若 release 文件已被用户修改，
 或 release 中出现未登记文件，卸载会保留它并把原因、原始校验和及恢复动作写入
 `preservedItems`；后续卸载可以在内容恢复为已知版本后安全重试，而不会丢失残留来源。
 
-## systemd user units
+## 会话启动项
 
-unit 安装到 `$XDG_CONFIG_HOME/systemd/user`，`ExecStart` 使用稳定 key 的绝对路径。
-`ExecStartPre=... key version` 把 release/commit 写入 journal。更新和回滚只对原本活跃
-的服务执行 restart，不向用户会话永久导出 QML 路径。`key doctor services` 检查 unit
-是否仍引用 `/usr/local/bin/key` 或固定旧 release，并用 `/proc/<pid>/environ` 检查
-运行中 Shell 的 `CLAVIS_RELEASE_ROOT`。
+Clavis 不安装 user systemd unit。Niri release 配置中的 `startup.kdl` 是会话启动项的
+唯一来源，因此服务生命周期与该 Niri 会话一致。
 
 ## 在线更新边界
 

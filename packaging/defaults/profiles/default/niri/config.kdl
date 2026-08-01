@@ -389,3 +389,7 @@ include "output.kdl"
 include "startup.kdl"
 include "windowrule.kdl"
 include "animations.kdl"
+
+// Default effects are inert; the generated session may layer a writable
+// Clavis effects file after this configuration.
+include optional=true "clavis-effects.kdl"

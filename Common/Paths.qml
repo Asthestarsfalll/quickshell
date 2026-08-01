@@ -71,8 +71,6 @@ Singleton {
         || dataHome + "/profiles/" + profileName
     readonly property string generatedHome: root.absoluteEnvironment("CLAVIS_GENERATED_HOME")
         || profileHome + "/generated"
-    readonly property string matugenConfig:
-        profileConfigHome + "/matugen/config.toml"
     readonly property string qmlImportHome: root.absoluteEnvironment("CLAVIS_QML_IMPORT_HOME")
         || currentRelease + "/lib/qml"
     readonly property string currentWallpaper: stateHome + "/wallpaper/current"

@@ -47,7 +47,7 @@ class ClavisPaths:
 
     @classmethod
     def from_environment(cls) -> "ClavisPaths":
-        home = _absolute_env("CLAVIS_REAL_HOME") or _absolute_env("HOME")
+        home = _absolute_env("HOME")
         if home is None:
             raise PathConfigurationError("HOME must be set to an absolute path")
         bin_home = _absolute_env("CLAVIS_BIN_HOME") or home / ".local/bin"
@@ -140,14 +140,9 @@ class ClavisPaths:
         xdg_config = _absolute_env("XDG_CONFIG_HOME") or self.home / ".config"
         return xdg_config / "systemd/user"
 
-    @property
-    def legacy_home(self) -> Path:
-        return self.profile_home / "legacy-home"
-
     def as_environment(self, release_root: Path) -> dict[str, str]:
         qml_import = release_root / "lib/qml"
         result = {
-            "CLAVIS_REAL_HOME": str(self.home),
             "CLAVIS_BIN_HOME": str(self.bin_home),
             "CLAVIS_INSTALL_PREFIX": str(self.install_prefix),
             "CLAVIS_RELEASE_ROOT": str(release_root),
@@ -160,7 +155,6 @@ class ClavisPaths:
             "CLAVIS_PROFILE_CONFIG_HOME": str(self.profile_config_home),
             "CLAVIS_PROFILE_HOME": str(self.profile_home),
             "CLAVIS_GENERATED_HOME": str(self.generated_home),
-            "CLAVIS_LEGACY_HOME": str(self.legacy_home),
             "CLAVIS_QML_IMPORT_HOME": str(qml_import),
             "CLAVIS_KEY": str(self.stable_key),
         }

@@ -32,8 +32,7 @@ CommandResult CommandRouter::route(const QStringList &arguments) const
         return VersionCommand().run(rest);
     if (command == QStringLiteral("doctor")
         && !rest.isEmpty()
-        && (rest.first() == QStringLiteral("legacy")
-            || rest.first() == QStringLiteral("services"))) {
+        && rest.first() == QStringLiteral("legacy")) {
         return ManagementCommand().run(command, rest);
     }
     if (command == QStringLiteral("doctor"))
@@ -53,12 +52,9 @@ CommandResult CommandRouter::route(const QStringList &arguments) const
     if (command == QStringLiteral("shell")
         || command == QStringLiteral("ipc")
         || command == QStringLiteral("session")
-        || command == QStringLiteral("prompt")
-        || command == QStringLiteral("run")
         || command == QStringLiteral("rollback")
         || command == QStringLiteral("uninstall")
         || command == QStringLiteral("migrate")
-        || command == QStringLiteral("export")
         || command == QStringLiteral("setup")
         || command == QStringLiteral("release")
         || command == QStringLiteral("update")) {
@@ -80,8 +76,6 @@ QString CommandRouter::helpText()
         "  key ipc [list|show]\n"
         "  key ipc call TARGET METHOD [ARGUMENTS...]\n"
         "  key session\n"
-        "  key prompt [EXIT_CODE [DURATION [WIDTH]]]\n"
-        "  key run kitty|btop|cava|yazi|fcitx5|rofi|wallpaper [OPTIONS...]\n"
         "  key doctor [--json] [--output DIRECTORY]\n"
         "  key doctor cpu-power [--json]\n"
         "  key audio start --source mic|system [--output DIRECTORY] [--json]\n"
@@ -107,10 +101,8 @@ QString CommandRouter::helpText()
         "  key release remove RELEASE [--dry-run]\n"
         "  key update [--artifact PATH]\n"
         "  key uninstall [--dry-run] [--purge-cache] [--purge-config] [--purge-data]\n"
-        "  key export APP [--dry-run] [--replace|--disable] [--json]\n"
         "  key setup cpu-power [--disable] [--dry-run]\n"
         "  key doctor legacy [--json]\n"
-        "  key doctor services [--json]\n"
         "  key migrate legacy [--dry-run]\n"
         "\n"
         "Recording options:\n"

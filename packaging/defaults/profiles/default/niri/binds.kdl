@@ -12,25 +12,25 @@ binds {
     // Mod-Shift-/, which is usually the same as Mod-?,
     // shows a list of important hotkeys.
     // 呼叫主进程开启锁屏
-    Mod+P { spawn-sh "$HOME/.local/bin/key ipc call lock open"; }
+    Mod+P { spawn-sh "$CLAVIS_KEY ipc call lock open"; }
     // 打开/关闭仪表盘 (Dashboard)
-    Mod+M { spawn-sh "$HOME/.local/bin/key ipc call keystone dashboard"; }
+    Mod+M { spawn-sh "$CLAVIS_KEY ipc call keystone dashboard"; }
 
-    Mod+Shift+T { spawn-sh "$HOME/.local/bin/key ipc call keystone tools"; }
+    Mod+Shift+T { spawn-sh "$CLAVIS_KEY ipc call keystone tools"; }
 
     // 打开/关闭壁纸切换器 (Wallpaper)
-    Mod+Shift+W { spawn-sh "$HOME/.local/bin/key ipc call keystone hub"; }
-    Mod+D { spawn-sh "$HOME/.local/bin/key ipc call spotlight toggle"; }
+    Mod+Shift+W { spawn-sh "$CLAVIS_KEY ipc call keystone hub"; }
+    Mod+D { spawn-sh "$CLAVIS_KEY ipc call spotlight toggle"; }
     // 打开/关闭应用启动器 (Launcher) - 对应之前的 'toggle'
     Mod+Shift+Slash { show-hotkey-overlay; }
     Mod+Ctrl+W { spawn-sh "$HOME/.config/swww-rofi/swww-rofi.sh"; }
-    Mod+F1 { spawn-sh "pkill fcitx5 || true; $HOME/.local/bin/key run fcitx5"; }
-    Mod+F2 { spawn-sh "pkill quickshell || true; $HOME/.local/bin/key shell --no-duplicate"; }
+    Mod+F1 { spawn-sh "pkill fcitx5 || true; fcitx5"; }
+    Mod+F2 { spawn-sh "pkill qs || true; $CLAVIS_KEY shell --no-duplicate"; }
     // Suggested binds for running programs: terminal, app launcher, screen locker.
-    Mod+T hotkey-overlay-title="Open a Terminal: kitty" { spawn-sh "$HOME/.local/bin/key run kitty"; }
+    Mod+T hotkey-overlay-title="Open a Terminal: kitty" { spawn "kitty"; }
     Mod+Ctrl+E hotkey-overlay-title="Run an Application: rofi" { spawn "rofi" "-show" "drun"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn-sh "$HOME/.local/bin/key ipc call lock open"; }
-    Mod+E { spawn-sh "$HOME/.local/bin/key run kitty $HOME/.local/bin/key run yazi"; }
+    Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn-sh "$CLAVIS_KEY ipc call lock open"; }
+    Mod+E { spawn "kitty" "yazi"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.

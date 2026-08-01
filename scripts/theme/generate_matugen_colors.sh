@@ -8,20 +8,17 @@ source "$scripts_dir/lib/clavis-paths.sh"
 clavis_paths_init
 
 share_root=$(cd -- "$scripts_dir/.." && pwd)
-if [[ -f "$share_root/libexec/matugen_config.py" ]]; then
-    config_helper=$share_root/libexec/matugen_config.py
-elif [[ -f "$share_root/packaging/matugen_config.py" ]]; then
-    config_helper=$share_root/packaging/matugen_config.py
-else
-    printf 'Clavis Matugen config helper is missing below %s\n' "$share_root" >&2
-    exit 1
+matugen_dir="$share_root/defaults/matugen"
+if [[ ! -d "$matugen_dir/templates" ]]; then
+    matugen_dir="$share_root/matugen"
 fi
-
+config_path="$matugen_dir/config.toml"
 mode=dark
 scheme=scheme-tonal-spot
 image_path=""
 source_color=""
 dry_run=false
+templates_requested=false
 templates_csv=""
 
 usage() {
@@ -52,6 +49,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --templates)
             [[ $# -ge 2 ]] || { usage; exit 2; }
+            templates_requested=true
             templates_csv=$2
             shift 2
             ;;
@@ -83,6 +81,90 @@ if ! command -v matugen >/dev/null 2>&1; then
     printf 'matugen is required but was not found in PATH\n' >&2
     exit 1
 fi
+if [[ ! -f "$config_path" ]]; then
+    printf 'Missing matugen config: %s\n' "$config_path" >&2
+    exit 1
+fi
+
+all_external_templates=(
+    btop
+    cava
+    kitty
+    fcitx5
+    fcitx5_panel_svg
+    fcitx5_highlight_svg
+    niri
+    yazi
+)
+
+selected_templates=(quickshell)
+if [[ "$templates_requested" == false ]]; then
+    selected_templates+=("${all_external_templates[@]}")
+elif [[ -n "$templates_csv" ]]; then
+    IFS=',' read -r -a requested_templates <<< "$templates_csv"
+    for template_id in "${requested_templates[@]}"; do
+        case "$template_id" in
+            btop|cava|kitty|fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg|niri|yazi)
+                ;;
+            *)
+                printf 'Unknown matugen template: %s\n' "$template_id" >&2
+                exit 2
+                ;;
+        esac
+        already_selected=false
+        for selected_id in "${selected_templates[@]}"; do
+            if [[ "$selected_id" == "$template_id" ]]; then
+                already_selected=true
+                break
+            fi
+        done
+        if [[ "$already_selected" == false ]]; then
+            selected_templates+=("$template_id")
+        fi
+    done
+fi
+
+template_file() {
+    case "$1" in
+        quickshell) printf '%s\n' quickshell-colors.json ;;
+        btop) printf '%s\n' btop.theme ;;
+        cava) printf '%s\n' cava-colors.ini ;;
+        kitty) printf '%s\n' kitty-colors.conf ;;
+        fcitx5) printf '%s\n' fcitx5-theme.conf ;;
+        fcitx5_panel_svg) printf '%s\n' fcitx5-panel.svg ;;
+        fcitx5_highlight_svg) printf '%s\n' fcitx5-highlight.svg ;;
+        niri) printf '%s\n' niri-colors.kdl ;;
+        yazi) printf '%s\n' yazi-theme.toml ;;
+    esac
+}
+
+for template_id in "${selected_templates[@]}"; do
+    template_path="$matugen_dir/templates/$(template_file "$template_id")"
+    [[ -f "$template_path" ]] || {
+        printf 'Missing matugen template: %s\n' "$template_path" >&2
+        exit 1
+    }
+done
+
+if [[ "$dry_run" == false ]]; then
+    mkdir -p "$CLAVIS_GENERATED_HOME/clavis" "$CLAVIS_GENERATED_HOME/niri"
+    for template_id in "${selected_templates[@]}"; do
+        case "$template_id" in
+            btop) mkdir -p "$HOME/.config/btop/themes" ;;
+            cava) mkdir -p "$HOME/.config/cava/themes" ;;
+            kitty) mkdir -p "$HOME/.config/kitty/themes" ;;
+            fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg)
+                mkdir -p "$HOME/.local/share/fcitx5/themes/Matugen"
+                ;;
+            yazi) mkdir -p "$HOME/.config/yazi" ;;
+        esac
+    done
+fi
+
+enabled_sections=,
+for template_id in "${selected_templates[@]}"; do
+    enabled_sections+="$template_id,"
+done
 
 mkdir -p "$CLAVIS_RUNTIME_HOME/temporary"
 runtime_dir=$(mktemp -d "$CLAVIS_RUNTIME_HOME/temporary/matugen.XXXXXX")
@@ -90,18 +172,30 @@ cleanup() {
     rm -rf -- "$runtime_dir"
 }
 trap cleanup EXIT HUP INT TERM
-runtime_config=$runtime_dir/config.toml
-helper_args=(
-    --share-root "$share_root"
-    --config "$CLAVIS_PROFILE_CONFIG_HOME/matugen/config.toml"
-    --generated-home "$CLAVIS_GENERATED_HOME"
-    --runtime-config "$runtime_config"
-    --templates "$templates_csv"
-)
-if [[ "$dry_run" == true ]]; then
-    helper_args+=(--dry-run)
-fi
-python3 "$config_helper" "${helper_args[@]}" >/dev/null
+runtime_config="$runtime_dir/config.toml"
+
+awk \
+    -v enabled="$enabled_sections" \
+    -v matugen_dir="$matugen_dir" \
+    -v generated_home="$CLAVIS_GENERATED_HOME" '
+    /^\[templates\.[^]]+\]$/ {
+        name = $0
+        sub(/^\[templates\./, "", name)
+        sub(/\]$/, "", name)
+        emit = index(enabled, "," name ",") > 0
+    }
+    /^\[config\]$/ { emit = 1 }
+    /^\[[^]]+\]$/ && $0 !~ /^\[templates\./ && $0 !~ /^\[config\]$/ {
+        emit = 0
+    }
+    emit {
+        line = $0
+        if (line ~ /^input_path = "templates\//)
+            sub(/^input_path = "/, "input_path = \"" matugen_dir "/", line)
+        gsub(/@CLAVIS_GENERATED_HOME@/, generated_home, line)
+        print line
+    }
+' "$config_path" > "$runtime_config"
 
 common_args=(--mode "$mode" --type "$scheme" --config "$runtime_config")
 if [[ "$dry_run" == true ]]; then

@@ -20,9 +20,9 @@ public:
     QString cacheHome() const;
     QString runtimeHome() const;
     QString profileName() const;
+    QString profileConfigHome() const;
     QString profileHome() const;
     QString generatedHome() const;
-    QString legacyHome() const;
     QString qmlImportHome() const;
     QString stableKey() const;
 
@@ -44,9 +44,9 @@ private:
     QString m_cacheHome;
     QString m_runtimeHome;
     QString m_profileName;
+    QString m_profileConfigHome;
     QString m_profileHome;
     QString m_generatedHome;
-    QString m_legacyHome;
     QString m_qmlImportHome;
 };
 

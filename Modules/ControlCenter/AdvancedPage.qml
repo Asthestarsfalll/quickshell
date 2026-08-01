@@ -42,11 +42,6 @@ StyledFlickable {
             "id": "yazi",
             "title": "Yazi",
             "icon": "folder"
-        }),
-        ({
-            "id": "zsh_prompt",
-            "title": "Zsh prompt",
-            "icon": "code"
         })
     ]
 
@@ -62,14 +57,14 @@ StyledFlickable {
         InlineStatusBanner {
             Layout.fillWidth: true
             visible: ThemeService.generating
-            message: qsTr("正在生成 Clavis 与当前 Clavis profile 的 Matugen 配色…")
+            message: qsTr("正在为已启用的程序生成 Matugen 配色…")
             iconName: "progress_activity"
         }
 
         SettingsSection {
             Layout.fillWidth: true
-            title: qsTr("Clavis Profile 配色")
-            supportingText: qsTr("Quickshell 配色始终写入 Clavis 数据目录。下列开关只生成当前 profile 使用的资源；输出路径可在 Matugen 配置中编辑。")
+            title: qsTr("Matugen 模板生成")
+            supportingText: qsTr("壁纸或主题变化时，仅为已启用的程序生成模板。Quickshell 配色始终生成。关闭开关不会删除已有配色文件。")
 
             Repeater {
                 model: root.templatePrograms
@@ -83,8 +78,8 @@ StyledFlickable {
                     supportingText:
                         PersonalizationConfig
                             .isMatugenTemplateEnabled(modelData.id)
-                        ? qsTr("生成到 Clavis profile，不修改现有配置")
-                        : qsTr("不生成该 profile 资源；已有资源会保留")
+                        ? qsTr("生成并更新 Matugen 配色")
+                        : qsTr("已停止后续生成；现有配色文件会保留")
 
                     trailing: StyledSwitch {
                         enabled: !ThemeService.generating
@@ -100,40 +95,6 @@ StyledFlickable {
                 }
             }
 
-            SettingsActionRow {
-                Layout.fillWidth: true
-                text: qsTr("编辑 Matugen 配置")
-                iconName: "edit_note"
-                trailingIconName: "open_in_new"
-                enabled: !ThemeService.generating
-                Accessible.name: qsTr("使用默认编辑器打开 Matugen 配置")
-                onClicked: ThemeService.openMatugenConfig()
-            }
-
-            SettingsActionRow {
-                Layout.fillWidth: true
-                text: qsTr("重新生成配色")
-                iconName: "refresh"
-                trailingIconName: ""
-                enabled: !ThemeService.generating
-                Accessible.name: qsTr("根据 Matugen 配置重新生成配色")
-                onClicked: ThemeService.regenerateFromCurrentWallpaper()
-            }
-        }
-
-        InlineStatusBanner {
-            Layout.fillWidth: true
-            visible: ThemeService.lastGenerationError !== ""
-            tone: "error"
-            message: ThemeService.lastGenerationError
-        }
-
-        InlineStatusBanner {
-            Layout.fillWidth: true
-            visible: ThemeService.lastGenerationMessage !== ""
-                && ThemeService.lastGenerationError === ""
-            message: ThemeService.lastGenerationMessage
-            iconName: "check_circle"
         }
 
         Item {

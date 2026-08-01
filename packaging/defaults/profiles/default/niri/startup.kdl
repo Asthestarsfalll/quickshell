@@ -1,12 +1,14 @@
 // 询问管理员权限功能（身份验证）
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
-spawn-sh-at-startup "$HOME/.local/bin/key run fcitx5"
+spawn-at-startup "fcitx5"
 spawn-at-startup "nm-applet"
 spawn-at-startup "blueman-applet"
 // spawn-at-startup "awww-daemon"
 
 // spawn-sh-at-startup "awww-daemon -n overview"
 
-// Clipboard history is managed by clavis-cliphist.service.
+// Clavis services are intentionally owned by this Niri session.
+spawn-sh-at-startup "$CLAVIS_KEY shell --no-duplicate"
+spawn-sh-at-startup "$CLAVIS_KEY clipboard watch"
 
 // spawn-at-startup "hypridle"

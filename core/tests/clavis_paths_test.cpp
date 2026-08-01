@@ -20,7 +20,6 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     QVERIFY(temporary.isValid());
     const QString root = temporary.path();
     for (const char *name : {
-             "CLAVIS_REAL_HOME",
              "CLAVIS_CONFIG_HOME",
              "CLAVIS_DATA_HOME",
              "CLAVIS_STATE_HOME",
@@ -36,6 +35,7 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     qputenv("XDG_CACHE_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("cache"))));
     qputenv("XDG_RUNTIME_DIR", QFile::encodeName(QDir(root).filePath(QStringLiteral("runtime"))));
     qputenv("CLAVIS_PROFILE", "test-profile");
+    qputenv("CLAVIS_PROFILE_CONFIG_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("profile-config"))));
     qputenv("CLAVIS_PROFILE_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("profile"))));
     qputenv("CLAVIS_GENERATED_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("generated"))));
     qputenv("CLAVIS_QML_IMPORT_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("override-qml"))));
@@ -51,15 +51,16 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     QCOMPARE(paths.cacheHome(), QDir(root).filePath(QStringLiteral("cache/clavis")));
     QCOMPARE(paths.runtimeHome(), QDir(root).filePath(QStringLiteral("runtime/clavis")));
     QCOMPARE(paths.profileName(), QStringLiteral("test-profile"));
+    QCOMPARE(paths.profileConfigHome(), QDir(root).filePath(QStringLiteral("profile-config")));
     QCOMPARE(paths.profileHome(), QDir(root).filePath(QStringLiteral("profile")));
     QCOMPARE(paths.generatedHome(), QDir(root).filePath(QStringLiteral("generated")));
     QCOMPARE(paths.qmlImportHome(), QDir(root).filePath(QStringLiteral("override-qml")));
 
     const QString release = QDir(root).filePath(QStringLiteral("release"));
     const QProcessEnvironment environment = paths.processEnvironment(release);
-    QCOMPARE(environment.value(QStringLiteral("CLAVIS_REAL_HOME")), paths.home());
     QCOMPARE(environment.value(QStringLiteral("CLAVIS_BIN_HOME")), paths.binHome());
     QCOMPARE(environment.value(QStringLiteral("CLAVIS_PROFILE_HOME")), paths.profileHome());
+    QCOMPARE(environment.value(QStringLiteral("CLAVIS_PROFILE_CONFIG_HOME")), paths.profileConfigHome());
     QCOMPARE(environment.value(QStringLiteral("CLAVIS_GENERATED_HOME")), paths.generatedHome());
     QCOMPARE(
         environment.value(QStringLiteral("CLAVIS_QML_IMPORT_HOME")),
@@ -70,6 +71,7 @@ void ClavisPathsTest::rejectsUnsafeProfileNamesByFallingBack()
 {
     qputenv("CLAVIS_PROFILE", "../escape");
     qunsetenv("CLAVIS_PROFILE_HOME");
+    qunsetenv("CLAVIS_PROFILE_CONFIG_HOME");
     qunsetenv("CLAVIS_GENERATED_HOME");
     const auto paths = Clavis::Runtime::ClavisPaths::fromEnvironment();
     QCOMPARE(paths.profileName(), QStringLiteral("default"));

@@ -317,27 +317,6 @@ purpose = "cloud file browser integration"
 detect = "rclone version"
 degradable = true
 
-[[feature.profile_apps]]
-name = "Kitty"
-arch = "kitty"
-purpose = "key run kitty profile adapter"
-detect = "kitty --version"
-degradable = true
-
-[[feature.profile_apps]]
-name = "btop"
-arch = "btop"
-purpose = "key run btop profile adapter"
-detect = "btop --version"
-degradable = true
-
-[[feature.profile_apps]]
-name = "Yazi"
-arch = "yazi"
-purpose = "key run yazi profile adapter"
-detect = "yazi --version"
-degradable = true
-
 [[development]]
 name = "Git"
 arch = "git"
