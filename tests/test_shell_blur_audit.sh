@@ -90,6 +90,10 @@ require_text Modules/Launcher/LauncherWindow.qml \
     'CompositorBlurRegion {'
 require_text Modules/Launcher/LauncherWindow.qml \
     'searchBar.blurRegionItems.slice(1).concat(['
+require_text Modules/Launcher/LauncherWindow.qml \
+    'onWebProgressChanged: spotlightBlur.publish()'
+reject_text Modules/Launcher/LauncherWindow.qml \
+    'style.scrimOpacity * root.windowProgress'
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'property color color: BlurService.backgroundColor('
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
@@ -113,7 +117,11 @@ require_text Widgets/common/CompositorBlurRegion.qml \
 require_text Widgets/common/CompositorBlurRegion.qml \
     'intersection: Intersection.Subtract'
 require_text Widgets/common/CompositorBlurRegion.qml \
-    'Qt.callLater(root.commit)'
+    'property TransformWatcher geometryWatcher: TransformWatcher {'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'onTransformChanged: root.publish()'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'commitTimer.restart()'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'targetWindow.BackgroundEffect.blurRegion = null'
 

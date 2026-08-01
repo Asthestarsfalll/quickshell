@@ -204,6 +204,14 @@ Item {
         }
     }
 
+    TransformWatcher {
+        id: clipTransformWatcher
+
+        a: root.targetWindow ? root.targetWindow.contentItem : null
+        b: root.clipItem
+        onTransformChanged: root.publish()
+    }
+
     Region {
         id: combinedRegion
     }
@@ -224,6 +232,13 @@ Item {
         Region {
             required property Item sourceItem
 
+            property TransformWatcher geometryWatcher: TransformWatcher {
+                a: root.targetWindow
+                    ? root.targetWindow.contentItem : null
+                b: sourceItem
+                onTransformChanged: root.publish()
+            }
+
             onChanged: root.publish()
 
             item: sourceItem && sourceItem.visible
@@ -243,6 +258,13 @@ Item {
 
         Region {
             required property Item sourceItem
+
+            property TransformWatcher geometryWatcher: TransformWatcher {
+                a: root.targetWindow
+                    ? root.targetWindow.contentItem : null
+                b: sourceItem
+                onTransformChanged: root.publish()
+            }
 
             onChanged: root.publish()
 

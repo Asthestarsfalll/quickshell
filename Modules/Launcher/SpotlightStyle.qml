@@ -78,7 +78,6 @@ QtObject {
     readonly property int railStagger: 28
     readonly property int webDuration: 340
     readonly property int panelDuration: 210
-    readonly property real scrimOpacity: 0.32
     readonly property real initialScale: 0.96
     readonly property real initialYOffset: -8
     readonly property real railWidthContraction:
