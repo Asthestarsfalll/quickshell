@@ -51,6 +51,7 @@ command -v key
 ```bash
 key version --json
 key shell
+key shell --dev
 key ipc list
 key ipc call keystone dashboard
 key session
@@ -61,7 +62,9 @@ key rollback
 key release list
 ```
 
-`key shell` 在现有 niri 会话中运行 Shell。`key session` 使用 release 内完整的
+`key shell` 从 `current` 指向的不可变 release 运行 Shell；源码工作区中的未提交修改
+不会影响它。`key shell --dev` 则从当前目录向上寻找 Clavis 仓库，直接加载源码中的
+QML、JavaScript、脚本与资源。`key session` 使用 release 内完整的
 Niri 默认配置启动会话，并拒绝在已有 niri 会话中递归启动。它保持真实 `HOME` 和
 用户的 XDG 路径；Kitty、Zsh、Fcitx5、btop、Yazi 等程序读取用户自己的配置。
 
@@ -70,7 +73,8 @@ Niri 默认配置启动会话，并拒绝在已有 niri 会话中递归启动。
 Niri 快捷键应调用稳定入口，例如
 `spawn-sh "$HOME/.local/bin/key ipc call keystone dashboard"`，不要调用裸
 `quickshell ipc`。后者按配置绝对路径选择实例，源码迁移或 release 更新后容易命中
-错误实例；`key ipc` 始终解析当前 release，并和 `key shell` 使用同一个 QML 根。
+错误实例；`key ipc` 优先验证 `$XDG_RUNTIME_DIR/clavis/active-shell.json` 并按精确 PID
+路由到当前正式或开发实例，陈旧记录会被清理，随后安全回退到 `current`。
 
 从 TTY 或显示管理器启动完整 Clavis 管理会话时运行
 `exec "$HOME/.local/bin/key" session`。如果已经位于 Niri 会话中，只运行
@@ -140,12 +144,27 @@ key setup cpu-power --disable
 ## 开发与验证
 
 ```bash
+key shell --dev
+key shell --dev --replace
+key shell --dev --native --replace
 ./setup.sh configure
 ./setup.sh build
 ./setup.sh test
 qmllint -I . Common/Paths.qml Services/RuntimeCompatibilityService.qml
 bash tests/test_matugen_templates.sh
 ```
+
+普通开发模式直接监视源码，QML 与资源修改由 Quickshell 原生 reload 立即加载；它仍
+使用 `current` release 的 `bin/key` 和 `lib/qml` 原生模块。修改 `core/` 时使用
+`--native`：命令会在 `.build/dev` 做增量 CMake 构建，并以新进程加载更新后的共享库，
+不会创建 release 或切换 `current`。另一套完整 Shell 正在运行时必须显式加
+`--replace`，该选项只停止记录到的 Clavis 实例。开发失败后可用
+`key shell --replace` 回到正式版。
+
+`just` 是可选的开发工作流缩写，不是 Clavis 运行依赖。安装了 `just` 时，从仓库任意
+子目录执行 `just` 或 `just --list` 可查看英文命令说明；执行 `just help-zh` 只显示
+中文命令说明。未安装时上述 `key` 与 `setup.sh` 命令照常可用。详细说明见
+[开发工作流](docs/development.md)。
 
 不要编辑生成的 build 目录。涉及 `core/` 的改动需重新构建；纯 QML 改动至少运行
 一次 `qmllint`。协议与能力模型见

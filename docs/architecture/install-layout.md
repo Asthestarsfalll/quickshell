@@ -28,9 +28,10 @@ clavis/
 `lib/qml` 注入 Clavis 子进程的 `QML_IMPORT_PATH`/`QML2_IMPORT_PATH`；登录环境和
 普通 Qt 应用不会看到私有 plugin。
 
-`key ipc` 使用和 `key shell` 完全相同的物理 release QML 根定位 Quickshell 实例。
-桌面快捷键不得调用未指定配置的裸 `quickshell ipc`，因为 Quickshell 的实例身份包含
-配置绝对路径，移动源码后该身份会发生变化。
+`key ipc` 优先验证 runtime 中的活动 Shell 记录并按 Quickshell PID 精确路由；没有
+有效记录时，使用和 `key shell` 完全相同的物理 release QML 根。桌面快捷键不得调用
+未指定配置的裸 `quickshell ipc`，因为 Quickshell 的实例身份包含配置绝对路径，移动
+源码或切换开发/release 模式后该身份会发生变化。
 
 `key ipc list` 是 `key ipc show` 的兼容别名；完整 target 和 method 清单见
 [IPC 命令](../ipc.md)。
@@ -93,6 +94,13 @@ SHA-256 与模式，以及 launcher、profile、协议和可选
 
 Clavis 不安装 user systemd unit。Niri release 配置中的 `startup.kdl` 是会话启动项的
 唯一来源，因此服务生命周期与该 Niri 会话一致。
+
+## 源码开发树
+
+`key shell --dev` 是唯一把源码树作为 Quickshell QML 根的入口。普通模式复用
+`current/bin/key` 与 `current/lib/qml`；`--native` 使用固定 `.build/dev` 中的增量
+构件。两者均不把 `current` 指向源码，也不复制源码进 release。完整流程见
+[源码开发工作流](../development.md)。
 
 ## 在线更新边界
 

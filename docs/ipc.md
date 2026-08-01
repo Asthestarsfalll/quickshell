@@ -1,5 +1,10 @@
 # Clavis IPC 命令
 
+`key ipc` 不要求调用者知道 Quickshell 的配置绝对路径。它先校验
+`$XDG_RUNTIME_DIR/clavis/active-shell.json` 并按精确 PID 路由到当前正式或源码开发
+实例；记录陈旧或不存在时回退到 `current` release。Niri 快捷键和脚本因此在
+`key shell` 与 `key shell --dev` 之间切换时保持不变。
+
 Clavis IPC 始终通过当前 release 的稳定入口调用：
 
 ```bash

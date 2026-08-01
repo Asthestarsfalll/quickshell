@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QProcess>
+#include <QProcessEnvironment>
 
 using Clavis::Runtime::ClavisPaths;
 
@@ -68,7 +69,9 @@ CommandResult ManagementCommand::run(const QString &command,
     process.setProgram(QStringLiteral("python3"));
     process.setArguments(QStringList{manager, command} + arguments);
     process.setProcessEnvironment(
-        ClavisPaths::fromEnvironment().processEnvironment(releaseRoot));
+        releaseRoot.isEmpty()
+            ? QProcessEnvironment::systemEnvironment()
+            : ClavisPaths::fromEnvironment().processEnvironment(releaseRoot));
     process.setProcessChannelMode(QProcess::ForwardedChannels);
     process.start();
     if (!process.waitForStarted()) {

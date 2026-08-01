@@ -151,8 +151,19 @@ Qt/C++ 代码统一位于 `core/`：通用 backend 在 `core/src/`，QML wrapper
 - 安装架构变更：在临时 HOME/XDG 中验证 fresh install、重复 install、rollback、
   release remove 和 uninstall dry-run。
 
-界面开发可以用源码 `qs` 做 smoke test；验证已安装版本使用 `key shell`。不要编辑
+界面开发优先使用 `key shell --dev`；验证已安装版本使用 `key shell`。不要编辑
 `.build/`、生成的 `session.kdl` 或 release 内文件来“修复”源码问题。
+
+正式 Shell、源码 Shell 与原生开发的标准入口分别是 `key shell`、`key shell --dev`
+和 `key shell --dev --native`。源码模式从当前目录向上发现仓库；不要把 `current`
+指向源码或为热重载创建 dirty release。普通源码模式复用 current release 的 key 与
+原生 QML plugin；原生模式只在 `.build/dev` 增量构建。另一套完整 Shell 已运行时，
+只有用户明确使用 `--replace` 才按实例 PID 替换；禁止 `pkill qs`/`pkill quickshell`。
+`key ipc` 的 runtime 活动实例协议发生变化时，应同步管理器测试与开发文档。
+
+仓库根 `justfile` 只提供可选工作流缩写，不能承载 `key shell --dev` 的核心环境或路径
+逻辑。公开 recipe 的 doc comment 使用英文，使 `just` 和 `just --list` 默认只显示英文；
+`just help-zh` 维护对应的纯中文命令帮助。新增或修改 recipe 时必须同步两种说明。
 
 `key top` 依赖 `ncursesw`。普通 `key` 不得获得 capability；CPU 功耗 helper 只能由
 用户明确执行 `key setup cpu-power` 安装，任何 AI 任务不得擅自请求 sudo。

@@ -6,7 +6,9 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import signal
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -118,6 +120,7 @@ class ClavisManagerTest(unittest.TestCase):
         (partial / "lib/qml/Clavis/Runtime/qmldir").write_text(
             "module Clavis.Runtime\n"
         )
+        (partial / "lib/qml/M3Shapes/qmldir").write_text("module M3Shapes\n")
         (partial / "share/clavis/qml/shell.qml").write_text(
             "import QtQuick\nItem {}\n"
         )
@@ -220,6 +223,222 @@ class ClavisManagerTest(unittest.TestCase):
                 self.assertEqual(program, str(fixture.bin / "qs"))
                 self.assertEqual(command[-4:], ["ipc", "call", "launcher", "toggle"])
                 self.assertEqual(environment["HOME"], str(paths.home))
+
+    def test_source_tree_discovery_walks_up_and_rejects_other_directories(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-source-test.") as name:
+            root = Path(name) / "checkout"
+            nested = root / "Modules/Spotlight"
+            nested.mkdir(parents=True)
+            (root / ".git").mkdir()
+            (root / "core").mkdir()
+            (root / "packaging").mkdir()
+            (root / "shell.qml").write_text("// source\n")
+            self.assertEqual(manager.locate_source_tree(nested), root)
+            with self.assertRaisesRegex(
+                manager.ClavisError, "Cannot locate the Clavis source tree"
+            ):
+                manager.locate_source_tree(Path(name))
+
+    def test_development_shell_uses_source_qml_and_release_native_components(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-dev-shell-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                os.environ["CLAVIS_SKIP_SYSTEMD"] = "1"
+                executable(fixture.bin / "qs")
+                partial, launcher = self.make_partial_release(paths, "2026.08.01")
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, "2026.08.01", launcher)
+                source = Path(name) / "source"
+                for directory in (source / ".git", source / "core", source / "packaging"):
+                    directory.mkdir(parents=True)
+                (source / "shell.qml").write_text("// development\n")
+                current_before = paths.current_release.resolve()
+                with (
+                    mock.patch.object(manager, "_list_instances", return_value=[]),
+                    mock.patch.object(manager, "_git_identity", return_value=("dev-commit", True)),
+                    mock.patch.object(manager, "_launch_shell", return_value=0) as launch,
+                ):
+                    self.assertEqual(
+                        manager.run_shell(paths, ["--dev", "--source", str(source)]),
+                        0,
+                    )
+                launch_paths, _qs, qml_root, _arguments, environment, metadata = (
+                    launch.call_args.args
+                )
+                release = paths.releases_home / "2026.08.01"
+                self.assertEqual(launch_paths, paths)
+                self.assertEqual(qml_root, source)
+                self.assertNotIn("CLAVIS_RELEASE_ROOT", environment)
+                self.assertEqual(environment["CLAVIS_SOURCE_ROOT"], str(source))
+                self.assertEqual(environment["CLAVIS_RUNTIME_MODE"], "development")
+                self.assertEqual(environment["CLAVIS_KEY"], str(release / "bin/key"))
+                self.assertEqual(
+                    environment["CLAVIS_QML_IMPORT_HOME"], str(release / "lib/qml")
+                )
+                self.assertEqual(metadata["mode"], "development")
+                self.assertEqual(paths.current_release.resolve(), current_before)
+
+    def test_release_shell_ignores_source_tree_and_uses_one_release(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-release-shell-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                executable(fixture.bin / "qs")
+                partial, launcher = self.make_partial_release(paths, "2026.08.01")
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, "2026.08.01", launcher)
+                (SOURCE_ROOT / "shell.qml").stat()  # Source exists but is not selected.
+                with (
+                    mock.patch.object(manager, "_list_instances", return_value=[]),
+                    mock.patch.object(manager, "_launch_shell", return_value=0) as launch,
+                ):
+                    self.assertEqual(manager.run_shell(paths, []), 0)
+                _paths, _qs, qml_root, _arguments, environment, metadata = (
+                    launch.call_args.args
+                )
+                release = paths.releases_home / "2026.08.01"
+                self.assertEqual(qml_root, release / "share/clavis/qml")
+                self.assertEqual(environment["CLAVIS_RELEASE_ROOT"], str(release))
+                self.assertEqual(environment["CLAVIS_KEY"], str(release / "bin/key"))
+                self.assertEqual(
+                    environment["CLAVIS_QML_IMPORT_HOME"], str(release / "lib/qml")
+                )
+                self.assertEqual(metadata["mode"], "release")
+
+    def test_shell_replace_targets_only_the_recorded_instance(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-shell-replace-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                executable(fixture.bin / "qs")
+                partial, launcher = self.make_partial_release(paths, "2026.08.01")
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, "2026.08.01", launcher)
+                release = paths.releases_home / "2026.08.01"
+                active = {
+                    "mode": "development",
+                    "pid": 7331,
+                    "qmlRoot": str(SOURCE_ROOT),
+                }
+                with (
+                    mock.patch.object(manager, "read_active_shell", return_value=active),
+                    mock.patch.object(manager, "_kill_instance") as kill,
+                    mock.patch.object(manager, "_remove_active_shell"),
+                    mock.patch.object(manager, "_launch_shell", return_value=0),
+                ):
+                    self.assertEqual(manager.run_shell(paths, ["--replace"]), 0)
+                kill.assert_called_once_with(str(fixture.bin / "qs"), 7331)
+                self.assertEqual(paths.current_release.resolve(), release)
+
+    def test_native_development_environment_uses_incremental_build_tree(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-native-shell-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                partial, _launcher = self.make_partial_release(paths, "2026.08.01")
+                release = paths.releases_home / "2026.08.01"
+                release.parent.mkdir(parents=True, exist_ok=True)
+                partial.rename(release)
+                source = Path(name) / "source"
+                build = source / ".build/dev"
+                (source / "packaging").mkdir(parents=True)
+                executable(source / "setup.sh")
+                (build / "bin").mkdir(parents=True)
+                executable(build / "bin/key")
+                (build / "Clavis/Runtime").mkdir(parents=True)
+                (build / "Clavis/Runtime/qmldir").write_text("module Clavis.Runtime\n")
+                (build / "M3Shapes").mkdir(parents=True)
+                (build / "M3Shapes/qmldir").write_text("module M3Shapes\n")
+                completed = subprocess.CompletedProcess([], 0)
+                with (
+                    mock.patch.object(manager.subprocess, "run", return_value=completed) as run,
+                    mock.patch.object(
+                        manager,
+                        "_key_handshake",
+                        return_value={"product": "clavis-key", "release": "development", "commit": "abc"},
+                    ),
+                ):
+                    environment, backend, imports, _handshake = manager._development_environment(
+                        paths, release, source, True
+                    )
+                self.assertEqual(
+                    run.call_args_list[0].args[0],
+                    [str(source / "setup.sh"), "dev-build", "--build-dir", str(build)],
+                )
+                self.assertEqual(backend, build / "bin/key")
+                self.assertEqual(imports, build)
+                self.assertEqual(environment["CLAVIS_RUNTIME_MODE"], "development-native")
+                self.assertEqual(
+                    environment["CLAVIS_MANAGER"], str(source / "packaging/clavis-manager.py")
+                )
+
+    def test_ipc_routes_to_valid_runtime_instance_and_cleans_stale_state(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-runtime-ipc-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                executable(fixture.bin / "qs")
+                partial, launcher = self.make_partial_release(paths, "2026.08.01")
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, "2026.08.01", launcher)
+                metadata = {
+                    "schemaVersion": manager.ACTIVE_SHELL_SCHEMA,
+                    "mode": "development",
+                    "pid": 4242,
+                    "processStartTicks": 99,
+                    "qmlRoot": str(SOURCE_ROOT),
+                    "token": "test",
+                }
+                manager.atomic_json(manager.active_shell_path(paths), metadata, 0o600)
+                with (
+                    mock.patch.object(manager, "_process_start_ticks", return_value=99),
+                    mock.patch.object(manager, "_process_is_quickshell", return_value=True),
+                    mock.patch.object(manager.os, "execvpe") as exec_mock,
+                ):
+                    manager.run_ipc(paths, ["call", "spotlight", "toggle"])
+                self.assertEqual(
+                    exec_mock.call_args.args[1][-6:],
+                    ["ipc", "--pid", "4242", "call", "spotlight", "toggle"],
+                )
+
+                manager.atomic_json(manager.active_shell_path(paths), metadata, 0o600)
+                with mock.patch.object(manager, "_process_start_ticks", return_value=None):
+                    self.assertIsNone(manager.read_active_shell(paths))
+                self.assertFalse(manager.active_shell_path(paths).exists())
+
+    def test_shell_runtime_metadata_is_private_and_removed_on_exit(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-shell-metadata-test.") as name:
+            with EnvironmentFixture(Path(name)) as paths:
+                observed: dict[str, object] = {}
+
+                class FakeProcess:
+                    pid = 4242
+
+                    def poll(self) -> None:
+                        return None
+
+                    def send_signal(self, _signum: int) -> None:
+                        pass
+
+                    def wait(self) -> int:
+                        path = manager.active_shell_path(paths)
+                        observed["mode"] = stat.S_IMODE(path.stat().st_mode)
+                        observed["metadata"] = json.loads(path.read_text())
+                        return 0
+
+                with (
+                    mock.patch.object(manager.subprocess, "Popen", return_value=FakeProcess()),
+                    mock.patch.object(manager, "_process_start_ticks", return_value=77),
+                    mock.patch.object(manager.signal, "signal", return_value=signal.SIG_DFL),
+                ):
+                    result = manager._launch_shell(
+                        paths,
+                        "/usr/bin/qs",
+                        SOURCE_ROOT,
+                        [],
+                        os.environ.copy(),
+                        {"mode": "development"},
+                    )
+                self.assertEqual(result, 0)
+                self.assertEqual(observed["mode"], 0o600)
+                self.assertEqual(observed["metadata"]["processStartTicks"], 77)
+                self.assertFalse(manager.active_shell_path(paths).exists())
 
     def test_removed_commands_are_not_routed(self) -> None:
         with tempfile.TemporaryDirectory(prefix="clavis-command-test.") as name:

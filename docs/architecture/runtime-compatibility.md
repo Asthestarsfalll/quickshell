@@ -32,6 +32,11 @@ release 日期用于运维与展示，不作为协议兼容判断。`RuntimeComp
 QML 与 key 都从同一 current release 解析。这是正常安装中避免“新 QML + 系统旧
 plugin”的主要保证。
 
+`key shell --dev` 仍执行相同握手。普通开发模式把 expected release/commit 设置为
+`current` release，并使用该 release 的 key 与 plugins；`--native` 则让
+`.build/dev/bin/key` 和 `.build/dev/Clavis.*` 共享 `development`/Git commit 标识。
+源码 QML 的位置不参与协议版本判断，因而不会因清除 `CLAVIS_RELEASE_ROOT` 而误判。
+
 兼容性升级约定：向后兼容的新能力添加 feature；破坏命令或 JSON 语义时提升相应
 子协议；改变所有管理命令共同语义时提升 core。QML 必须按协议和 feature 判断，
 不得按日期硬编码功能可用性。

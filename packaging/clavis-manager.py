@@ -9,12 +9,14 @@ import hashlib
 import json
 import os
 import re
+import signal
 import shutil
 import shlex
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -26,6 +28,8 @@ RELEASE_PATTERN = re.compile(r"^(\d{4})\.(\d{2})\.(\d{2})(?:\.(\d+))?$")
 REQUIRED_PROTOCOLS = {"core": 1, "clipboard": 2, "sysmon": 1}
 REQUIRED_DATA_SCHEMAS = {"config": 1, "manifest": 1, "profile": 1}
 OBSOLETE_USER_SERVICES = ("clavis-shell.service", "clavis-cliphist.service")
+ACTIVE_SHELL_SCHEMA = 1
+SOURCE_MARKERS = ("shell.qml", "core", "packaging")
 
 
 class ClavisError(RuntimeError):
@@ -73,10 +77,11 @@ def atomic_write(path: Path, data: bytes, mode: int = 0o644) -> None:
             temporary.unlink()
 
 
-def atomic_json(path: Path, value: Any) -> None:
+def atomic_json(path: Path, value: Any, mode: int = 0o644) -> None:
     atomic_write(
         path,
         (json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True) + "\n").encode(),
+        mode,
     )
 
 
@@ -333,6 +338,8 @@ def release_environment(paths: ClavisPaths, release_root: Path) -> dict[str, str
     metadata = read_release_metadata(release_root)
     result["CLAVIS_SHELL_RELEASE"] = metadata["release"]
     result["CLAVIS_SHELL_COMMIT"] = str(metadata.get("commit", "unknown"))
+    result["CLAVIS_RUNTIME_MODE"] = "release"
+    result.pop("CLAVIS_SOURCE_ROOT", None)
     path_entries = [entry for entry in result.get("PATH", "").split(os.pathsep) if entry]
     if str(paths.bin_home) in path_entries:
         path_entries.remove(str(paths.bin_home))
@@ -348,12 +355,425 @@ def executable(name: str) -> str:
     return found
 
 
+def active_shell_path(paths: ClavisPaths) -> Path:
+    return paths.runtime_home / "active-shell.json"
+
+
+def _process_start_ticks(pid: int) -> int | None:
+    try:
+        fields = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8").split()
+        return int(fields[21])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _process_is_quickshell(pid: int, qml_root: Path | None = None) -> bool:
+    try:
+        arguments = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
+    except OSError:
+        return False
+    if not arguments or Path(os.fsdecode(arguments[0])).name not in {
+        "qs",
+        "quickshell",
+    }:
+        return False
+    if qml_root is None:
+        return True
+    decoded = [os.fsdecode(argument) for argument in arguments[1:] if argument]
+    for index, argument in enumerate(decoded[:-1]):
+        if argument in {"--path", "-p"}:
+            try:
+                return Path(decoded[index + 1]).resolve() == qml_root.resolve()
+            except OSError:
+                return False
+    return False
+
+
+def _remove_active_shell(paths: ClavisPaths, token: str | None = None) -> None:
+    path = active_shell_path(paths)
+    if token is not None:
+        try:
+            recorded = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return
+        if recorded.get("token") != token:
+            return
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        pass
+
+
+def read_active_shell(paths: ClavisPaths) -> dict[str, Any] | None:
+    path = active_shell_path(paths)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        pid = int(value["pid"])
+        start_ticks = int(value["processStartTicks"])
+        qml_root = Path(str(value["qmlRoot"]))
+        if (
+            value.get("schemaVersion") != ACTIVE_SHELL_SCHEMA
+            or value.get("mode")
+            not in {"release", "development", "development-native"}
+            or not isinstance(value.get("token"), str)
+            or not value["token"]
+            or not qml_root.is_absolute()
+            or _process_start_ticks(pid) != start_ticks
+            or not _process_is_quickshell(pid, qml_root)
+        ):
+            raise ValueError("stale active shell metadata")
+        return value
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        _remove_active_shell(paths)
+        return None
+
+
+def _source_tree_is_valid(path: Path) -> bool:
+    return (
+        (path / ".git").exists()
+        and (path / SOURCE_MARKERS[0]).is_file()
+        and all((path / marker).is_dir() for marker in SOURCE_MARKERS[1:])
+    )
+
+
+def locate_source_tree(start: Path, override: str | None = None) -> Path:
+    if override:
+        candidate = Path(override).expanduser()
+        if not candidate.is_absolute():
+            candidate = Path.cwd() / candidate
+        candidate = candidate.resolve()
+        if _source_tree_is_valid(candidate):
+            return candidate
+        raise ClavisError(f"not a valid Clavis source tree: {candidate}")
+    candidate = start.resolve()
+    for directory in (candidate, *candidate.parents):
+        if _source_tree_is_valid(directory):
+            return directory
+    raise ClavisError(
+        "Cannot locate the Clavis source tree.\n"
+        "Run this command inside the Clavis repository."
+    )
+
+
+def _git_identity(source_root: Path) -> tuple[str, bool]:
+    commit = subprocess.run(
+        ["git", "-C", str(source_root), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    ).stdout.strip() or "unknown"
+    status = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(source_root),
+            "status",
+            "--porcelain",
+            "--untracked-files=normal",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return commit, bool(status.stdout.strip()) or status.returncode != 0
+
+
+def _key_handshake(key: Path, environment: dict[str, str]) -> dict[str, Any]:
+    result = subprocess.run(
+        [str(key), "version", "--json"],
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise ClavisError(f"development key handshake failed: {result.stderr.strip()}")
+    try:
+        value = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise ClavisError("development key returned invalid version JSON") from error
+    if value.get("product") != "clavis-key":
+        raise ClavisError("development key handshake identifies the wrong product")
+    return value
+
+
+def _development_environment(
+    paths: ClavisPaths,
+    release_root: Path,
+    source_root: Path,
+    native: bool,
+) -> tuple[dict[str, str], Path, Path, dict[str, Any]]:
+    environment = release_environment(paths, release_root)
+    environment.pop("CLAVIS_RELEASE_ROOT", None)
+    build_root = source_root / ".build/dev"
+    if native:
+        build = subprocess.run(
+            [str(source_root / "setup.sh"), "dev-build", "--build-dir", str(build_root)],
+            cwd=source_root,
+            env=os.environ.copy(),
+            check=False,
+        )
+        if build.returncode != 0:
+            raise ClavisError(
+                "native development build failed; the installed release was not changed"
+            )
+        backend_key = build_root / "bin/key"
+        native_import = build_root
+        environment["CLAVIS_MANAGER"] = str(
+            source_root / "packaging/clavis-manager.py"
+        )
+    else:
+        backend_key = release_root / "bin/key"
+        native_import = release_root / "lib/qml"
+        environment.pop("CLAVIS_MANAGER", None)
+    required = (
+        backend_key,
+        native_import / "Clavis/Runtime/qmldir",
+        native_import / "M3Shapes/qmldir",
+    )
+    missing = [str(path) for path in required if not path.exists()]
+    if missing:
+        raise ClavisError(
+            "development native components are incomplete: " + ", ".join(missing)
+        )
+    handshake = _key_handshake(backend_key, environment)
+    environment.update(
+        {
+            "CLAVIS_SOURCE_ROOT": str(source_root),
+            "CLAVIS_RUNTIME_MODE": "development-native" if native else "development",
+            "CLAVIS_KEY": str(backend_key),
+            "CLAVIS_QML_IMPORT_HOME": str(native_import),
+            "CLAVIS_SHELL_RELEASE": str(handshake.get("release", "")),
+            "CLAVIS_SHELL_COMMIT": str(handshake.get("commit", "")),
+        }
+    )
+    path_entries = [
+        entry for entry in environment.get("PATH", "").split(os.pathsep) if entry
+    ]
+    backend_bin = str(backend_key.parent)
+    path_entries = [entry for entry in path_entries if entry != backend_bin]
+    environment["PATH"] = os.pathsep.join([backend_bin, *path_entries])
+    for variable in ("QML_IMPORT_PATH", "QML2_IMPORT_PATH"):
+        entries = [
+            entry
+            for entry in environment.get(variable, "").split(os.pathsep)
+            if entry
+        ]
+        blocked_imports = {
+            (release_root / "lib/qml").resolve(),
+            native_import.resolve(),
+        }
+        entries = [
+            entry
+            for entry in entries
+            if Path(entry).resolve() not in blocked_imports
+        ]
+        environment[variable] = os.pathsep.join([str(native_import), *entries])
+    return environment, backend_key, native_import, handshake
+
+
+def _list_instances(qs: str, qml_root: Path) -> list[dict[str, Any]]:
+    result = subprocess.run(
+        [qs, "list", "--json", "--path", str(qml_root)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return []
+    try:
+        instances = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(instances, list):
+        return []
+    return [item for item in instances if isinstance(item, dict)]
+
+
+def _kill_instance(qs: str, pid: int) -> None:
+    original_start_ticks = _process_start_ticks(pid)
+    if original_start_ticks is None:
+        return
+    result = subprocess.run([qs, "kill", "--pid", str(pid)], check=False)
+    if result.returncode != 0:
+        raise ClavisError(f"unable to stop Quickshell instance {pid}")
+    for _attempt in range(50):
+        if _process_start_ticks(pid) != original_start_ticks:
+            return
+        time.sleep(0.05)
+    raise ClavisError(f"Quickshell instance {pid} did not exit")
+
+
+def _shell_arguments(arguments: list[str]) -> tuple[argparse.Namespace, list[str]]:
+    parser = argparse.ArgumentParser(
+        prog="key shell",
+        usage="key shell [--dev [--native] [--source PATH]] [--replace] "
+        "[--no-duplicate] [QUICKSHELL_OPTIONS...]",
+    )
+    parser.add_argument(
+        "--dev", action="store_true", help="run QML and resources from source"
+    )
+    parser.add_argument(
+        "--native",
+        action="store_true",
+        help="incrementally build and use native components",
+    )
+    parser.add_argument("--source", metavar="PATH", help="explicit Clavis source tree")
+    parser.add_argument(
+        "--replace", action="store_true", help="replace the active Clavis Shell instance"
+    )
+    parser.add_argument(
+        "--no-duplicate",
+        action="store_true",
+        help="exit successfully if this exact Shell is already running",
+    )
+    parsed, passthrough = parser.parse_known_args(arguments)
+    if parsed.native and not parsed.dev:
+        raise ClavisError("--native requires --dev")
+    if parsed.source and not parsed.dev:
+        raise ClavisError("--source requires --dev")
+    if parsed.dev and ("--daemonize" in passthrough or "-d" in passthrough):
+        raise ClavisError("--daemonize is not supported in source development mode")
+    if parsed.no_duplicate:
+        passthrough.insert(0, "--no-duplicate")
+    return parsed, passthrough
+
+
+def _launch_shell(
+    paths: ClavisPaths,
+    qs: str,
+    qml_root: Path,
+    arguments: list[str],
+    environment: dict[str, str],
+    metadata: dict[str, Any],
+) -> int:
+    command = [qs, "--path", str(qml_root), *arguments]
+    process = subprocess.Popen(command, env=environment)
+    start_ticks = _process_start_ticks(process.pid)
+    if start_ticks is None:
+        return process.wait()
+    token = f"{process.pid}-{start_ticks}-{os.urandom(8).hex()}"
+    metadata.update(
+        {
+            "schemaVersion": ACTIVE_SHELL_SCHEMA,
+            "pid": process.pid,
+            "processStartTicks": start_ticks,
+            "qmlRoot": str(qml_root),
+            "startedAt": utc_now(),
+            "token": token,
+        }
+    )
+    atomic_json(active_shell_path(paths), metadata, 0o600)
+    previous_handlers: dict[int, Any] = {}
+
+    def forward(signum: int, _frame: Any) -> None:
+        if process.poll() is None:
+            process.send_signal(signum)
+
+    for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        previous_handlers[signum] = signal.signal(signum, forward)
+    try:
+        return process.wait()
+    finally:
+        for signum, handler in previous_handlers.items():
+            signal.signal(signum, handler)
+        _remove_active_shell(paths, token)
+
+
 def run_shell(paths: ClavisPaths, arguments: list[str]) -> int:
+    options, qs_arguments = _shell_arguments(arguments)
     release = resolve_active_release(paths)
-    qml_root = release / "share/clavis/qml"
-    command = [executable("qs"), "--path", str(qml_root), *arguments]
-    os.execvpe(command[0], command, release_environment(paths, release))
-    return 127
+    release_metadata = read_release_metadata(release)
+    release_qml = release / "share/clavis/qml"
+    qs = executable("qs")
+    source_root: Path | None = None
+    backend_key = release / "bin/key"
+    native_import = release / "lib/qml"
+    environment = release_environment(paths, release)
+    mode = "release"
+    qml_root = release_qml
+    commit = str(release_metadata.get("commit", "unknown"))
+    dirty = bool(release_metadata.get("sourceDirty", False))
+    if options.dev:
+        source_root = locate_source_tree(Path.cwd(), options.source)
+        mode = "development-native" if options.native else "development"
+        qml_root = source_root
+        environment, backend_key, native_import, _handshake = _development_environment(
+            paths, release, source_root, options.native
+        )
+        commit, dirty = _git_identity(source_root)
+    else:
+        environment["CLAVIS_KEY"] = str(backend_key)
+        path_entries = [
+            entry for entry in environment.get("PATH", "").split(os.pathsep) if entry
+        ]
+        release_bin = str(backend_key.parent)
+        environment["PATH"] = os.pathsep.join(
+            [release_bin, *(entry for entry in path_entries if entry != release_bin)]
+        )
+
+    active = read_active_shell(paths)
+    if active is not None:
+        active_pid = int(active["pid"])
+        same = Path(str(active["qmlRoot"])) == qml_root and active.get("mode") == mode
+        if same and options.no_duplicate and not options.replace:
+            print(f"Clavis Shell is already running ({mode}, pid {active_pid}).")
+            return 0
+        if not options.replace:
+            raise ClavisError(
+                f"a Clavis Shell is already running ({active['mode']}, pid {active_pid}); "
+                "rerun with --replace to switch instances"
+            )
+        _kill_instance(qs, active_pid)
+        active_token = active.get("token")
+        if isinstance(active_token, str) and active_token:
+            _remove_active_shell(paths, active_token)
+    else:
+        conflicting: list[dict[str, Any]] = _list_instances(qs, qml_root)
+        if options.dev:
+            conflicting.extend(_list_instances(qs, release_qml))
+        unique = {
+            int(item["pid"]): item
+            for item in conflicting
+            if str(item.get("pid", "")).isdigit()
+        }
+        if unique and options.no_duplicate and not options.replace and all(
+            str(item.get("config_path", "")).startswith(str(qml_root))
+            for item in unique.values()
+        ):
+            print(f"Clavis Shell is already running ({mode}).")
+            return 0
+        if unique and not options.replace:
+            raise ClavisError(
+                "a Clavis Quickshell instance is already running; rerun with --replace to switch instances"
+            )
+        for pid in unique:
+            _kill_instance(qs, pid)
+
+    print(f"Runtime mode: {mode}")
+    print(
+        "Source root: "
+        f"{source_root if source_root is not None else '(installed release)'}"
+    )
+    print(f"QML root: {qml_root}")
+    print(f"Backend key: {backend_key}")
+    print(f"Native QML import root: {native_import}")
+    print(f"Git commit: {commit}")
+    print(f"Working tree dirty: {'yes' if dirty else 'no'}", flush=True)
+    return _launch_shell(
+        paths,
+        qs,
+        qml_root,
+        qs_arguments,
+        environment,
+        {
+            "mode": mode,
+            "backendKey": str(backend_key),
+            "nativeImportRoot": str(native_import),
+            "release": str(release_metadata.get("release", "")),
+            "sourceRoot": str(source_root) if source_root is not None else "",
+        },
+    )
 
 
 def run_ipc(paths: ClavisPaths, arguments: list[str]) -> int:
@@ -361,7 +781,11 @@ def run_ipc(paths: ClavisPaths, arguments: list[str]) -> int:
         arguments = ["show"]
     release = resolve_active_release(paths)
     qml_root = release / "share/clavis/qml"
-    command = [executable("qs"), "--path", str(qml_root), "ipc", *arguments]
+    active = read_active_shell(paths)
+    if active is not None:
+        command = [executable("qs"), "ipc", "--pid", str(active["pid"]), *arguments]
+    else:
+        command = [executable("qs"), "--path", str(qml_root), "ipc", *arguments]
     os.execvpe(command[0], command, release_environment(paths, release))
     return 127
 

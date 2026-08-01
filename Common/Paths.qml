@@ -18,9 +18,12 @@ Singleton {
     }
 
     readonly property string shellDir: Quickshell.shellDir
+    readonly property string runtimeMode: Quickshell.env("CLAVIS_RUNTIME_MODE") || "release"
+    readonly property string sourceRoot: root.absoluteEnvironment("CLAVIS_SOURCE_ROOT")
     readonly property string releaseRoot: root.absoluteEnvironment("CLAVIS_RELEASE_ROOT")
-    readonly property string shareRoot: releaseRoot !== ""
-        ? releaseRoot + "/share/clavis" : shellDir
+    readonly property string shareRoot: runtimeMode.startsWith("development")
+        && sourceRoot !== "" ? sourceRoot
+        : releaseRoot !== "" ? releaseRoot + "/share/clavis" : shellDir
     readonly property string assetsDir: shareRoot + "/assets"
     readonly property string fontsDir: assetsDir + "/fonts"
     readonly property string iconsDir: assetsDir + "/icons"

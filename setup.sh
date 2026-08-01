@@ -28,6 +28,7 @@ Usage:
   ./setup.sh configure [--release YYYY.MM.DD[.N]] [--build-dir PATH]
   ./setup.sh build [--release VERSION] [--build-dir PATH]
   ./setup.sh test [--release VERSION] [--build-dir PATH]
+  ./setup.sh dev-build [--build-dir PATH]
   ./setup.sh install [--release VERSION] [--build-dir PATH] [--dry-run] [--allow-dirty]
   ./setup.sh uninstall-build [--release VERSION] [--build-dir PATH] [--dry-run]
   ./setup.sh dry-run [--release VERSION] [--build-dir PATH]
@@ -167,6 +168,16 @@ resolve_build_dir() {
     build_dir=$(realpath -m -- "$build_dir")
 }
 
+resolve_dev_build_dir() {
+    if [[ -z "$build_dir" ]]; then
+        build_dir=$setup_dir/.build/dev
+    fi
+    if [[ "$build_dir" != /* ]]; then
+        build_dir=$setup_dir/$build_dir
+    fi
+    build_dir=$(realpath -m -- "$build_dir")
+}
+
 print_command() {
     printf '+'
     printf ' %q' "$@"
@@ -291,6 +302,44 @@ configure() {
         -DCLAVIS_CHANNEL=stable
 }
 
+configure_development() {
+    resolve_dev_build_dir
+    local commit
+    commit=$(git -C "$setup_dir" rev-parse HEAD 2>/dev/null || printf 'unknown')
+    local dirty=false
+    if source_is_dirty; then
+        dirty=true
+    fi
+    local fingerprint
+    fingerprint=$(source_fingerprint)
+    local build_time=""
+    if [[ -f "$build_dir/CMakeCache.txt" ]]; then
+        build_time=$(sed -n \
+            's/^CLAVIS_BUILD_TIME:[^=]*=//p' "$build_dir/CMakeCache.txt" \
+            | head -n 1)
+    fi
+    if [[ -z "$build_time" ]]; then
+        build_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+    fi
+    run cmake \
+        -S "$setup_dir/core" \
+        -B "$build_dir" \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_INSTALL_MESSAGE=NEVER \
+        -DBUILD_TESTING=ON \
+        -DCLAVIS_RELEASE=development \
+        -DCLAVIS_COMMIT="$commit" \
+        -DCLAVIS_SOURCE_DIRTY="$dirty" \
+        -DCLAVIS_SOURCE_FINGERPRINT="$fingerprint" \
+        -DCLAVIS_BUILD_TIME="$build_time" \
+        -DCLAVIS_CHANNEL=development
+}
+
+dev_build() {
+    configure_development
+    run cmake --build "$build_dir" --parallel
+}
+
 build() {
     configure
     run cmake --build "$build_dir" --parallel
@@ -388,6 +437,9 @@ case "$command_name" in
         ;;
     test)
         test_release
+        ;;
+    dev-build)
+        dev_build
         ;;
     install)
         install_release
