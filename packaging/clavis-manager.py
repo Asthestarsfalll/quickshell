@@ -599,6 +599,7 @@ def finalize_install(
         created_final = True
 
     previous = str(manifest.get("activeRelease", ""))
+    previous_root = paths.releases_home / previous if previous else None
     profile_dirs = [
         paths.config_home / "overrides",
         paths.data_home / "wallpapers",
@@ -668,6 +669,7 @@ def finalize_install(
         reload_user_units()
         raise
     reload_user_units()
+    restart_long_running(paths, previous_root)
     print(f"Installed Clavis {release} at {final}")
     print(f"Stable command: {paths.stable_key}")
     return 0
@@ -728,12 +730,12 @@ def _service_is_active(name: str) -> bool:
     return result.returncode == 0
 
 
-def restart_long_running(paths: ClavisPaths, old_root: Path) -> None:
+def restart_long_running(paths: ClavisPaths, old_root: Path | None) -> None:
     active_services = {name: _service_is_active(name) for name in MANAGED_SERVICES}
     qs = shutil.which("qs")
     manual_shell_running = False
-    old_qml = old_root / "share/clavis/qml"
-    if qs:
+    if qs and old_root is not None:
+        old_qml = old_root / "share/clavis/qml"
         listed = subprocess.run(
             [qs, "list", "--json", "--path", str(old_qml)],
             check=False,

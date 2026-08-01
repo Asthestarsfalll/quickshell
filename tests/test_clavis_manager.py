@@ -259,7 +259,9 @@ class ClavisManagerTest(unittest.TestCase):
                 executable(fixture.bin / "qs")
                 release = "2026.08.01"
                 partial, launcher = self.make_partial_release(paths, release)
-                manager.finalize_install(paths, partial, release, launcher)
+                with mock.patch.object(manager, "restart_long_running") as restart:
+                    manager.finalize_install(paths, partial, release, launcher)
+                restart.assert_called_once_with(paths, None)
 
                 with mock.patch.object(manager.os, "execvpe") as exec_mock:
                     self.assertEqual(
