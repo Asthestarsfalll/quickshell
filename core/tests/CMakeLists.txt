@@ -1,5 +1,11 @@
 find_package(Qt6 REQUIRED COMPONENTS Test)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_program(BASH_EXECUTABLE bash REQUIRED)
+
+add_test(
+    NAME shader_asset_tests
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_shader_assets.sh
+)
 
 add_test(
     NAME qml_unit_tests

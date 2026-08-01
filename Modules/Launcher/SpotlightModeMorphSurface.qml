@@ -284,9 +284,9 @@ Item {
             root.buttonBridgeRadius(2)
         property real edgeSoftness: root.edgeSoftness
 
-        fragmentShader: Qt.resolvedUrl(
-            "../../assets/shaders/launcher/qsb/spotlight_mode_morph.frag.qsb"
-        )
+        fragmentShader: Paths.fileUrl(
+            Paths.assetsDir
+                + "/shaders/launcher/qsb/spotlight_mode_morph.frag.qsb")
     }
 
     MultiEffect {

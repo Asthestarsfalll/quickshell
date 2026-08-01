@@ -31,9 +31,9 @@ Item {
         property real blendRadius: root.blendRadius
         property real edgeSoftness: root.edgeSoftness
 
-        fragmentShader: Qt.resolvedUrl(
-            "../../../../assets/shaders/keystone/qsb/pill_morph.frag.qsb"
-        )
+        fragmentShader: Paths.fileUrl(
+            Paths.assetsDir
+                + "/shaders/keystone/qsb/pill_morph.frag.qsb")
     }
 
     MorphShader {

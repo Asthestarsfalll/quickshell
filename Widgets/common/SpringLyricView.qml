@@ -47,6 +47,7 @@ Item {
     property real _currentStiffness: baseStiffness
     property real _currentDamping: baseDamping
     property bool _animating: false
+    property bool _layoutImmediateRequested: false
 
     clip: true
 
@@ -131,9 +132,9 @@ Item {
     }
 
     function scheduleLayout(immediate) {
-        Qt.callLater(function() {
-            root.layoutLines(immediate);
-        });
+        root._layoutImmediateRequested =
+            root._layoutImmediateRequested || immediate;
+        layoutTimer.restart();
     }
 
     function resetToLine(index) {
@@ -227,6 +228,18 @@ Item {
         }
 
         root._animating = running;
+    }
+
+    Timer {
+        id: layoutTimer
+
+        interval: 0
+        repeat: false
+        onTriggered: {
+            const immediate = root._layoutImmediateRequested;
+            root._layoutImmediateRequested = false;
+            root.layoutLines(immediate);
+        }
     }
 
     Timer {
