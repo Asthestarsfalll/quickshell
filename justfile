@@ -1,60 +1,48 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
-
-root := justfile_directory()
-
-# Show all development workflows in English without taking action
-default:
-    @just --list
+set default-list
 
 # Show all development workflows in Chinese without taking action
 help-zh:
     @printf '%s\n' \
-        '可用命令：' \
-        '    build              使用 setup.sh 配置并构建正式构件，不创建 release' \
-        '    default            显示英文命令帮助，不执行任何操作' \
-        '    dev                从源码启动 Quickshell，支持 QML 与资源热重载' \
-        '    dev-native         增量编译 C++ 与原生 QML 插件后启动源码 Shell' \
-        '    dev-native-replace 增量编译原生构件并停止当前 Shell 后启动开发实例' \
-        '    dev-replace        停止当前 Clavis Shell 并切换到源码开发实例' \
-        '    doctor             只读检查构建与运行依赖，不安装软件' \
-        '    help-zh            显示中文命令帮助，不执行任何操作' \
-        '    install            构建、测试并安装新的不可变用户级 release' \
-        '    releases           列出已安装 release 与当前版本，不修改任何 release' \
-        '    test               使用 setup.sh 构建并运行完整 CTest，不创建 release'
+    '可用命令：' \
+    '    dev         停止当前 Clavis Shell，并从源码启动支持热重载的开发实例' \
+    '    dev-native  增量编译 C++ 与原生 QML 插件，并启动源码开发实例' \
+    '    dn          dev-native 的简短别名' \
+    '    build       使用 setup.sh 配置并构建正式构件，不创建 release' \
+    '    test        使用 setup.sh 构建并运行完整 CTest，不创建 release' \
+    '    doctor      只读检查构建与运行依赖，不安装软件' \
+    '    install     构建、测试并安装新的不可变用户级 release' \
+    '    releases    列出已安装的 release 与当前版本，不修改任何 release' \
+    '    help-zh     显示中文命令帮助，不执行任何操作'
 
-# Run Quickshell from source with QML and asset hot reload
+# Replace the active Shell and run Quickshell directly from source with hot reload
 dev:
-    cd "{{root}}" && key shell --dev
+    key shell --dev --replace
 
-# Stop the active Clavis Shell and replace it with a source development instance
-dev-replace:
-    cd "{{root}}" && key shell --dev --replace
-
-# Incrementally build C++ and native QML plugins, then run the source Shell
+# Incrementally build native components and replace the active Shell with a source development instance
 dev-native:
-    cd "{{root}}" && key shell --dev --native
+    key shell --dev --native --replace
 
-# Incrementally build native components, stop the active Shell, and start development
-dev-native-replace:
-    cd "{{root}}" && key shell --dev --native --replace
+# Short alias for dev-native
+alias dn := dev-native
 
-# Configure and build release components through setup.sh without creating a release
+# Configure and build release components without creating a release
 build:
-    cd "{{root}}" && ./setup.sh build
+    ./setup.sh build
 
-# Build and run the full CTest suite through setup.sh without creating a release
+# Build the project and run the complete CTest suite without creating a release
 test:
-    cd "{{root}}" && ./setup.sh test
+    ./setup.sh test
 
 # Check build and runtime dependencies without installing software
 doctor:
-    cd "{{root}}" && ./setup.sh doctor
+    ./setup.sh doctor
 
 # Build, test, and install a new immutable user-level release
 install:
-    cd "{{root}}" && ./setup.sh install
+    ./setup.sh install
 
-# List installed releases and the current version without changing releases
+# Show the current version and list all installed releases
 releases:
-    cd "{{root}}" && key version --json
-    cd "{{root}}" && key release list
+    key version --json
+    key release list
