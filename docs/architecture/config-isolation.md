@@ -6,6 +6,7 @@ Clavis 只在自己的 namespace 中写入：
 
 ```text
 $XDG_CONFIG_HOME/clavis/             用户可编辑设置与 overrides
+$XDG_CONFIG_HOME/clavis/profiles/    profile 专属应用与 Matugen 配置
 $XDG_DATA_HOME/clavis/               profile、壁纸和持久数据
 $XDG_STATE_HOME/clavis/              manifest、历史、迁移报告和备份
 $XDG_CACHE_HOME/clavis/              可安全删除的缓存
@@ -22,23 +23,27 @@ QML import 路径，不修改用户的 niri 或应用配置。
 
 `key session` 使用 `niri --session --config <generated-session.kdl>`。配置按顺序包含：
 
-1. release 中只读的 base；
+1. release 中只读的完整 Niri 默认配置；
 2. profile `generated/niri` 中的颜色、光标和效果；
-3. `$XDG_CONFIG_HOME/clavis/overrides/niri.kdl`。
+3. 兼容覆盖 `$XDG_CONFIG_HOME/clavis/overrides/niri.kdl`；
+4. profile 覆盖 `$XDG_CONFIG_HOME/clavis/profiles/<profile>/niri/override.kdl`。
 
 它不会把 Clavis 的 `XDG_CONFIG_HOME` 传播给整个桌面，也拒绝在现有 niri 会话中嵌套。
 
-`key run kitty|btop|cava|yazi` 分别使用应用支持的 `--config`、`--themes-dir`、`-p`
-或 `YAZI_CONFIG_HOME`。运行时合成文件写入 profile `generated/runtime`，层次为 release
-base、generated、用户 override。普通应用仍读取自己的正常 XDG 路径。
+`key run kitty|btop|cava|yazi|fcitx5` 分别使用应用支持的 `--config`、
+`--themes-dir`、`-p`、`YAZI_CONFIG_HOME` 或进程级 XDG 环境。运行时合成文件写入
+profile `generated/runtime`，层次为完整 release base、generated、用户 override。
+Kitty 中的 Zsh 使用 profile 专属 `ZDOTDIR`；Fcitx5 隔离自己的配置和可写数据根，
+只继续查找标准系统 data dirs，不读取旧用户 data home 中的 Rime 数据库。
 
 ## Matugen 三层
 
-第一层始终生成 Clavis 内部 `colors.json`。第二层只在设置中心明确打开对应模板后生成
-到 `$XDG_DATA_HOME/clavis/profiles/<profile>/generated`。模板自身没有 post-hook，
-不会触碰外部配置。
+第一层始终生成 Clavis 内部 `colors.json`。第二层只在设置中心明确打开对应模板后生成。
+每个 profile 的原生 Matugen 配置位于
+`$XDG_CONFIG_HOME/clavis/profiles/<profile>/matugen/config.toml`；用户可以修改
+`output_path`，Clavis 根据开关过滤模板并拒绝执行 post-hook。
 
-第三层是逐 adapter 外部导出。支持 Kitty、btop、Cava、niri、Yazi、Zsh prompt、
+旧版本的第三层是逐 adapter 外部导出。支持 Kitty、btop、Cava、niri、Yazi、Zsh prompt、
 Fcitx5 和桌面 gsettings。每次导出会：
 
 - 检测目标程序、源资源和准确目标；
@@ -53,7 +58,8 @@ Fcitx5 和桌面 gsettings。每次导出会：
 等于 applied 值才恢复；用户后续修改会被保留。QML 不再直接写 gsettings 或
 `~/.Xresources`。
 
-Fcitx5 是共享会话服务，导出 UI 和 manifest 都明确标记它不是 profile 隔离。
+旧导出机制曾把 Fcitx5 作为共享会话服务处理；当前设置中心不再创建新的第三层
+export，`key export` 仅为已有 manifest 的兼容清理保留。
 
 ## 迁移与兼容
 

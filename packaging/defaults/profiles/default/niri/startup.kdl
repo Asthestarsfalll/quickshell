@@ -1,0 +1,12 @@
+// 询问管理员权限功能（身份验证）
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+spawn-sh-at-startup "$HOME/.local/bin/key run fcitx5"
+spawn-at-startup "nm-applet"
+spawn-at-startup "blueman-applet"
+// spawn-at-startup "awww-daemon"
+
+// spawn-sh-at-startup "awww-daemon -n overview"
+
+// Clipboard history is managed by clavis-cliphist.service.
+
+// spawn-at-startup "hypridle"

@@ -81,6 +81,11 @@ Singleton {
             root.keyAvailable, root.features, name);
     }
 
+    function ipcCommand(target, methodAndArguments) {
+        return RuntimeRules.ipcCommand(
+            root.commandName, target, methodAndArguments);
+    }
+
     function refresh() {
         if (versionProcess.running)
             return false;

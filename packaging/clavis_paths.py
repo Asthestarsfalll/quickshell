@@ -40,6 +40,7 @@ class ClavisPaths:
     cache_home: Path
     runtime_home: Path
     profile_name: str
+    profile_config_home: Path
     profile_home: Path
     generated_home: Path
     qml_import_home: Path
@@ -86,6 +87,10 @@ class ClavisPaths:
             _absolute_env("CLAVIS_PROFILE_HOME")
             or data_home / "profiles" / profile_name
         )
+        profile_config_home = (
+            _absolute_env("CLAVIS_PROFILE_CONFIG_HOME")
+            or config_home / "profiles" / profile_name
+        )
         generated_home = (
             _absolute_env("CLAVIS_GENERATED_HOME")
             or profile_home / "generated"
@@ -104,6 +109,7 @@ class ClavisPaths:
             cache_home=cache_home,
             runtime_home=runtime_home,
             profile_name=profile_name,
+            profile_config_home=profile_config_home,
             profile_home=profile_home,
             generated_home=generated_home,
             qml_import_home=qml_import_home,
@@ -145,6 +151,7 @@ class ClavisPaths:
             "CLAVIS_CACHE_HOME": str(self.cache_home),
             "CLAVIS_RUNTIME_HOME": str(self.runtime_home),
             "CLAVIS_PROFILE": self.profile_name,
+            "CLAVIS_PROFILE_CONFIG_HOME": str(self.profile_config_home),
             "CLAVIS_PROFILE_HOME": str(self.profile_home),
             "CLAVIS_GENERATED_HOME": str(self.generated_home),
             "CLAVIS_QML_IMPORT_HOME": str(qml_import),

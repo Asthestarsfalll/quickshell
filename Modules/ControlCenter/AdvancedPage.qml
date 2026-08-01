@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls.Material as MaterialControls
 import qs.Common
 import qs.Services
 import qs.Widgets.common
@@ -51,16 +50,6 @@ StyledFlickable {
         })
     ]
 
-    function exportTitle(id) {
-        if (id === "desktop")
-            return qsTr("桌面图标、光标与明暗模式");
-        for (let index = 0; index < root.templatePrograms.length; index += 1) {
-            if (root.templatePrograms[index].id === id)
-                return root.templatePrograms[index].title;
-        }
-        return id;
-    }
-
     ColumnLayout {
         id: contentColumn
 
@@ -80,7 +69,7 @@ StyledFlickable {
         SettingsSection {
             Layout.fillWidth: true
             title: qsTr("Clavis Profile 配色")
-            supportingText: qsTr("Quickshell 配色始终写入 Clavis 数据目录。下列开关只生成独立 profile 资源，不会写入你现有的应用配置；外部环境导出需要另行明确授权。")
+            supportingText: qsTr("Quickshell 配色始终写入 Clavis 数据目录。下列开关只生成当前 profile 使用的资源；输出路径可在 Matugen 配置中编辑。")
 
             Repeater {
                 model: root.templatePrograms
@@ -110,71 +99,41 @@ StyledFlickable {
                     }
                 }
             }
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                text: qsTr("编辑 Matugen 配置")
+                iconName: "edit_note"
+                trailingIconName: "open_in_new"
+                enabled: !ThemeService.generating
+                Accessible.name: qsTr("使用默认编辑器打开 Matugen 配置")
+                onClicked: ThemeService.openMatugenConfig()
+            }
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                text: qsTr("重新生成配色")
+                iconName: "refresh"
+                trailingIconName: ""
+                enabled: !ThemeService.generating
+                Accessible.name: qsTr("根据 Matugen 配置重新生成配色")
+                onClicked: ThemeService.regenerateFromCurrentWallpaper()
+            }
         }
 
         InlineStatusBanner {
             Layout.fillWidth: true
-            visible: ExternalThemeExportService.lastError !== ""
-            tone: ExternalThemeExportService.conflictApplication !== ""
-                ? "warning" : "error"
-            message: ExternalThemeExportService.lastError
+            visible: ThemeService.lastGenerationError !== ""
+            tone: "error"
+            message: ThemeService.lastGenerationError
         }
 
-        SettingsRow {
+        InlineStatusBanner {
             Layout.fillWidth: true
-            visible: ExternalThemeExportService.conflictApplication !== ""
-            iconName: "backup"
-            title: qsTr("检测到外部配置冲突")
-            supportingText: qsTr("只有确认后才会备份原文件并原子替换。")
-
-            trailing: MaterialControls.Button {
-                text: qsTr("备份并替换")
-                enabled: !ExternalThemeExportService.busy
-                Accessible.name: qsTr("备份并替换冲突的外部主题文件")
-                onClicked: ExternalThemeExportService.replaceConflict()
-            }
-        }
-
-        SettingsSection {
-            Layout.fillWidth: true
-            title: qsTr("外部应用主题导出")
-            supportingText: qsTr("默认关闭。每个 adapter 会先检测程序和准确目标路径；冲突不会被静默覆盖，禁用时也会保留用户修改过的文件。Fcitx5 是共享会话服务，并非完全隔离。")
-
-            Repeater {
-                model: ExternalThemeExportService.applications
-
-                SettingsRow {
-                    id: exportRow
-                    required property string modelData
-
-                    readonly property var exportStatus:
-                        ExternalThemeExportService.status(modelData)
-
-                    Layout.fillWidth: true
-                    iconName: exportStatus.managed ? "verified_user" : "ios_share"
-                    title: root.exportTitle(modelData)
-                    supportingText: (exportStatus.installed
-                        ? ExternalThemeExportService.targetText(modelData)
-                        : qsTr("目标程序未安装 · ")
-                            + ExternalThemeExportService.targetText(modelData))
-
-                    trailing: MaterialControls.Button {
-                        text: exportRow.exportStatus.managed
-                            ? qsTr("禁用") : qsTr("导出")
-                        enabled: !ExternalThemeExportService.busy
-                            && exportRow.exportStatus.installed
-                        Accessible.name: exportRow.exportStatus.managed
-                            ? qsTr("禁用 %1 外部主题导出").arg(exportRow.title)
-                            : qsTr("导出 %1 外部主题").arg(exportRow.title)
-                        onClicked: {
-                            if (exportRow.exportStatus.managed)
-                                ExternalThemeExportService.disable(exportRow.modelData);
-                            else
-                                ExternalThemeExportService.enable(exportRow.modelData);
-                        }
-                    }
-                }
-            }
+            visible: ThemeService.lastGenerationMessage !== ""
+                && ThemeService.lastGenerationError === ""
+            message: ThemeService.lastGenerationMessage
+            iconName: "check_circle"
         }
 
         Item {

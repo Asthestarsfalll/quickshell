@@ -65,6 +65,7 @@ class EnvironmentFixture:
             "CLAVIS_RUNTIME_HOME",
             "CLAVIS_PROFILE",
             "CLAVIS_PROFILE_HOME",
+            "CLAVIS_PROFILE_CONFIG_HOME",
             "CLAVIS_GENERATED_HOME",
             "CLAVIS_QML_IMPORT_HOME",
         ):
@@ -162,12 +163,22 @@ class ClavisManagerTest(unittest.TestCase):
                 self.assertEqual(paths.state_home, Path(name) / "state/clavis")
                 self.assertEqual(paths.cache_home, Path(name) / "cache/clavis")
                 self.assertEqual(paths.runtime_home, Path(name) / "runtime/clavis")
+                self.assertEqual(
+                    paths.profile_config_home,
+                    Path(name) / "config/clavis/profiles/default",
+                )
                 self.assertNotIn(str(SOURCE_ROOT), paths.as_environment(Path(name) / "release").values())
                 os.environ["CLAVIS_PROFILE_HOME"] = str(Path(name) / "profile")
+                os.environ["CLAVIS_PROFILE_CONFIG_HOME"] = str(
+                    Path(name) / "profile-config"
+                )
                 os.environ["CLAVIS_GENERATED_HOME"] = str(Path(name) / "generated")
                 os.environ["CLAVIS_QML_IMPORT_HOME"] = str(Path(name) / "qml")
                 overridden = ClavisPaths.from_environment()
                 self.assertEqual(overridden.profile_home, Path(name) / "profile")
+                self.assertEqual(
+                    overridden.profile_config_home, Path(name) / "profile-config"
+                )
                 self.assertEqual(overridden.generated_home, Path(name) / "generated")
                 self.assertEqual(overridden.qml_import_home, Path(name) / "qml")
                 os.environ["XDG_CONFIG_HOME"] = "relative"
@@ -273,13 +284,18 @@ class ClavisManagerTest(unittest.TestCase):
                     )
                 program, command, environment = exec_mock.call_args.args
                 release_root = paths.releases_home / release
+                profile_override = paths.profile_config_home / "niri/override.kdl"
+                profile_override.parent.mkdir(parents=True)
+                profile_override.write_text("hotkey-overlay { skip-at-startup; }\n")
                 session_config = manager.prepare_niri_profile(
                     paths, release_root
                 )
+                session_text = session_config.read_text(encoding="utf-8")
                 self.assertIn(
                     f'spawn-at-startup "{paths.stable_key}" "shell" "--no-duplicate"',
-                    session_config.read_text(encoding="utf-8"),
+                    session_text,
                 )
+                self.assertIn(f'include "{profile_override}"', session_text)
                 self.assertEqual(program, str(fixture.bin / "qs"))
                 self.assertEqual(
                     command,
@@ -295,6 +311,74 @@ class ClavisManagerTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     environment["CLAVIS_RELEASE_ROOT"], str(release_root)
+                )
+
+                with mock.patch.object(manager.os, "execvpe") as list_mock:
+                    manager.run_ipc(paths, ["list"])
+                self.assertEqual(
+                    list_mock.call_args.args[1],
+                    [
+                        str(fixture.bin / "qs"),
+                        "--path",
+                        str(release_root / "share/clavis/qml"),
+                        "ipc",
+                        "show",
+                    ],
+                )
+
+    def test_profile_applications_seed_isolated_fcitx_and_zsh_config(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-profile-app-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                os.environ["CLAVIS_SKIP_SYSTEMD"] = "1"
+                executable(fixture.bin / "kitty")
+                executable(fixture.bin / "fcitx5")
+                release = "2026.08.01"
+                partial, launcher = self.make_partial_release(paths, release)
+                defaults = partial / "share/clavis/defaults/profiles/default"
+                (defaults / "kitty").mkdir(parents=True)
+                (defaults / "kitty/kitty.conf").write_text("font_size 15\n")
+                (defaults / "zsh").mkdir()
+                (defaults / "zsh/.zshrc").write_text("setopt promptsubst\n")
+                (defaults / "fcitx5/conf").mkdir(parents=True)
+                (defaults / "fcitx5/config").write_text("Hotkey={}\n")
+                (defaults / "fcitx5/conf/classicui.conf").write_text(
+                    "Theme=Clavis\n"
+                )
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, release, launcher)
+                release_root = paths.releases_home / release
+
+                with mock.patch.object(manager.os, "execvpe") as kitty_exec:
+                    manager.run_profile_application(paths, "kitty", [])
+                kitty_environment = kitty_exec.call_args.args[2]
+                self.assertEqual(
+                    kitty_environment["ZDOTDIR"],
+                    str(paths.profile_config_home / "zsh"),
+                )
+                self.assertTrue(
+                    (paths.profile_config_home / "zsh/.zshrc").is_file()
+                )
+
+                with mock.patch.object(manager.os, "execvpe") as fcitx_exec:
+                    manager.run_profile_application(paths, "fcitx5", [])
+                program, command, fcitx_environment = fcitx_exec.call_args.args
+                self.assertEqual(program, str(fixture.bin / "fcitx5"))
+                self.assertEqual(command, [str(fixture.bin / "fcitx5")])
+                self.assertEqual(
+                    fcitx_environment["XDG_CONFIG_HOME"],
+                    str(paths.profile_config_home),
+                )
+                self.assertTrue(
+                    (paths.profile_config_home / "fcitx5/config").is_file()
+                )
+                self.assertNotIn(
+                    str(paths.home / ".local/share"),
+                    fcitx_environment["XDG_DATA_DIRS"].split(":"),
+                )
+                self.assertEqual(
+                    manager.load_manifest(paths)["profiles"][0]["configPath"],
+                    str(paths.profile_config_home),
                 )
 
     def test_repeated_install_rejects_a_mutated_immutable_release(self) -> None:

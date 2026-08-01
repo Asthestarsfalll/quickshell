@@ -139,6 +139,7 @@ install(
     FILES
         "${CLAVIS_SOURCE_ROOT}/packaging/clavis-manager.py"
         "${CLAVIS_SOURCE_ROOT}/packaging/clavis_paths.py"
+        "${CLAVIS_SOURCE_ROOT}/packaging/matugen_config.py"
     DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/libexec"
 )
 install(

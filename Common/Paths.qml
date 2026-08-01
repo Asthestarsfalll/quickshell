@@ -64,10 +64,15 @@ Singleton {
     readonly property string requestedProfileName: Quickshell.env("CLAVIS_PROFILE") || "default"
     readonly property string profileName: root.validProfileName(requestedProfileName)
         ? requestedProfileName.trim() : "default"
+    readonly property string profileConfigHome:
+        root.absoluteEnvironment("CLAVIS_PROFILE_CONFIG_HOME")
+        || configHome + "/profiles/" + profileName
     readonly property string profileHome: root.absoluteEnvironment("CLAVIS_PROFILE_HOME")
         || dataHome + "/profiles/" + profileName
     readonly property string generatedHome: root.absoluteEnvironment("CLAVIS_GENERATED_HOME")
         || profileHome + "/generated"
+    readonly property string matugenConfig:
+        profileConfigHome + "/matugen/config.toml"
     readonly property string qmlImportHome: root.absoluteEnvironment("CLAVIS_QML_IMPORT_HOME")
         || currentRelease + "/lib/qml"
     readonly property string currentWallpaper: stateHome + "/wallpaper/current"

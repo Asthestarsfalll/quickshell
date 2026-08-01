@@ -102,4 +102,16 @@ TestCase {
         verify(!result.coreCompatible);
         compare(result.errorCode, "invalid_version_handshake");
     }
+
+    function test_ipcCommandAlwaysUsesStableKey() {
+        compare(
+            RuntimeRules.ipcCommand(
+                "/home/test/.local/bin/key", "wallpaper",
+                ["setFolder", "/home/test/Pictures"]),
+            [
+                "/home/test/.local/bin/key", "ipc", "call",
+                "wallpaper", "setFolder", "/home/test/Pictures"
+            ]
+        );
+    }
 }

@@ -50,6 +50,10 @@ Variants {
         return invoke("hub");
     }
 
+    function dashboard(): string {
+        return invoke("dashboard");
+    }
+
     function tools(): string {
         return invoke("tools");
     }
@@ -87,6 +91,17 @@ Variants {
             closeAllOthers();
             root.showHub = true;
             return "HUB_OPENED";
+        }
+
+        function dashboard(): string {
+            if (root.showHub && root.hubTabIndex === 0) {
+                root.showHub = false;
+                return "DASHBOARD_CLOSED";
+            }
+            closeAllOthers();
+            root.hubTabIndex = 0;
+            root.showHub = true;
+            return "DASHBOARD_OPENED";
         }
 
         function tools(): string {

@@ -26,6 +26,15 @@ function nativePluginsCompatible(expectedRelease, expectedCommit,
         && (expectedCommit === "" || pluginCommit === expectedCommit);
 }
 
+function ipcCommand(commandName, target, methodAndArguments) {
+    const command = [String(commandName), "ipc", "call", String(target)];
+    const values = Array.isArray(methodAndArguments)
+        ? methodAndArguments : [];
+    for (let index = 0; index < values.length; index += 1)
+        command.push(String(values[index]));
+    return command;
+}
+
 function evaluate(response, expectedRelease, expectedCommit,
                   pluginRelease, pluginCommit, requiredProtocols,
                   requiredClipboardFeatures) {

@@ -32,6 +32,9 @@ clavis/
 桌面快捷键不得调用未指定配置的裸 `quickshell ipc`，因为 Quickshell 的实例身份包含
 配置绝对路径，移动源码后该身份会发生变化。
 
+`key ipc list` 是 `key ipc show` 的兼容别名；完整 target 和 method 清单见
+[IPC 命令](../ipc.md)。
+
 ## 统一路径解析
 
 同一组语义由以下薄实现映射到各运行环境：
@@ -44,7 +47,8 @@ clavis/
 支持 `CLAVIS_INSTALL_PREFIX`、`CLAVIS_BIN_HOME`、`CLAVIS_CONFIG_HOME`、
 `CLAVIS_DATA_HOME`、`CLAVIS_STATE_HOME`、`CLAVIS_CACHE_HOME`、
 `CLAVIS_RUNTIME_HOME`、`CLAVIS_PROFILE`、`CLAVIS_PROFILE_HOME`、
-`CLAVIS_GENERATED_HOME` 与 `CLAVIS_QML_IMPORT_HOME`。未设置时按 XDG Base
+`CLAVIS_PROFILE_CONFIG_HOME`、`CLAVIS_GENERATED_HOME` 与
+`CLAVIS_QML_IMPORT_HOME`。未设置时按 XDG Base
 Directory 解析。路径覆盖值必须是绝对路径；内部协议不使用 `~` 展开。
 
 ## 发布事务

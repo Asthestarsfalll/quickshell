@@ -11,6 +11,8 @@ Singleton {
 
     property bool generating: false
     property string lastSource: ""
+    property string lastGenerationError: ""
+    property string lastGenerationMessage: ""
     property var availableIconThemes: [({ "label": qsTr("系统默认"), "value": "" })]
     property var availableCursorThemes: [({ "label": qsTr("系统默认"), "value": "" })]
     property string systemDefaultIconTheme: ""
@@ -252,6 +254,8 @@ cursor {
             return;
 
         root.applyConfigToAppearance();
+        root.lastGenerationError = "";
+        root.lastGenerationMessage = "";
         root.lastSource = path;
         const command = [
             "bash", Paths.scriptPath("theme", "generate_matugen_colors.sh"),
@@ -279,6 +283,8 @@ cursor {
 
         const sourceColor = root.opaqueHexFromColor(value);
         root.applyConfigToAppearance();
+        root.lastGenerationError = "";
+        root.lastGenerationMessage = "";
         root.lastSource = value;
         const command = [
             "bash", Paths.scriptPath("theme", "generate_matugen_colors.sh"),
@@ -298,6 +304,20 @@ cursor {
             root.generateFromWallpaper(path);
         else if (path && path !== "" && WallpaperService.isColorSource(path))
             root.generateFromColor(path);
+        else
+            root.lastGenerationError = qsTr("当前没有可用于重新生成配色的壁纸或颜色");
+    }
+
+    function openMatugenConfig() {
+        if (ensureMatugenConfigProcess.running)
+            return false;
+        root.lastGenerationError = "";
+        ensureMatugenConfigProcess.command = [
+            "bash",
+            Paths.scriptPath("theme", "ensure_matugen_config.sh")
+        ];
+        ensureMatugenConfigProcess.running = true;
+        return true;
     }
 
     Component.onCompleted: {
@@ -344,12 +364,36 @@ cursor {
     Process {
         id: generateColorsProcess
         onRunningChanged: if (running) root.generating = true
+        stderr: StdioCollector {
+            onStreamFinished: root.lastGenerationError = this.text.trim()
+        }
         onExited: exitCode => {
             root.generating = false;
-            if (exitCode === 0)
+            if (exitCode === 0) {
+                root.lastGenerationError = "";
+                root.lastGenerationMessage = qsTr("Matugen 配色已重新生成");
                 Appearance.reloadColors();
-            else
+            } else {
+                if (root.lastGenerationError === "")
+                    root.lastGenerationError = qsTr("Matugen 配色生成失败（退出码 %1）").arg(exitCode);
                 console.error("Matugen color generation failed with exit code", exitCode);
+            }
+        }
+    }
+
+    Process {
+        id: ensureMatugenConfigProcess
+        property string errorOutput: ""
+        stderr: StdioCollector {
+            onStreamFinished: ensureMatugenConfigProcess.errorOutput = this.text.trim()
+        }
+        onRunningChanged: if (running) errorOutput = ""
+        onExited: exitCode => {
+            if (exitCode === 0)
+                Qt.openUrlExternally(Paths.fileUrl(Paths.matugenConfig));
+            else
+                root.lastGenerationError = errorOutput !== ""
+                    ? errorOutput : qsTr("无法初始化 Matugen 配置文件");
         }
     }
 }

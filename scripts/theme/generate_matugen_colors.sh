@@ -8,12 +8,12 @@ source "$scripts_dir/lib/clavis-paths.sh"
 clavis_paths_init
 
 share_root=$(cd -- "$scripts_dir/.." && pwd)
-if [[ -d "$share_root/defaults/matugen/templates" ]]; then
-    template_dir=$share_root/defaults/matugen/templates
-elif [[ -d "$share_root/matugen/templates" ]]; then
-    template_dir=$share_root/matugen/templates
+if [[ -f "$share_root/libexec/matugen_config.py" ]]; then
+    config_helper=$share_root/libexec/matugen_config.py
+elif [[ -f "$share_root/packaging/matugen_config.py" ]]; then
+    config_helper=$share_root/packaging/matugen_config.py
 else
-    printf 'Clavis Matugen templates are missing below %s\n' "$share_root" >&2
+    printf 'Clavis Matugen config helper is missing below %s\n' "$share_root" >&2
     exit 1
 fi
 
@@ -84,66 +84,6 @@ if ! command -v matugen >/dev/null 2>&1; then
     exit 1
 fi
 
-template_file() {
-    case "$1" in
-        quickshell) printf '%s\n' quickshell-colors.json ;;
-        btop) printf '%s\n' btop.theme ;;
-        cava) printf '%s\n' cava-colors.ini ;;
-        kitty) printf '%s\n' kitty-colors.conf ;;
-        fcitx5) printf '%s\n' fcitx5-theme.conf ;;
-        fcitx5_panel_svg) printf '%s\n' fcitx5-panel.svg ;;
-        fcitx5_highlight_svg) printf '%s\n' fcitx5-highlight.svg ;;
-        niri) printf '%s\n' niri-colors.kdl ;;
-        yazi) printf '%s\n' yazi-theme.toml ;;
-        zsh_prompt) printf '%s\n' zsh-prompt-colors.zsh ;;
-        *) return 1 ;;
-    esac
-}
-
-output_path() {
-    case "$1" in
-        quickshell) printf '%s\n' "$CLAVIS_GENERATED_HOME/clavis/colors.json" ;;
-        btop) printf '%s\n' "$CLAVIS_GENERATED_HOME/btop/themes/clavis.theme" ;;
-        cava) printf '%s\n' "$CLAVIS_GENERATED_HOME/cava/colors.ini" ;;
-        kitty) printf '%s\n' "$CLAVIS_GENERATED_HOME/kitty/colors.conf" ;;
-        fcitx5) printf '%s\n' "$CLAVIS_GENERATED_HOME/fcitx5/Matugen/theme.conf" ;;
-        fcitx5_panel_svg) printf '%s\n' "$CLAVIS_GENERATED_HOME/fcitx5/Matugen/panel.svg" ;;
-        fcitx5_highlight_svg) printf '%s\n' "$CLAVIS_GENERATED_HOME/fcitx5/Matugen/highlight.svg" ;;
-        niri) printf '%s\n' "$CLAVIS_GENERATED_HOME/niri/colors.kdl" ;;
-        yazi) printf '%s\n' "$CLAVIS_GENERATED_HOME/yazi/theme.toml" ;;
-        zsh_prompt) printf '%s\n' "$CLAVIS_GENERATED_HOME/zsh/prompt-colors.zsh" ;;
-        *) return 1 ;;
-    esac
-}
-
-selected_templates=(quickshell)
-if [[ -n "$templates_csv" ]]; then
-    IFS=',' read -r -a requested_templates <<< "$templates_csv"
-    for template_id in "${requested_templates[@]}"; do
-        if ! template_file "$template_id" >/dev/null; then
-            printf 'Unknown Matugen profile template: %s\n' "$template_id" >&2
-            exit 2
-        fi
-        duplicate=false
-        for selected in "${selected_templates[@]}"; do
-            if [[ "$selected" == "$template_id" ]]; then
-                duplicate=true
-                break
-            fi
-        done
-        if [[ "$duplicate" == false ]]; then
-            selected_templates+=("$template_id")
-        fi
-    done
-fi
-
-toml_escape() {
-    local value=$1
-    value=${value//\\/\\\\}
-    value=${value//\"/\\\"}
-    printf '%s' "$value"
-}
-
 mkdir -p "$CLAVIS_RUNTIME_HOME/temporary"
 runtime_dir=$(mktemp -d "$CLAVIS_RUNTIME_HOME/temporary/matugen.XXXXXX")
 cleanup() {
@@ -151,25 +91,17 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 runtime_config=$runtime_dir/config.toml
-
-printf '[config]\nversion_check = false\n' > "$runtime_config"
-for template_id in "${selected_templates[@]}"; do
-    template_name=$(template_file "$template_id")
-    input=$template_dir/$template_name
-    output=$(output_path "$template_id")
-    if [[ ! -f "$input" ]]; then
-        printf 'Missing Matugen template: %s\n' "$input" >&2
-        exit 1
-    fi
-    if [[ "$dry_run" == false ]]; then
-        mkdir -p "$(dirname -- "$output")"
-    fi
-    {
-        printf '\n[templates.%s]\n' "$template_id"
-        printf 'input_path = "%s"\n' "$(toml_escape "$input")"
-        printf 'output_path = "%s"\n' "$(toml_escape "$output")"
-    } >> "$runtime_config"
-done
+helper_args=(
+    --share-root "$share_root"
+    --config "$CLAVIS_PROFILE_CONFIG_HOME/matugen/config.toml"
+    --generated-home "$CLAVIS_GENERATED_HOME"
+    --runtime-config "$runtime_config"
+    --templates "$templates_csv"
+)
+if [[ "$dry_run" == true ]]; then
+    helper_args+=(--dry-run)
+fi
+python3 "$config_helper" "${helper_args[@]}" >/dev/null
 
 common_args=(--mode "$mode" --type "$scheme" --config "$runtime_config")
 if [[ "$dry_run" == true ]]; then

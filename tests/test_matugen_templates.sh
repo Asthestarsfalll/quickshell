@@ -77,6 +77,8 @@ filtered_outputs=(
     "$filtered_home/.local/share/clavis/profiles/default/generated/zsh/prompt-colors.zsh"
     "$filtered_home/.local/share/clavis/profiles/default/generated/yazi/theme.toml"
 )
+[[ -s "$filtered_home/.config/clavis/profiles/default/matugen/config.toml" ]] \
+    || fail "persistent Matugen config was not initialized"
 for output in "${filtered_outputs[@]}"; do
     [[ -s "$output" ]] || fail "missing filtered output: $output"
 done
@@ -85,7 +87,7 @@ disabled_outputs=(
     "$filtered_home/.local/share/clavis/profiles/default/generated/btop/themes/clavis.theme"
     "$filtered_home/.local/share/clavis/profiles/default/generated/cava/colors.ini"
     "$filtered_home/.local/share/clavis/profiles/default/generated/kitty/colors.conf"
-    "$filtered_home/.local/share/clavis/profiles/default/generated/fcitx5/Matugen/theme.conf"
+    "$filtered_home/.local/share/clavis/profiles/default/data/fcitx5/themes/Clavis/theme.conf"
     "$filtered_home/.local/share/clavis/profiles/default/generated/niri/colors.kdl"
 )
 for output in "${disabled_outputs[@]}"; do
@@ -111,10 +113,55 @@ HOME="$quickshell_only_home" "$generator" \
     --templates ""
 [[ -s "$quickshell_only_home/.local/share/clavis/profiles/default/generated/clavis/colors.json" ]] \
     || fail "Quickshell output is missing when all external templates are disabled"
-[[ ! -e "$quickshell_only_home/.config" ]] \
-    || fail "default generation created an external configuration directory"
+[[ -s "$quickshell_only_home/.config/clavis/profiles/default/matugen/config.toml" ]] \
+    || fail "default generation did not create the editable Matugen config"
+[[ ! -e "$quickshell_only_home/.config/kitty" ]] \
+    || fail "default generation modified the user's Kitty configuration"
 [[ ! -e "$quickshell_only_home/.local/share/clavis/profiles/default/generated/zsh/prompt-colors.zsh" ]] \
     || fail "Zsh prompt output was generated for an empty selection"
+
+custom_home="$test_dir/custom-home"
+HOME="$custom_home" "$generator" \
+    --color "#6750a4" --templates "kitty"
+custom_config="$custom_home/.config/clavis/profiles/default/matugen/config.toml"
+custom_kitty="$custom_home/custom/kitty-colors.conf"
+sed -i \
+    "s|$custom_home/.local/share/clavis/profiles/default/generated/kitty/colors.conf|$custom_kitty|" \
+    "$custom_config"
+HOME="$custom_home" "$generator" \
+    --color "#6750a4" --templates "kitty"
+[[ -s "$custom_kitty" ]] \
+    || fail "custom Matugen output_path was not honored"
+
+invalid_home="$test_dir/invalid-home"
+HOME="$invalid_home" "$generator" --color "#6750a4" >/dev/null
+invalid_config="$invalid_home/.config/clavis/profiles/default/matugen/config.toml"
+printf '%s\n' '[templates.quickshell' > "$invalid_config"
+if HOME="$invalid_home" "$generator" --color "#6750a4" >/dev/null 2>&1; then
+    fail "generator unexpectedly accepted invalid Matugen TOML"
+fi
+HOME="$invalid_home" "$repo_dir/scripts/theme/ensure_matugen_config.sh" \
+    >/dev/null || fail "invalid Matugen config cannot be opened for repair"
+grep -Fxq '[templates.quickshell' "$invalid_config" \
+    || fail "opening an invalid Matugen config unexpectedly replaced it"
+
+relative_home="$test_dir/relative-home"
+HOME="$relative_home" "$generator" --color "#6750a4" >/dev/null
+relative_config="$relative_home/.config/clavis/profiles/default/matugen/config.toml"
+sed -i '0,/output_path = ".*"/s//output_path = "relative\/colors.json"/' \
+    "$relative_config"
+if HOME="$relative_home" "$generator" --color "#6750a4" >/dev/null 2>&1; then
+    fail "generator unexpectedly accepted a relative Matugen output path"
+fi
+
+unwritable_home="$test_dir/unwritable-home"
+HOME="$unwritable_home" "$generator" --color "#6750a4" >/dev/null
+unwritable_config="$unwritable_home/.config/clavis/profiles/default/matugen/config.toml"
+sed -i '0,/output_path = ".*"/s||output_path = "/proc/clavis/colors.json"|' \
+    "$unwritable_config"
+if HOME="$unwritable_home" "$generator" --color "#6750a4" >/dev/null 2>&1; then
+    fail "generator unexpectedly accepted an unwritable output path"
+fi
 
 mock_bin="$test_dir/bin"
 mkdir -p "$mock_bin"

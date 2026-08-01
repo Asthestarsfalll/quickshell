@@ -232,10 +232,8 @@ Singleton {
         if (root.primaryInstance || !args || args.length === 0)
             return false;
 
-        const command = ["qs", "ipc", "call", "wallpaper"];
-        for (let i = 0; i < args.length; i += 1)
-            command.push(String(args[i]));
-        Quickshell.execDetached(command);
+        Quickshell.execDetached(
+            RuntimeCompatibilityService.ipcCommand("wallpaper", args));
         return true;
     }
 

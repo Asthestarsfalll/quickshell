@@ -51,12 +51,14 @@ command -v key
 ```bash
 key version --json
 key shell
+key ipc list
 key ipc call keystone dashboard
 key session
 key run kitty
 key run btop
 key run cava
 key run yazi
+key run fcitx5
 key top
 key doctor
 key doctor services
@@ -69,6 +71,10 @@ key release list
 niri profile，并拒绝在已有 niri 会话中递归启动。`key run` 只给目标应用传入其
 官方支持的配置参数或精确环境变量，不会替换整个桌面会话的
 `XDG_CONFIG_HOME`。
+
+完整 IPC target 与 method 清单见 [docs/ipc.md](docs/ipc.md)。每个 profile 的
+Matugen 输出路径可在
+`$XDG_CONFIG_HOME/clavis/profiles/<profile>/matugen/config.toml` 中编辑。
 
 Niri 快捷键应调用稳定入口，例如
 `spawn-sh "$HOME/.local/bin/key ipc call keystone dashboard"`，不要调用裸
@@ -88,6 +94,7 @@ Niri 快捷键应调用稳定入口，例如
 ~/.local/lib/clavis/current -> releases/<date-release>
 ~/.local/lib/clavis/releases/<date-release>/
 ~/.config/clavis/
+~/.config/clavis/profiles/default/
 ~/.local/share/clavis/profiles/default/
 ~/.local/state/clavis/
 ~/.cache/clavis/
@@ -99,11 +106,16 @@ $XDG_RUNTIME_DIR/clavis/
 [安装布局](docs/architecture/install-layout.md) 与
 [配置隔离](docs/architecture/config-isolation.md)。
 
-## 主题与外部导出
+## 主题与 Matugen 配置
 
-Matugen 默认只生成 Clavis 内部配色。可选模板生成到当前 Clavis profile 的
-`generated/`，不会自动写入 Kitty、btop、Cava、Yazi、niri 或 Fcitx5 的用户
-配置。设置中心“高级 → 外部应用主题导出”或以下命令提供逐应用 opt-in：
+Matugen 默认只生成 Clavis 内部配色；在个性化设置中启用 Kitty、btop、Cava、
+Yazi、niri、Fcitx5 或 Zsh prompt 后，对应模板会按当前 profile 的
+`matugen/config.toml` 写入用户可编辑的绝对输出路径。设置中心“高级”页可以直接
+打开该配置，并在修改后重新生成配色。Clavis 管理的应用通过 `key run` 消费这些
+文件，不会覆盖原有的 `~/.config/<application>`。
+
+以下 `key export` 命令只为清理旧版已经写入外部应用目录的 manifest 记录而保留，
+不再出现在设置中心，也不是新 profile 的主题配置方式：
 
 ```bash
 key export kitty --status
@@ -113,9 +125,10 @@ key export kitty --replace   # 冲突时明确备份并替换
 key export kitty --disable
 ```
 
-导出会记录目标、备份与校验和；用户修改过的导出文件不会在禁用或卸载时被删除。
-Fcitx5 是共享会话服务，不被描述为 profile 隔离。桌面图标、光标和明暗模式也通过
-独立 `desktop` adapter 记录并安全恢复，不由 QML 直接改写。
+旧导出会记录目标、备份与校验和；用户修改过的文件不会在禁用或卸载时被删除。
+Fcitx5 在 Clavis 会话中由 `key run fcitx5` 使用 profile 专属配置和数据根启动；
+系统词库仍通过标准系统数据路径可见，但不会读取或复制旧用户目录中的 Rime
+数据库、缓存或同步 ID。
 
 ## 更新、回滚与卸载
 
