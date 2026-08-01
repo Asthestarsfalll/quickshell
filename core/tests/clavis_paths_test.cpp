@@ -20,6 +20,7 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     QVERIFY(temporary.isValid());
     const QString root = temporary.path();
     for (const char *name : {
+             "CLAVIS_REAL_HOME",
              "CLAVIS_CONFIG_HOME",
              "CLAVIS_DATA_HOME",
              "CLAVIS_STATE_HOME",
@@ -56,6 +57,8 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
 
     const QString release = QDir(root).filePath(QStringLiteral("release"));
     const QProcessEnvironment environment = paths.processEnvironment(release);
+    QCOMPARE(environment.value(QStringLiteral("CLAVIS_REAL_HOME")), paths.home());
+    QCOMPARE(environment.value(QStringLiteral("CLAVIS_BIN_HOME")), paths.binHome());
     QCOMPARE(environment.value(QStringLiteral("CLAVIS_PROFILE_HOME")), paths.profileHome());
     QCOMPARE(environment.value(QStringLiteral("CLAVIS_GENERATED_HOME")), paths.generatedHome());
     QCOMPARE(

@@ -47,7 +47,7 @@ class ClavisPaths:
 
     @classmethod
     def from_environment(cls) -> "ClavisPaths":
-        home = _absolute_env("HOME")
+        home = _absolute_env("CLAVIS_REAL_HOME") or _absolute_env("HOME")
         if home is None:
             raise PathConfigurationError("HOME must be set to an absolute path")
         bin_home = _absolute_env("CLAVIS_BIN_HOME") or home / ".local/bin"
@@ -147,6 +147,8 @@ class ClavisPaths:
     def as_environment(self, release_root: Path) -> dict[str, str]:
         qml_import = release_root / "lib/qml"
         result = {
+            "CLAVIS_REAL_HOME": str(self.home),
+            "CLAVIS_BIN_HOME": str(self.bin_home),
             "CLAVIS_INSTALL_PREFIX": str(self.install_prefix),
             "CLAVIS_RELEASE_ROOT": str(release_root),
             "CLAVIS_CONFIG_HOME": str(self.config_home),

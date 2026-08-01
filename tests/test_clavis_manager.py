@@ -163,6 +163,9 @@ class ClavisManagerTest(unittest.TestCase):
                 self.assertEqual(paths.state_home, Path(name) / "state/clavis")
                 self.assertEqual(paths.cache_home, Path(name) / "cache/clavis")
                 self.assertEqual(paths.runtime_home, Path(name) / "runtime/clavis")
+                environment = paths.as_environment(Path(name) / "release")
+                self.assertEqual(environment["CLAVIS_REAL_HOME"], str(paths.home))
+                self.assertEqual(environment["CLAVIS_BIN_HOME"], str(paths.bin_home))
                 self.assertEqual(
                     paths.profile_config_home,
                     Path(name) / "config/clavis/profiles/default",
@@ -181,6 +184,11 @@ class ClavisManagerTest(unittest.TestCase):
                 )
                 self.assertEqual(overridden.generated_home, Path(name) / "generated")
                 self.assertEqual(overridden.qml_import_home, Path(name) / "qml")
+                os.environ["CLAVIS_REAL_HOME"] = str(paths.home)
+                os.environ["HOME"] = str(paths.legacy_home)
+                self.assertEqual(ClavisPaths.from_environment().home, paths.home)
+                os.environ.pop("CLAVIS_REAL_HOME")
+                os.environ["HOME"] = str(paths.home)
                 os.environ["XDG_CONFIG_HOME"] = "relative"
                 with self.assertRaises(PathConfigurationError):
                     ClavisPaths.from_environment()
@@ -312,6 +320,10 @@ class ClavisManagerTest(unittest.TestCase):
                 self.assertEqual(
                     environment["CLAVIS_RELEASE_ROOT"], str(release_root)
                 )
+                self.assertEqual(environment["HOME"], str(paths.legacy_home))
+                self.assertEqual(
+                    environment["PATH"].split(os.pathsep)[0], str(paths.bin_home)
+                )
 
                 with mock.patch.object(manager.os, "execvpe") as list_mock:
                     manager.run_ipc(paths, ["list"])
@@ -333,6 +345,7 @@ class ClavisManagerTest(unittest.TestCase):
                 os.environ["CLAVIS_SKIP_SYSTEMD"] = "1"
                 executable(fixture.bin / "kitty")
                 executable(fixture.bin / "fcitx5")
+                executable(fixture.bin / "zsh")
                 release = "2026.08.01"
                 partial, launcher = self.make_partial_release(paths, release)
                 defaults = partial / "share/clavis/defaults/profiles/default"
@@ -352,6 +365,16 @@ class ClavisManagerTest(unittest.TestCase):
                 with mock.patch.object(manager.os, "execvpe") as kitty_exec:
                     manager.run_profile_application(paths, "kitty", [])
                 kitty_environment = kitty_exec.call_args.args[2]
+                self.assertEqual(kitty_environment["HOME"], str(paths.legacy_home))
+                self.assertEqual(
+                    kitty_environment["XDG_CONFIG_HOME"],
+                    str(paths.legacy_home / ".config"),
+                )
+                self.assertEqual(kitty_environment["SHELL"], str(fixture.bin / "zsh"))
+                self.assertEqual(
+                    kitty_environment["PATH"].split(os.pathsep)[0],
+                    str(paths.bin_home),
+                )
                 self.assertEqual(
                     kitty_environment["ZDOTDIR"],
                     str(paths.profile_config_home / "zsh"),
@@ -439,11 +462,20 @@ class ClavisManagerTest(unittest.TestCase):
                     paths.legacy_home / ".config/niri/config.kdl",
                 )
                 startup = (paths.legacy_home / ".config/niri/startup.kdl").read_text()
-                self.assertIn("key session supervise", startup)
+                self.assertIn("$CLAVIS_KEY session supervise", startup)
                 self.assertIn('"nm-applet"', startup)
                 self.assertNotIn('"quickshell"', startup)
+                manager.prepare_niri_profile(paths, release_root)
+                repeated_startup = (
+                    paths.legacy_home / ".config/niri/startup.kdl"
+                ).read_text()
+                self.assertEqual(startup, repeated_startup)
+                self.assertEqual(
+                    repeated_startup.count("Clavis owns the three session children"),
+                    1,
+                )
                 binds = (paths.legacy_home / ".config/niri/binds.kdl").read_text()
-                self.assertIn("key ipc call keystone dashboard", binds)
+                self.assertIn("$CLAVIS_KEY ipc call keystone dashboard", binds)
                 zshrc = (paths.legacy_home / ".zshrc").read_text()
                 self.assertIn("${CLAVIS_LEGACY_HOME}/.zsh/plugins", zshrc)
                 self.assertIn('key}\" prompt', zshrc)
@@ -461,6 +493,79 @@ class ClavisManagerTest(unittest.TestCase):
                 self.assertEqual(
                     session_environment["NIRI_CONFIG"],
                     str(paths.legacy_home / ".config/niri/config.kdl"),
+                )
+                self.assertEqual(
+                    session_environment["PATH"].split(os.pathsep)[0],
+                    str(paths.bin_home),
+                )
+
+    def test_passthrough_commands_accept_leading_options(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-passthrough-test.") as name:
+            with EnvironmentFixture(Path(name)) as paths:
+                with mock.patch.object(manager, "run_shell", return_value=23) as run:
+                    self.assertEqual(
+                        manager.main(["shell", "--no-duplicate", "--verbose"]),
+                        23,
+                    )
+                run.assert_called_once_with(paths, ["--no-duplicate", "--verbose"])
+
+    def test_session_supervisor_stops_when_its_niri_socket_disappears(self) -> None:
+        class Child:
+            returncode = None
+            next_pid = 10000
+
+            def __init__(self):
+                self.pid = Child.next_pid
+                Child.next_pid += 1
+
+            def poll(self):
+                return self.returncode
+
+            def wait(self, _timeout):
+                self.returncode = -15
+                return self.returncode
+
+        with tempfile.TemporaryDirectory(prefix="clavis-supervisor-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                os.environ["CLAVIS_SKIP_SYSTEMD"] = "1"
+                release = "2026.08.01.8"
+                partial, launcher = self.make_partial_release(paths, release)
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, release, launcher)
+                socket = paths.runtime_home / "niri.test.sock"
+                socket.parent.mkdir(parents=True, exist_ok=True)
+                socket.touch()
+                os.environ["NIRI_SOCKET"] = str(socket)
+
+                def end_session(_seconds):
+                    socket.unlink()
+
+                with (
+                    mock.patch.object(
+                        manager.subprocess, "Popen", side_effect=lambda *_a, **_kw: Child()
+                    ) as popen,
+                    mock.patch.object(manager.time, "sleep", side_effect=end_session),
+                    mock.patch.object(manager.os, "killpg") as killpg,
+                ):
+                    self.assertEqual(manager.run_session_supervisor(paths), 0)
+
+                self.assertEqual(popen.call_count, 3)
+                self.assertTrue(
+                    all(
+                        call.kwargs["start_new_session"]
+                        for call in popen.call_args_list
+                    )
+                )
+                self.assertEqual(killpg.call_count, 3)
+                log = paths.state_home / "logs/session-supervisor.log"
+                self.assertIn("supervisor stopped", log.read_text())
+                self.assertTrue(
+                    any(
+                        paths.runtime_home.joinpath("locks").glob(
+                            "session-supervisor-*.lock"
+                        )
+                    )
                 )
 
     def test_repeated_install_rejects_a_mutated_immutable_release(self) -> None:

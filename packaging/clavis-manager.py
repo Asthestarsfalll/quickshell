@@ -336,7 +336,31 @@ def release_environment(paths: ClavisPaths, release_root: Path) -> dict[str, str
     result["CLAVIS_SHELL_RELEASE"] = metadata["release"]
     result["CLAVIS_SHELL_COMMIT"] = str(metadata.get("commit", "unknown"))
     result["CLAVIS_LEGACY_HOME"] = str(paths.legacy_home)
+    path_entries = [entry for entry in result.get("PATH", "").split(os.pathsep) if entry]
+    if str(paths.bin_home) in path_entries:
+        path_entries.remove(str(paths.bin_home))
+    path_entries.insert(0, str(paths.bin_home))
+    result["PATH"] = os.pathsep.join(path_entries)
     return result
+
+
+def managed_home_environment(
+    paths: ClavisPaths, release_root: Path, legacy: Path
+) -> dict[str, str]:
+    """Return an app environment isolated from the user's real HOME."""
+    environment = release_environment(paths, release_root)
+    managed_paths = {
+        "HOME": legacy,
+        "XDG_CONFIG_HOME": legacy / ".config",
+        "XDG_DATA_HOME": legacy / ".local/share",
+        "XDG_STATE_HOME": legacy / ".local/state",
+        "XDG_CACHE_HOME": legacy / ".cache",
+    }
+    for path in managed_paths.values():
+        path.mkdir(parents=True, exist_ok=True)
+    environment.update({name: str(path) for name, path in managed_paths.items()})
+    environment["CLAVIS_MANAGED_HOME"] = str(legacy)
+    return environment
 
 
 def executable(name: str) -> str:
@@ -348,9 +372,11 @@ def executable(name: str) -> str:
 
 def run_shell(paths: ClavisPaths, arguments: list[str]) -> int:
     release = resolve_active_release(paths)
+    prepare_local_profile(paths, release)
     qml_root = release / "share/clavis/qml"
     command = [executable("qs"), "--path", str(qml_root), *arguments]
-    os.execvpe(command[0], command, release_environment(paths, release))
+    environment = managed_home_environment(paths, release, paths.legacy_home)
+    os.execvpe(command[0], command, environment)
     return 127
 
 
@@ -358,9 +384,11 @@ def run_ipc(paths: ClavisPaths, arguments: list[str]) -> int:
     if not arguments or arguments[0] == "list":
         arguments = ["show"]
     release = resolve_active_release(paths)
+    prepare_local_profile(paths, release)
     qml_root = release / "share/clavis/qml"
     command = [executable("qs"), "--path", str(qml_root), "ipc", *arguments]
-    os.execvpe(command[0], command, release_environment(paths, release))
+    environment = managed_home_environment(paths, release, paths.legacy_home)
+    os.execvpe(command[0], command, environment)
     return 127
 
 
@@ -447,8 +475,11 @@ def _patch_legacy_profile(paths: ClavisPaths, legacy: Path) -> None:
     startup = niri / "startup.kdl"
 
     def patch_startup(text: str) -> str:
+        marker = "// Clavis owns the three session children for the lifetime of Niri."
         retained = []
         for line in text.splitlines():
+            if line.strip() == marker:
+                continue
             active = line.lstrip().startswith(("spawn-at-startup", "spawn-sh-at-startup"))
             if active and any(
                 token in line
@@ -456,18 +487,20 @@ def _patch_legacy_profile(paths: ClavisPaths, legacy: Path) -> None:
                     '"fcitx5"',
                     '"quickshell"',
                     "key shell",
-                    "key session supervise",
+                    "session supervise",
                     "clipse --listen",
                     "key clipboard watch",
                 )
             ):
                 continue
             retained.append(line)
+        while retained and not retained[-1].strip():
+            retained.pop()
         retained.extend(
             [
                 "",
-                "// Clavis owns the three session children for the lifetime of Niri.",
-                'spawn-sh-at-startup "$HOME/.local/bin/key session supervise"',
+                marker,
+                'spawn-sh-at-startup "$CLAVIS_KEY session supervise"',
             ]
         )
         return "\n".join(retained).rstrip() + "\n"
@@ -475,34 +508,35 @@ def _patch_legacy_profile(paths: ClavisPaths, legacy: Path) -> None:
     _rewrite_text(startup, patch_startup)
 
     def patch_binds(text: str) -> str:
+        text = text.replace("$HOME/.local/bin/key", "$CLAVIS_KEY")
         text = re.sub(
             r'spawn\s+"quickshell"\s+"ipc"\s+"call"\s+"([^"]+)"\s+"([^"]+)"',
-            r'spawn-sh "$HOME/.local/bin/key ipc call \1 \2"',
+            r'spawn-sh "$CLAVIS_KEY ipc call \1 \2"',
             text,
         )
         text = re.sub(
             r'spawn\s+"bash"\s+"/[^"]+/\.config/swww-rofi/swww-rofi\.sh"',
-            'spawn-sh "$HOME/.local/bin/key run wallpaper"',
+            'spawn-sh "$CLAVIS_KEY run wallpaper"',
             text,
         )
         text = text.replace(
             'spawn "kitty" "yazi"',
-            'spawn-sh "$HOME/.local/bin/key run kitty $HOME/.local/bin/key run yazi"',
+            'spawn-sh "$CLAVIS_KEY run kitty $CLAVIS_KEY run yazi"',
         )
         text = text.replace(
-            'spawn "kitty";', 'spawn-sh "$HOME/.local/bin/key run kitty";'
+            'spawn "kitty";', 'spawn-sh "$CLAVIS_KEY run kitty";'
         )
         text = text.replace(
             'spawn "rofi" "-show" "drun"',
-            'spawn-sh "$HOME/.local/bin/key run rofi -show drun"',
+            'spawn-sh "$CLAVIS_KEY run rofi -show drun"',
         )
         text = text.replace(
             'pkill fcitx5 || fcitx5',
-            'pkill fcitx5 || true; $HOME/.local/bin/key run fcitx5',
+            'pkill fcitx5 || true; $CLAVIS_KEY run fcitx5',
         )
         text = text.replace(
             'pkill quickshell || true && quickshell',
-            'pkill quickshell || true; $HOME/.local/bin/key shell --no-duplicate',
+            'pkill quickshell || true; $CLAVIS_KEY shell --no-duplicate',
         )
         return text
 
@@ -595,7 +629,7 @@ def run_session(paths: ClavisPaths, arguments: list[str]) -> int:
     release = resolve_active_release(paths)
     config = prepare_niri_profile(paths, release)
     command = [executable("niri-session")]
-    environment = os.environ.copy()
+    environment = release_environment(paths, release)
     environment.update(
         {
             "CLAVIS_PROFILE": paths.profile_name,
@@ -612,11 +646,16 @@ def run_session(paths: ClavisPaths, arguments: list[str]) -> int:
 
 
 def run_session_supervisor(paths: ClavisPaths) -> int:
-    if not os.environ.get("NIRI_SOCKET"):
+    socket_value = os.environ.get("NIRI_SOCKET", "")
+    if not socket_value:
         raise ClavisError("session supervise must run inside the Niri session")
+    niri_socket = Path(socket_value)
+    if not niri_socket.exists():
+        raise ClavisError(f"Niri session socket no longer exists: {niri_socket}")
     release = resolve_active_release(paths)
     prepare_local_profile(paths, release)
-    lock_path = paths.runtime_home / "locks/session-supervisor.lock"
+    socket_key = hashlib.sha256(os.fsencode(niri_socket)).hexdigest()[:16]
+    lock_path = paths.runtime_home / f"locks/session-supervisor-{socket_key}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     lock = lock_path.open("a+")
     try:
@@ -630,7 +669,8 @@ def run_session_supervisor(paths: ClavisPaths) -> int:
                 [
                     "systemctl",
                     "--user",
-                    "stop",
+                    "disable",
+                    "--now",
                     "clavis-shell.service",
                     "clavis-cliphist.service",
                 ],
@@ -644,7 +684,16 @@ def run_session_supervisor(paths: ClavisPaths) -> int:
             "clipboard": [str(paths.stable_key), "clipboard", "watch"],
         }
         children: dict[str, subprocess.Popen[bytes]] = {}
+        restart_after = {name: 0.0 for name in commands}
         stopping = False
+
+        log_dir = paths.state_home / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "session-supervisor.log"
+        rotated_log = log_dir / "session-supervisor.log.1"
+        if log_path.is_file() and log_path.stat().st_size > 1024 * 1024:
+            os.replace(log_path, rotated_log)
+        log = log_path.open("ab", buffering=0)
 
         def request_stop(_signum: int, _frame: Any) -> None:
             nonlocal stopping
@@ -655,25 +704,53 @@ def run_session_supervisor(paths: ClavisPaths) -> int:
             for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
         }
         try:
-            while not stopping:
+            log.write(
+                f"[{utc_now()}] supervisor started for {niri_socket}\n".encode()
+            )
+            while not stopping and niri_socket.exists():
+                now = time.monotonic()
                 for name, command in commands.items():
                     child = children.get(name)
-                    if child is None or child.poll() is not None:
-                        children[name] = subprocess.Popen(command, env=environment)
+                    if child is not None and child.poll() is not None:
+                        log.write(
+                            f"[{utc_now()}] {name} exited with {child.returncode}\n".encode()
+                        )
+                        children.pop(name)
+                        restart_after[name] = now + 2.0
+                    if children.get(name) is None and now >= restart_after[name]:
+                        log.write(
+                            f"[{utc_now()}] starting {name}: {shlex.join(command)}\n".encode()
+                        )
+                        children[name] = subprocess.Popen(
+                            command,
+                            env=environment,
+                            stdin=subprocess.DEVNULL,
+                            stdout=log,
+                            stderr=subprocess.STDOUT,
+                            start_new_session=True,
+                        )
                 time.sleep(1)
         finally:
             for child in children.values():
                 if child.poll() is None:
-                    child.terminate()
+                    try:
+                        os.killpg(child.pid, signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
             deadline = time.monotonic() + 3
             for child in children.values():
                 if child.poll() is None:
                     try:
                         child.wait(max(0.0, deadline - time.monotonic()))
                     except subprocess.TimeoutExpired:
-                        child.kill()
+                        try:
+                            os.killpg(child.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
             for sig, handler in previous_handlers.items():
                 signal.signal(sig, handler)
+            log.write(f"[{utc_now()}] supervisor stopped\n".encode())
+            log.close()
     finally:
         lock.close()
     return 0
@@ -707,9 +784,7 @@ def run_profile_application(
     defaults = release / "share/clavis/defaults/profiles/default"
     generated = paths.generated_home
     overrides = paths.config_home / "overrides"
-    environment = release_environment(paths, release)
-    if legacy is not None:
-        environment["CLAVIS_LEGACY_HOME"] = str(legacy)
+    environment = managed_home_environment(paths, release, paths.legacy_home)
 
     if application == "kitty":
         kitty_colors = _matugen_output(
@@ -719,6 +794,7 @@ def run_profile_application(
         if legacy is None:
             _seed_profile_directory(defaults / "zsh", zsh_config)
         environment["ZDOTDIR"] = str(zsh_config)
+        environment["SHELL"] = executable("zsh")
         environment["CLAVIS_PROMPT_PALETTE_FILE"] = str(
             _matugen_output(
                 paths,
@@ -850,10 +926,6 @@ def run_profile_application(
         script = legacy / ".config/swww-rofi/swww-rofi.sh"
         if not script.is_file():
             raise ClavisError(f"wallpaper picker is missing: {script}")
-        environment["HOME"] = str(legacy)
-        environment["XDG_CONFIG_HOME"] = str(legacy / ".config")
-        environment["XDG_DATA_HOME"] = str(legacy / ".local/share")
-        environment["XDG_CACHE_HOME"] = str(legacy / ".cache")
         command = [executable("bash"), str(script), *arguments]
     else:
         raise ClavisError(
@@ -2618,7 +2690,10 @@ def main(argv: list[str]) -> int:
     command, arguments = argv[0], argv[1:]
     try:
         paths = ClavisPaths.from_environment()
-        parsed = parser_for(command).parse_args(arguments)
+        if command in {"shell", "session", "ipc", "prompt"}:
+            parsed = argparse.Namespace(arguments=arguments)
+        else:
+            parsed = parser_for(command).parse_args(arguments)
         if command == "shell":
             return run_shell(paths, parsed.arguments)
         if command == "session":
