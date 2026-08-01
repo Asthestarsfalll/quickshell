@@ -16,6 +16,7 @@ build_dir=""
 dry_run=false
 deps_install=false
 allow_dirty=${CLAVIS_ALLOW_DIRTY:-false}
+pending_partial=""
 
 usage() {
     cat <<'EOF'
@@ -123,7 +124,16 @@ source_fingerprint() {
         printf 'unknown'
         return
     fi
-    git -C "$setup_dir" ls-files -co --exclude-standard -z \
+    {
+        git -C "$setup_dir" ls-files -co --exclude-standard -z
+        if [[ -d "$setup_dir/local/profiles/default" ]]; then
+            find "$setup_dir/local/profiles/default" \
+                \( -type f -o -type l \) -printf '%P\0' \
+                | while IFS= read -r -d '' local_path; do
+                    printf 'local/profiles/default/%s\0' "$local_path"
+                done
+        fi
+    } \
         | sort -z \
         | while IFS= read -r -d '' source_path; do
             printf '%s\0' "$source_path"
@@ -257,6 +267,16 @@ configure() {
     fi
     local fingerprint
     fingerprint=$(source_fingerprint)
+    local build_time=""
+    local installed_metadata=$CLAVIS_INSTALL_PREFIX/releases/$release/release.json
+    if [[ -f "$installed_metadata" ]]; then
+        build_time=$(python3 -c \
+            'import json,sys; data=json.load(open(sys.argv[1])); print(data.get("buildTime", ""))' \
+            "$installed_metadata" 2>/dev/null || true)
+    fi
+    if [[ -z "$build_time" ]]; then
+        build_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+    fi
     run cmake \
         -S "$setup_dir/core" \
         -B "$build_dir" \
@@ -267,6 +287,7 @@ configure() {
         -DCLAVIS_COMMIT="$commit" \
         -DCLAVIS_SOURCE_DIRTY="$dirty" \
         -DCLAVIS_SOURCE_FINGERPRINT="$fingerprint" \
+        -DCLAVIS_BUILD_TIME="$build_time" \
         -DCLAVIS_CHANNEL=stable
 }
 
@@ -294,6 +315,7 @@ install_release() {
     resolve_build_dir
     test_release
     local partial=$CLAVIS_INSTALL_PREFIX/releases/$release.partial
+    pending_partial=$partial
     local launcher=$setup_dir/packaging/defaults/key-launcher
     if [[ "$dry_run" == true ]]; then
         print_command mkdir -p "$CLAVIS_INSTALL_PREFIX/releases"
@@ -309,8 +331,8 @@ install_release() {
         rm -rf -- "$partial"
     fi
     cleanup_partial() {
-        if [[ -d "$partial" ]]; then
-            rm -rf -- "$partial"
+        if [[ -n "$pending_partial" && -d "$pending_partial" ]]; then
+            rm -rf -- "$pending_partial"
         fi
     }
     trap cleanup_partial EXIT
@@ -318,6 +340,7 @@ install_release() {
     python3 "$setup_dir/packaging/clavis-manager.py" \
         install-finalize --partial "$partial" --release "$release" \
         --launcher "$launcher"
+    pending_partial=""
     trap - EXIT
 }
 

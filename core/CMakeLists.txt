@@ -31,7 +31,9 @@ if(CLAVIS_COMMIT STREQUAL "unknown")
         endif()
     endif()
 endif()
-string(TIMESTAMP CLAVIS_BUILD_TIME "%Y-%m-%dT%H:%M:%SZ" UTC)
+if(NOT CLAVIS_BUILD_TIME)
+    string(TIMESTAMP CLAVIS_BUILD_TIME "%Y-%m-%dT%H:%M:%SZ" UTC)
+endif()
 # Older development builds wrote release metadata at the build root, which can
 # make a source-tree `key` look like an installed release. Remove only that
 # obsolete generated location; installed prefixes are unaffected.
@@ -44,6 +46,9 @@ configure_file(
 
 set(CLAVIS_QML_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/qml")
 set(CLAVIS_SHARE_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/clavis")
+set(CLAVIS_LOCAL_PROFILE_SOURCE
+    "${CLAVIS_SOURCE_ROOT}/local/profiles/default"
+)
 
 # Find Qt 6 basics
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network ShaderTools LinguistTools)
@@ -63,6 +68,23 @@ add_subdirectory(src)
 # Standalone command line tools
 add_subdirectory(cli)
 add_subdirectory(helper/rapl)
+
+# A machine-local profile is intentionally ignored by Git, but local releases
+# may still build and ship the user's prompt engine with the rest of Clavis.
+if(EXISTS "${CLAVIS_LOCAL_PROFILE_SOURCE}/home/prompt_dev/main.cpp"
+   AND EXISTS "${CLAVIS_LOCAL_PROFILE_SOURCE}/home/prompt_dev/modules.cpp")
+    add_executable(clavis-prompt
+        "${CLAVIS_LOCAL_PROFILE_SOURCE}/home/prompt_dev/main.cpp"
+        "${CLAVIS_LOCAL_PROFILE_SOURCE}/home/prompt_dev/modules.cpp"
+        "${CLAVIS_LOCAL_PROFILE_SOURCE}/home/prompt_dev/utils.h"
+    )
+    set_target_properties(clavis-prompt PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
+    install(TARGETS clavis-prompt
+        RUNTIME DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/libexec"
+    )
+endif()
 
 if(BUILD_TESTING)
     add_subdirectory(tests)
@@ -135,6 +157,13 @@ install(
     DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/defaults/"
     DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/defaults"
 )
+if(EXISTS "${CLAVIS_LOCAL_PROFILE_SOURCE}/home")
+    install(
+        DIRECTORY "${CLAVIS_LOCAL_PROFILE_SOURCE}/home/"
+        DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/local-profile/home"
+        USE_SOURCE_PERMISSIONS
+    )
+endif()
 install(
     FILES
         "${CLAVIS_SOURCE_ROOT}/packaging/clavis-manager.py"

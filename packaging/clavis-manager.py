@@ -5,16 +5,19 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import fcntl
 import hashlib
 import json
 import os
 import re
 import shutil
 import shlex
+import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 import tomllib
 from pathlib import Path
 from typing import Any, NoReturn
@@ -155,7 +158,15 @@ def _require_replaceable(
 def release_file_records(root: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for path in sorted(root.rglob("*")):
-        if path.is_file() and not path.is_symlink():
+        if path.is_symlink():
+            records.append(
+                {
+                    "path": str(path.relative_to(root)),
+                    "kind": "symlink",
+                    "target": os.readlink(path),
+                }
+            )
+        elif path.is_file():
             record = file_record(path)
             record["path"] = str(path.relative_to(root))
             records.append(record)
@@ -195,12 +206,20 @@ def _release_owned_directories(entry: dict[str, Any]) -> set[str]:
 
 
 def _release_tree_matches_partial(final: Path, partial: Path) -> bool:
+    def signature(record: dict[str, Any], read_only: bool) -> tuple[Any, ...]:
+        if record.get("kind") == "symlink":
+            return "symlink", record.get("target")
+        mode = int(record["mode"])
+        if read_only:
+            mode &= ~0o222
+        return "file", record["sha256"], mode
+
     expected_files = {
-        record["path"]: (record["sha256"], int(record["mode"]) & ~0o222)
+        record["path"]: signature(record, True)
         for record in release_file_records(partial)
     }
     actual_files = {
-        record["path"]: (record["sha256"], int(record["mode"]))
+        record["path"]: signature(record, False)
         for record in release_file_records(final)
     }
     expected_directories = {
@@ -316,6 +335,7 @@ def release_environment(paths: ClavisPaths, release_root: Path) -> dict[str, str
     metadata = read_release_metadata(release_root)
     result["CLAVIS_SHELL_RELEASE"] = metadata["release"]
     result["CLAVIS_SHELL_COMMIT"] = str(metadata.get("commit", "unknown"))
+    result["CLAVIS_LEGACY_HOME"] = str(paths.legacy_home)
     return result
 
 
@@ -344,6 +364,20 @@ def run_ipc(paths: ClavisPaths, arguments: list[str]) -> int:
     return 127
 
 
+def run_prompt(paths: ClavisPaths, arguments: list[str]) -> int:
+    if len(arguments) > 3:
+        raise ClavisError("prompt accepts at most EXIT_CODE, DURATION and WIDTH")
+    release = resolve_active_release(paths)
+    prompt = release / "share/clavis/libexec/clavis-prompt"
+    if not prompt.is_file():
+        prompt = paths.legacy_home / ".local/bin/prompt"
+    if not prompt.is_file() or not os.access(prompt, os.X_OK):
+        raise ClavisError("the local prompt engine is unavailable; rebuild the release")
+    command = [str(prompt), *arguments]
+    os.execvpe(command[0], command, release_environment(paths, release))
+    return 127
+
+
 def _existing_layers(candidates: list[Path]) -> list[Path]:
     return [path for path in candidates if path.is_file()]
 
@@ -367,7 +401,155 @@ def _write_generated(path: Path, text: str) -> None:
     atomic_write(path, text.encode())
 
 
+def _seed_local_profile(paths: ClavisPaths, release: Path) -> Path | None:
+    source = release / "share/clavis/local-profile/home"
+    if not source.is_dir():
+        return None
+    destination = paths.legacy_home
+    if destination.exists():
+        if not destination.is_dir() or destination.is_symlink():
+            raise ClavisError(
+                f"local profile destination is not a real directory: {destination}"
+            )
+        return destination
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.parent / f".{destination.name}.seed-{os.getpid()}"
+    if temporary.exists():
+        shutil.rmtree(temporary)
+    try:
+        shutil.copytree(source, temporary, symlinks=True)
+        os.replace(temporary, destination)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+    for path in [destination, *destination.rglob("*")]:
+        if path.is_symlink():
+            continue
+        mode = stat.S_IMODE(path.stat().st_mode)
+        if path.is_dir():
+            path.chmod(mode | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        elif path.is_file():
+            path.chmod(mode | stat.S_IRUSR | stat.S_IWUSR)
+    return destination
+
+
+def _rewrite_text(path: Path, transform: Any) -> None:
+    if not path.is_file() or path.is_symlink():
+        return
+    original = path.read_text(encoding="utf-8")
+    updated = transform(original)
+    if updated != original:
+        atomic_write(path, updated.encode(), stat.S_IMODE(path.stat().st_mode))
+
+
+def _patch_legacy_profile(paths: ClavisPaths, legacy: Path) -> None:
+    niri = legacy / ".config/niri"
+    startup = niri / "startup.kdl"
+
+    def patch_startup(text: str) -> str:
+        retained = []
+        for line in text.splitlines():
+            active = line.lstrip().startswith(("spawn-at-startup", "spawn-sh-at-startup"))
+            if active and any(
+                token in line
+                for token in (
+                    '"fcitx5"',
+                    '"quickshell"',
+                    "key shell",
+                    "key session supervise",
+                    "clipse --listen",
+                    "key clipboard watch",
+                )
+            ):
+                continue
+            retained.append(line)
+        retained.extend(
+            [
+                "",
+                "// Clavis owns the three session children for the lifetime of Niri.",
+                'spawn-sh-at-startup "$HOME/.local/bin/key session supervise"',
+            ]
+        )
+        return "\n".join(retained).rstrip() + "\n"
+
+    _rewrite_text(startup, patch_startup)
+
+    def patch_binds(text: str) -> str:
+        text = re.sub(
+            r'spawn\s+"quickshell"\s+"ipc"\s+"call"\s+"([^"]+)"\s+"([^"]+)"',
+            r'spawn-sh "$HOME/.local/bin/key ipc call \1 \2"',
+            text,
+        )
+        text = re.sub(
+            r'spawn\s+"bash"\s+"/[^"]+/\.config/swww-rofi/swww-rofi\.sh"',
+            'spawn-sh "$HOME/.local/bin/key run wallpaper"',
+            text,
+        )
+        text = text.replace(
+            'spawn "kitty" "yazi"',
+            'spawn-sh "$HOME/.local/bin/key run kitty $HOME/.local/bin/key run yazi"',
+        )
+        text = text.replace(
+            'spawn "kitty";', 'spawn-sh "$HOME/.local/bin/key run kitty";'
+        )
+        text = text.replace(
+            'spawn "rofi" "-show" "drun"',
+            'spawn-sh "$HOME/.local/bin/key run rofi -show drun"',
+        )
+        text = text.replace(
+            'pkill fcitx5 || fcitx5',
+            'pkill fcitx5 || true; $HOME/.local/bin/key run fcitx5',
+        )
+        text = text.replace(
+            'pkill quickshell || true && quickshell',
+            'pkill quickshell || true; $HOME/.local/bin/key shell --no-duplicate',
+        )
+        return text
+
+    _rewrite_text(niri / "binds.kdl", patch_binds)
+
+    def patch_zsh(text: str) -> str:
+        text = text.replace("~/.zsh/", "${CLAVIS_LEGACY_HOME}/.zsh/")
+        text = text.replace(
+            "$(~/.local/bin/prompt $PROMPT_EXIT_CODE",
+            "$(\"${CLAVIS_KEY:-$HOME/.local/bin/key}\" prompt $PROMPT_EXIT_CODE",
+        )
+        return text
+
+    _rewrite_text(legacy / ".zshrc", patch_zsh)
+
+    def patch_machine_paths(text: str) -> str:
+        text = text.replace(str(paths.home), str(legacy))
+        return re.sub(r"/home/[^/\s\"']+", str(legacy), text)
+
+    for relative in (
+        ".config/swww-rofi/swww-rofi.sh",
+        ".config/swww-rofi/overview.sh",
+        ".config/swww-rofi/wallpaper_2_line.rasi",
+    ):
+        _rewrite_text(legacy / relative, patch_machine_paths)
+
+    marker = legacy / ".clavis-profile-patch-v1"
+    if not marker.exists():
+        atomic_write(
+            marker,
+            b"Runtime copy patched for key session; raw release snapshot is unchanged.\n",
+        )
+
+
+def prepare_local_profile(paths: ClavisPaths, release: Path) -> Path | None:
+    legacy = _seed_local_profile(paths, release)
+    if legacy is not None:
+        _patch_legacy_profile(paths, legacy)
+    return legacy
+
+
 def prepare_niri_profile(paths: ClavisPaths, release: Path) -> Path:
+    legacy = prepare_local_profile(paths, release)
+    if legacy is not None:
+        config = legacy / ".config/niri/config.kdl"
+        if config.is_file():
+            return config
     base = release / "share/clavis/defaults/profiles/default/niri/base.kdl"
     generated_colors = _matugen_output(
         paths, "niri", paths.generated_home / "niri/colors.kdl"
@@ -396,6 +578,12 @@ def prepare_niri_profile(paths: ClavisPaths, release: Path) -> Path:
 
 
 def run_session(paths: ClavisPaths, arguments: list[str]) -> int:
+    if arguments and arguments[0] == "supervise":
+        if len(arguments) != 1:
+            raise ClavisError("session supervise accepts no options")
+        return run_session_supervisor(paths)
+    if arguments:
+        raise ClavisError("session accepts no options")
     if os.environ.get("NIRI_SOCKET") or "niri" in (
         os.environ.get("XDG_CURRENT_DESKTOP", "")
         + ":"
@@ -406,7 +594,7 @@ def run_session(paths: ClavisPaths, arguments: list[str]) -> int:
         )
     release = resolve_active_release(paths)
     config = prepare_niri_profile(paths, release)
-    command = [executable("niri"), "--session", "--config", str(config), *arguments]
+    command = [executable("niri-session")]
     environment = os.environ.copy()
     environment.update(
         {
@@ -421,6 +609,74 @@ def run_session(paths: ClavisPaths, arguments: list[str]) -> int:
     )
     os.execvpe(command[0], command, environment)
     return 127
+
+
+def run_session_supervisor(paths: ClavisPaths) -> int:
+    if not os.environ.get("NIRI_SOCKET"):
+        raise ClavisError("session supervise must run inside the Niri session")
+    release = resolve_active_release(paths)
+    prepare_local_profile(paths, release)
+    lock_path = paths.runtime_home / "locks/session-supervisor.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock = lock_path.open("a+")
+    try:
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return 0
+
+        if os.environ.get("CLAVIS_SKIP_SYSTEMD") != "1" and shutil.which("systemctl"):
+            subprocess.run(
+                [
+                    "systemctl",
+                    "--user",
+                    "stop",
+                    "clavis-shell.service",
+                    "clavis-cliphist.service",
+                ],
+                check=False,
+            )
+
+        environment = release_environment(paths, release)
+        commands = {
+            "shell": [str(paths.stable_key), "shell", "--no-duplicate"],
+            "fcitx5": [str(paths.stable_key), "run", "fcitx5"],
+            "clipboard": [str(paths.stable_key), "clipboard", "watch"],
+        }
+        children: dict[str, subprocess.Popen[bytes]] = {}
+        stopping = False
+
+        def request_stop(_signum: int, _frame: Any) -> None:
+            nonlocal stopping
+            stopping = True
+
+        previous_handlers = {
+            sig: signal.signal(sig, request_stop)
+            for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+        }
+        try:
+            while not stopping:
+                for name, command in commands.items():
+                    child = children.get(name)
+                    if child is None or child.poll() is not None:
+                        children[name] = subprocess.Popen(command, env=environment)
+                time.sleep(1)
+        finally:
+            for child in children.values():
+                if child.poll() is None:
+                    child.terminate()
+            deadline = time.monotonic() + 3
+            for child in children.values():
+                if child.poll() is None:
+                    try:
+                        child.wait(max(0.0, deadline - time.monotonic()))
+                    except subprocess.TimeoutExpired:
+                        child.kill()
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
+    finally:
+        lock.close()
+    return 0
 
 
 def _concatenate(paths_to_read: list[Path]) -> str:
@@ -447,17 +703,21 @@ def run_profile_application(
     paths: ClavisPaths, application: str, arguments: list[str]
 ) -> int:
     release = resolve_active_release(paths)
+    legacy = prepare_local_profile(paths, release)
     defaults = release / "share/clavis/defaults/profiles/default"
     generated = paths.generated_home
     overrides = paths.config_home / "overrides"
     environment = release_environment(paths, release)
+    if legacy is not None:
+        environment["CLAVIS_LEGACY_HOME"] = str(legacy)
 
     if application == "kitty":
         kitty_colors = _matugen_output(
             paths, "kitty", generated / "kitty/colors.conf"
         )
-        zsh_config = paths.profile_config_home / "zsh"
-        _seed_profile_directory(defaults / "zsh", zsh_config)
+        zsh_config = legacy if legacy is not None else paths.profile_config_home / "zsh"
+        if legacy is None:
+            _seed_profile_directory(defaults / "zsh", zsh_config)
         environment["ZDOTDIR"] = str(zsh_config)
         environment["CLAVIS_PROMPT_PALETTE_FILE"] = str(
             _matugen_output(
@@ -466,17 +726,30 @@ def run_profile_application(
                 generated / "zsh/prompt-colors.zsh",
             )
         )
+        legacy_kitty = legacy / ".config/kitty/kitty.conf" if legacy else None
         command = [executable("kitty"), "--config", "NONE"]
-        for layer in _existing_layers(
-            [
-                defaults / "kitty/kitty.conf",
-                kitty_colors,
-                overrides / "kitty.conf",
-            ]
-        ):
-            command += ["--config", str(layer)]
+        if legacy_kitty is not None and legacy_kitty.is_file():
+            command += ["--config", str(legacy_kitty)]
+        else:
+            for layer in _existing_layers(
+                [
+                    defaults / "kitty/kitty.conf",
+                    kitty_colors,
+                    overrides / "kitty.conf",
+                ]
+            ):
+                command += ["--config", str(layer)]
         command += arguments
     elif application == "btop":
+        legacy_config = legacy / ".config/btop/btop.conf" if legacy else None
+        if legacy_config is not None and legacy_config.is_file():
+            command = [executable("btop"), "--config", str(legacy_config)]
+            legacy_themes = legacy_config.parent / "themes"
+            if legacy_themes.is_dir():
+                command += ["--themes-dir", str(legacy_themes)]
+            command += arguments
+            os.execvpe(command[0], command, environment)
+            return 127
         config = generated / "runtime/btop.conf"
         theme = _matugen_output(
             paths, "btop", generated / "btop/themes/clavis.theme"
@@ -496,6 +769,11 @@ def run_profile_application(
             *arguments,
         ]
     elif application == "cava":
+        legacy_config = legacy / ".config/cava/config" if legacy else None
+        if legacy_config is not None and legacy_config.is_file():
+            command = [executable("cava"), "-p", str(legacy_config), *arguments]
+            os.execvpe(command[0], command, environment)
+            return 127
         config = generated / "runtime/cava.conf"
         cava_colors = _matugen_output(
             paths, "cava", generated / "cava/colors.ini"
@@ -510,6 +788,12 @@ def run_profile_application(
         _write_generated(config, text)
         command = [executable("cava"), "-p", str(config), *arguments]
     elif application == "yazi":
+        legacy_config = legacy / ".config/yazi" if legacy else None
+        if legacy_config is not None and legacy_config.is_dir():
+            environment["YAZI_CONFIG_HOME"] = str(legacy_config)
+            command = [executable("yazi"), *arguments]
+            os.execvpe(command[0], command, environment)
+            return 127
         config_dir = generated / "runtime/yazi"
         yazi_theme = _matugen_output(
             paths, "yazi", generated / "yazi/theme.toml"
@@ -530,10 +814,13 @@ def run_profile_application(
         environment["YAZI_CONFIG_HOME"] = str(config_dir)
         command = [executable("yazi"), *arguments]
     elif application == "fcitx5":
-        _seed_profile_directory(
-            defaults / "fcitx5", paths.profile_config_home / "fcitx5"
+        if legacy is None:
+            _seed_profile_directory(
+                defaults / "fcitx5", paths.profile_config_home / "fcitx5"
+            )
+        profile_data = (
+            legacy / ".local/share" if legacy is not None else paths.profile_home / "data"
         )
-        profile_data = paths.profile_home / "data"
         profile_data.mkdir(parents=True, exist_ok=True)
         external_data = _external_xdg_base(
             "XDG_DATA_HOME", paths.home / ".local/share"
@@ -547,14 +834,32 @@ def run_profile_application(
         ]
         if not data_dirs:
             data_dirs = ["/usr/local/share", "/usr/share"]
-        environment["XDG_CONFIG_HOME"] = str(paths.profile_config_home)
+        environment["XDG_CONFIG_HOME"] = str(
+            legacy / ".config" if legacy is not None else paths.profile_config_home
+        )
         environment["XDG_DATA_HOME"] = str(profile_data)
         environment["XDG_DATA_DIRS"] = ":".join(data_dirs)
         command = [executable("fcitx5"), *arguments]
+    elif application == "rofi":
+        if legacy is not None:
+            environment["XDG_CONFIG_HOME"] = str(legacy / ".config")
+        command = [executable("rofi"), *arguments]
+    elif application == "wallpaper":
+        if legacy is None:
+            raise ClavisError("the local wallpaper profile is unavailable")
+        script = legacy / ".config/swww-rofi/swww-rofi.sh"
+        if not script.is_file():
+            raise ClavisError(f"wallpaper picker is missing: {script}")
+        environment["HOME"] = str(legacy)
+        environment["XDG_CONFIG_HOME"] = str(legacy / ".config")
+        environment["XDG_DATA_HOME"] = str(legacy / ".local/share")
+        environment["XDG_CACHE_HOME"] = str(legacy / ".cache")
+        command = [executable("bash"), str(script), *arguments]
     else:
         raise ClavisError(
             "unsupported profile application "
-            f"{application!r}; expected kitty, btop, cava, yazi or fcitx5"
+            f"{application!r}; expected kitty, btop, cava, yazi, fcitx5, "
+            "rofi or wallpaper"
         )
 
     os.execvpe(command[0], command, environment)
@@ -699,6 +1004,7 @@ def finalize_install(
     ]
     for directory in profile_dirs:
         directory.mkdir(parents=True, exist_ok=True)
+    prepare_local_profile(paths, final)
 
     manifest["previousRelease"] = previous if previous != release else manifest.get(
         "previousRelease", ""
@@ -768,6 +1074,8 @@ def finalize_install(
 
 def _verify_record(root: Path, record: dict[str, Any]) -> bool:
     path = root / record["path"]
+    if record.get("kind") == "symlink":
+        return path.is_symlink() and os.readlink(path) == record.get("target")
     return (
         path.is_file()
         and not path.is_symlink()
@@ -955,7 +1263,9 @@ def release_command(
     _make_tree_owner_writable(root)
     for record in reversed(entry.get("files", [])):
         path = root / record["path"]
-        if path.is_file() and not path.is_symlink():
+        if record.get("kind") == "symlink" and path.is_symlink():
+            path.unlink()
+        elif path.is_file() and not path.is_symlink():
             path.unlink()
     for relative in sorted(
         owned_directories,
@@ -982,6 +1292,14 @@ def _remove_recorded_file(record: dict[str, Any], dry_run: bool) -> tuple[bool, 
     path = Path(record["path"])
     if not path.exists() and not path.is_symlink():
         return True, "missing"
+    if record.get("kind") == "symlink":
+        if not path.is_symlink():
+            return False, "not the recorded symlink"
+        if os.readlink(path) != record.get("target"):
+            return False, "modified"
+        if not dry_run:
+            path.unlink()
+        return True, "removed"
     if not path.is_file() or path.is_symlink():
         return False, "not a regular file"
     if sha256(path) != record.get("sha256"):
@@ -2283,7 +2601,7 @@ def parser_for(command: str) -> argparse.ArgumentParser:
     elif command == "run":
         parser.add_argument("application")
         parser.add_argument("arguments", nargs=argparse.REMAINDER)
-    elif command in {"shell", "session", "ipc"}:
+    elif command in {"shell", "session", "ipc", "prompt"}:
         parser.add_argument("arguments", nargs=argparse.REMAINDER)
     elif command == "install-finalize":
         parser.add_argument("--partial", required=True, type=Path)
@@ -2307,6 +2625,8 @@ def main(argv: list[str]) -> int:
             return run_session(paths, parsed.arguments)
         if command == "ipc":
             return run_ipc(paths, parsed.arguments)
+        if command == "prompt":
+            return run_prompt(paths, parsed.arguments)
         if command == "run":
             return run_profile_application(paths, parsed.application, parsed.arguments)
         if command == "rollback":

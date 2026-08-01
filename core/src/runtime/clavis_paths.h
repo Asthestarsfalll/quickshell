@@ -22,6 +22,7 @@ public:
     QString profileName() const;
     QString profileHome() const;
     QString generatedHome() const;
+    QString legacyHome() const;
     QString qmlImportHome() const;
     QString stableKey() const;
 
@@ -45,6 +46,7 @@ private:
     QString m_profileName;
     QString m_profileHome;
     QString m_generatedHome;
+    QString m_legacyHome;
     QString m_qmlImportHome;
 };
 

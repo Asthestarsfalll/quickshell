@@ -381,6 +381,88 @@ class ClavisManagerTest(unittest.TestCase):
                     str(paths.profile_config_home),
                 )
 
+    def test_local_profile_is_preserved_and_runtime_copy_is_patched(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-local-profile-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                os.environ["CLAVIS_SKIP_SYSTEMD"] = "1"
+                executable(fixture.bin / "niri-session")
+                release = "2026.08.01.7"
+                partial, launcher = self.make_partial_release(paths, release)
+                raw = partial / "share/clavis/local-profile/home"
+                niri = raw / ".config/niri"
+                niri.mkdir(parents=True)
+                (niri / "config.kdl").write_text(
+                    'include "binds.kdl"\ninclude "startup.kdl"\n'
+                )
+                (niri / "binds.kdl").write_text(
+                    'Mod+M { spawn "quickshell" "ipc" "call" "keystone" "dashboard"; }\n'
+                )
+                (niri / "startup.kdl").write_text(
+                    'spawn-at-startup "fcitx5"\n'
+                    'spawn-at-startup "quickshell"\n'
+                    'spawn-sh-at-startup "clipse --listen"\n'
+                    'spawn-at-startup "nm-applet"\n'
+                )
+                (raw / ".zsh/plugins/demo").mkdir(parents=True)
+                (raw / ".zsh/plugins/demo/plugin.zsh").write_text("true\n")
+                (raw / ".zsh/plugins/demo/plugin-link.zsh").symlink_to("plugin.zsh")
+                (raw / ".zshrc").write_text(
+                    "source ~/.zsh/plugins/demo/plugin.zsh\n"
+                    "PROMPT='$(~/.local/bin/prompt $PROMPT_EXIT_CODE \"$PROMPT_CMD_DURATION\" $COLUMNS)'\n"
+                )
+                raw_hash = manager.sha256(niri / "binds.kdl")
+
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, release, launcher)
+
+                release_root = paths.releases_home / release
+                manager.verify_manifest_release(
+                    paths, release, manager.load_manifest(paths)
+                )
+                release_entry = manager.load_manifest(paths)["releases"][release]
+                self.assertIn(
+                    {
+                        "path": "share/clavis/local-profile/home/.zsh/plugins/demo/plugin-link.zsh",
+                        "kind": "symlink",
+                        "target": "plugin.zsh",
+                    },
+                    release_entry["files"],
+                )
+                installed_raw = (
+                    release_root
+                    / "share/clavis/local-profile/home/.config/niri/binds.kdl"
+                )
+                self.assertEqual(manager.sha256(installed_raw), raw_hash)
+                self.assertEqual(
+                    manager.prepare_niri_profile(paths, release_root),
+                    paths.legacy_home / ".config/niri/config.kdl",
+                )
+                startup = (paths.legacy_home / ".config/niri/startup.kdl").read_text()
+                self.assertIn("key session supervise", startup)
+                self.assertIn('"nm-applet"', startup)
+                self.assertNotIn('"quickshell"', startup)
+                binds = (paths.legacy_home / ".config/niri/binds.kdl").read_text()
+                self.assertIn("key ipc call keystone dashboard", binds)
+                zshrc = (paths.legacy_home / ".zshrc").read_text()
+                self.assertIn("${CLAVIS_LEGACY_HOME}/.zsh/plugins", zshrc)
+                self.assertIn('key}\" prompt', zshrc)
+
+                environment = os.environ.copy()
+                environment.pop("NIRI_SOCKET", None)
+                environment.pop("XDG_CURRENT_DESKTOP", None)
+                environment.pop("XDG_SESSION_DESKTOP", None)
+                with mock.patch.dict(os.environ, environment, clear=True):
+                    with mock.patch.object(manager.os, "execvpe") as exec_mock:
+                        manager.run_session(paths, [])
+                program, command, session_environment = exec_mock.call_args.args
+                self.assertEqual(program, str(fixture.bin / "niri-session"))
+                self.assertEqual(command, [str(fixture.bin / "niri-session")])
+                self.assertEqual(
+                    session_environment["NIRI_CONFIG"],
+                    str(paths.legacy_home / ".config/niri/config.kdl"),
+                )
+
     def test_repeated_install_rejects_a_mutated_immutable_release(self) -> None:
         with tempfile.TemporaryDirectory(prefix="clavis-repeat-integrity-test.") as name:
             fixture = EnvironmentFixture(Path(name))

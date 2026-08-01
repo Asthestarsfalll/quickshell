@@ -53,6 +53,7 @@ CommandResult CommandRouter::route(const QStringList &arguments) const
     if (command == QStringLiteral("shell")
         || command == QStringLiteral("ipc")
         || command == QStringLiteral("session")
+        || command == QStringLiteral("prompt")
         || command == QStringLiteral("run")
         || command == QStringLiteral("rollback")
         || command == QStringLiteral("uninstall")
@@ -79,7 +80,8 @@ QString CommandRouter::helpText()
         "  key ipc [list|show]\n"
         "  key ipc call TARGET METHOD [ARGUMENTS...]\n"
         "  key session\n"
-        "  key run kitty|btop|cava|yazi|fcitx5 [APPLICATION_OPTIONS...]\n"
+        "  key prompt [EXIT_CODE [DURATION [WIDTH]]]\n"
+        "  key run kitty|btop|cava|yazi|fcitx5|rofi|wallpaper [OPTIONS...]\n"
         "  key doctor [--json] [--output DIRECTORY]\n"
         "  key doctor cpu-power [--json]\n"
         "  key audio start --source mic|system [--output DIRECTORY] [--json]\n"

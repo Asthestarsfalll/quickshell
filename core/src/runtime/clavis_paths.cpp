@@ -77,6 +77,8 @@ ClavisPaths ClavisPaths::fromEnvironment()
         paths.m_generatedHome = QDir(paths.m_profileHome).filePath(
             QStringLiteral("generated"));
     }
+    paths.m_legacyHome = QDir(paths.m_profileHome).filePath(
+        QStringLiteral("legacy-home"));
     paths.m_qmlImportHome = cleanAbsolute(env("CLAVIS_QML_IMPORT_HOME"));
     if (paths.m_qmlImportHome.isEmpty()) {
         paths.m_qmlImportHome = QDir(paths.currentRelease()).filePath(
@@ -110,6 +112,10 @@ QString ClavisPaths::generatedHome() const
 {
     return m_generatedHome;
 }
+QString ClavisPaths::legacyHome() const
+{
+    return m_legacyHome;
+}
 QString ClavisPaths::qmlImportHome() const
 {
     return m_qmlImportHome;
@@ -134,6 +140,7 @@ QProcessEnvironment ClavisPaths::processEnvironment(const QString &releaseRoot) 
     result.insert(QStringLiteral("CLAVIS_PROFILE"), m_profileName);
     result.insert(QStringLiteral("CLAVIS_PROFILE_HOME"), profileHome());
     result.insert(QStringLiteral("CLAVIS_GENERATED_HOME"), generatedHome());
+    result.insert(QStringLiteral("CLAVIS_LEGACY_HOME"), legacyHome());
     result.insert(QStringLiteral("CLAVIS_QML_IMPORT_HOME"), qmlImport);
     result.insert(QStringLiteral("CLAVIS_KEY"), stableKey());
     result.insert(

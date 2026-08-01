@@ -140,6 +140,10 @@ class ClavisPaths:
         xdg_config = _absolute_env("XDG_CONFIG_HOME") or self.home / ".config"
         return xdg_config / "systemd/user"
 
+    @property
+    def legacy_home(self) -> Path:
+        return self.profile_home / "legacy-home"
+
     def as_environment(self, release_root: Path) -> dict[str, str]:
         qml_import = release_root / "lib/qml"
         result = {
@@ -154,6 +158,7 @@ class ClavisPaths:
             "CLAVIS_PROFILE_CONFIG_HOME": str(self.profile_config_home),
             "CLAVIS_PROFILE_HOME": str(self.profile_home),
             "CLAVIS_GENERATED_HOME": str(self.generated_home),
+            "CLAVIS_LEGACY_HOME": str(self.legacy_home),
             "CLAVIS_QML_IMPORT_HOME": str(qml_import),
             "CLAVIS_KEY": str(self.stable_key),
         }

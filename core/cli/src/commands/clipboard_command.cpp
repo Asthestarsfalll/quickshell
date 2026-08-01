@@ -10,6 +10,7 @@
 #include <QImageReader>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QLockFile>
 #include <QMimeDatabase>
 #include <QProcess>
 #include <QRegularExpression>
@@ -1057,8 +1058,30 @@ CommandResult ClipboardCommand::run(const QStringList &arguments) const
                 message, true);
         }
 
-        const QString stableKey =
-            Clavis::Runtime::ClavisPaths::fromEnvironment().stableKey();
+        const Clavis::Runtime::ClavisPaths paths =
+            Clavis::Runtime::ClavisPaths::fromEnvironment();
+        const QString lockDirectory = QDir(paths.runtimeHome()).filePath(
+            QStringLiteral("locks"));
+        if (!QDir().mkpath(lockDirectory)) {
+            return resultFor(
+                QStringLiteral("clipboard.watch"), false, RuntimeFailure,
+                {{QStringLiteral("available"), false}},
+                QStringLiteral("unable to create clipboard watcher lock directory"),
+                true);
+        }
+        QLockFile watcherLock(QDir(lockDirectory).filePath(
+            QStringLiteral("clipboard-watch.lock")));
+        watcherLock.setStaleLockTime(0);
+        if (!watcherLock.tryLock()) {
+            return resultFor(
+                QStringLiteral("clipboard.watch"), false, RuntimeFailure,
+                {{QStringLiteral("available"), true},
+                 {QStringLiteral("alreadyRunning"), true}},
+                QStringLiteral("a Clavis clipboard watcher is already active"),
+                true);
+        }
+
+        const QString stableKey = paths.stableKey();
         QList<QByteArray> encoded{
             QFile::encodeName(wlPaste),
             QByteArrayLiteral("--watch"),
