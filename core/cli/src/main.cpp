@@ -4,11 +4,13 @@
 #include <QJsonDocument>
 #include <QTextStream>
 
+#include "clavis_release.h"
+
 int main(int argc, char *argv[])
 {
     QCoreApplication application(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("key"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
+    QCoreApplication::setApplicationVersion(QStringLiteral(CLAVIS_RELEASE));
 
     const CommandResult result =
         CommandRouter().route(QCoreApplication::arguments().mid(1));

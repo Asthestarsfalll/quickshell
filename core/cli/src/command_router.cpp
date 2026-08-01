@@ -4,9 +4,11 @@
 #include "commands/cast_command.h"
 #include "commands/clipboard_command.h"
 #include "commands/doctor_command.h"
+#include "commands/management_command.h"
 #include "commands/record_command.h"
 #include "commands/sysmon_command.h"
 #include "commands/top_command.h"
+#include "commands/version_command.h"
 #include "recording/recording_types.h"
 
 #include <QCoreApplication>
@@ -21,17 +23,19 @@ CommandResult CommandRouter::route(const QStringList &arguments) const
     }
     if (arguments.first() == QStringLiteral("--version")
         || arguments.first() == QStringLiteral("-v")) {
-        return {
-            Success,
-            false,
-            {},
-            QStringLiteral("key %1").arg(QCoreApplication::applicationVersion()),
-            false,
-        };
+        return VersionCommand().run(arguments.mid(1));
     }
 
     const QString command = arguments.first();
     const QStringList rest = arguments.mid(1);
+    if (command == QStringLiteral("version"))
+        return VersionCommand().run(rest);
+    if (command == QStringLiteral("doctor")
+        && !rest.isEmpty()
+        && (rest.first() == QStringLiteral("legacy")
+            || rest.first() == QStringLiteral("services"))) {
+        return ManagementCommand().run(command, rest);
+    }
     if (command == QStringLiteral("doctor"))
         return DoctorCommand().run(rest);
     if (command == QStringLiteral("audio"))
@@ -46,6 +50,19 @@ CommandResult CommandRouter::route(const QStringList &arguments) const
         return SysmonCommand().run(rest);
     if (command == QStringLiteral("top"))
         return TopCommand().run(rest);
+    if (command == QStringLiteral("shell")
+        || command == QStringLiteral("ipc")
+        || command == QStringLiteral("session")
+        || command == QStringLiteral("run")
+        || command == QStringLiteral("rollback")
+        || command == QStringLiteral("uninstall")
+        || command == QStringLiteral("migrate")
+        || command == QStringLiteral("export")
+        || command == QStringLiteral("setup")
+        || command == QStringLiteral("release")
+        || command == QStringLiteral("update")) {
+        return ManagementCommand().run(command, rest);
+    }
     return usageError(QStringLiteral("Unknown command: %1").arg(command),
                       arguments.contains(QStringLiteral("--json")));
 }
@@ -57,7 +74,13 @@ QString CommandRouter::helpText()
         "\n"
         "Usage:\n"
         "  key [--help] [--version]\n"
+        "  key version [--json]\n"
+        "  key shell [QUICKSHELL_OPTIONS...]\n"
+        "  key ipc call TARGET METHOD [ARGUMENTS...]\n"
+        "  key session\n"
+        "  key run kitty|btop|cava|yazi [APPLICATION_OPTIONS...]\n"
         "  key doctor [--json] [--output DIRECTORY]\n"
+        "  key doctor cpu-power [--json]\n"
         "  key audio start --source mic|system [--output DIRECTORY] [--json]\n"
         "  key audio status [--json]\n"
         "  key audio stop [--json]\n"
@@ -70,11 +93,22 @@ QString CommandRouter::helpText()
         "  key clipboard inspect|preview ID --format json\n"
         "  key clipboard restore|delete ID [--format json]\n"
         "  key clipboard clear|status [--format json]\n"
+        "  key clipboard watch\n"
         "  key sysmon snapshot [--format json] [--modules LIST]\n"
         "  key sysmon stream [--format jsonl] [--interval MS] [--modules LIST]\n"
         "  key sysmon system|cpu|memory|gpu|disk|network|battery [--format json]\n"
         "  key sysmon processes [--sort FIELD] [--limit N] [--filter TEXT] [--tree]\n"
         "  key top\n"
+        "  key rollback [RELEASE] [--dry-run]\n"
+        "  key release list [--json]\n"
+        "  key release remove RELEASE [--dry-run]\n"
+        "  key update [--artifact PATH]\n"
+        "  key uninstall [--dry-run] [--purge-cache] [--purge-config] [--purge-data]\n"
+        "  key export APP [--dry-run] [--replace|--disable] [--json]\n"
+        "  key setup cpu-power [--disable] [--dry-run]\n"
+        "  key doctor legacy [--json]\n"
+        "  key doctor services [--json]\n"
+        "  key migrate legacy [--dry-run]\n"
         "\n"
         "Recording options:\n"
         "  --type TYPE         video or gif (default: video)\n"

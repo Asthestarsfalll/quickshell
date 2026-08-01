@@ -43,8 +43,14 @@ Singleton {
     }
 
     function setMatugenTemplateEnabled(id, enabled) {
-        const changed =
+        let changed =
             PersonalizationConfig.setMatugenTemplateEnabled(id, enabled);
+        if (id === "fcitx5") {
+            changed = PersonalizationConfig.setMatugenTemplateEnabled(
+                "fcitx5_panel_svg", enabled) || changed;
+            changed = PersonalizationConfig.setMatugenTemplateEnabled(
+                "fcitx5_highlight_svg", enabled) || changed;
+        }
         if (changed && enabled)
             root.regenerateFromCurrentWallpaper();
     }
@@ -78,10 +84,6 @@ Singleton {
 
     function setIconTheme(value) {
         PersonalizationConfig.setIconTheme(value);
-
-        const themeName = root.effectiveIconTheme();
-        if (themeName !== "")
-            Quickshell.execDetached(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", themeName]);
     }
 
     function effectiveIconTheme() {
@@ -116,7 +118,7 @@ Singleton {
     function dataDirs() {
         const raw = Quickshell.env("XDG_DATA_DIRS") || "";
         const base = raw.trim() !== "" ? raw.split(":") : ["/usr/local/share", "/usr/share"];
-        return root.unique(base.concat([Paths.homeDir + "/.local/share", "/usr/local/share", "/usr/share"]));
+        return root.unique(base.concat([Paths.xdgDataHome, "/usr/local/share", "/usr/share"]));
     }
 
     function hasOption(options, value) {
@@ -206,56 +208,11 @@ Singleton {
     }
 
     function applyCursorSettings() {
-        const themeName = root.effectiveCursorTheme();
-        if (themeName !== "")
-            Quickshell.execDetached(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", themeName]);
-        Quickshell.execDetached(["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", String(PersonalizationConfig.cursorSize)]);
-        root.updateXResources();
         root.generateNiriCursorConfig();
     }
 
-    function updateXResources() {
-        const themeName = root.effectiveCursorTheme();
-        if (themeName === "")
-            return;
-
-        const xresourcesPath = Paths.homeDir + "/.Xresources";
-        const script = `
-            xresources_file=${root.shellQuote(xresourcesPath)}
-            theme_name=${root.shellQuote(themeName)}
-            cursor_size=${PersonalizationConfig.cursorSize}
-
-            [ -f "$xresources_file" ] && [ ! -w "$xresources_file" ] && exit 0
-
-            current_theme=""
-            current_size=""
-            if [ -f "$xresources_file" ]; then
-                current_theme=$(grep -E '^[[:space:]]*Xcursor\\.theme:' "$xresources_file" 2>/dev/null | sed 's/.*:[[:space:]]*//' | head -1)
-                current_size=$(grep -E '^[[:space:]]*Xcursor\\.size:' "$xresources_file" 2>/dev/null | sed 's/.*:[[:space:]]*//' | head -1)
-            fi
-
-            [ "$current_theme" = "$theme_name" ] && [ "$current_size" = "$cursor_size" ] && exit 0
-
-            temp_file="$xresources_file.tmp.$$"
-            if [ -f "$xresources_file" ]; then
-                grep -v '^[[:space:]]*Xcursor\\.theme:' "$xresources_file" | grep -v '^[[:space:]]*Xcursor\\.size:' > "$temp_file" 2>/dev/null || true
-            else
-                touch "$temp_file"
-            fi
-
-            printf 'Xcursor.theme: %s\\n' "$theme_name" >> "$temp_file"
-            printf 'Xcursor.size: %s\\n' "$cursor_size" >> "$temp_file"
-            mv "$temp_file" "$xresources_file"
-            xrdb -merge "$xresources_file" 2>/dev/null || true
-        `;
-        Quickshell.execDetached(["bash", "-c", script]);
-    }
-
     function generateNiriCursorConfig() {
-        if (!root.isNiriSession)
-            return;
-
-        const niriDmsDir = Paths.homeDir + "/.config/niri/dms";
+        const niriDmsDir = Paths.generatedHome + "/niri";
         const cursorPath = niriDmsDir + "/cursor.kdl";
         const themeName = root.effectiveCursorTheme();
         const size = PersonalizationConfig.cursorSize;

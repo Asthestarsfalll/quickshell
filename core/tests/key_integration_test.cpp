@@ -18,6 +18,7 @@ class KeyIntegrationTest : public QObject {
 private slots:
     void init();
     void cleanup();
+    void reportsUnifiedVersionHandshake();
     void rejectsMissingRegionGeometry();
     void reportsMissingDependencies();
     void reportsRecorderStartFailure();
@@ -44,6 +45,7 @@ private slots:
     void clipboardDeleteAndClearAreSafe();
     void clipboardReportsMissingDependencies();
     void clipboardReportsInactiveWatcher();
+    void clipboardWatchExecutesResolvedWatcherWithStableKey();
 
 private:
     struct KeyResult {
@@ -76,6 +78,9 @@ void KeyIntegrationTest::init()
     m_environment.insert(QStringLiteral("XDG_RUNTIME_DIR"),
                          m_temporary->filePath(QStringLiteral("runtime")));
     m_environment.insert(QStringLiteral("HOME"), m_temporary->path());
+    m_environment.insert(
+        QStringLiteral("CLAVIS_BIN_HOME"),
+        m_temporary->filePath(QStringLiteral("commands")));
     m_environment.insert(
         QStringLiteral("CLAVIS_CLIPBOARD_WATCHER_RUNNING"),
         QStringLiteral("1"));
@@ -110,6 +115,45 @@ void KeyIntegrationTest::cleanup()
         ::kill(static_cast<pid_t>(m_recorderPid), SIGINT);
     m_recorderPid = 0;
     m_temporary.reset();
+}
+
+void KeyIntegrationTest::reportsUnifiedVersionHandshake()
+{
+    const KeyResult result = runKey(
+        {QStringLiteral("version"), QStringLiteral("--json")});
+    QCOMPARE(result.exitCode, 0);
+    QCOMPARE(result.json.value(QStringLiteral("product")).toString(),
+             QStringLiteral("clavis-key"));
+    QVERIFY(!result.json.value(QStringLiteral("release")).toString().isEmpty());
+    QVERIFY(!result.json.value(QStringLiteral("commit")).toString().isEmpty());
+    const QJsonObject protocols =
+        result.json.value(QStringLiteral("protocols")).toObject();
+    QCOMPARE(protocols.value(QStringLiteral("core")).toInt(), 1);
+    QCOMPARE(protocols.value(QStringLiteral("clipboard")).toInt(), 2);
+    QCOMPARE(protocols.value(QStringLiteral("sysmon")).toInt(), 1);
+    QCOMPARE(protocols.value(QStringLiteral("raplHelper")).toInt(), 1);
+    const QJsonArray features =
+        result.json.value(QStringLiteral("features")).toArray();
+    QVERIFY(features.contains(QStringLiteral("clipboard.mime-restore")));
+    QVERIFY(features.contains(QStringLiteral("clipboard.mime-aware-store")));
+    QVERIFY(features.contains(QStringLiteral("sysmon.rapl-status")));
+}
+
+void KeyIntegrationTest::clipboardWatchExecutesResolvedWatcherWithStableKey()
+{
+    const QString trace =
+        m_temporary->filePath(QStringLiteral("clipboard-watch.trace"));
+    m_environment.insert(QStringLiteral("CLAVIS_TEST_CLIPBOARD_TRACE"), trace);
+    const KeyResult result = runKey(
+        {QStringLiteral("clipboard"), QStringLiteral("watch")});
+    QCOMPARE(result.exitCode, 0);
+    QFile traceFile(trace);
+    QVERIFY(traceFile.open(QIODevice::ReadOnly));
+    const QByteArray contents = traceFile.readAll();
+    QVERIFY(contents.contains("watch:--watch\n"));
+    const QByteArray expectedKey =
+        QFile::encodeName(m_temporary->filePath(QStringLiteral("commands/key")));
+    QVERIFY(contents.contains(expectedKey + "\nclipboard\nstore"));
 }
 
 void KeyIntegrationTest::rejectsMissingRegionGeometry()

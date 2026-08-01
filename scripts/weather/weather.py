@@ -4,13 +4,17 @@ import time
 import os
 import urllib.request
 import sys
-import ssl
 import datetime
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from clavis_paths import ClavisPaths
 
 # ================= 配置区域 =================
-CACHE_FILE = "/tmp/qs_weather_cache.json"
+CACHE_FILE = str(
+    ClavisPaths.from_environment().cache_home / "weather/legacy-forecast.json"
+)
 CACHE_DURATION = 1800
-ssl._create_default_https_context = ssl._create_unverified_context
 
 WEATHER_CODES = {
     0: "Clear",
@@ -76,6 +80,7 @@ def load_cache():
 
 def save_cache(data):
     try:
+        os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
         with open(CACHE_FILE, "w") as f:
             f.write(json.dumps(data))
     except:

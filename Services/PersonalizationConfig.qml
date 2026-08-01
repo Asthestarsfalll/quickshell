@@ -12,12 +12,12 @@ Singleton {
         Quickshell.env("CLAVIS_PERSONALIZATION_CONFIG") || ""
     readonly property string filePath: root.configOverride !== ""
         ? root.configOverride
-        : Paths.homeDir + "/.cache/quickshell/personalization.json"
+        : Paths.configHome + "/config.json"
     readonly property string configDir: {
         const separator = root.filePath.lastIndexOf("/");
         return separator > 0
             ? root.filePath.slice(0, separator)
-            : Paths.homeDir + "/.cache/quickshell";
+            : Paths.configHome;
     }
 
     readonly property var fillModes: [
@@ -111,7 +111,7 @@ Singleton {
     property bool storeReady: false
     property bool loading: false
 
-    property string wallpaperFolder: Paths.homeDir + "/.config/wallpaper"
+    property string wallpaperFolder: Paths.dataHome + "/wallpapers"
     property string wallpaperPath: ""
     property string wallpaperPathLight: ""
     property string wallpaperPathDark: ""
@@ -163,15 +163,15 @@ Singleton {
 
     property string matugenScheme: "scheme-tonal-spot"
     property var matugenTemplates: ({
-        "btop": true,
-        "cava": true,
-        "kitty": true,
-        "fcitx5": true,
-        "fcitx5_panel_svg": true,
-        "fcitx5_highlight_svg": true,
-        "niri": true,
-        "yazi": true,
-        "zsh_prompt": true
+        "btop": false,
+        "cava": false,
+        "kitty": false,
+        "fcitx5": false,
+        "fcitx5_panel_svg": false,
+        "fcitx5_highlight_svg": false,
+        "niri": false,
+        "yazi": false,
+        "zsh_prompt": false
     })
     property string themeMode: "dark"
     property string cursorTheme: ""
@@ -273,7 +273,7 @@ Singleton {
         const result = {};
         for (let i = 0; i < root.matugenTemplateIds.length; i += 1) {
             const id = root.matugenTemplateIds[i];
-            result[id] = source[id] === undefined ? true : !!source[id];
+            result[id] = source[id] === undefined ? false : !!source[id];
         }
         return result;
     }
@@ -311,7 +311,7 @@ Singleton {
     }
 
     function setWallpaperFolder(value) {
-        setValue("wallpaperFolder", value || Paths.homeDir + "/.config/wallpaper");
+        setValue("wallpaperFolder", value || Paths.dataHome + "/wallpapers");
     }
 
     function setWallpaperPath(value) {
@@ -636,7 +636,7 @@ Singleton {
     function isMatugenTemplateEnabled(id) {
         if (root.matugenTemplateIds.indexOf(id) === -1)
             return false;
-        return root.matugenTemplates[id] !== false;
+        return root.matugenTemplates[id] === true;
     }
 
     function setMatugenTemplateEnabled(id, enabled) {
@@ -843,7 +843,7 @@ Singleton {
         const parallax = wallpaper.parallax || {};
         const autoCycle = wallpaper.autoCycle || {};
 
-        root.wallpaperFolder = wallpaper.folder || Paths.homeDir + "/.config/wallpaper";
+        root.wallpaperFolder = wallpaper.folder || Paths.dataHome + "/wallpapers";
         root.wallpaperPath = wallpaper.path === Paths.currentWallpaper ? "" : (wallpaper.path || "");
         root.wallpaperPathLight = wallpaper.pathLight || "";
         root.wallpaperPathDark = wallpaper.pathDark || "";

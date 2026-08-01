@@ -7,9 +7,13 @@ import re
 import os
 import hashlib
 import base64
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from clavis_paths import ClavisPaths
 
 # ================= 配置区 =================
-CACHE_DIR = "/tmp/qs_lyrics_cache"
+CACHE_DIR = str(ClavisPaths.from_environment().cache_home / "lyrics")
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
 

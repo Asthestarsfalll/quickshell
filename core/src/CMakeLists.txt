@@ -1,4 +1,15 @@
-# 纯底层可复用的架构层
+# 纯底层可复用的架构层。RuntimeCore 先定义，供其他 core target 共享。
+qt_add_library(ClavisRuntimeCore STATIC)
+target_sources(ClavisRuntimeCore PRIVATE
+    runtime/clavis_paths.h
+    runtime/clavis_paths.cpp
+    runtime/rapl_helper_client.h
+    runtime/rapl_helper_client.cpp
+)
+set_target_properties(ClavisRuntimeCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(ClavisRuntimeCore PRIVATE Qt6::Core Qt6::Network)
+target_include_directories(ClavisRuntimeCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 qt_add_library(ClavisSysmonCore STATIC)
 target_sources(ClavisSysmonCore PRIVATE
     sysmon/types.h
@@ -20,7 +31,7 @@ target_sources(ClavisSysmonCore PRIVATE
 # 确保在共享库被链接时开启 -fPIC
 set_target_properties(ClavisSysmonCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(ClavisSysmonCore PRIVATE Qt6::Core)
+target_link_libraries(ClavisSysmonCore PRIVATE ClavisRuntimeCore Qt6::Core)
 target_include_directories(ClavisSysmonCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(ClavisWeatherCore STATIC)
@@ -40,6 +51,7 @@ target_sources(ClavisWeatherCore PRIVATE
 set_target_properties(ClavisWeatherCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(ClavisWeatherCore PRIVATE
+    ClavisRuntimeCore
     Qt6::Core
     Qt6::Network
 )
@@ -54,6 +66,7 @@ target_sources(ClavisWeatherMapCore PRIVATE
 set_target_properties(ClavisWeatherMapCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(ClavisWeatherMapCore PRIVATE
+    ClavisRuntimeCore
     Qt6::Core
     Qt6::Gui
     Qt6::Network
@@ -122,7 +135,7 @@ target_sources(ClavisRecordingCore PRIVATE
 
 set_target_properties(ClavisRecordingCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(ClavisRecordingCore PRIVATE Qt6::Core)
+target_link_libraries(ClavisRecordingCore PRIVATE ClavisRuntimeCore Qt6::Core)
 target_include_directories(ClavisRecordingCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(ClavisAudioCore STATIC)

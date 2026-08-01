@@ -8,7 +8,7 @@ import qs.Common
 Singleton {
     id: root
 
-    readonly property string configDir: Paths.homeDir + "/.cache/quickshell"
+    readonly property string configDir: Paths.configHome
     readonly property string filePath: configDir + "/ui-preferences.json"
 
     property bool dndEnabled: false
@@ -51,7 +51,6 @@ Singleton {
     function setDarkMode(value) {
         root.darkMode = value;
         root.save();
-        Quickshell.execDetached(["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", value ? "prefer-dark" : "default"]);
         themeDebounce.start();
     }
 

@@ -1,12 +1,12 @@
 #include "capture_session_guard.h"
 
 #include "process_identity.h"
+#include "runtime/clavis_paths.h"
 
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
-#include <QProcessEnvironment>
 
 namespace Clavis::Recording {
 
@@ -21,11 +21,7 @@ QJsonObject CaptureConflict::toJson() const
 
 QString CaptureSessionGuard::baseDirectory() const
 {
-    const QString runtime =
-        QProcessEnvironment::systemEnvironment().value(QStringLiteral("XDG_RUNTIME_DIR"));
-    return runtime.isEmpty()
-        ? QString()
-        : QDir(runtime).filePath(QStringLiteral("clavis-shell"));
+    return Clavis::Runtime::ClavisPaths::fromEnvironment().runtimeHome();
 }
 
 QString CaptureSessionGuard::lockPath() const

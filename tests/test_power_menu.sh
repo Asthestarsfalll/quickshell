@@ -45,10 +45,10 @@ exit 1
 EOF
 
 chmod +x "$test_dir/bin/niri" "$test_dir/bin/wlogout"
-mkdir -p "$test_dir/cache/quickshell"
+mkdir -p "$test_dir/config/clavis" "$test_dir/runtime"
 printf '%s\n' \
     '{"effects":{"shellBackgroundOpacity":0.42}}' \
-    > "$test_dir/cache/quickshell/personalization.json"
+    > "$test_dir/config/clavis/config.json"
 
 run_style() {
     style=$1
@@ -59,7 +59,12 @@ run_style() {
 
     MOCK_WLOGOUT_ARGS="$args" \
     MOCK_WLOGOUT_CSS="$css" \
+    HOME="$test_dir/home" \
+    XDG_CONFIG_HOME="$test_dir/config" \
+    XDG_DATA_HOME="$test_dir/data" \
+    XDG_STATE_HOME="$test_dir/state" \
     XDG_CACHE_HOME="$test_dir/cache" \
+    XDG_RUNTIME_DIR="$test_dir/runtime" \
     PATH="$test_dir/bin:$PATH" \
         "$launcher" "$style"
 

@@ -1,4 +1,5 @@
 #include "weather_map_provider.h"
+#include "runtime/clavis_paths.h"
 
 #include <QBuffer>
 #include <QDateTime>
@@ -12,7 +13,6 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSaveFile>
-#include <QStandardPaths>
 #include <QUrlQuery>
 #include <qt6keychain/keychain.h>
 
@@ -44,13 +44,9 @@ qint64 cacheControlMaxAge(const QByteArray &header)
 WeatherMapProvider::WeatherMapProvider(QObject *parent)
     : QObject(parent)
 {
-    const QString genericCache = QStandardPaths::writableLocation(
-        QStandardPaths::GenericCacheLocation
-    );
-    m_cacheRoot = (genericCache.isEmpty()
-        ? QDir::homePath() + QStringLiteral("/.cache")
-        : genericCache)
-        + QStringLiteral("/quickshell/weather-map");
+    m_cacheRoot = QDir(
+        Clavis::Runtime::ClavisPaths::fromEnvironment().cacheHome())
+        .filePath(QStringLiteral("weather-map"));
     QDir().mkpath(m_cacheRoot);
 
     m_status = QStringLiteral("loading_credentials");

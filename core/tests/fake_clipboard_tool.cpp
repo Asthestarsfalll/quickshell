@@ -55,6 +55,12 @@ int main(int argc, char *argv[])
 
     if (executable == QStringLiteral("wl-paste")) {
         const QStringList arguments = application.arguments().mid(1);
+        if (arguments.contains(QStringLiteral("--watch"))) {
+            return appendTrace(
+                QByteArrayLiteral("watch:")
+                + arguments.join(QLatin1Char('\n')).toUtf8()
+                + QByteArrayLiteral("\n")) ? 0 : 1;
+        }
         if (arguments.contains(QStringLiteral("--list-types"))) {
             const QByteArray types = qgetenv("CLAVIS_TEST_SELECTION_TYPES");
             const QByteArray output = types.isEmpty()

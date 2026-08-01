@@ -5,8 +5,8 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin
-ExecStart=/usr/bin/wl-paste --watch /usr/bin/env key clipboard store
+ExecStartPre=@CLAVIS_KEY@ version
+ExecStart=@CLAVIS_KEY@ clipboard watch
 Restart=on-failure
 RestartSec=1
 

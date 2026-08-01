@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.Services
 
 Singleton {
     id: root
@@ -16,16 +17,7 @@ Singleton {
     // CLAVIS_KEY is treated as one argv executable, never as shell input.
     // Production uses the installed `key`; local smoke tests can select the
     // just-built backend without changing the service.
-    property string commandName: {
-        const configured = String(
-            Quickshell.env("CLAVIS_KEY") || ""
-        ).trim();
-        return configured.length > 0
-            && configured.indexOf("\n") < 0
-            && configured.indexOf("\r") < 0
-            ? configured
-            : "key";
-    }
+    property string commandName: RuntimeCompatibilityService.commandName
     property int configuredIntervalMs: 1000
     property double sourceIntervalMs: 0
     readonly property int intervalMs: configuredIntervalMs
@@ -143,6 +135,19 @@ Singleton {
     function _startStream() {
         if (!root.active || streamProcess.running || root._fatalError)
             return;
+        if (!RuntimeCompatibilityService.ready) {
+            root.state = "loading";
+            RuntimeCompatibilityService.refresh();
+            return;
+        }
+        if (!RuntimeCompatibilityService.sysmonCompatible) {
+            root._fatalError = true;
+            root.state = "error";
+            root.errorMessage = qsTr("系统监测协议不兼容");
+            root.errorDetails = RuntimeCompatibilityService.errorMessage
+                || qsTr("请安装与当前 Shell 兼容的 key release。");
+            return;
+        }
 
         reconnectTimer.stop();
         forceStopTimer.stop();
@@ -591,6 +596,18 @@ Singleton {
             root._startStream();
         else
             root._stopStream();
+    }
+
+    Connections {
+        target: RuntimeCompatibilityService
+
+        function onReadyChanged() {
+            if (RuntimeCompatibilityService.ready && root.active
+                    && !streamProcess.running) {
+                root._fatalError = false;
+                root._startStream();
+            }
+        }
     }
 
     Timer {

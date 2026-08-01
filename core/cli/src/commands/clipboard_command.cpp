@@ -1,4 +1,5 @@
 #include "clipboard_command.h"
+#include "runtime/clavis_paths.h"
 
 #include <QBuffer>
 #include <QCryptographicHash>
@@ -18,7 +19,11 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <cerrno>
 #include <cstdio>
+#include <cstring>
+#include <unistd.h>
+#include <vector>
 
 namespace {
 
@@ -405,8 +410,8 @@ QString cacheDirectory()
 {
     QString path = qEnvironmentVariable("CLAVIS_CLIPBOARD_CACHE_DIR").trimmed();
     if (path.isEmpty())
-        path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
-            + QStringLiteral("/clavis/clipboard");
+        path = QDir(Clavis::Runtime::ClavisPaths::fromEnvironment().cacheHome())
+            .filePath(QStringLiteral("clipboard"));
     QDir().mkpath(path);
     QFile::setPermissions(
         path,
@@ -1034,6 +1039,48 @@ CommandResult ClipboardCommand::run(const QStringList &arguments) const
         {QStringLiteral("mimeRestore"), true},
         {QStringLiteral("mimeAwareStore"), true},
     };
+
+    if (subcommand == QStringLiteral("watch")) {
+        if (arguments.size() != 1)
+            return usageFailure(
+                QStringLiteral("clipboard watch accepts no options"),
+                jsonRequested);
+        if (!cliphistAvailable || wlPaste.isEmpty()) {
+            const QString message = !cliphistAvailable
+                ? QStringLiteral("cliphist is unavailable")
+                : QStringLiteral("wl-paste is unavailable");
+            return resultFor(
+                QStringLiteral("clipboard.watch"), false,
+                DependencyFailure,
+                {{QStringLiteral("available"), false},
+                 {QStringLiteral("dependencies"), dependencies}},
+                message, true);
+        }
+
+        const QString stableKey =
+            Clavis::Runtime::ClavisPaths::fromEnvironment().stableKey();
+        QList<QByteArray> encoded{
+            QFile::encodeName(wlPaste),
+            QByteArrayLiteral("--watch"),
+            QFile::encodeName(stableKey),
+            QByteArrayLiteral("clipboard"),
+            QByteArrayLiteral("store"),
+        };
+        std::vector<char *> execArguments;
+        execArguments.reserve(static_cast<std::size_t>(encoded.size() + 1));
+        for (QByteArray &argument : encoded)
+            execArguments.push_back(argument.data());
+        execArguments.push_back(nullptr);
+        ::execv(encoded.first().constData(), execArguments.data());
+        return resultFor(
+            QStringLiteral("clipboard.watch"), false,
+            RuntimeFailure,
+            {{QStringLiteral("available"), false},
+             {QStringLiteral("dependencies"), dependencies}},
+            QStringLiteral("unable to start wl-paste watcher: %1")
+                .arg(QString::fromLocal8Bit(std::strerror(errno))),
+            true);
+    }
 
     if (subcommand == QStringLiteral("store")) {
         QString invalid;

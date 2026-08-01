@@ -5,6 +5,10 @@ qt_add_executable(key
     src/command_router.cpp
     src/commands/doctor_command.h
     src/commands/doctor_command.cpp
+    src/commands/version_command.h
+    src/commands/version_command.cpp
+    src/commands/management_command.h
+    src/commands/management_command.cpp
     src/commands/audio_command.h
     src/commands/audio_command.cpp
     src/commands/record_command.h
@@ -29,6 +33,7 @@ set_target_properties(key PROPERTIES
 )
 
 target_link_libraries(key PRIVATE
+    ClavisRuntimeCore
     ClavisSysmonCore
     ClavisRecordingCore
     ClavisNiriCore
@@ -40,33 +45,8 @@ target_link_libraries(key PRIVATE
 
 target_include_directories(key PRIVATE src)
 
+target_include_directories(key PRIVATE ${CMAKE_BINARY_DIR}/generated)
+
 install(TARGETS key
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-# Linux exposes Intel RAPL package energy as a root-readable sysfs counter on
-# hardened kernels. btop solves the same problem with cap_dac_read_search.
-# Keep this opt-out so packagers can provide an ACL/udev policy instead.
-option(
-    CLAVIS_INSTALL_RAPL_CAPABILITY
-    "Grant the installed key executable permission to read Intel RAPL energy"
-    ON
-)
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CLAVIS_INSTALL_RAPL_CAPABILITY)
-    find_program(CLAVIS_SETCAP_EXECUTABLE NAMES setcap)
-    if(CLAVIS_SETCAP_EXECUTABLE)
-        configure_file(
-            cmake/InstallKeyCapabilities.cmake.in
-            ${CMAKE_CURRENT_BINARY_DIR}/InstallKeyCapabilities.cmake
-            @ONLY
-        )
-        install(SCRIPT
-            ${CMAKE_CURRENT_BINARY_DIR}/InstallKeyCapabilities.cmake
-        )
-    else()
-        message(WARNING
-            "setcap was not found; installed key cannot read protected "
-            "Intel RAPL CPU energy counters")
-    endif()
-endif()

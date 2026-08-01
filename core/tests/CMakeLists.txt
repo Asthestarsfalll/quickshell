@@ -1,4 +1,13 @@
 find_package(Qt6 REQUIRED COMPONENTS Test)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+add_test(
+    NAME qml_unit_tests
+    COMMAND Qt6::qmltestrunner -input ${CMAKE_SOURCE_DIR}/../tests/qml
+)
+set_tests_properties(qml_unit_tests PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
 
 qt_add_executable(clavis_core_tests
     recording_core_test.cpp
@@ -51,6 +60,36 @@ target_link_libraries(sysmon_core_tests PRIVATE
 )
 
 add_test(NAME sysmon_core_tests COMMAND sysmon_core_tests)
+
+qt_add_executable(rapl_helper_client_tests
+    rapl_helper_client_test.cpp
+)
+
+target_link_libraries(rapl_helper_client_tests PRIVATE
+    ClavisRuntimeCore
+    Qt6::Core
+    Qt6::Network
+    Qt6::Test
+)
+
+add_test(NAME rapl_helper_client_tests COMMAND rapl_helper_client_tests)
+
+qt_add_executable(clavis_paths_tests
+    clavis_paths_test.cpp
+)
+
+target_link_libraries(clavis_paths_tests PRIVATE
+    ClavisRuntimeCore
+    Qt6::Core
+    Qt6::Test
+)
+
+add_test(NAME clavis_paths_tests COMMAND clavis_paths_tests)
+
+add_test(
+    NAME clavis_manager_tests
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_clavis_manager.py
+)
 
 qt_add_executable(m3shapes_tests
     m3shapes_test.cpp

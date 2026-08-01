@@ -28,13 +28,13 @@ Singleton {
         const configured = Quickshell.env("NIRI_CONFIG") || "";
         return configured !== ""
             ? configured
-            : Paths.homeDir + "/.config/niri/config.kdl";
+            : Paths.generatedHome + "/niri/session.kdl";
     }
     readonly property string niriConfigDir: {
         const separator = root.niriConfigPath.lastIndexOf("/");
         return separator > 0
             ? root.niriConfigPath.slice(0, separator)
-            : Paths.homeDir + "/.config/niri";
+            : Paths.generatedHome + "/niri";
     }
     readonly property string effectsConfigPath:
         root.niriConfigDir + "/clavis-effects.kdl"

@@ -1,0 +1,353 @@
+schema = 1
+primary_distribution = "arch"
+other_distributions = "experimental"
+
+[[build.required]]
+name = "cmake"
+arch = "cmake"
+purpose = "configure and install the native backend and QML modules"
+detect = "cmake --version"
+degradable = false
+
+[[build.required]]
+name = "C++ compiler"
+arch = "gcc"
+purpose = "build the Qt/C++ backend"
+detect = "c++ --version"
+degradable = false
+
+[[build.required]]
+name = "pkg-config"
+arch = "pkgconf"
+purpose = "locate PipeWire, ncursesw and cava libraries"
+detect = "pkg-config --version"
+degradable = false
+
+[[build.required]]
+name = "Qt 6 base and declarative"
+arch = "qt6-base qt6-declarative"
+purpose = "Qt Core, Gui, Network, QML and Quick"
+detect = "pkg-config --exists Qt6Core Qt6Qml Qt6Quick"
+degradable = false
+
+[[build.required]]
+name = "Qt 6 ShaderTools and Tools"
+arch = "qt6-shadertools qt6-tools"
+purpose = "compile shaders, translations and QML metadata"
+detect = "test -x \"$(pkg-config --variable=libexecdir Qt6Core)/bin/qsb\" && test -x \"$(pkg-config --variable=libexecdir Qt6Core)/bin/lrelease\""
+degradable = false
+
+[[build.required]]
+name = "QtKeychain 6"
+arch = "qtkeychain-qt6"
+purpose = "store weather-map API credentials"
+detect = "pkg-config --exists qt6keychain"
+degradable = false
+
+[[build.required]]
+name = "PipeWire development files"
+arch = "pipewire"
+purpose = "native audio monitoring"
+detect = "pkg-config --exists libpipewire-0.3"
+degradable = false
+
+[[build.required]]
+name = "ncursesw"
+arch = "ncurses"
+purpose = "key top terminal UI"
+detect = "pkg-config --exists ncursesw"
+degradable = false
+
+[[build.required]]
+name = "libcava"
+arch = "cava"
+purpose = "native audio spectrum provider"
+detect = "pkg-config --exists libcava || pkg-config --exists cava"
+degradable = false
+
+[[runtime.required]]
+name = "Quickshell"
+arch = "quickshell"
+purpose = "run the Clavis QML shell"
+detect = "qs --version"
+degradable = false
+
+[[runtime.required]]
+name = "Python 3"
+arch = "python"
+purpose = "release manager and bundled helper scripts"
+detect = "python3 --version"
+degradable = false
+
+[[runtime.required]]
+name = "Bash and coreutils"
+arch = "bash coreutils"
+purpose = "stable launcher and bundled scripts"
+detect = "bash --version"
+degradable = false
+
+[[runtime.required]]
+name = "which"
+arch = "which"
+purpose = "executable discovery from Quickshell service probes"
+detect = "which --version"
+degradable = false
+
+[[runtime.required]]
+name = "Qt 6 compatibility and Lottie QML modules"
+arch = "qt6-5compat qt6-lottie"
+purpose = "Qt5Compat.GraphicalEffects and Qt.labs.lottieqt imports"
+detect = "test -d \"$(pkg-config --variable=libexecdir Qt6Core)/qml/Qt5Compat\" && test -d \"$(pkg-config --variable=libexecdir Qt6Core)/qml/Qt/labs/lottieqt\""
+degradable = false
+
+[[runtime.required]]
+name = "systemd user tools"
+arch = "systemd"
+purpose = "user services, session suspend and optional socket activation"
+detect = "systemctl --version && loginctl --version"
+degradable = false
+
+[[runtime.recommended]]
+name = "Niri"
+arch = "niri"
+purpose = "Clavis Session and compositor integration"
+detect = "niri --version"
+degradable = true
+
+[[runtime.recommended]]
+name = "libnotify"
+arch = "libnotify"
+purpose = "desktop notifications from recording and timers"
+detect = "notify-send --version"
+degradable = true
+
+[[runtime.recommended]]
+name = "freedesktop sound theme"
+arch = "sound-theme-freedesktop"
+purpose = "Pomodoro notification sounds"
+detect = "test -d /usr/share/sounds/freedesktop/stereo"
+degradable = true
+
+[[feature.clipboard]]
+name = "cliphist"
+arch = "cliphist"
+purpose = "MIME-aware clipboard history storage"
+detect = "cliphist --help"
+degradable = true
+
+[[feature.clipboard]]
+name = "wl-clipboard"
+arch = "wl-clipboard"
+purpose = "Wayland clipboard watch and restore"
+detect = "wl-copy --version && wl-paste --version"
+degradable = true
+
+[[feature.wallpaper]]
+name = "awww"
+arch = "awww"
+purpose = "optional animated wallpaper backend"
+detect = "awww --version"
+degradable = true
+
+[[feature.wallpaper]]
+name = "wlogout"
+arch = "wlogout"
+purpose = "themed power menu"
+detect = "wlogout --version"
+degradable = true
+
+[[feature.wallpaper]]
+name = "ImageMagick"
+arch = "imagemagick"
+purpose = "generate disposable overview wallpaper caches"
+detect = "magick -version"
+degradable = true
+
+[[feature.recording]]
+name = "gpu-screen-recorder"
+arch = "gpu-screen-recorder"
+purpose = "Wayland video and GIF capture"
+detect = "gpu-screen-recorder --version"
+degradable = true
+
+[[feature.recording]]
+name = "FFmpeg"
+arch = "ffmpeg"
+purpose = "recording post-processing and audio capture"
+detect = "ffmpeg -version && ffprobe -version"
+degradable = true
+
+[[feature.theming]]
+name = "matugen"
+arch = "matugen-bin"
+purpose = "generate Material color profiles"
+detect = "matugen --version"
+degradable = true
+
+[[feature.theming]]
+name = "gettext"
+arch = "gettext"
+purpose = "envsubst for the themed power menu"
+detect = "envsubst --version"
+degradable = true
+
+[[feature.theming]]
+name = "GLib settings tools"
+arch = "glib2"
+purpose = "optional desktop icon, cursor and color-scheme integration"
+detect = "gsettings --version"
+degradable = true
+
+[[feature.audio]]
+name = "PipeWire and PulseAudio tools"
+arch = "pipewire pipewire-pulse"
+purpose = "volume, microphone and recording source control"
+detect = "pactl --version && wpctl --version"
+degradable = true
+
+[[feature.audio]]
+name = "pavucontrol"
+arch = "pavucontrol"
+purpose = "advanced audio control panel"
+detect = "pavucontrol --version"
+degradable = true
+
+[[feature.audio]]
+name = "cava"
+arch = "cava"
+purpose = "terminal visualizer profile and native spectrum backend"
+detect = "cava -v"
+degradable = true
+
+[[feature.audio]]
+name = "wlsunset"
+arch = "wlsunset"
+purpose = "night-light color temperature"
+detect = "wlsunset -h"
+degradable = true
+
+[[feature.audio]]
+name = "procps-ng"
+arch = "procps-ng"
+purpose = "stop an existing wlsunset process before applying a new gamma"
+detect = "pkill --version"
+degradable = true
+
+[[feature.network]]
+name = "NetworkManager"
+arch = "networkmanager"
+purpose = "Quickshell network backend"
+detect = "nmcli --version"
+degradable = true
+
+[[feature.bluetooth]]
+name = "BlueZ"
+arch = "bluez bluez-utils"
+purpose = "Quickshell Bluetooth backend"
+detect = "bluetoothctl --version"
+degradable = true
+
+[[feature.cpu_power]]
+name = "Linux powercap Intel RAPL"
+arch = "linux"
+purpose = "optional CPU package power metric"
+detect = "test -d /sys/class/powercap"
+degradable = true
+
+[[feature.capture]]
+name = "hyprpicker"
+arch = "hyprpicker"
+purpose = "screen color picker"
+detect = "hyprpicker --version"
+degradable = true
+
+[[feature.capture]]
+name = "grim"
+arch = "grim"
+purpose = "Wayland screenshot capture used by Keystone tools"
+detect = "grim -h"
+degradable = true
+
+[[feature.desktop_integration]]
+name = "xdg-utils"
+arch = "xdg-utils"
+purpose = "open network login and other external URLs"
+detect = "xdg-open --help"
+degradable = true
+
+[[feature.desktop_integration]]
+name = "GNOME System Monitor"
+arch = "gnome-system-monitor"
+purpose = "optional graphical process monitor launch action"
+detect = "gnome-system-monitor --version"
+degradable = true
+
+[[feature.package_updates]]
+name = "pacman"
+arch = "pacman"
+purpose = "Arch package count and update indicators"
+detect = "pacman --version"
+degradable = true
+
+[[feature.package_updates]]
+name = "paru"
+arch = "paru"
+purpose = "Arch repository and AUR update counts shown by PackageService"
+detect = "paru --version"
+degradable = true
+
+[[feature.brightness]]
+name = "brightnessctl"
+arch = "brightnessctl"
+purpose = "internal display brightness"
+detect = "brightnessctl --version"
+degradable = true
+
+[[feature.brightness]]
+name = "ddcutil"
+arch = "ddcutil"
+purpose = "external display brightness"
+detect = "ddcutil --version"
+degradable = true
+
+[[feature.cloud]]
+name = "rclone"
+arch = "rclone"
+purpose = "cloud file browser integration"
+detect = "rclone version"
+degradable = true
+
+[[feature.profile_apps]]
+name = "Kitty"
+arch = "kitty"
+purpose = "key run kitty profile adapter"
+detect = "kitty --version"
+degradable = true
+
+[[feature.profile_apps]]
+name = "btop"
+arch = "btop"
+purpose = "key run btop profile adapter"
+detect = "btop --version"
+degradable = true
+
+[[feature.profile_apps]]
+name = "Yazi"
+arch = "yazi"
+purpose = "key run yazi profile adapter"
+detect = "yazi --version"
+degradable = true
+
+[[development]]
+name = "Git"
+arch = "git"
+purpose = "record commits and update source checkouts"
+detect = "git --version"
+degradable = true
+
+[[development]]
+name = "QML lint"
+arch = "qt6-declarative"
+purpose = "static QML validation"
+detect = "qmllint --version"
+degradable = false

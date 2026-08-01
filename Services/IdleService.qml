@@ -29,7 +29,7 @@ Singleton {
     property real suspendTimeout: 1800
     property bool suspendRespectInhibitors: true
 
-    readonly property string policyConfigDir: Paths.homeDir + "/.cache/quickshell"
+    readonly property string policyConfigDir: Paths.configHome
     readonly property string policyConfigPath: policyConfigDir + "/idle-policy.json"
     readonly property bool policyReady: policyStoreReady && !policyLoading
     property bool policyStoreReady: false

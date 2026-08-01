@@ -1,0 +1,9 @@
+// Clavis-managed niri base profile.
+// User changes belong in $CLAVIS_CONFIG_HOME/overrides/niri.kdl.
+
+prefer-no-csd
+
+layout {
+    gaps 12
+    center-focused-column "never"
+}

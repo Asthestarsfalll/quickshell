@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -z "${HOME:-}" || "${HOME}" != /* ]]; then
+    echo "key: HOME must be an absolute path" >&2
+    exit 78
+fi
+
+clavis_install_prefix="${CLAVIS_INSTALL_PREFIX:-${HOME}/.local/lib/clavis}"
+if [[ "${clavis_install_prefix}" != /* ]]; then
+    echo "key: CLAVIS_INSTALL_PREFIX must be an absolute path" >&2
+    exit 78
+fi
+clavis_current="${clavis_install_prefix}/current"
+if [[ ! -L "${clavis_current}" ]]; then
+    echo "key: no active Clavis release at ${clavis_current}" >&2
+    echo "Run ./setup.sh install from a Clavis source checkout." >&2
+    exit 127
+fi
+clavis_release_root=$(readlink -f -- "${clavis_current}")
+case "${clavis_release_root}" in
+    "${clavis_install_prefix}"/releases/*) ;;
+    *)
+        echo "key: current release escapes ${clavis_install_prefix}/releases" >&2
+        exit 78
+        ;;
+esac
+clavis_target="${clavis_release_root}/bin/key"
+
+if [[ ! -x "${clavis_target}" ]]; then
+    echo "key: no active Clavis release at ${clavis_current}" >&2
+    echo "Run ./setup.sh install from a Clavis source checkout." >&2
+    exit 127
+fi
+
+export CLAVIS_INSTALL_PREFIX="${clavis_install_prefix}"
+export CLAVIS_RELEASE_ROOT="${clavis_release_root}"
+exec "${clavis_target}" "$@"

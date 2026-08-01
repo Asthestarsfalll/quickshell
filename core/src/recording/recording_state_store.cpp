@@ -1,22 +1,19 @@
 #include "recording_state_store.h"
+#include "runtime/clavis_paths.h"
 
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
-#include <QProcessEnvironment>
 #include <QSaveFile>
 
 namespace Clavis::Recording {
 
 QString RecordingStateStore::runtimeDirectory() const
 {
-    const QString base =
-        QProcessEnvironment::systemEnvironment().value(QStringLiteral("XDG_RUNTIME_DIR"));
-    if (base.isEmpty())
-        return {};
-    return QDir(base).filePath(QStringLiteral("clavis-shell/recording"));
+    return QDir(Clavis::Runtime::ClavisPaths::fromEnvironment().runtimeHome())
+        .filePath(QStringLiteral("recording"));
 }
 
 QString RecordingStateStore::sessionPath() const

@@ -321,7 +321,8 @@ Singleton {
         if (!fromIpc && !root.primaryInstance)
             return root.forwardIpc(["setFolder", path]);
 
-        PersonalizationConfig.setWallpaperFolder(path || Paths.homeDir + "/.config/wallpaper");
+        PersonalizationConfig.setWallpaperFolder(
+            path || Paths.dataHome + "/wallpapers");
         root.scan();
         return true;
     }
@@ -468,7 +469,7 @@ Singleton {
         overviewBackdropRuleProbe.command = [
             "grep", "-R", "-F", "-q",
             "clavis-overview-wallpaper",
-            Paths.homeDir + "/.config/niri"
+            Paths.xdgConfigHome + "/niri"
         ];
         overviewBackdropRuleProbe.running = true;
     }
@@ -728,7 +729,7 @@ Singleton {
             niriTransparentBackgroundProbe.command = [
                 "grep", "-F", "-q",
                 "background-color \"transparent\"",
-                Paths.homeDir + "/.config/niri/config.kdl"
+                Paths.xdgConfigHome + "/niri/config.kdl"
             ];
             niriTransparentBackgroundProbe.running = true;
         }

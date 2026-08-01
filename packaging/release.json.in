@@ -1,0 +1,20 @@
+{
+  "release": "@CLAVIS_RELEASE@",
+  "commit": "@CLAVIS_COMMIT@",
+  "buildTime": "@CLAVIS_BUILD_TIME@",
+  "channel": "@CLAVIS_CHANNEL@",
+  "sourceDirty": @CLAVIS_SOURCE_DIRTY@,
+  "sourceFingerprint": "@CLAVIS_SOURCE_FINGERPRINT@",
+  "protocols": {
+    "core": 1,
+    "clipboard": 2,
+    "sysmon": 1,
+    "raplHelper": 1
+  },
+  "dataSchemas": {
+    "config": 1,
+    "manifest": 1,
+    "profile": 1
+  },
+  "dependencyManifest": 1
+}

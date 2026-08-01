@@ -6,8 +6,22 @@ import Quickshell
 Singleton {
     id: root
 
+    function absoluteEnvironment(name) {
+        const value = String(Quickshell.env(name) || "").trim();
+        return value.startsWith("/") ? value : "";
+    }
+
+    function validProfileName(value) {
+        const name = String(value || "").trim();
+        return name !== "" && name !== "." && name !== ".."
+            && name.indexOf("/") < 0 && name.indexOf("\\") < 0;
+    }
+
     readonly property string shellDir: Quickshell.shellDir
-    readonly property string assetsDir: shellDir + "/assets"
+    readonly property string releaseRoot: root.absoluteEnvironment("CLAVIS_RELEASE_ROOT")
+    readonly property string shareRoot: releaseRoot !== ""
+        ? releaseRoot + "/share/clavis" : shellDir
+    readonly property string assetsDir: shareRoot + "/assets"
     readonly property string fontsDir: assetsDir + "/fonts"
     readonly property string iconsDir: assetsDir + "/icons"
     readonly property string appIconsDir: iconsDir + "/apps"
@@ -16,7 +30,7 @@ Singleton {
     readonly property string meteoconsDir: weatherIconsDir + "/meteocons"
     readonly property string imagesDir: assetsDir + "/images"
 
-    readonly property string scriptsDir: shellDir + "/scripts"
+    readonly property string scriptsDir: shareRoot + "/scripts"
     readonly property string audioScriptsDir: scriptsDir + "/audio"
     readonly property string captureScriptsDir: scriptsDir + "/capture"
     readonly property string mediaScriptsDir: scriptsDir + "/media"
@@ -25,11 +39,41 @@ Singleton {
     readonly property string themeScriptsDir: scriptsDir + "/theme"
     readonly property string weatherScriptsDir: scriptsDir + "/weather"
 
-    readonly property string homeDir: Quickshell.env("HOME")
-    readonly property string currentWallpaper: homeDir + "/.cache/wallpaper_rofi/current"
-    readonly property string scheduleCache: homeDir + "/.cache/quickshell/schedule.json"
+    readonly property string homeDir: root.absoluteEnvironment("HOME")
+    readonly property string xdgConfigHome: root.absoluteEnvironment("XDG_CONFIG_HOME")
+        || homeDir + "/.config"
+    readonly property string xdgDataHome: root.absoluteEnvironment("XDG_DATA_HOME")
+        || homeDir + "/.local/share"
+    readonly property string binHome: root.absoluteEnvironment("CLAVIS_BIN_HOME")
+        || homeDir + "/.local/bin"
+    readonly property string stableKey: binHome + "/key"
+    readonly property string installPrefix: root.absoluteEnvironment("CLAVIS_INSTALL_PREFIX")
+        || homeDir + "/.local/lib/clavis"
+    readonly property string currentRelease: releaseRoot !== ""
+        ? releaseRoot : installPrefix + "/current"
+    readonly property string configHome: root.absoluteEnvironment("CLAVIS_CONFIG_HOME")
+        || xdgConfigHome + "/clavis"
+    readonly property string dataHome: root.absoluteEnvironment("CLAVIS_DATA_HOME")
+        || xdgDataHome + "/clavis"
+    readonly property string stateHome: root.absoluteEnvironment("CLAVIS_STATE_HOME")
+        || (root.absoluteEnvironment("XDG_STATE_HOME") || homeDir + "/.local/state") + "/clavis"
+    readonly property string cacheHome: root.absoluteEnvironment("CLAVIS_CACHE_HOME")
+        || (root.absoluteEnvironment("XDG_CACHE_HOME") || homeDir + "/.cache") + "/clavis"
+    readonly property string runtimeHome: root.absoluteEnvironment("CLAVIS_RUNTIME_HOME")
+        || (root.absoluteEnvironment("XDG_RUNTIME_DIR") || cacheHome + "/runtime") + "/clavis"
+    readonly property string requestedProfileName: Quickshell.env("CLAVIS_PROFILE") || "default"
+    readonly property string profileName: root.validProfileName(requestedProfileName)
+        ? requestedProfileName.trim() : "default"
+    readonly property string profileHome: root.absoluteEnvironment("CLAVIS_PROFILE_HOME")
+        || dataHome + "/profiles/" + profileName
+    readonly property string generatedHome: root.absoluteEnvironment("CLAVIS_GENERATED_HOME")
+        || profileHome + "/generated"
+    readonly property string qmlImportHome: root.absoluteEnvironment("CLAVIS_QML_IMPORT_HOME")
+        || currentRelease + "/lib/qml"
+    readonly property string currentWallpaper: stateHome + "/wallpaper/current"
+    readonly property string scheduleCache: cacheHome + "/schedule.json"
     readonly property string profileAvatar: homeDir + "/.face"
-    readonly property string defaultAvatar: homeDir + "/Pictures/avatar/shelby.jpg"
+    readonly property string defaultAvatar: imagesDir + "/dino.png"
 
     function fileUrl(path) {
         const value = String(path);

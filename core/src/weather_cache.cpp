@@ -1,19 +1,18 @@
 #include "weather_cache.h"
+#include "runtime/clavis_paths.h"
 
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QStandardPaths>
 
 QString WeatherCache::defaultPath() {
-    const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    if (!cacheDir.isEmpty()) {
-        QDir().mkpath(cacheDir);
-        return cacheDir + "/clavis_weather_cache.json";
-    }
-    return QDir::homePath() + "/.cache/clavis_weather_cache.json";
+    const QString cacheDir =
+        Clavis::Runtime::ClavisPaths::fromEnvironment().cacheHome()
+        + QStringLiteral("/weather");
+    QDir().mkpath(cacheDir);
+    return cacheDir + QStringLiteral("/forecast.json");
 }
 
 WeatherSnapshot WeatherCache::load(const QString &path) {

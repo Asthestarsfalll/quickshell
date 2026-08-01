@@ -5,6 +5,7 @@ set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 generator="$repo_dir/scripts/theme/generate_matugen_colors.sh"
 test_dir="$(mktemp -d /tmp/clavis-matugen-test.XXXXXX)"
+export CLAVIS_RUNTIME_HOME="$test_dir/runtime"
 
 cleanup() {
     rm -rf -- "$test_dir"
@@ -21,16 +22,13 @@ command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 command -v yazi >/dev/null 2>&1 || fail "yazi is required"
 command -v zsh >/dev/null 2>&1 || fail "zsh is required"
 
-expected_hooks=(
-    'post_hook = "pkill -USR1 cava >/dev/null 2>&1 || true"'
-    'post_hook = "cp \"$HOME/.config/kitty/themes/Matugen.conf\" \"$HOME/.config/kitty/current-theme.conf\" && (pkill -USR1 -x kitty >/dev/null 2>&1 || true)"'
-    'post_hook = "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 ReloadAddonConfig s classicui >/dev/null 2>&1 || true"'
-    'post_hook = "niri msg action load-config-file >/dev/null 2>&1 || true"'
-)
-for expected_hook in "${expected_hooks[@]}"; do
-    grep -Fqx "$expected_hook" "$repo_dir/matugen/config.toml" \
-        || fail "missing official hot-reload hook: $expected_hook"
-done
+grep -Fq 'source[id] === undefined ? false' \
+    "$repo_dir/Services/PersonalizationConfig.qml" \
+    || fail "legacy settings implicitly enable profile templates"
+grep -Fq 'root.matugenTemplates[id] === true' \
+    "$repo_dir/Services/PersonalizationConfig.qml" \
+    || fail "missing profile template flags do not fail closed"
+
 test_home="$test_dir/home"
 mkdir -p "$test_home"
 
@@ -56,12 +54,16 @@ if HOME="$test_home" "$generator" \
     fail "generator unexpectedly accepted an unknown template"
 fi
 
-# Exercise the production config without creating outputs or running hooks.
+# Dry-run must not create generated or external application files.
 HOME="$test_home" "$generator" \
     --color "#6750a4" \
     --mode dark \
     --scheme scheme-tonal-spot \
     --dry-run
+[[ ! -e "$test_home/.config" ]] \
+    || fail "dry-run created a user configuration directory"
+[[ ! -e "$test_home/.local/share/clavis/profiles/default/generated" ]] \
+    || fail "dry-run created generated profile files"
 
 filtered_home="$test_dir/filtered-home"
 HOME="$filtered_home" "$generator" \
@@ -71,39 +73,35 @@ HOME="$filtered_home" "$generator" \
     --templates "yazi,zsh_prompt"
 
 filtered_outputs=(
-    "$filtered_home/.cache/quickshell-dev-colorscheme/colors.json"
-    "$filtered_home/.cache/quickshell-dev-colorscheme/zsh-prompt-colors.zsh"
-    "$filtered_home/.config/yazi/theme.toml"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/clavis/colors.json"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/zsh/prompt-colors.zsh"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/yazi/theme.toml"
 )
 for output in "${filtered_outputs[@]}"; do
     [[ -s "$output" ]] || fail "missing filtered output: $output"
 done
 
 disabled_outputs=(
-    "$filtered_home/.config/btop/themes/matugen.theme"
-    "$filtered_home/.config/cava/themes/matugen"
-    "$filtered_home/.config/kitty/themes/Matugen.conf"
-    "$filtered_home/.local/share/fcitx5/themes/Matugen/theme.conf"
-    "$filtered_home/.config/niri/colors.kdl"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/btop/themes/clavis.theme"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/cava/colors.ini"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/kitty/colors.conf"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/fcitx5/Matugen/theme.conf"
+    "$filtered_home/.local/share/clavis/profiles/default/generated/niri/colors.kdl"
 )
 for output in "${disabled_outputs[@]}"; do
     [[ ! -e "$output" ]] || fail "disabled template generated output: $output"
 done
 
 kitty_home="$test_dir/kitty-home"
-hook_bin="$test_dir/hook-bin"
-mkdir -p "$hook_bin"
-printf '%s\n' '#!/bin/sh' 'exit 0' > "$hook_bin/pkill"
-chmod +x "$hook_bin/pkill"
-HOME="$kitty_home" PATH="$hook_bin:$PATH" "$generator" \
+HOME="$kitty_home" "$generator" \
     --color "#6750a4" \
     --mode dark \
     --scheme scheme-tonal-spot \
     --templates "kitty"
-cmp -s \
-    "$kitty_home/.config/kitty/themes/Matugen.conf" \
-    "$kitty_home/.config/kitty/current-theme.conf" \
-    || fail "Kitty current-theme.conf was not synchronized"
+[[ -s "$kitty_home/.local/share/clavis/profiles/default/generated/kitty/colors.conf" ]] \
+    || fail "Kitty profile colors were not generated"
+[[ ! -e "$kitty_home/.config/kitty" ]] \
+    || fail "profile generation modified the user's Kitty configuration"
 
 quickshell_only_home="$test_dir/quickshell-only-home"
 HOME="$quickshell_only_home" "$generator" \
@@ -111,11 +109,11 @@ HOME="$quickshell_only_home" "$generator" \
     --mode dark \
     --scheme scheme-tonal-spot \
     --templates ""
-[[ -s "$quickshell_only_home/.cache/quickshell-dev-colorscheme/colors.json" ]] \
+[[ -s "$quickshell_only_home/.local/share/clavis/profiles/default/generated/clavis/colors.json" ]] \
     || fail "Quickshell output is missing when all external templates are disabled"
 [[ ! -e "$quickshell_only_home/.config" ]] \
-    || fail "external template directories were created for an empty selection"
-[[ ! -e "$quickshell_only_home/.cache/quickshell-dev-colorscheme/zsh-prompt-colors.zsh" ]] \
+    || fail "default generation created an external configuration directory"
+[[ ! -e "$quickshell_only_home/.local/share/clavis/profiles/default/generated/zsh/prompt-colors.zsh" ]] \
     || fail "Zsh prompt output was generated for an empty selection"
 
 mock_bin="$test_dir/bin"

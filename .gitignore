@@ -3,6 +3,7 @@
 !README.md
 !AGENTS.md
 !docs/*.md
+!docs/**/*.md
 
 # Local tool/editor state
 .agentrules
@@ -18,6 +19,7 @@ assets/icons/weather/meteocons/*
 
 # C++/Qt build outputs
 core/build*/
+.build/
 core/**/*.o
 core/**/*.obj
 core/**/*.a
@@ -36,7 +38,7 @@ core/**/*_autogen/
 core/**/meta_types/
 
 # Runtime/cache noise
-scripts/**/__pycache__/
+**/__pycache__/
 *.log
 *.tmp
 *.bak

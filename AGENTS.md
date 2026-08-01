@@ -2,7 +2,7 @@
 
 ## 项目结构与模块组织
 
-这是一个主要使用 QML 构建的 Quickshell 桌面 shell。`shell.qml` 是主入口，只负责加载 `AppShell.qml`；`AppShell.qml` 负责挂载 Bar、Keystone、Sidebars、Launcher 与 Lock 等顶层模块。`demo.qml`、`test_list.qml` 和 `test_proc.qml` 是本地 smoke-test 入口。
+这是一个主要使用 QML 构建的 Quickshell 桌面 shell。`shell.qml` 是主入口，只负责加载 `AppShell.qml`；`AppShell.qml` 负责挂载 Bar、Keystone、Sidebars、Launcher 与 Lock 等顶层模块。自动化与 smoke-test 入口统一放在 `tests/`；根目录仅保留被自动化 AWWW 回归测试直接加载的 `smoke_awww_dedup.qml`。
 
 ## Keystone 术语约定
 
@@ -70,7 +70,7 @@
 - `scripts/` 按用途分组；不要把新脚本直接散放在 `scripts/` 根目录。
 - 不再使用旧的 `Widget/`、`config/`、`JS/` 目录；新增代码不要恢复这些目录。
 
-Qt/C++ plugin 统一位于 `core/`：可复用 backend 代码在 `core/src/`，QML plugin wrapper 位于 `core/plugin/` 下，构建输出位于 `core/build/`。避免编辑 `core/build/` 中的生成文件。
+Qt/C++ plugin 统一位于 `core/`：可复用 backend 代码在 `core/src/`，QML plugin wrapper 位于 `core/plugin/` 下。构建输出默认位于 `.build/<release>/`，避免编辑生成文件。`packaging/` 存放 release manager、稳定 launcher、默认 profile 与依赖清单。
 
 ## Quickshell Plugin 架构
 
@@ -83,26 +83,26 @@ Qt/C++ plugin 统一位于 `core/`：可复用 backend 代码在 `core/src/`，Q
 - 左侧系统页只通过 `Services/SystemMonitorService.qml` 消费
   `key sysmon stream` 的 JSONL；展示组件不得直接 import `Clavis.Sysmon`
   或创建系统命令。
-- plugin 构建完成后，如需让系统里的 Quickshell 正常 `import`，必须将构建出的 `Clavis/` 和 `M3Shapes/` 目录复制到 `/usr/lib64/qt6/qml/`：
-  `sudo cp -a core/build/Clavis core/build/M3Shapes /usr/lib64/qt6/qml/`
+- 自制 plugin 只安装到当前 release 的私有 `lib/qml/`。严禁复制到系统 Qt import 根；`key shell` 只为 Clavis 进程树注入 import path。
 - QML 中使用自制 plugin 时，直接按其 URI import，例如：
   `import Clavis.Sysmon 1.0`
-- 若只改了 QML，不需要重编译 plugin；若改动涉及 `core/src/` 或 `core/plugin/`，则需要重新构建并重新复制安装。
+- 若只改了 QML，不需要重编译 plugin；若改动涉及 `core/src/` 或 `core/plugin/`，则需要重新构建 release。
+- 路径语义由 `core/src/runtime/clavis_paths.*`、`Common/Paths.qml`、`packaging/clavis_paths.py` 和 `scripts/lib/clavis-paths.sh` 统一对齐；不得再引入仓库绝对路径。
 
 ## 构建、测试与开发命令
 
-- `qs`：运行当前这套 Quickshell 配置并直接查看输出结果。
-- `cmake -S core -B core/build`：配置 Qt 6/CMake plugins。
-- `cmake --build core/build`：构建 C++ plugin backend。
-- `env -u QT_QPA_PLATFORMTHEME QT_QPA_PLATFORM=offscreen ctest --test-dir core/build --output-on-failure`：运行 C++ 与 CLI 测试。
-- `sudo cmake --install core/build`：安装 `key` 单一 CLI 入口。
-- `sudo cp -a core/build/Clavis core/build/M3Shapes /usr/lib64/qt6/qml/`：安装编译后的 plugin，以便 Quickshell 正常 import。
+- `./setup.sh doctor`：检测构建依赖并只显示安装命令。
+- `./setup.sh configure`：配置 Qt 6/CMake plugins 到独立 build 目录。
+- `./setup.sh build`：构建 C++ backend、`key` 和私有 QML plugin。
+- `./setup.sh test`：运行 CTest。
+- `./setup.sh install [--release YYYY.MM.DD[.N]]`：测试后执行用户级原子 release 安装，默认不调用 sudo。
+- `key shell`：从 `current` release 运行 Shell；源码 UI smoke test 仍可使用 `qs`。
 
 除非另有说明，请从仓库根目录运行这些命令。
 
 `key top` 使用 `ncursesw`；CMake 通过 `pkg-config` 检测该依赖，缺失时会在
 配置阶段明确报错。系统监测 JSON v1 协议记录在
-`docs/sysmon-schema-v1.md`。
+`docs/sysmon-schema-v1.md`。普通 `key` 不得获得 capability；CPU 功耗 helper 只能通过用户显式执行 `key setup cpu-power` 安装。
 
 ## 代码风格与命名约定
 
@@ -134,7 +134,7 @@ Qt/C++ plugin 统一位于 `core/`：可复用 backend 代码在 `core/src/`，Q
 
 ## 测试指南
 
-纯 QML 改动至少执行一次 `qmllint`；涉及 `core/` 的改动至少重新构建一次 plugin。界面验证优先直接运行 `qs`。
+纯 QML 改动至少执行一次 `qmllint`；涉及 `core/` 的改动至少执行 `./setup.sh build` 和 `./setup.sh test`。安装架构改动还必须在临时 HOME/XDG 中验证 fresh install、重复 install、rollback、release remove 和 uninstall dry-run。界面验证可使用 `qs`或已安装的 `key shell`。
 
 ## Commit 与 Pull Request 指南
 
@@ -160,4 +160,4 @@ Git commit subject 必须使用 `type: 描述` 格式。`type` 使用小写英�
 
 ## 安全与配置提示
 
-不要提交机器特定的 secret、token 或私有路径。脚本可能会在 `$HOME/.cache` 下写入缓存文件，或在 `/tmp` 下写入日志；这些内容应排除在版本控制之外。谨慎处理 `Modules/Lock/pam/` 中与锁屏和 PAM 相关的文件，提出改动前请先在本地测试。
+不要提交机器特定的 secret、token 或私有路径。脚本的持久输出必须遵循 `ClavisPaths` 对齐后的 XDG namespace；临时日志或测试 fixture 应位于 Clavis runtime/cache 或安全的临时目录，并排除在版本控制之外。谨慎处理 `Modules/Lock/pam/` 中与锁屏和 PAM 相关的文件，提出改动前请先在本地测试。

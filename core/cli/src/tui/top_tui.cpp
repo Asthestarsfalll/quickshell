@@ -1,4 +1,5 @@
 #include "top_tui.h"
+#include "runtime/clavis_paths.h"
 #include "top_tui_helpers.h"
 
 #include "sysmon/sampler.h"
@@ -282,8 +283,9 @@ private:
         m_colorEnabled = true;
 
         QJsonObject tokens;
-        QFile file(QDir::homePath()
-                   + QStringLiteral("/.cache/quickshell-dev-colorscheme/colors.json"));
+        QFile file(
+            Clavis::Runtime::ClavisPaths::fromEnvironment().generatedHome()
+            + QStringLiteral("/clavis/colors.json"));
         if (file.open(QIODevice::ReadOnly)) {
             QJsonParseError error;
             const QJsonDocument document =

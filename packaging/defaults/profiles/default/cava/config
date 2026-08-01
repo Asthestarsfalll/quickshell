@@ -1,0 +1,5 @@
+[general]
+framerate = 60
+
+[output]
+method = ncurses

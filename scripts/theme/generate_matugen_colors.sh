@@ -1,15 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-config_path="$repo_root/matugen/config.toml"
-matugen_dir="$repo_root/matugen"
-mode="dark"
-scheme="scheme-tonal-spot"
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+scripts_dir=$(cd -- "$script_dir/.." && pwd)
+# shellcheck source=scripts/lib/clavis-paths.sh
+source "$scripts_dir/lib/clavis-paths.sh"
+clavis_paths_init
+
+share_root=$(cd -- "$scripts_dir/.." && pwd)
+if [[ -d "$share_root/defaults/matugen/templates" ]]; then
+    template_dir=$share_root/defaults/matugen/templates
+elif [[ -d "$share_root/matugen/templates" ]]; then
+    template_dir=$share_root/matugen/templates
+else
+    printf 'Clavis Matugen templates are missing below %s\n' "$share_root" >&2
+    exit 1
+fi
+
+mode=dark
+scheme=scheme-tonal-spot
 image_path=""
 source_color=""
 dry_run=false
-templates_requested=false
 templates_csv=""
 
 usage() {
@@ -19,24 +31,28 @@ usage() {
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --image)
-            image_path="${2:-}"
+            [[ $# -ge 2 ]] || { usage; exit 2; }
+            image_path=$2
             shift 2
             ;;
         --color)
-            source_color="${2:-}"
+            [[ $# -ge 2 ]] || { usage; exit 2; }
+            source_color=$2
             shift 2
             ;;
         --mode)
-            mode="${2:-}"
+            [[ $# -ge 2 ]] || { usage; exit 2; }
+            mode=$2
             shift 2
             ;;
         --scheme)
-            scheme="${2:-}"
+            [[ $# -ge 2 ]] || { usage; exit 2; }
+            scheme=$2
             shift 2
             ;;
         --templates)
-            templates_requested=true
-            templates_csv="${2:-}"
+            [[ $# -ge 2 ]] || { usage; exit 2; }
+            templates_csv=$2
             shift 2
             ;;
         --dry-run)
@@ -54,143 +70,108 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ -n "$image_path" && -n "$source_color" ]] || [[ -z "$image_path" && -z "$source_color" ]]; then
+if [[ -n "$image_path" && -n "$source_color" ]] \
+    || [[ -z "$image_path" && -z "$source_color" ]]; then
     usage
     exit 2
 fi
-
-if [[ "$mode" != "dark" && "$mode" != "light" ]]; then
+if [[ "$mode" != dark && "$mode" != light ]]; then
     usage
     exit 2
 fi
-
 if ! command -v matugen >/dev/null 2>&1; then
     printf 'matugen is required but was not found in PATH\n' >&2
     exit 1
 fi
 
-if [[ ! -f "$config_path" ]]; then
-    printf 'Missing matugen config: %s\n' "$config_path" >&2
-    exit 1
-fi
+template_file() {
+    case "$1" in
+        quickshell) printf '%s\n' quickshell-colors.json ;;
+        btop) printf '%s\n' btop.theme ;;
+        cava) printf '%s\n' cava-colors.ini ;;
+        kitty) printf '%s\n' kitty-colors.conf ;;
+        fcitx5) printf '%s\n' fcitx5-theme.conf ;;
+        fcitx5_panel_svg) printf '%s\n' fcitx5-panel.svg ;;
+        fcitx5_highlight_svg) printf '%s\n' fcitx5-highlight.svg ;;
+        niri) printf '%s\n' niri-colors.kdl ;;
+        yazi) printf '%s\n' yazi-theme.toml ;;
+        zsh_prompt) printf '%s\n' zsh-prompt-colors.zsh ;;
+        *) return 1 ;;
+    esac
+}
 
-all_external_templates=(
-    btop
-    cava
-    kitty
-    fcitx5
-    fcitx5_panel_svg
-    fcitx5_highlight_svg
-    niri
-    yazi
-    zsh_prompt
-)
+output_path() {
+    case "$1" in
+        quickshell) printf '%s\n' "$CLAVIS_GENERATED_HOME/clavis/colors.json" ;;
+        btop) printf '%s\n' "$CLAVIS_GENERATED_HOME/btop/themes/clavis.theme" ;;
+        cava) printf '%s\n' "$CLAVIS_GENERATED_HOME/cava/colors.ini" ;;
+        kitty) printf '%s\n' "$CLAVIS_GENERATED_HOME/kitty/colors.conf" ;;
+        fcitx5) printf '%s\n' "$CLAVIS_GENERATED_HOME/fcitx5/Matugen/theme.conf" ;;
+        fcitx5_panel_svg) printf '%s\n' "$CLAVIS_GENERATED_HOME/fcitx5/Matugen/panel.svg" ;;
+        fcitx5_highlight_svg) printf '%s\n' "$CLAVIS_GENERATED_HOME/fcitx5/Matugen/highlight.svg" ;;
+        niri) printf '%s\n' "$CLAVIS_GENERATED_HOME/niri/colors.kdl" ;;
+        yazi) printf '%s\n' "$CLAVIS_GENERATED_HOME/yazi/theme.toml" ;;
+        zsh_prompt) printf '%s\n' "$CLAVIS_GENERATED_HOME/zsh/prompt-colors.zsh" ;;
+        *) return 1 ;;
+    esac
+}
 
 selected_templates=(quickshell)
-if [[ "$templates_requested" == false ]]; then
-    selected_templates+=("${all_external_templates[@]}")
-elif [[ -n "$templates_csv" ]]; then
+if [[ -n "$templates_csv" ]]; then
     IFS=',' read -r -a requested_templates <<< "$templates_csv"
     for template_id in "${requested_templates[@]}"; do
-        case "$template_id" in
-            btop|cava|kitty|fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg|niri|yazi|zsh_prompt)
-                ;;
-            *)
-                printf 'Unknown matugen template: %s\n' "$template_id" >&2
-                exit 2
-                ;;
-        esac
-
-        already_selected=false
-        for selected_id in "${selected_templates[@]}"; do
-            if [[ "$selected_id" == "$template_id" ]]; then
-                already_selected=true
+        if ! template_file "$template_id" >/dev/null; then
+            printf 'Unknown Matugen profile template: %s\n' "$template_id" >&2
+            exit 2
+        fi
+        duplicate=false
+        for selected in "${selected_templates[@]}"; do
+            if [[ "$selected" == "$template_id" ]]; then
+                duplicate=true
                 break
             fi
         done
-        if [[ "$already_selected" == false ]]; then
+        if [[ "$duplicate" == false ]]; then
             selected_templates+=("$template_id")
         fi
     done
 fi
 
-template_file() {
-    case "$1" in
-        quickshell) printf '%s\n' "quickshell-colors.json" ;;
-        btop) printf '%s\n' "btop.theme" ;;
-        cava) printf '%s\n' "cava-colors.ini" ;;
-        kitty) printf '%s\n' "kitty-colors.conf" ;;
-        fcitx5) printf '%s\n' "fcitx5-theme.conf" ;;
-        fcitx5_panel_svg) printf '%s\n' "fcitx5-panel.svg" ;;
-        fcitx5_highlight_svg) printf '%s\n' "fcitx5-highlight.svg" ;;
-        niri) printf '%s\n' "niri-colors.kdl" ;;
-        yazi) printf '%s\n' "yazi-theme.toml" ;;
-        zsh_prompt) printf '%s\n' "zsh-prompt-colors.zsh" ;;
-    esac
+toml_escape() {
+    local value=$1
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    printf '%s' "$value"
 }
 
-for template_id in "${selected_templates[@]}"; do
-    template_name="$(template_file "$template_id")"
-    template_path="$matugen_dir/templates/$template_name"
-    if [[ ! -f "$template_path" ]]; then
-        printf 'Missing matugen template: %s\n' "$template_path" >&2
-        exit 1
-    fi
-done
-
-mkdir -p "$HOME/.cache/quickshell-dev-colorscheme"
-for template_id in "${selected_templates[@]}"; do
-    case "$template_id" in
-        btop) mkdir -p "$HOME/.config/btop/themes" ;;
-        cava) mkdir -p "$HOME/.config/cava/themes" ;;
-        kitty) mkdir -p "$HOME/.config/kitty/themes" ;;
-        fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg)
-            mkdir -p "$HOME/.local/share/fcitx5/themes/Matugen"
-            ;;
-        niri) mkdir -p "$HOME/.config/niri" ;;
-        yazi) mkdir -p "$HOME/.config/yazi" ;;
-    esac
-done
-
-enabled_sections=","
-for template_id in "${selected_templates[@]}"; do
-    enabled_sections+="$template_id,"
-done
-
-runtime_dir="$(mktemp -d "${TMPDIR:-/tmp}/clavis-matugen.XXXXXX")"
+mkdir -p "$CLAVIS_RUNTIME_HOME/temporary"
+runtime_dir=$(mktemp -d "$CLAVIS_RUNTIME_HOME/temporary/matugen.XXXXXX")
 cleanup() {
     rm -rf -- "$runtime_dir"
 }
 trap cleanup EXIT HUP INT TERM
+runtime_config=$runtime_dir/config.toml
 
-runtime_config="$runtime_dir/config.toml"
-awk -v enabled="$enabled_sections" -v matugen_dir="$matugen_dir" '
-    /^\[templates\.[^]]+\]$/ {
-        name = $0
-        sub(/^\[templates\./, "", name)
-        sub(/\]$/, "", name)
-        emit = index(enabled, "," name ",") > 0
-    }
-    /^\[config\]$/ {
-        emit = 1
-    }
-    /^\[[^]]+\]$/ && $0 !~ /^\[templates\./ && $0 !~ /^\[config\]$/ {
-        emit = 0
-    }
-    emit {
-        line = $0
-        if (line ~ /^input_path = "templates\//)
-            sub(/^input_path = "/,
-                "input_path = \"" matugen_dir "/", line)
-        print line
-    }
-' "$config_path" > "$runtime_config"
+printf '[config]\nversion_check = false\n' > "$runtime_config"
+for template_id in "${selected_templates[@]}"; do
+    template_name=$(template_file "$template_id")
+    input=$template_dir/$template_name
+    output=$(output_path "$template_id")
+    if [[ ! -f "$input" ]]; then
+        printf 'Missing Matugen template: %s\n' "$input" >&2
+        exit 1
+    fi
+    if [[ "$dry_run" == false ]]; then
+        mkdir -p "$(dirname -- "$output")"
+    fi
+    {
+        printf '\n[templates.%s]\n' "$template_id"
+        printf 'input_path = "%s"\n' "$(toml_escape "$input")"
+        printf 'output_path = "%s"\n' "$(toml_escape "$output")"
+    } >> "$runtime_config"
+done
 
-common_args=(
-    --mode "$mode"
-    --type "$scheme"
-    --config "$runtime_config"
-)
+common_args=(--mode "$mode" --type "$scheme" --config "$runtime_config")
 if [[ "$dry_run" == true ]]; then
     common_args+=(--dry-run)
 fi
