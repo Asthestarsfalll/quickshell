@@ -1,31 +1,54 @@
 # 天气侧边栏手动预览
 
+## 测试文件
+
+主要入口是 `tests/manual/weather_preview/WeatherPreview.qml`。它创建全屏
+LayerShell overlay，并在其中装配与正式版相同尺寸、相同组件链的
+`LeftSidebarWindow`、`WeatherView` 和 `WeatherBackground`。根目录的
+`weather-preview.qml` 只是 Quickshell 必须直接加载的极薄入口。
+
+天气数据来自同目录的 `MockWeatherSource.qml`，不访问网络。启动脚本把 Clavis 的
+配置、数据、状态和缓存全部指向临时目录，退出后删除，因此不会修改用户配置或 release。
+
+## 使用方法
+
 从仓库根目录运行：
 
 ```bash
 just weather-preview
 ```
 
-默认初始标签是 `weather`；可在命令前设置
-`CLAVIS_WEATHER_PREVIEW_INITIAL_VIEW=info`（或 `sys`）来改变初始标签。
+点击侧边栏之外的暗色空白区域，或点击右上角醒目的红色“关闭天气测试”按钮，即可关闭
+overlay 和测试进程。
 
-预览使用生产环境的 `LeftSidebarWindow`、`WeatherView` 和
-`WeatherBackground`，天气数据来自同目录的 `MockWeatherSource.qml`，不访问网络，
-启动脚本也会把 Clavis 配置、数据、状态和缓存隔离到临时目录。
+## 修改测试字段
 
-## 操作步骤
+直接编辑 `tests/manual/weather_preview/WeatherPreview.qml` 顶部
+“Manual test values”区域并保存。该区域的每个字段旁都有注释：
 
-1. 用“打开/关闭侧边栏”和 `info`、`sys`、`weather` 按钮反复切换生命周期与页面。
-2. 从“天气场景”选择晴天/晴夜、局部多云、阴天/雾、雨、雷暴、雪或大风落叶；也可直接编辑
-   `weatherCode`、`iconName`、夜间开关、持续风速和阵风。
-3. 选择 1080p、2K 或 4K 原生分辨率，再选择 1.00×、1.25×、1.50× 或 2.00×
-   输出缩放。窗口使用 `原生像素 ÷ 输出缩放` 得到预计逻辑尺寸，并显示 Qt 实际 DPR。
-4. 状态卡中的慢速场景应显示 15 FPS / 66 ms；雨、雷暴、雪和大风落叶应显示
-   30 FPS / 33 ms。
-5. 关闭侧边栏时观察“模拟帧”和“Canvas 绘制”：滑出期间仍增长，完全离场后
-   “动画运行”变为“否”，计数停止。没有其他属性或窗口尺寸变化时不应继续增长。
-6. 关闭“保留已加载页面”时，打开期间页面实例数始终为 1，完全关闭后为 0；打开该开关时，
-   访问过的页面会保留，完全关闭后对象仍在，但天气动画必须停止。再次切回天气时粒子从保留状态继续。
+- `previewWeatherCode`、`previewIconName`、`previewWeatherText`：天气场景；
+- `previewNight`：昼夜；
+- `previewWindSpeedMs`、`previewWindGustsMs`：持续风和阵风；
+- `previewTemperatureC`、`previewFeelsLikeC`、`previewHighC`、`previewLowC`：温度；
+- `previewKeepSidebarsLoaded`：页面是否保留；
+- `previewInitialView`：初始 `info`、`sys` 或 `weather` 标签；
+- `previewScreenName`：留空使用第一个输出，或填写精确输出名称。
 
-若要长期改变 Mock 的默认数据，请编辑 `MockWeatherSource.qml` 顶部的属性；日常测试直接使用
-预览面板即可，不会写回源码或用户配置。
+常用场景：
+
+| 场景 | weatherCode | iconName | night | 风速/阵风 |
+| --- | ---: | --- | --- | --- |
+| 晴天 | 0 | `clear_day` | false | 2 / 4 |
+| 晴夜 | 0 | `clear_night` | true | 2 / 4 |
+| 局部多云 | 2 | `partly_cloudy_day` | false | 3 / 5 |
+| 阴天/雾 | 45 | `fog_day` | false | 2 / 3 |
+| 雨 | 63 | `rain` | false | 5 / 8 |
+| 雷暴/闪电 | 95 | `thunderstorms_day` | false | 7 / 12 |
+| 雪 | 73 | `snow` | false | 4 / 7 |
+| 大风落叶 | 1 | `mostly_clear_day` | false | 10 / 15 |
+
+慢速云层场景目标为 15 FPS / 66 ms；雨、雷暴、雪和大风落叶目标为
+30 FPS / 33 ms。用正式侧边栏顶部标签切换页面；关闭时点击侧边栏外的空白区域或红色
+按钮。退出前可在 QML 调试器中观察 `weatherAnimationActive`：关闭请求发出后，它会在
+侧边栏退场阶段继续为 true，并在退场完成时变为 false；
+`previewKeepSidebarsLoaded=false` 时页面实例随后卸载，为 true 时对象保留但视觉动画停止。
