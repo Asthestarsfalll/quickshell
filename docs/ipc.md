@@ -44,6 +44,10 @@ wallpaper setFolder PATH
 weather-map reloadCredentials
 weather-map mapTilerStatus
 
+sidebar open left|right
+sidebar close left|right
+sidebar toggle left|right
+
 keystone cancelRecord
 keystone closeAllOthers
 keystone currentStyle

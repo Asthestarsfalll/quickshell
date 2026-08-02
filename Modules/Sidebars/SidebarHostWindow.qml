@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import qs.Common
 import qs.Modules.Sidebars.Left
@@ -9,6 +10,28 @@ import qs.Widgets.common
 
 PanelWindow {
     id: root
+
+    function sidebarOpen(side) {
+        const normalized = String(side || "").toLowerCase();
+        if (normalized === "left")
+            return WidgetState.leftSidebarOpen;
+        if (normalized === "right")
+            return WidgetState.qsOpen;
+        return null;
+    }
+
+    function setSidebarOpen(side, open) {
+        const normalized = String(side || "").toLowerCase();
+        if (normalized === "left") {
+            WidgetState.leftSidebarOpen = open;
+            return open ? "LEFT_OPEN" : "LEFT_CLOSED";
+        }
+        if (normalized === "right") {
+            WidgetState.qsOpen = open;
+            return open ? "RIGHT_OPEN" : "RIGHT_CLOSED";
+        }
+        return "INVALID_SIDE";
+    }
 
     readonly property bool anySidebarOpen:
         WidgetState.leftSidebarOpen || WidgetState.qsOpen
@@ -38,6 +61,25 @@ PanelWindow {
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     WlrLayershell.keyboardFocus: root.anySidebarOpen
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    IpcHandler {
+        target: "sidebar"
+
+        function open(side: string): string {
+            return root.setSidebarOpen(side, true);
+        }
+
+        function close(side: string): string {
+            return root.setSidebarOpen(side, false);
+        }
+
+        function toggle(side: string): string {
+            const current = root.sidebarOpen(side);
+            if (current === null)
+                return "INVALID_SIDE";
+            return root.setSidebarOpen(side, !current);
+        }
+    }
 
     mask: Region {
         item: root.anySidebarOpen ? interactionRegion : null
