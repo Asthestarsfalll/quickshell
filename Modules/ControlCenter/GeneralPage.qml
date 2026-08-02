@@ -351,6 +351,23 @@ StyledFlickable {
         }
 
         Section {
+            title: qsTr("界面密度")
+            iconName: "density_medium"
+
+            SliderSettingRow {
+                title: qsTr("仅 Clavis UI 缩放")
+                description: qsTr("使用逻辑像素调整 Clavis 控件密度；它独立于 Niri 输出缩放，不会乘以屏幕 DPR。")
+                from: 75
+                to: 150
+                stepSize: 5
+                suffix: "%"
+                value: PersonalizationConfig.uiScale * 100
+                onMoved: value =>
+                    PersonalizationConfig.setUiScale(value / 100)
+            }
+        }
+
+        Section {
             title: qsTr("透明与模糊")
             iconName: "blur_on"
 

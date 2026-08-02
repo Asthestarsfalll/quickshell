@@ -212,7 +212,7 @@ Singleton {
     }
 
     function generateNiriCursorConfig() {
-        const niriDmsDir = Paths.generatedHome + "/niri";
+        const niriDmsDir = Paths.xdgConfigHome + "/niri/clavis";
         const cursorPath = niriDmsDir + "/cursor.kdl";
         const themeName = root.effectiveCursorTheme();
         const size = PersonalizationConfig.cursorSize;

@@ -61,28 +61,21 @@ Clavis 是以 QML/Quickshell 构建的 Wayland 桌面 Shell。`shell.qml` 是极
 
 ## 配置所有权与 Niri 会话
 
-Clavis **只托管 Niri 的完整默认配置**，正式源位于：
+用户拥有 `$XDG_CONFIG_HOME/niri/config.kdl` 及其用户 include 树。Clavis 只管理
+`$XDG_CONFIG_HOME/niri/clavis/*.kdl` 中明确启用的派生域，并以
+`$XDG_CONFIG_HOME/clavis/config.json` 为 source of truth；不得重写完整主配置、重排
+用户注释或把生成 KDL 当作设置数据库。
 
-```text
-packaging/defaults/profiles/default/niri/
-```
-
-这里应保留完整的 `config.kdl`、`binds.kdl`、`output.kdl`、`startup.kdl`、
-`windowrule.kdl`、`animations.kdl`、`theme.kdl` 等文件。不要放入个人输出、备份、
-临时文件、DMS 目录或机器专属绝对路径。
-
-`key session` 保持调用者真实的 `HOME` 和 XDG 环境，只生成一个薄的 Niri 会话入口，
-按顺序叠加 release 默认配置、generated Niri 配色/光标/效果以及用户 override。
-
-`startup.kdl` 是会话服务的唯一管理入口，直接启动 Fcitx5、nm-applet、
-blueman-applet、`key shell --no-duplicate` 和 `key clipboard watch`。禁止重新引入：
+`key session` 已删除，登录使用系统 `niri-session`。`clavis-shell.service` 和
+`clavis-clipboard.service` 绑定 `niri.service`，安装时只 enable、不立即启动。
+`startup.kdl` 归用户且只保留 Polkit agent；Fcitx5、nm-applet、blueman-applet 使用
+XDG Autostart。禁止重新引入：
 
 - 伪 HOME、`legacy-home` 或全局替换 `XDG_CONFIG_HOME`；
 - `key run`、应用 adapter、profile application sandbox；
 - Kitty、Zsh、Fcitx5、btop、Cava、Yazi 等完整配置副本；
 - Zsh prompt 程序或 prompt 配色模板；
-- session supervisor；
-- `clavis-shell.service`、`clavis-cliphist.service` 等会话 user systemd unit；
+- 自定义 session supervisor 或 generic cliphist watcher；
 - 向 `/usr/lib{,64}/qt6/qml` 或其他系统 Qt import 根复制 plugin。
 
 除 Niri 外，应用一律读取用户原本的配置。不得为了“让体验一致”复制或修改真实
@@ -97,7 +90,7 @@ Niri 快捷键调用 Shell IPC 时使用稳定入口 `$CLAVIS_KEY ipc call ...`�
 Matugen 使用仓库内固定的 `matugen/config.toml` 和模板，不生成可编辑的 profile
 输出映射。行为约定如下：
 
-- Quickshell 和 Niri 配色写入 Clavis profile 的 `generated/` 目录；
+- Quickshell 配色写入 Clavis profile，Niri 配色写入 `niri/clavis/colors.kdl`；
 - btop、Cava、Kitty、Yazi 主题写入用户标准 `~/.config` 位置；
 - Fcitx5 主题写入 `~/.local/share/fcitx5/themes/Matugen`；
 - 设置中心“高级”页只控制各程序是否继续生成主题；关闭开关不删除已有文件；
@@ -145,14 +138,14 @@ Qt/C++ 代码统一位于 `core/`：通用 backend 在 `core/src/`，QML wrapper
 - 纯 QML 变更：对修改文件执行 `qmllint -I .`；有对应测试时一并运行。
 - shell/Python 变更：执行语法检查和对应 `tests/` 用例。
 - `core/`、CLI 或 plugin 变更：执行 `./setup.sh build` 和 `./setup.sh test`。
-- Niri 默认配置变更：执行 `niri validate -c
-  packaging/defaults/profiles/default/niri/config.kdl`。
+- Niri 片段或迁移变更：运行 Niri 配置管理测试，并对完整候选配置执行
+  `niri validate -c`。
 - Matugen 变更：执行 `bash tests/test_matugen_templates.sh`。
 - 安装架构变更：在临时 HOME/XDG 中验证 fresh install、重复 install、rollback、
   release remove 和 uninstall dry-run。
 
 界面开发优先使用 `key shell --dev`；验证已安装版本使用 `key shell`。不要编辑
-`.build/`、生成的 `session.kdl` 或 release 内文件来“修复”源码问题。
+`.build/`、用户 Niri 配置或 release 内文件来“修复”源码问题。
 
 正式 Shell、源码 Shell 与原生开发的标准入口分别是 `key shell`、`key shell --dev`
 和 `key shell --dev --native`。源码模式从当前目录向上发现仓库；不要把 `current`

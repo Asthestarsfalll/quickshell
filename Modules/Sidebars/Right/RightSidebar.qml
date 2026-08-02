@@ -6,7 +6,7 @@ Item {
     id: root
 
     property var panelScreen: null
-    property int sidebarWidth: 420
+    property real sidebarWidth: Metrics.sidebarWidthCompact
     property int gap: 24
     readonly property alias blurBackgroundItem: panelSurface
     property int qsTargetHeight: 640

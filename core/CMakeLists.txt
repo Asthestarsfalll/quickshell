@@ -155,6 +155,10 @@ install(
     DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/systemd/system/"
     DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/systemd/system"
 )
+install(
+    DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/systemd/user/"
+    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/systemd/user"
+)
 
 configure_file(
     "${CLAVIS_SOURCE_ROOT}/packaging/release.json.in"

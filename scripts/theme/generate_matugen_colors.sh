@@ -146,8 +146,9 @@ for template_id in "${selected_templates[@]}"; do
     }
 done
 
+CLAVIS_NIRI_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/niri"
 if [[ "$dry_run" == false ]]; then
-    mkdir -p "$CLAVIS_GENERATED_HOME/clavis" "$CLAVIS_GENERATED_HOME/niri"
+    mkdir -p "$CLAVIS_GENERATED_HOME/clavis"
     for template_id in "${selected_templates[@]}"; do
         case "$template_id" in
             btop) mkdir -p "$HOME/.config/btop/themes" ;;
@@ -156,6 +157,7 @@ if [[ "$dry_run" == false ]]; then
             fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg)
                 mkdir -p "$HOME/.local/share/fcitx5/themes/Matugen"
                 ;;
+            niri) mkdir -p "$CLAVIS_NIRI_HOME/clavis" ;;
             yazi) mkdir -p "$HOME/.config/yazi" ;;
         esac
     done
@@ -177,7 +179,8 @@ runtime_config="$runtime_dir/config.toml"
 awk \
     -v enabled="$enabled_sections" \
     -v matugen_dir="$matugen_dir" \
-    -v generated_home="$CLAVIS_GENERATED_HOME" '
+    -v generated_home="$CLAVIS_GENERATED_HOME" \
+    -v niri_home="$CLAVIS_NIRI_HOME" '
     /^\[templates\.[^]]+\]$/ {
         name = $0
         sub(/^\[templates\./, "", name)
@@ -193,6 +196,7 @@ awk \
         if (line ~ /^input_path = "templates\//)
             sub(/^input_path = "/, "input_path = \"" matugen_dir "/", line)
         gsub(/@CLAVIS_GENERATED_HOME@/, generated_home, line)
+        gsub(/@CLAVIS_NIRI_HOME@/, niri_home, line)
         print line
     }
 ' "$config_path" > "$runtime_config"

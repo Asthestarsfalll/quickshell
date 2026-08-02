@@ -8,7 +8,7 @@ Item {
     signal presentationClosed()
 
     property var panelScreen: null
-    property int sidebarWidth: 540
+    property real sidebarWidth: Metrics.sidebarWidthComfortable
     property int gap: 24
     readonly property alias blurBackgroundItem: panelSurface
     readonly property int sidebarY: Sizes.barHeight + gap
@@ -182,7 +182,6 @@ Item {
         LeftSidebarContent {
             anchors.fill: parent
             screenName: root.panelScreen ? root.panelScreen.name : ""
-            keepViewsLoaded: root.keepLoaded
             weatherSourceOverride: root.weatherSourceOverride
             foreground: root.panelInteractive
             presentationActive: root.panelVisuallyPresent

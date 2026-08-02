@@ -27,7 +27,7 @@ post_hook = "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Con
 
 [templates.niri]
 input_path = "templates/niri-colors.kdl"
-output_path = "@CLAVIS_GENERATED_HOME@/niri/colors.kdl"
+output_path = "@CLAVIS_NIRI_HOME@/clavis/colors.kdl"
 post_hook = "niri msg action load-config-file >/dev/null 2>&1 || true"
 
 [templates.yazi]

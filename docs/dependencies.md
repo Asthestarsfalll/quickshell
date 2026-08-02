@@ -17,7 +17,7 @@
 ## Runtime 核心
 
 Quickshell、Python 3、Bash/coreutils、`which`、Qt runtime 模块与 systemd user 工具是核心。
-niri 是 `key session` 和主要 compositor 集成所需，作为推荐依赖，以便 `key shell`
+niri 是主要 compositor 集成和设置中心 Niri 页所需，作为推荐依赖，以便 `key shell`
 仍能在诊断场景下独立处理。
 
 ## 可降级功能

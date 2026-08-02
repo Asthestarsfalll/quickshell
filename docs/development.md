@@ -3,8 +3,8 @@
 ## 三个入口的职责
 
 ```text
-key session
-    从 TTY 启动 Niri，并使用 Clavis 托管的 Niri 配置
+niri-session
+    由显示管理器启动 Niri，并读取用户拥有的 config.kdl
 
 key shell
     从 current 指向的不可变 release 后台启动正式 Quickshell
@@ -16,7 +16,7 @@ key shell --dev --native
     增量构建原生构件后，从源码后台启动 Quickshell
 ```
 
-`key shell --dev` 不重启 Niri、不改写 generated `session.kdl`，也不创建 release、
+`key shell --dev` 不重启 Niri、不改写用户 Niri 配置，也不创建 release、
 切换 `current` 或修改 manifest。因此正式 release 始终可作为开发失败后的回退。
 恢复正式版使用 `key shell --replace`。以上入口默认都在确认 Quickshell 完成实例注册后
 返回终端；加 `--foreground` 时保持前台运行并实时显示 stdout/stderr。
@@ -90,8 +90,9 @@ Linux 进程启动时刻、日志和当前 QML/import 来源。该文件权限�
 
 `key ipc` 在记录有效时按 PID 路由，因此 Niri 中固定的 `$CLAVIS_KEY ipc ...` 快捷键
 无需为开发模式生成另一份配置。没有有效记录时，它回退到 `current` release 的 QML
-实例。剪贴板 watcher 继续由 `startup.kdl` 启动，既不依赖开发源码位置，也不随 Shell
-切换而重复创建。
+实例。剪贴板 watcher 由 `clavis-clipboard.service` 管理，不随 Shell 热重载重复创建。
+显式使用 `key shell --dev --replace` 时，CLI 会停止生产 Shell service，避免其
+`Restart=on-failure` 与开发实例竞争；重新登录 Niri 后恢复生产服务。
 
 ## 后台启动、前台调试与日志
 

@@ -51,7 +51,6 @@ CommandResult CommandRouter::route(const QStringList &arguments) const
         return TopCommand().run(rest);
     if (command == QStringLiteral("shell")
         || command == QStringLiteral("ipc")
-        || command == QStringLiteral("session")
         || command == QStringLiteral("rollback")
         || command == QStringLiteral("uninstall")
         || command == QStringLiteral("migrate")
@@ -79,7 +78,6 @@ QString CommandRouter::helpText()
         "  key shell logs [--follow] [--mode release|dev|dev-native]\n"
         "  key ipc [list|show]\n"
         "  key ipc call TARGET METHOD [ARGUMENTS...]\n"
-        "  key session\n"
         "  key doctor [--json] [--output DIRECTORY]\n"
         "  key doctor cpu-power [--json]\n"
         "  key audio start --source mic|system [--output DIRECTORY] [--json]\n"

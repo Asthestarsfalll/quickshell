@@ -24,20 +24,12 @@ Singleton {
     property string niriVersion: ""
     property bool effectsWritePending: false
 
-    readonly property string niriConfigPath: {
-        const configured = Quickshell.env("NIRI_CONFIG") || "";
-        return configured !== ""
-            ? configured
-            : Paths.generatedHome + "/niri/session.kdl";
-    }
-    readonly property string niriConfigDir: {
-        const separator = root.niriConfigPath.lastIndexOf("/");
-        return separator > 0
-            ? root.niriConfigPath.slice(0, separator)
-            : Paths.generatedHome + "/niri";
-    }
+    readonly property string niriConfigPath:
+        Paths.xdgConfigHome + "/niri/config.kdl"
+    readonly property string niriConfigDir:
+        Paths.xdgConfigHome + "/niri/clavis"
     readonly property string effectsConfigPath:
-        root.niriConfigDir + "/clavis-effects.kdl"
+        root.niriConfigDir + "/effects.kdl"
     readonly property string configScript:
         Paths.systemScriptsDir + "/manage-niri-effects.sh"
 
@@ -61,7 +53,7 @@ Singleton {
     }
 
     function includesEffectsConfig(text) {
-        return /(^|\n)\s*include(?:\s+optional=true)?\s+"(?:[^"]*\/)?clavis-effects\.kdl"\s*(?:\/\/[^\n]*)?(?:\n|$)/
+        return /(^|\n)\s*include(?:\s+optional=true)?\s+"clavis\/effects\.kdl"\s*(?:\/\/[^\n]*)?(?:\n|$)/
             .test(String(text || ""));
     }
 

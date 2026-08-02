@@ -121,6 +121,7 @@ Item {
         shapeHeight: root.style.searchHeight
         buttonDiameter: root.style.modeButtonDiameter
         buttonGap: root.style.modeButtonGap
+        blurEdgeInset: root.style.blurEdgeInset
         edgeSoftness: root.style.edgeSoftness
         staggerFraction:
             root.style.railStagger / root.style.railDuration

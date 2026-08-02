@@ -412,7 +412,7 @@ Rectangle {
                                 iconName: dayPart.iconName || ""
                                 night: false
                                 style: "fill"
-                                playing: root.foreground
+                                animated: false
                             }
 
                             Text {
@@ -446,7 +446,7 @@ Rectangle {
                                 iconName: nightPart.iconName || ""
                                 night: true
                                 style: "fill"
-                                playing: root.foreground
+                                animated: false
                             }
                         }
                     }

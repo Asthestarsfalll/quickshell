@@ -187,11 +187,27 @@ Singleton {
     property bool pomodoroSoundEnabled: false
 
     property bool keepSidebarsLoaded: true
+    property real uiScale: 1.0
 
     property bool scrollSmoothEnabled: true
     property int scrollMouseFactor: 50
     property int scrollTouchpadFactor: 100
     property int scrollMouseDeltaThreshold: 120
+
+    // Clavis settings are the source of truth for managed Niri fragments.
+    // The generated KDL files are derived output and are never parsed back as
+    // user preferences.
+    property var niriManagedDomains: ({
+        "colors": true,
+        "effects": true,
+        "cursor": false,
+        "binds": false,
+        "layout": false,
+        "outputs": true
+    })
+    property var niriOutputSettings: ({})
+    property var niriLayoutSettings: ({})
+    property var niriKeybindOverrides: ({})
 
     function optionExists(options, value) {
         for (let i = 0; i < options.length; i += 1) {
@@ -708,6 +724,10 @@ Singleton {
         setValue("keepSidebarsLoaded", !!value);
     }
 
+    function setUiScale(value) {
+        setValue("uiScale", normalizedBoundedReal(value, 1.0, 0.75, 1.5));
+    }
+
     function setScrollSmoothEnabled(value) {
         setValue("scrollSmoothEnabled", !!value);
     }
@@ -722,6 +742,28 @@ Singleton {
 
     function setScrollMouseDeltaThreshold(value) {
         setValue("scrollMouseDeltaThreshold", normalizedBoundedInt(value, 120, 60, 240));
+    }
+
+    function setNiriManagedDomain(domain, enabled) {
+        const next = cloneMap(root.niriManagedDomains);
+        next[String(domain)] = !!enabled;
+        root.niriManagedDomains = next;
+        root.save();
+    }
+
+    function setNiriOutputSettings(value) {
+        root.niriOutputSettings = cloneMap(value);
+        root.save();
+    }
+
+    function setNiriLayoutSettings(value) {
+        root.niriLayoutSettings = cloneMap(value);
+        root.save();
+    }
+
+    function setNiriKeybindOverrides(value) {
+        root.niriKeybindOverrides = cloneMap(value);
+        root.save();
     }
 
     function toJson() {
@@ -813,7 +855,8 @@ Singleton {
                 "pomodoro": root.pomodoroSoundEnabled
             },
             "sidebar": {
-                "keepLoaded": root.keepSidebarsLoaded
+                "keepLoaded": root.keepSidebarsLoaded,
+                "uiScale": root.uiScale
             },
             "interactions": {
                 "scrolling": {
@@ -822,6 +865,12 @@ Singleton {
                     "touchpadFactor": root.scrollTouchpadFactor,
                     "mouseDeltaThreshold": root.scrollMouseDeltaThreshold
                 }
+            },
+            "niri": {
+                "managedDomains": root.cloneMap(root.niriManagedDomains),
+                "outputs": root.cloneMap(root.niriOutputSettings),
+                "layout": root.cloneMap(root.niriLayoutSettings),
+                "keybindOverrides": root.cloneMap(root.niriKeybindOverrides)
             }
         };
     }
@@ -835,6 +884,7 @@ Singleton {
         const sidebar = parsed.sidebar || {};
         const interactions = parsed.interactions || {};
         const scrolling = interactions.scrolling || {};
+        const niri = parsed.niri || {};
         const transition = wallpaper.transition || {};
         const awww = wallpaper.awww || {};
         const overview = wallpaper.overview || {};
@@ -942,10 +992,22 @@ Singleton {
         root.pomodoroSoundEnabled = !!sounds.pomodoro;
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
             ? true : !!sidebar.keepLoaded;
+        root.uiScale = normalizedBoundedReal(sidebar.uiScale, 1.0, 0.75, 1.5);
         root.scrollSmoothEnabled = scrolling.smoothEnabled === undefined ? true : !!scrolling.smoothEnabled;
         root.scrollMouseFactor = normalizedBoundedInt(scrolling.mouseFactor, 50, 10, 240);
         root.scrollTouchpadFactor = normalizedBoundedInt(scrolling.touchpadFactor, 100, 10, 300);
         root.scrollMouseDeltaThreshold = normalizedBoundedInt(scrolling.mouseDeltaThreshold, 120, 60, 240);
+        root.niriManagedDomains = Object.assign({
+            "colors": true,
+            "effects": true,
+            "cursor": false,
+            "binds": false,
+            "layout": false,
+            "outputs": true
+        }, cloneMap(niri.managedDomains));
+        root.niriOutputSettings = cloneMap(niri.outputs);
+        root.niriLayoutSettings = cloneMap(niri.layout);
+        root.niriKeybindOverrides = cloneMap(niri.keybindOverrides);
     }
 
     function needsWallpaperMigration(parsed) {

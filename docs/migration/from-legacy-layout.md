@@ -43,8 +43,8 @@ key top
 ```
 
 确认 `key` 来自 `~/.local/bin`，Shell 能加载 current release 的私有 plugin，剪贴板与
-sysmon 协议兼容。新安装会删除 Clavis 旧 user unit；会话服务由 Niri 的
-`startup.kdl` 直接启动。
+sysmon 协议兼容。新安装会替换旧 unit，并启用绑定 `niri.service` 的 Shell 与剪贴板
+service；不会在安装时立即启动。Niri 主配置迁移见 [配置管理](../niri-configuration.md)。
 
 旧 root-owned 文件只应在审计其来源后手动清理；普通安装和迁移不会请求 sudo。示例
 路径必须以 doctor 实际报告为准，不要盲目复制命令：

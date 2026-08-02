@@ -9,8 +9,8 @@ Rectangle {
     property string supportingText: ""
     default property alias content: body.data
 
-    implicitHeight: sectionLayout.implicitHeight + Appearance.spacing.medium * 2
-    radius: Appearance.rounding.large
+    implicitHeight: sectionLayout.implicitHeight + Metrics.cardPadding * 2
+    radius: Metrics.cornerL
     color: Appearance.colors.colLayer1
 
     ColumnLayout {
@@ -18,9 +18,9 @@ Rectangle {
 
         anchors {
             fill: parent
-            margins: Appearance.spacing.medium
+            margins: Metrics.cardPadding
         }
-        spacing: Appearance.spacing.small
+        spacing: Metrics.spacingS
 
         Text {
             Layout.fillWidth: true
@@ -47,7 +47,7 @@ Rectangle {
             id: body
 
             Layout.fillWidth: true
-            spacing: Appearance.spacing.xSmall
+            spacing: Metrics.spacingXS
         }
     }
 }

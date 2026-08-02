@@ -88,19 +88,23 @@ if [ ! -f "$main_config" ]; then
     exit 3
 fi
 
-if grep -Eq '^[[:space:]]*include([[:space:]]+optional=true)?[[:space:]]+"([^"]*/)?clavis-effects\.kdl"[[:space:]]*(//.*)?$' "$main_config"; then
+main_dir=$(dirname -- "$main_config")
+snippet_include=$(realpath --relative-to="$main_dir" "$snippet_path")
+escaped_include=$(printf '%s' "$snippet_include" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
+if grep -Fq "include optional=true \"$escaped_include\"" "$main_config" \
+    || grep -Fq "include \"$escaped_include\"" "$main_config"; then
     trap - EXIT HUP INT TERM
     echo "configured"
     exit 0
 fi
 
-main_dir=$(dirname -- "$main_config")
 main_tmp=$(mktemp "$main_dir/.config.kdl.clavis.XXXXXX")
 cp -p -- "$main_config" "$main_tmp"
 {
     echo
     echo "// BEGIN CLAVIS EFFECTS"
-    echo "include optional=true \"clavis-effects.kdl\""
+    echo "include optional=true \"$escaped_include\""
     echo "// END CLAVIS EFFECTS"
 } >> "$main_tmp"
 

@@ -189,7 +189,9 @@ Item {
         id: panelBlurRegion
 
         anchors.fill: parent
-        property real radius: root.style.resultRadius
+        anchors.margins: root.style.blurEdgeInset
+        property real radius: Math.max(0,
+            root.style.resultRadius - root.style.blurEdgeInset)
     }
 
     Rectangle {

@@ -52,6 +52,10 @@ QtObject {
     readonly property int resultMaxHeight: 440
     readonly property int resultRowHeight: 64
     readonly property int resultIconSize: 40
+    // Wayland blur regions have a hard, integer edge. Keep that edge beneath
+    // the antialiased translucent surface so X-Ray wallpaper-only blur cannot
+    // expose a stair-stepped boundary.
+    readonly property int blurEdgeInset: 2
     readonly property int wallpaperPanelWidth: 1240
     readonly property int wallpaperGridHeight: 600
     readonly property int wallpaperPanelPadding: 16

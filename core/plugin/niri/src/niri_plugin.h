@@ -96,6 +96,7 @@ signals:
     void overviewChanged();
     void keyboardLayoutChanged();
     void castsChanged();
+    void configLoaded(bool failed, const QString &error);
 
 private slots:
     void handleEvent(const QJsonObject &event);

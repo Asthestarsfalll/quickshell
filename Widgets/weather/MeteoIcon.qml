@@ -17,6 +17,8 @@ Item {
     readonly property url svgSource: Paths.meteoconSvg(normalizedStyle(), resolvedSlug)
     readonly property url lottieSource: Paths.meteoconLottie(resolvedSlug)
     readonly property real fittedScale: Math.min(width / baseSize, height / baseSize)
+    readonly property bool lottieReady: lottieLoader.item
+        && lottieLoader.item.status === LottieAnimation.Ready
 
     function normalizedStyle() {
         if (style === "fill" || style === "line" || style === "monochrome" || style === "flat") return style
@@ -61,36 +63,45 @@ Item {
         return byName.length > 0 ? byName : "not-available"
     }
 
-    LottieAnimation {
-        id: lottieIcon
+    Loader {
+        id: lottieLoader
+
         anchors.centerIn: parent
         width: root.baseSize
         height: root.baseSize
         scale: root.fittedScale
         transformOrigin: Item.Center
-        visible: root.animated && status === LottieAnimation.Ready
-        source: root.lottieSource
-        autoPlay: root.playing
-        loops: LottieAnimation.Infinite
+        active: root.animated
+        visible: root.lottieReady
 
-        onStatusChanged: {
-            if (status !== LottieAnimation.Ready)
-                return
-            if (root.playing)
-                play()
-            else
-                pause()
+        sourceComponent: LottieAnimation {
+            source: root.lottieSource
+            autoPlay: root.playing
+            loops: LottieAnimation.Infinite
+
+            onStatusChanged: {
+                if (status !== LottieAnimation.Ready)
+                    return
+                if (root.playing)
+                    play()
+                else
+                    pause()
+            }
         }
     }
 
     onPlayingChanged: {
-        if (!playing) lottieIcon.pause()
-        else if (lottieIcon.status === LottieAnimation.Ready) lottieIcon.play()
+        if (!lottieLoader.item)
+            return
+        if (!playing)
+            lottieLoader.item.pause()
+        else if (root.lottieReady)
+            lottieLoader.item.play()
     }
 
     Image {
         anchors.fill: parent
-        visible: !lottieIcon.visible
+        visible: !root.lottieReady
         source: root.svgSource
         fillMode: Image.PreserveAspectFit
         asynchronous: true

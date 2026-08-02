@@ -12,7 +12,7 @@ add_test(
     COMMAND Qt6::qmltestrunner -input ${CMAKE_SOURCE_DIR}/../tests/qml
 )
 set_tests_properties(qml_unit_tests PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME="
 )
 
 qt_add_executable(clavis_core_tests
@@ -98,8 +98,18 @@ add_test(
 )
 
 add_test(
-    NAME niri_output_config_tests
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_manage_niri_outputs.py
+    NAME niri_config_manager_tests
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_manage_niri_config.py
+)
+
+add_test(
+    NAME xdg_autostart_manager_tests
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_manage_xdg_autostart.py
+)
+
+add_test(
+    NAME clavis_user_service_installer_tests
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_install_clavis_user_services.py
 )
 
 qt_add_executable(m3shapes_tests

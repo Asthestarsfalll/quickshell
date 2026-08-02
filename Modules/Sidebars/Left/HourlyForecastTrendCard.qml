@@ -273,7 +273,7 @@ Rectangle {
                                 iconName: hourItem.iconName || ""
                                 night: hourItem.isDaylight === undefined ? false : !hourItem.isDaylight
                                 style: "fill"
-                                playing: root.foreground
+                                animated: false
                             }
                         }
                     }

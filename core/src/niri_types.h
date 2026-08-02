@@ -46,6 +46,9 @@ struct NiriOutput {
     double scale = 1.0;
     QString transform;
     QString currentMode;
+    QVariantList modes;
+    bool enabled = true;
+    bool vrrSupported = false;
     bool vrrEnabled = false;
 };
 

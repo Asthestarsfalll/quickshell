@@ -24,12 +24,19 @@ FloatingWindow {
     onClosed: Qt.quit()
     Component.onCompleted: I18nService.initialize()
 
+    Binding {
+        target: Metrics
+        property: "uiScale"
+        value: PersonalizationConfig.uiScale
+    }
+
     property real contentPadding: 8
     property int currentPage: 0
     property bool navExpanded: width > 900
     readonly property var pages: [
         ({ "id": "account", "title": qsTr("账户"), "icon": "account_circle", "source": "AccountPage.qml" }),
         ({ "id": "general", "title": qsTr("通用"), "icon": "settings", "source": "GeneralPage.qml" }),
+        ({ "id": "autostart", "title": qsTr("开机启动"), "icon": "rocket_launch", "source": "AutostartPage.qml" }),
         ({ "id": "wallpaper", "title": qsTr("壁纸"), "icon": "wallpaper", "source": "WallpaperPage.qml" }),
         ({ "id": "theme", "title": qsTr("主题"), "icon": "palette", "source": "ThemePage.qml" }),
         ({ "id": "keystone", "title": qsTr("钥石"), "icon": "toggle_off", "source": "KeystonePage.qml" }),

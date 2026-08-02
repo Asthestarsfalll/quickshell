@@ -4,6 +4,14 @@ set -euo pipefail
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 generator="$repo_dir/scripts/theme/generate_matugen_colors.sh"
 test_dir=$(mktemp -d /tmp/clavis-matugen-test.XXXXXX)
+test_runtime_dir="$test_dir/runtime"
+mkdir -p "$test_runtime_dir"
+unset CLAVIS_BIN_HOME CLAVIS_INSTALL_PREFIX CLAVIS_CONFIG_HOME \
+    CLAVIS_DATA_HOME CLAVIS_STATE_HOME CLAVIS_CACHE_HOME \
+    CLAVIS_PROFILE_HOME CLAVIS_PROFILE_CONFIG_HOME CLAVIS_GENERATED_HOME \
+    CLAVIS_QML_IMPORT_HOME
+export XDG_RUNTIME_DIR="$test_runtime_dir"
+export CLAVIS_RUNTIME_HOME="$test_runtime_dir/clavis"
 
 cleanup() { rm -rf -- "$test_dir"; }
 trap cleanup EXIT HUP INT TERM
@@ -39,7 +47,8 @@ generated="$filtered_home/.local/share/clavis/profiles/default/generated"
 [[ -s "$filtered_home/.config/yazi/theme.toml" ]] || fail "missing Yazi theme"
 [[ ! -e "$filtered_home/.config/kitty" ]] || fail "disabled Kitty was modified"
 [[ ! -e "$filtered_home/.config/btop" ]] || fail "disabled btop was modified"
-[[ ! -e "$generated/niri/colors.kdl" ]] || fail "disabled Niri was generated"
+[[ ! -e "$filtered_home/.config/niri/clavis/colors.kdl" ]] \
+    || fail "disabled Niri was generated"
 [[ ! -e "$filtered_home/.config/clavis/profiles/default/matugen/config.toml" ]] \
     || fail "an editable per-user Matugen config was recreated"
 
@@ -64,7 +73,7 @@ for render_mode in dark light; do
     sed \
         -e "s|input_path = \"templates/|input_path = \"$repo_dir/matugen/templates/|" \
         -e "s|@CLAVIS_GENERATED_HOME@/clavis/colors.json|$output_dir/colors.json|" \
-        -e "s|@CLAVIS_GENERATED_HOME@/niri/colors.kdl|$output_dir/niri-colors.kdl|" \
+        -e "s|@CLAVIS_NIRI_HOME@/clavis/colors.kdl|$output_dir/niri-colors.kdl|" \
         -e "s|~/.config/btop/themes/matugen.theme|$output_dir/btop.theme|" \
         -e "s|~/.config/cava/themes/matugen|$output_dir/cava|" \
         -e "s|~/.config/kitty/themes/Matugen.conf|$output_dir/kitty.conf|" \

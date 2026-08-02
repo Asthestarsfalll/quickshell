@@ -64,7 +64,7 @@ Directory 解析。路径覆盖值必须是绝对路径；内部协议不使用 
 4. 检查必要文件、`release.json`、协议和可执行权限；
 5. 执行暂存 `key version --json` smoke test；
 6. 原子重命名为不可变 release；
-7. 冲突预检后更新稳定 launcher、active-release 与 manifest，并移除旧 user units；
+7. 冲突预检后更新稳定 launcher、active-release、manifest 与 Niri user units；
 8. 最后原子替换 `current` symlink；
 9. 任一步失败时恢复上述可变文件，并移除尚未激活的新 release。
 
@@ -93,11 +93,14 @@ SHA-256 与模式，以及 launcher、profile、协议和可选
 
 ## 会话启动项
 
-Clavis 不安装 user systemd unit。Niri release 配置中的 `startup.kdl` 是会话启动项的
-唯一来源，因此服务生命周期与该 Niri 会话一致。其中 `key shell --no-duplicate` 现在
-在完成后台实例注册后正常返回，不会造成 Niri 重复启动；剪贴板 watcher 仍是独立的
-长期进程。未来若新增由 systemd 监督的 Shell unit，必须调用 `key shell --foreground`
-以便 systemd 跟踪真实主进程。
+release 携带 `clavis-shell.service` 和 `clavis-clipboard.service` 模板。安装器用稳定
+`$XDG_BIN_HOME/key` 绝对路径渲染到 user unit 目录，执行 daemon-reload 后只 enable，
+不在当前会话 `--now`。两者由 `niri.service.wants/` 拉起，并以 `PartOf=` 和
+`Requisite=` 保证退出 Niri 时停止、其他桌面不启动。Shell unit 必须调用
+`key shell --foreground --no-duplicate`，使 systemd 跟踪真实 Quickshell 主进程。
+
+用户 `startup.kdl` 仅保留 Polkit agent。Fcitx5、nm-applet、blueman-applet 属于 XDG
+Autostart；Clavis 不为它们创建重复 service。
 
 后台 Shell 日志位于 `$XDG_STATE_HOME/clavis/logs/`，不写入 release 或源码树。release、
 普通开发和原生开发分别使用独立日志文件；每个文件限制为 2 MiB 并保留 3 份轮转备份。

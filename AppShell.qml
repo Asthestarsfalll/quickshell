@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Clavis.WeatherMap 1.0
+import qs.Common
 import qs.Modules.Bar
 import qs.Modules.Keystone
 import qs.Modules.Launcher
@@ -18,6 +19,12 @@ Item {
         I18nService.initialize();
         WallpaperService.primaryInstance = true;
         AwwwWallpaperService.primaryInstance = true;
+    }
+
+    Binding {
+        target: Metrics
+        property: "uiScale"
+        value: PersonalizationConfig.uiScale
     }
 
     WallpaperBackground {}

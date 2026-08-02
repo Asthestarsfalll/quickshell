@@ -82,6 +82,21 @@ void KeyIntegrationTest::init()
         QStringLiteral("CLAVIS_BIN_HOME"),
         m_temporary->filePath(QStringLiteral("commands")));
     m_environment.insert(
+        QStringLiteral("CLAVIS_CONFIG_HOME"),
+        m_temporary->filePath(QStringLiteral("config/clavis")));
+    m_environment.insert(
+        QStringLiteral("CLAVIS_DATA_HOME"),
+        m_temporary->filePath(QStringLiteral("data/clavis")));
+    m_environment.insert(
+        QStringLiteral("CLAVIS_STATE_HOME"),
+        m_temporary->filePath(QStringLiteral("state/clavis")));
+    m_environment.insert(
+        QStringLiteral("CLAVIS_CACHE_HOME"),
+        m_temporary->filePath(QStringLiteral("cache/clavis")));
+    m_environment.insert(
+        QStringLiteral("CLAVIS_RUNTIME_HOME"),
+        m_temporary->filePath(QStringLiteral("runtime/clavis")));
+    m_environment.insert(
         QStringLiteral("CLAVIS_CLIPBOARD_WATCHER_RUNNING"),
         QStringLiteral("1"));
     const QString fileRoot =

@@ -57,7 +57,6 @@ key shell --foreground
 key shell logs
 key ipc list
 key ipc call keystone dashboard
-key session
 key top
 key doctor
 key doctor legacy
@@ -71,24 +70,26 @@ QML、JavaScript、脚本与资源。三种 Shell 模式默认都在完成实例
 终端；加 `--foreground` 可在前台观察实时输出并用 `Ctrl+C` 结束。后台日志可通过
 `key shell logs` 或 `key shell logs --follow` 查看。
 
-`key session` 使用 release 内完整的
-Niri 默认配置启动会话，并拒绝在已有 niri 会话中递归启动。它保持真实 `HOME` 和
-用户的 XDG 路径；Kitty、Zsh、Fcitx5、btop、Yazi 等程序读取用户自己的配置。
-设置中心的 Niri 页面可按输出调整 compositor scale；它只写入当前 profile 的
-`generated/niri/outputs.kdl`，先验证完整候选 session 再原子替换，不会修改用户的
-`~/.config/niri/config.kdl`。缩放只在 Clavis 管理的 Niri session 中可用。
+Niri 会话由系统的 `niri-session` 启动。`$XDG_CONFIG_HOME/niri/config.kdl` 及用户
+include 始终归用户所有；Clavis 只生成 `$XDG_CONFIG_HOME/niri/clavis/*.kdl` 中已在
+设置中心启用的域。每次写入先验证完整候选树，再原子替换并等待 Niri 的
+`ConfigLoaded`；失败会恢复 `.last-good`。
+
+安装会加入 `clavis-shell.service` 和 `clavis-clipboard.service`，两者只挂到
+`niri.service`，不会在其他桌面或安装时立即启动。Fcitx5、nm-applet 与
+blueman-applet 使用 XDG Autostart。所有权、迁移和回滚见
+[Niri 配置管理](docs/niri-configuration.md)。
 
 完整 IPC target 与 method 清单见 [docs/ipc.md](docs/ipc.md)。
 
 Niri 快捷键应调用稳定入口，例如
-`spawn-sh "$HOME/.local/bin/key ipc call keystone dashboard"`，不要调用裸
+`spawn-sh "$CLAVIS_KEY ipc call keystone dashboard"`，不要调用裸
 `quickshell ipc`。后者按配置绝对路径选择实例，源码迁移或 release 更新后容易命中
 错误实例；`key ipc` 优先验证 `$XDG_RUNTIME_DIR/clavis/active-shell.json` 并按精确 PID
 路由到当前正式或开发实例，陈旧记录会被清理，随后安全回退到 `current`。
 
-从 TTY 或显示管理器启动完整 Clavis 管理会话时运行
-`exec "$HOME/.local/bin/key" session`。如果已经位于 Niri 会话中，只运行
-`$HOME/.local/bin/key shell`，不要嵌套第二个 compositor。
+从显示管理器选择系统提供的 Niri 会话；不要嵌套第二个 compositor。源码开发仍使用
+`key shell --dev`，生产 service 不替代开发命令。
 
 ## 目录边界
 
@@ -115,7 +116,7 @@ $XDG_RUNTIME_DIR/clavis/
 ## 主题与 Matugen 配置
 
 Matugen 始终生成 Clavis/Quickshell 配色。设置中心“高级”页可分别启用 btop、Cava、
-Kitty、Fcitx5、Niri 与 Yazi 模板。Niri 配色写入 Clavis profile 的 generated 目录；
+Kitty、Fcitx5、Niri 与 Yazi 模板。Niri 配色写入 `~/.config/niri/clavis/colors.kdl`；
 其他程序的主题文件直接写入它们在 `~/.config` 或 `~/.local/share` 下的标准位置，
 与重构用户级 release 架构之前的行为一致。Clavis 不托管这些程序的完整配置。
 

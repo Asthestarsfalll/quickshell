@@ -387,6 +387,9 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
                       m_casts.end());
         castChanged = true;
     } else if (type == QStringLiteral("ConfigLoaded")) {
+        const QJsonObject data = event.value(type).toObject();
+        emit configLoaded(data.value(QStringLiteral("failed")).toBool(),
+                          data.value(QStringLiteral("error")).toString());
         fetchOutputs();
     }
 
@@ -440,6 +443,7 @@ NiriOutput NiriPlugin::parseOutput(const QString &name, const QJsonObject &objec
     output.model = object.value(QStringLiteral("model")).toString();
     output.serial = object.value(QStringLiteral("serial")).toString();
     output.vrrEnabled = object.value(QStringLiteral("vrr_enabled")).toBool();
+    output.vrrSupported = object.value(QStringLiteral("vrr_supported")).toBool();
     const QJsonObject logical = object.value(QStringLiteral("logical")).toObject();
     output.logicalX = logical.value(QStringLiteral("x")).toInt(999999);
     output.logicalY = logical.value(QStringLiteral("y")).toInt(999999);
@@ -449,12 +453,23 @@ NiriOutput NiriPlugin::parseOutput(const QString &name, const QJsonObject &objec
     output.transform = logical.value(QStringLiteral("transform")).toString();
     const int currentMode = object.value(QStringLiteral("current_mode")).toInt(-1);
     const QJsonArray modes = object.value(QStringLiteral("modes")).toArray();
+    output.enabled = currentMode >= 0;
+    for (const QJsonValue &value : modes) {
+        const QJsonObject mode = value.toObject();
+        output.modes.append(QVariantMap{
+            {QStringLiteral("width"), mode.value(QStringLiteral("width")).toInt()},
+            {QStringLiteral("height"), mode.value(QStringLiteral("height")).toInt()},
+            {QStringLiteral("refreshRate"), mode.value(QStringLiteral("refresh_rate")).toDouble() / 1000.0},
+            {QStringLiteral("preferred"), mode.value(QStringLiteral("is_preferred")).toBool()},
+        });
+    }
     if (currentMode >= 0 && currentMode < modes.size()) {
         const QJsonObject mode = modes.at(currentMode).toObject();
         output.currentMode = QStringLiteral("%1x%2@%3")
             .arg(mode.value(QStringLiteral("width")).toInt())
             .arg(mode.value(QStringLiteral("height")).toInt())
-            .arg(mode.value(QStringLiteral("refresh_rate")).toDouble());
+            .arg(mode.value(QStringLiteral("refresh_rate")).toDouble() / 1000.0,
+                 0, 'f', 3);
     }
     return output;
 }

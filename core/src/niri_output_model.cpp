@@ -41,6 +41,12 @@ QVariant NiriOutputModel::data(const QModelIndex &index, int role) const
         return output.transform;
     case CurrentModeRole:
         return output.currentMode;
+    case ModesRole:
+        return output.modes;
+    case EnabledRole:
+        return output.enabled;
+    case VrrSupportedRole:
+        return output.vrrSupported;
     case VrrEnabledRole:
         return output.vrrEnabled;
     default:
@@ -62,6 +68,9 @@ QHash<int, QByteArray> NiriOutputModel::roleNames() const
         {ScaleRole, "scale"},
         {TransformRole, "transform"},
         {CurrentModeRole, "currentMode"},
+        {ModesRole, "modes"},
+        {EnabledRole, "outputEnabled"},
+        {VrrSupportedRole, "vrrSupported"},
         {VrrEnabledRole, "vrrEnabled"},
     };
 }
@@ -104,6 +113,9 @@ QVariantMap NiriOutputModel::toMap(const NiriOutput &output) const
         {QStringLiteral("scale"), output.scale},
         {QStringLiteral("transform"), output.transform},
         {QStringLiteral("currentMode"), output.currentMode},
+        {QStringLiteral("modes"), output.modes},
+        {QStringLiteral("enabled"), output.enabled},
+        {QStringLiteral("vrrSupported"), output.vrrSupported},
         {QStringLiteral("vrrEnabled"), output.vrrEnabled},
     };
 }

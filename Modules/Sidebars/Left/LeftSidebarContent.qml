@@ -11,8 +11,6 @@ Item {
     property string screenName: ""
     property bool foreground: false
     property bool presentationActive: false
-    property bool keepViewsLoaded:
-        PersonalizationConfig.keepSidebarsLoaded
     property var weatherSourceOverride: null
     readonly property string activeView: WidgetState.leftSidebarView
     readonly property int instantiatedViewCount: {
@@ -221,21 +219,18 @@ Item {
                     property bool loadedOnce: false
 
                     anchors.fill: parent
-                    active: modelData === root.activeView
-                        || (root.keepViewsLoaded
-                            && loadedOnce)
+                    // Cache every page visited during this sidebar content
+                    // lifetime. The outer Loader owns the common destruction
+                    // boundary after the panel has completely slid away.
+                    active: modelData === root.activeView || loadedOnce
                     visible: active && modelData === root.activeView
+                    asynchronous: true
                     sourceComponent: modelData === "info"
                         ? infoComponent
                         : modelData === "sys"
                             ? systemComponent : weatherComponent
 
                     onLoaded: loadedOnce = true
-                    onActiveChanged: {
-                        if (!active
-                                && !root.keepViewsLoaded)
-                            loadedOnce = false
-                    }
                 }
             }
 

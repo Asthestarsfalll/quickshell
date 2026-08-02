@@ -21,6 +21,9 @@ public:
         ScaleRole,
         TransformRole,
         CurrentModeRole,
+        ModesRole,
+        EnabledRole,
+        VrrSupportedRole,
         VrrEnabledRole
     };
 

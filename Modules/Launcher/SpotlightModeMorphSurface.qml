@@ -13,6 +13,7 @@ Item {
     required property real shapeHeight
     required property real buttonDiameter
     required property real buttonGap
+    required property real blurEdgeInset
 
     property color surfaceColor: Appearance.colors.colSurfaceContainerHigh
     property real edgeSoftness: 0.9
@@ -303,17 +304,22 @@ Item {
     Item {
         id: mainBlurRegion
 
-        x: root.mainLeft
+        x: root.mainLeft + root.blurEdgeInset
         y: root.shapeCenterY - root.shapeHeight / 2
-        width: root.mainWidth
-        height: root.shapeHeight
-        property real radius: root.shapeHeight / 2
+            + root.blurEdgeInset
+        width: Math.max(0,
+            root.mainWidth - root.blurEdgeInset * 2)
+        height: Math.max(0,
+            root.shapeHeight - root.blurEdgeInset * 2)
+        property real radius: Math.max(0,
+            root.shapeHeight / 2 - root.blurEdgeInset)
     }
 
     Item {
         id: button0BlurRegion
 
-        readonly property real shapeRadius: root.buttonRadius(0)
+        readonly property real shapeRadius: Math.max(0,
+            root.buttonRadius(0) - root.blurEdgeInset)
         x: root.buttonCenterX(0) - shapeRadius
         y: root.shapeCenterY - shapeRadius
         width: shapeRadius * 2
@@ -324,7 +330,8 @@ Item {
     Item {
         id: button1BlurRegion
 
-        readonly property real shapeRadius: root.buttonRadius(1)
+        readonly property real shapeRadius: Math.max(0,
+            root.buttonRadius(1) - root.blurEdgeInset)
         x: root.buttonCenterX(1) - shapeRadius
         y: root.shapeCenterY - shapeRadius
         width: shapeRadius * 2
@@ -335,7 +342,8 @@ Item {
     Item {
         id: button2BlurRegion
 
-        readonly property real shapeRadius: root.buttonRadius(2)
+        readonly property real shapeRadius: Math.max(0,
+            root.buttonRadius(2) - root.blurEdgeInset)
         x: root.buttonCenterX(2) - shapeRadius
         y: root.shapeCenterY - shapeRadius
         width: shapeRadius * 2
@@ -346,11 +354,13 @@ Item {
     Item {
         id: bridge0BlurRegion
 
-        readonly property real shapeRadius:
-            root.buttonBridgeRadius(0)
-        x: root.bridgeLeft(0)
+        readonly property real shapeRadius: Math.max(0,
+            root.buttonBridgeRadius(0) - root.blurEdgeInset)
+        x: Math.min(root.bridgeStartX(0), root.buttonCenterX(0))
+            - shapeRadius
         y: root.shapeCenterY - shapeRadius
-        width: root.bridgeWidth(0)
+        width: Math.abs(root.buttonCenterX(0)
+            - root.bridgeStartX(0)) + shapeRadius * 2
         height: shapeRadius * 2
         property real radius: shapeRadius
         visible: shapeRadius > 0.001
@@ -359,11 +369,13 @@ Item {
     Item {
         id: bridge1BlurRegion
 
-        readonly property real shapeRadius:
-            root.buttonBridgeRadius(1)
-        x: root.bridgeLeft(1)
+        readonly property real shapeRadius: Math.max(0,
+            root.buttonBridgeRadius(1) - root.blurEdgeInset)
+        x: Math.min(root.bridgeStartX(1), root.buttonCenterX(1))
+            - shapeRadius
         y: root.shapeCenterY - shapeRadius
-        width: root.bridgeWidth(1)
+        width: Math.abs(root.buttonCenterX(1)
+            - root.bridgeStartX(1)) + shapeRadius * 2
         height: shapeRadius * 2
         property real radius: shapeRadius
         visible: shapeRadius > 0.001
@@ -372,11 +384,13 @@ Item {
     Item {
         id: bridge2BlurRegion
 
-        readonly property real shapeRadius:
-            root.buttonBridgeRadius(2)
-        x: root.bridgeLeft(2)
+        readonly property real shapeRadius: Math.max(0,
+            root.buttonBridgeRadius(2) - root.blurEdgeInset)
+        x: Math.min(root.bridgeStartX(2), root.buttonCenterX(2))
+            - shapeRadius
         y: root.shapeCenterY - shapeRadius
-        width: root.bridgeWidth(2)
+        width: Math.abs(root.buttonCenterX(2)
+            - root.bridgeStartX(2)) + shapeRadius * 2
         height: shapeRadius * 2
         property real radius: shapeRadius
         visible: shapeRadius > 0.001
