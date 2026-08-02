@@ -42,7 +42,9 @@ Item {
 
     readonly property bool parentHierarchyAvailable:
         !root.respectParentHierarchy
-        || root.hierarchyAvailable(root)
+        // The tooltip's own effective visibility depends on this property.
+        // Start at its parent so the availability check cannot include itself.
+        || root.hierarchyAvailable(root.parent)
     readonly property var anchorWindow: root.QsWindow.window
     readonly property bool anchorWindowReady:
         root.anchorWindow !== null
