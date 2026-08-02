@@ -25,6 +25,8 @@ Item {
     readonly property int weatherSimulationFrameCount:
         weatherBackground.simulationFrameCount
     readonly property int weatherPaintCount: weatherBackground.paintCount
+    readonly property real effectiveDpr:
+        Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1
     property int contentMargin: 16
     property int headerHeight: 62
     property bool lightHeaderPalette: currentIsNight()
@@ -282,8 +284,6 @@ Item {
         radius: 30
         clip: true
         color: "transparent"
-        border.width: 1
-        border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.34)
         layer.enabled: true
         layer.effect: OpacityMask {
             maskSource: Rectangle {
@@ -777,6 +777,20 @@ Item {
                 }
             }
         }
+    }
+
+    // Keep the one-pixel outline outside the OpacityMask texture. Rendering it
+    // into the masked layer made the already antialiased stroke pass through a
+    // second alpha resampling step, which softened the stable rounded edge.
+    Rectangle {
+        anchors.fill: weatherPanel
+        color: "transparent"
+        radius: weatherPanel.radius
+        border.width: 1 / root.effectiveDpr
+        border.color: Qt.rgba(
+            Appearance.colors.colOutlineVariant.r,
+            Appearance.colors.colOutlineVariant.g,
+            Appearance.colors.colOutlineVariant.b, 0.34)
     }
 
     component SectionCard: Rectangle {
