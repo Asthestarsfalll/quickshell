@@ -17,10 +17,19 @@ Item {
         Math.max(0, height - sidebarY - gap)
     property bool panelPresented: false
     property bool contentRetained: false
+    property bool keepLoaded:
+        PersonalizationConfig.keepSidebarsLoaded
+    property var weatherSourceOverride: null
     readonly property bool panelVisuallyPresent:
         WidgetState.leftSidebarOpen || panelPresented
     readonly property bool panelInteractive: WidgetState.leftSidebarOpen
     readonly property string activeView: WidgetState.leftSidebarView
+    readonly property int instantiatedViewCount:
+        sidebarContentLoader.item
+            ? sidebarContentLoader.item.instantiatedViewCount : 0
+    readonly property var weatherView:
+        sidebarContentLoader.item
+            ? sidebarContentLoader.item.weatherView : null
 
     function beginPresentation() {
         panelPresented = true
@@ -33,14 +42,14 @@ Item {
 
         // Hide the already off-screen surface before releasing its layout tree.
         panelPresented = false
-        if (!PersonalizationConfig.keepSidebarsLoaded)
+        if (!root.keepLoaded)
             contentRetained = false
     }
 
     Component.onCompleted: {
         panelPresented = WidgetState.leftSidebarOpen
         contentRetained = WidgetState.leftSidebarOpen
-            || PersonalizationConfig.keepSidebarsLoaded
+            || root.keepLoaded
     }
 
     Connections {
@@ -52,16 +61,12 @@ Item {
         }
     }
 
-    Connections {
-        target: PersonalizationConfig
-
-        function onKeepSidebarsLoadedChanged() {
-            if (PersonalizationConfig.keepSidebarsLoaded) {
-                root.contentRetained = true
-            } else if (!WidgetState.leftSidebarOpen
-                    && !root.panelPresented) {
-                root.contentRetained = false
-            }
+    onKeepLoadedChanged: {
+        if (root.keepLoaded) {
+            root.contentRetained = true
+        } else if (!WidgetState.leftSidebarOpen
+                && !root.panelPresented) {
+            root.contentRetained = false
         }
     }
 
@@ -158,8 +163,10 @@ Item {
         clip: true
 
         Loader {
+            id: sidebarContentLoader
+
             anchors.fill: parent
-            active: PersonalizationConfig.keepSidebarsLoaded
+            active: root.keepLoaded
                 || WidgetState.leftSidebarOpen
                 || root.contentRetained
             sourceComponent: leftSidebarContentComponent
@@ -172,6 +179,8 @@ Item {
         LeftSidebarContent {
             anchors.fill: parent
             screenName: root.panelScreen ? root.panelScreen.name : ""
+            keepViewsLoaded: root.keepLoaded
+            weatherSourceOverride: root.weatherSourceOverride
             foreground: root.panelInteractive
             presentationActive: root.panelVisuallyPresent
         }

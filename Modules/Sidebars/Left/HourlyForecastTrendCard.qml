@@ -21,7 +21,11 @@ Rectangle {
     clip: true
 
     function modelCount() {
-        return sourceModel && sourceModel.count ? Math.min(maxItems, sourceModel.count()) : 0
+        if (!sourceModel)
+            return 0
+        const count = typeof sourceModel.count === "function"
+            ? sourceModel.count() : Number(sourceModel.count || 0)
+        return Math.min(maxItems, count)
     }
 
     function itemAt(index) {

@@ -106,7 +106,11 @@ Item {
         const list = []
         let highest = 0
         let validCount = 0
-        const count = root.sourceModel && root.sourceModel.count ? Math.min(root.maxDays, root.sourceModel.count()) : 0
+        const modelCount = root.sourceModel
+            ? (typeof root.sourceModel.count === "function"
+                ? root.sourceModel.count()
+                : Number(root.sourceModel.count || 0)) : 0
+        const count = Math.min(root.maxDays, modelCount)
         for (let i = 0; i < count; ++i) {
             const day = root.sourceModel.get(i) || ({})
             const aqi = root.dailyAqiValue(day.airQuality || ({}))

@@ -11,7 +11,23 @@ Item {
     property string screenName: ""
     property bool foreground: false
     property bool presentationActive: false
+    property bool keepViewsLoaded:
+        PersonalizationConfig.keepSidebarsLoaded
+    property var weatherSourceOverride: null
     readonly property string activeView: WidgetState.leftSidebarView
+    readonly property int instantiatedViewCount: {
+        let count = 0
+        for (let index = 0; index < viewRepeater.count; ++index) {
+            const loader = viewRepeater.itemAt(index)
+            if (loader && loader.item)
+                count += 1
+        }
+        return count
+    }
+    readonly property var weatherView: {
+        const loader = viewRepeater.itemAt(2)
+        return loader ? loader.item : null
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -194,6 +210,8 @@ Item {
             radius: Appearance.rounding.large
 
             Repeater {
+                id: viewRepeater
+
                 model: ["info", "sys", "weather"]
 
                 Loader {
@@ -204,7 +222,7 @@ Item {
 
                     anchors.fill: parent
                     active: modelData === root.activeView
-                        || (PersonalizationConfig.keepSidebarsLoaded
+                        || (root.keepViewsLoaded
                             && loadedOnce)
                     visible: active && modelData === root.activeView
                     sourceComponent: modelData === "info"
@@ -215,7 +233,7 @@ Item {
                     onLoaded: loadedOnce = true
                     onActiveChanged: {
                         if (!active
-                                && !PersonalizationConfig.keepSidebarsLoaded)
+                                && !root.keepViewsLoaded)
                             loadedOnce = false
                     }
                 }
@@ -244,6 +262,7 @@ Item {
                 id: weatherComponent
 
                 WeatherView {
+                    weatherSourceOverride: root.weatherSourceOverride
                     foreground: root.foreground
                         && root.activeView === "weather"
                     presentationActive: root.presentationActive

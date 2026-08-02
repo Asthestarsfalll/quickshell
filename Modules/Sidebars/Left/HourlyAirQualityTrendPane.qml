@@ -99,7 +99,11 @@ Item {
         const list = []
         let highest = 0
         let validCount = 0
-        const count = root.sourceModel && root.sourceModel.count ? Math.min(root.maxHours, root.sourceModel.count()) : 0
+        const modelCount = root.sourceModel
+            ? (typeof root.sourceModel.count === "function"
+                ? root.sourceModel.count()
+                : Number(root.sourceModel.count || 0)) : 0
+        const count = Math.min(root.maxHours, modelCount)
         for (let i = 0; i < count; ++i) {
             const hour = root.sourceModel.get(i) || ({})
             const aqi = root.hourlyAqiValue(hour.airQuality || ({}))

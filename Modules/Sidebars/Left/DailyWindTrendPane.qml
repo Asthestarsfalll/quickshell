@@ -86,7 +86,11 @@ Item {
         const list = []
         let highest = 0
         let validCount = 0
-        const count = root.sourceModel && root.sourceModel.count ? Math.min(root.maxItems, root.sourceModel.count()) : 0
+        const modelCount = root.sourceModel
+            ? (typeof root.sourceModel.count === "function"
+                ? root.sourceModel.count()
+                : Number(root.sourceModel.count || 0)) : 0
+        const count = Math.min(root.maxItems, modelCount)
         for (let i = 0; i < count; ++i) {
             const dayItem = root.sourceModel.get(i) || ({})
             const dayPart = dayItem.day || ({})

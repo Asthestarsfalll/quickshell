@@ -20,6 +20,7 @@ help-zh:
         '    doctor                 只读检查构建与运行依赖，不安装软件' \
         '    install                构建、测试并安装新的不可变用户级 release' \
         '    releases               查看当前版本和所有已安装 release' \
+        '    weather-preview         启动隔离的天气侧边栏手动预览' \
         '    help-zh                显示中文命令帮助，不执行任何操作'
 
 # Replace the active Shell with the installed release and return immediately
@@ -74,3 +75,7 @@ install:
 releases:
     key version --json
     key release list
+
+# Run the isolated manual weather sidebar preview
+weather-preview:
+    ./scripts/development/weather-preview.sh
