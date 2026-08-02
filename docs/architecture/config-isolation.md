@@ -25,8 +25,15 @@ release 是只读程序资产，Git checkout 不是运行时配置目录。
 
 1. release 内完整的正式 Niri 默认配置；
 2. profile 中生成的 Niri 颜色、光标和效果；
-3. `$XDG_CONFIG_HOME/clavis/overrides/niri.kdl`；
-4. `$XDG_CONFIG_HOME/clavis/profiles/<profile>/niri/override.kdl`。
+3. Clavis 设置中心生成的 `generated/niri/outputs.kdl`（可选 include）；
+4. `$XDG_CONFIG_HOME/clavis/overrides/niri.kdl`；
+5. `$XDG_CONFIG_HOME/clavis/profiles/<profile>/niri/override.kdl`。
+
+`outputs.kdl` 只包含以输出名为键的 `scale`，不会生成 mode、刷新率、position 或
+transform。设置中心先用临时候选文件替换 session 中的该 include 并执行
+`niri validate -c`；验证通过后才原子替换 fragment。旧 fragment 会保存为
+`outputs.kdl.last-good`。当前会话若不是 Clavis 生成的 session，或不支持项目默认配置
+已经依赖的 KDL include，页面会禁用写入，不会退回到改写用户完整配置。
 
 正式配置的 `startup.kdl` 直接启动 Fcitx5、nm-applet、blueman-applet、
 `key shell --no-duplicate` 和 `key clipboard watch`。Clavis 不安装 session supervisor

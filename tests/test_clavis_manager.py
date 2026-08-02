@@ -253,6 +253,10 @@ class ClavisManagerTest(unittest.TestCase):
                     session_text,
                 )
                 self.assertIn(str(generated / "colors.kdl"), session_text)
+                self.assertIn(
+                    f'include optional=true "{generated / "outputs.kdl"}"',
+                    session_text,
+                )
                 self.assertIn(str(override), session_text)
                 self.assertNotIn("legacy-home", session_text)
 

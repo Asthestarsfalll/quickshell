@@ -11,6 +11,8 @@ Item {
     property real value: 0
     property bool enabled: true
     property string valueSuffix: ""
+    property int valueDecimals: 0
+    readonly property bool pressed: control.pressed
 
     readonly property int stateLayerSize: 40
     readonly property int trackInset: stateLayerSize / 2
@@ -21,6 +23,7 @@ Item {
     readonly property bool valueIndicatorVisible: control.pressed || control.hovered || control.activeFocus
 
     signal moved(real value)
+    signal committed(real value)
 
     implicitHeight: 78
 
@@ -43,6 +46,10 @@ Item {
         }
 
         onMoved: root.moved(value)
+        onPressedChanged: {
+            if (!pressed)
+                root.committed(value)
+        }
 
         background: Item {
             id: track
@@ -198,7 +205,8 @@ Item {
                         id: valueLabel
 
                         anchors.centerIn: parent
-                        text: Math.round(control.value) + root.valueSuffix
+                        text: Number(control.value).toFixed(
+                            root.valueDecimals) + root.valueSuffix
                         color: Appearance.colors.colOnPrimary
                         font.family: Sizes.fontFamilyMono
                         font.pixelSize: 12

@@ -97,6 +97,11 @@ add_test(
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_clavis_manager.py
 )
 
+add_test(
+    NAME niri_output_config_tests
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_manage_niri_outputs.py
+)
+
 qt_add_executable(m3shapes_tests
     m3shapes_test.cpp
 )

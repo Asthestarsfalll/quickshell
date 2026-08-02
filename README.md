@@ -74,6 +74,9 @@ QML、JavaScript、脚本与资源。三种 Shell 模式默认都在完成实例
 `key session` 使用 release 内完整的
 Niri 默认配置启动会话，并拒绝在已有 niri 会话中递归启动。它保持真实 `HOME` 和
 用户的 XDG 路径；Kitty、Zsh、Fcitx5、btop、Yazi 等程序读取用户自己的配置。
+设置中心的 Niri 页面可按输出调整 compositor scale；它只写入当前 profile 的
+`generated/niri/outputs.kdl`，先验证完整候选 session 再原子替换，不会修改用户的
+`~/.config/niri/config.kdl`。缩放只在 Clavis 管理的 Niri session 中可用。
 
 完整 IPC target 与 method 清单见 [docs/ipc.md](docs/ipc.md)。
 

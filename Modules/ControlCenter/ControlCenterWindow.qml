@@ -34,6 +34,7 @@ FloatingWindow {
         ({ "id": "theme", "title": qsTr("主题"), "icon": "palette", "source": "ThemePage.qml" }),
         ({ "id": "keystone", "title": qsTr("钥石"), "icon": "toggle_off", "source": "KeystonePage.qml" }),
         ({ "id": "weather", "title": qsTr("天气"), "icon": "partly_cloudy_day", "source": "WeatherPage.qml" }),
+        ({ "id": "niri", "title": "Niri", "icon": "display_settings", "source": "NiriPage.qml" }),
         ({ "id": "advanced", "title": qsTr("高级"), "icon": "tune", "source": "AdvancedPage.qml" })
     ]
 
