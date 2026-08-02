@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.Common
@@ -107,25 +106,7 @@ Item {
             root.overflowAnchorReady = false;
     }
 
-    Rectangle {
-        id: bgRect
-
-        anchors.fill: parent
-        color: BlurService.backgroundColor(
-            Appearance.colors.colLayer0)
-        radius: height / 2
-        visible: false
-    }
-
-    MultiEffect {
-        source: bgRect
-        anchors.fill: bgRect
-        shadowEnabled: true
-        shadowColor: Appearance.applyAlpha(Appearance.colors.colShadow, 0.4)
-        shadowBlur: 0.8
-        shadowVerticalOffset: 3
-        shadowHorizontalOffset: 0
-    }
+    TopBarPillBackground { anchors.fill: parent }
 
     RowLayout {
         id: content

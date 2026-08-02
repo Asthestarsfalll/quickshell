@@ -26,8 +26,9 @@ Variants {
         
         property real barHeight: Sizes.barHeight
         
-        // 高度不再受 Keystone 影响
-        implicitHeight: barWindow.barHeight
+        // The pill geometry remains inside barHeight. Extra transparent
+        // surface space only lets the shadows finish drawing below it.
+        implicitHeight: barWindow.barHeight + Sizes.topBarShadowPadding
         
         exclusiveZone: barHeight
         

@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import qs.Common 
 import qs.Services
+import qs.Widgets.common
 
 // 新增引入我们的 C++ 高性能监控库
 import Clavis.Sysmon 1.0
@@ -27,23 +27,7 @@ Item {
         NumberAnimation { duration: 300; easing.type: Easing.OutQuart } 
     }
 
-    Rectangle {
-        id: bgRect
-        anchors.fill: parent
-        color: BlurService.backgroundColor(
-            Appearance.colors.colLayer0)
-        radius: height / 2 
-        visible: false 
-    }
-
-    MultiEffect {
-        source: bgRect
-        anchors.fill: bgRect
-        shadowEnabled: true
-        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
-        shadowBlur: 0.8
-        shadowVerticalOffset: 3
-    }
+    TopBarPillBackground { anchors.fill: parent }
 
     // （这里原本庞大的 Process 启动子线程和 SplitParser JSON 提取，以及循环调度的 Timer 已被彻底抹去）
 

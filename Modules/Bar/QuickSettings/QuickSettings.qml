@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import qs.Common
 import qs.Services as Services
+import qs.Widgets.common
 
 Item {
     id: root
@@ -13,22 +13,10 @@ Item {
     implicitHeight: 36
     implicitWidth: layout.width + 16
 
-    Rectangle {
-        id: bgRect
+    TopBarPillBackground {
         anchors.fill: parent
-        color: Services.BlurService.backgroundColor(
+        fillColor: Services.BlurService.backgroundColor(
             Appearance.colors.colLayer0)
-        radius: height / 2 
-        visible: false 
-    }
-
-    MultiEffect {
-        source: bgRect
-        anchors.fill: bgRect
-        shadowEnabled: true
-        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
-        shadowBlur: 0.8
-        shadowVerticalOffset: 3
     }
 
     RowLayout {

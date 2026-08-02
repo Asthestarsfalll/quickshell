@@ -25,6 +25,7 @@ Singleton {
 
     readonly property real cornerRadius: 10
     readonly property real barHeight: 44
+    readonly property real topBarShadowPadding: 36
     readonly property real sidebarScrollableListMaxHeight: 224
 
     readonly property real lockReferenceScale: 4 / 3
