@@ -30,14 +30,10 @@ Item {
         shadowVerticalOffset: 3
         shadowHorizontalOffset: 0
 
-        // Make the effect's texture boundary explicit. The top-level bar
-        // surface reserves the same bottom extent, so neither layer clips the
-        // pill shadow before its alpha falloff reaches zero.
-        autoPaddingEnabled: false
-        paddingRect: Qt.rect(
-            -root.shadowPadding,
-            -root.shadowPadding,
-            root.shadowPadding * 2,
-            root.shadowPadding * 2)
+        // Let MultiEffect derive the source texture padding from its blur.
+        // A manually expanded paddingRect caused the source itself to vanish
+        // on the Qt version used by Clavis. The PanelWindow still reserves
+        // shadowPadding below the visual bar for the resulting shadow.
+        autoPaddingEnabled: true
     }
 }
