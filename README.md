@@ -52,6 +52,9 @@ command -v key
 key version --json
 key shell
 key shell --dev
+key shell --dev --native
+key shell --foreground
+key shell logs
 key ipc list
 key ipc call keystone dashboard
 key session
@@ -64,7 +67,11 @@ key release list
 
 `key shell` 从 `current` 指向的不可变 release 运行 Shell；源码工作区中的未提交修改
 不会影响它。`key shell --dev` 则从当前目录向上寻找 Clavis 仓库，直接加载源码中的
-QML、JavaScript、脚本与资源。`key session` 使用 release 内完整的
+QML、JavaScript、脚本与资源。三种 Shell 模式默认都在完成实例注册后转入后台并返回
+终端；加 `--foreground` 可在前台观察实时输出并用 `Ctrl+C` 结束。后台日志可通过
+`key shell logs` 或 `key shell logs --follow` 查看。
+
+`key session` 使用 release 内完整的
 Niri 默认配置启动会话，并拒绝在已有 niri 会话中递归启动。它保持真实 `HOME` 和
 用户的 XDG 路径；Kitty、Zsh、Fcitx5、btop、Yazi 等程序读取用户自己的配置。
 
@@ -92,6 +99,7 @@ Niri 快捷键应调用稳定入口，例如
 ~/.config/clavis/profiles/default/
 ~/.local/share/clavis/profiles/default/
 ~/.local/state/clavis/
+~/.local/state/clavis/logs/
 ~/.cache/clavis/
 $XDG_RUNTIME_DIR/clavis/
 ```
@@ -145,8 +153,10 @@ key setup cpu-power --disable
 
 ```bash
 key shell --dev
-key shell --dev --replace
-key shell --dev --native --replace
+key shell --dev --native
+key shell --dev --foreground --replace
+key shell logs --mode dev
+key shell logs --follow
 ./setup.sh configure
 ./setup.sh build
 ./setup.sh test
@@ -158,12 +168,19 @@ bash tests/test_matugen_templates.sh
 使用 `current` release 的 `bin/key` 和 `lib/qml` 原生模块。修改 `core/` 时使用
 `--native`：命令会在 `.build/dev` 做增量 CMake 构建，并以新进程加载更新后的共享库，
 不会创建 release 或切换 `current`。另一套完整 Shell 正在运行时必须显式加
-`--replace`，该选项只停止记录到的 Clavis 实例。开发失败后可用
-`key shell --replace` 回到正式版。
+`--replace`，该选项只停止记录到的 Clavis 实例。新实例启动失败时不会改变 `current`，
+但已停止的旧实例不会自动恢复；运行 `key shell --replace` 回到正式版。
+
+后台启动将 stdout/stderr 分模式写入 `$XDG_STATE_HOME/clavis/logs/`，单个日志到达
+2 MiB 后轮转并保留 3 份备份。启动器在最多 8 秒内按 Quickshell 实例 PID 验证注册，
+失败时返回非零并打印最近 50 行。前台模式不写这些后台日志，而是保留真实退出码并
+将 `SIGINT`、`SIGTERM` 和 `SIGHUP` 转发给 Quickshell。
 
 `just` 是可选的开发工作流缩写，不是 Clavis 运行依赖。安装了 `just` 时，从仓库任意
 子目录执行 `just` 或 `just --list` 可查看英文命令说明；执行 `just help-zh` 只显示
-中文命令说明。未安装时上述 `key` 与 `setup.sh` 命令照常可用。详细说明见
+中文命令说明。`just shell`、`just dev`、`just dev-native` 是后台切换入口；`just sf`、
+`just df`、`just dnf` 分别以前台方式启动并显示实时日志。未安装时上述 `key` 与
+`setup.sh` 命令照常可用。详细说明见
 [开发工作流](docs/development.md)。
 
 不要编辑生成的 build 目录。涉及 `core/` 的改动需重新构建；纯 QML 改动至少运行

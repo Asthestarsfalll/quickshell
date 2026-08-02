@@ -16,7 +16,9 @@ release 是只读程序资产，Git checkout 不是运行时配置目录。
 
 ## Shell 与 Niri Session
 
-`key shell` 只给 Quickshell 进程树注入当前 release 的 QML import 路径。
+`key shell` 只给 Quickshell 进程树注入当前 release 的 QML import 路径。默认后台模式
+也只改变该子进程的环境；不会向登录会话导出变量。保存的 stdout/stderr 位于
+`$XDG_STATE_HOME/clavis/logs/`。
 
 `key session` 保持调用者真实的 `HOME` 与 XDG 环境，并生成一个很薄的 Niri 入口，
 按顺序包含：
@@ -28,7 +30,7 @@ release 是只读程序资产，Git checkout 不是运行时配置目录。
 
 正式配置的 `startup.kdl` 直接启动 Fcitx5、nm-applet、blueman-applet、
 `key shell --no-duplicate` 和 `key clipboard watch`。Clavis 不安装 session supervisor
-或 user systemd unit。
+或 user systemd unit；前者在后台实例完成注册后返回，后者继续作为独立长期进程运行。
 
 除 Niri 外，Kitty、Zsh、Fcitx5、btop、Cava、Yazi 等应用全部读取用户默认配置。
 Clavis 不提供 `key run`，不替换 `HOME`、`XDG_CONFIG_HOME` 或 `ZDOTDIR`。

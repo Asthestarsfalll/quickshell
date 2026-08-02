@@ -161,9 +161,18 @@ Qt/C++ 代码统一位于 `core/`：通用 backend 在 `core/src/`，QML wrapper
 只有用户明确使用 `--replace` 才按实例 PID 替换；禁止 `pkill qs`/`pkill quickshell`。
 `key ipc` 的 runtime 活动实例协议发生变化时，应同步管理器测试与开发文档。
 
+三种 `key shell` 模式默认都由 CLI 受控地后台启动，完成实例注册后返回终端；实时调试
+统一使用 `--foreground`。后台 stdout/stderr 保存到 `$XDG_STATE_HOME/clavis/logs/`，
+通过 `key shell logs [--follow]` 查看。不得在 justfile、Niri 或文档中另行使用
+`nohup`、`&`、`disown` 或把日志丢弃到 `/dev/null`。若未来增加由 systemd 监督的 Shell
+unit，必须显式使用 `--foreground`；当前仓库仍不安装此类 unit。
+
 仓库根 `justfile` 只提供可选工作流缩写，不能承载 `key shell --dev` 的核心环境或路径
 逻辑。公开 recipe 的 doc comment 使用英文，使 `just` 和 `just --list` 默认只显示英文；
 `just help-zh` 维护对应的纯中文命令帮助。新增或修改 recipe 时必须同步两种说明。
+Shell recipes 的后台正式入口为 `shell`、`dev`、`dev-native`，前台入口为
+`shell-foreground`/`sf`、`dev-foreground`/`df`、`dev-native-foreground`/`dnf`；`dn`
+始终是后台 `dev-native` 的别名。进程分离、日志和 PID 管理只能存在于 `key`。
 
 `key top` 依赖 `ncursesw`。普通 `key` 不得获得 capability；CPU 功耗 helper 只能由
 用户明确执行 `key setup cpu-power` 安装，任何 AI 任务不得擅自请求 sudo。

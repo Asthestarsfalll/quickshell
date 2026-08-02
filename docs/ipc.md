@@ -5,6 +5,10 @@
 实例；记录陈旧或不存在时回退到 `current` release。Niri 快捷键和脚本因此在
 `key shell` 与 `key shell --dev` 之间切换时保持不变。
 
+后台启动只有在 `qs list` 返回新进程的精确 PID 后才原子写入活动记录。后台监视器或
+下一次 IPC 读取会清理由正常退出、崩溃或 PID 复用留下的陈旧记录；启动日志路径也只
+允许指向 `$XDG_STATE_HOME/clavis/logs/` 下三个固定的模式日志。
+
 Clavis IPC 始终通过当前 release 的稳定入口调用：
 
 ```bash

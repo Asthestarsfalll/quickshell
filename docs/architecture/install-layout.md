@@ -26,7 +26,8 @@ clavis/
 `$HOME/.local/bin/key` 是稳定 launcher，只解析同一 HOME 下的 `current/bin/key`。
 它不搜索 `/usr/local/bin`，也不会递归调用自己。`key shell` 才把当前 release 的
 `lib/qml` 注入 Clavis 子进程的 `QML_IMPORT_PATH`/`QML2_IMPORT_PATH`；登录环境和
-普通 Qt 应用不会看到私有 plugin。
+普通 Qt 应用不会看到私有 plugin。交互式 `key shell` 默认以独立 session 后台启动，
+完成实例注册后返回；需要监督长期主进程时必须显式使用 `--foreground`。
 
 `key ipc` 优先验证 runtime 中的活动 Shell 记录并按 Quickshell PID 精确路由；没有
 有效记录时，使用和 `key shell` 完全相同的物理 release QML 根。桌面快捷键不得调用
@@ -93,7 +94,14 @@ SHA-256 与模式，以及 launcher、profile、协议和可选
 ## 会话启动项
 
 Clavis 不安装 user systemd unit。Niri release 配置中的 `startup.kdl` 是会话启动项的
-唯一来源，因此服务生命周期与该 Niri 会话一致。
+唯一来源，因此服务生命周期与该 Niri 会话一致。其中 `key shell --no-duplicate` 现在
+在完成后台实例注册后正常返回，不会造成 Niri 重复启动；剪贴板 watcher 仍是独立的
+长期进程。未来若新增由 systemd 监督的 Shell unit，必须调用 `key shell --foreground`
+以便 systemd 跟踪真实主进程。
+
+后台 Shell 日志位于 `$XDG_STATE_HOME/clavis/logs/`，不写入 release 或源码树。release、
+普通开发和原生开发分别使用独立日志文件；每个文件限制为 2 MiB 并保留 3 份轮转备份。
+短生命周期 active metadata 仍位于 `$XDG_RUNTIME_DIR/clavis/active-shell.json`。
 
 ## 源码开发树
 

@@ -136,6 +136,10 @@ class ClavisPaths:
         return self.state_home / "active-release"
 
     @property
+    def logs_home(self) -> Path:
+        return self.state_home / "logs"
+
+    @property
     def user_systemd_home(self) -> Path:
         xdg_config = _absolute_env("XDG_CONFIG_HOME") or self.home / ".config"
         return xdg_config / "systemd/user"

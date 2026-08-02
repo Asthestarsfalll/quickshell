@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections import deque
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -30,6 +31,21 @@ REQUIRED_DATA_SCHEMAS = {"config": 1, "manifest": 1, "profile": 1}
 OBSOLETE_USER_SERVICES = ("clavis-shell.service", "clavis-cliphist.service")
 ACTIVE_SHELL_SCHEMA = 1
 SOURCE_MARKERS = ("shell.qml", "core", "packaging")
+SHELL_START_TIMEOUT_SECONDS = 8.0
+SHELL_START_POLL_SECONDS = 0.05
+SHELL_LOG_MAX_BYTES = 2 * 1024 * 1024
+SHELL_LOG_BACKUPS = 3
+SHELL_LOG_TAIL_LINES = 50
+SHELL_LOG_NAMES = {
+    "release": "shell-release.log",
+    "development": "shell-dev.log",
+    "development-native": "shell-dev-native.log",
+}
+SHELL_MODE_ARGUMENTS = {
+    "release": "release",
+    "dev": "development",
+    "dev-native": "development-native",
+}
 
 
 class ClavisError(RuntimeError):
@@ -502,16 +518,22 @@ def _development_environment(
     release_root: Path,
     source_root: Path,
     native: bool,
+    build_log: Any = None,
 ) -> tuple[dict[str, str], Path, Path, dict[str, Any]]:
     environment = release_environment(paths, release_root)
     environment.pop("CLAVIS_RELEASE_ROOT", None)
     build_root = source_root / ".build/dev"
     if native:
+        build_options: dict[str, Any] = {
+            "cwd": source_root,
+            "env": os.environ.copy(),
+            "check": False,
+        }
+        if build_log is not None:
+            build_options.update(stdout=build_log, stderr=subprocess.STDOUT)
         build = subprocess.run(
             [str(source_root / "setup.sh"), "dev-build", "--build-dir", str(build_root)],
-            cwd=source_root,
-            env=os.environ.copy(),
-            check=False,
+            **build_options,
         )
         if build.returncode != 0:
             raise ClavisError(
@@ -604,11 +626,297 @@ def _kill_instance(qs: str, pid: int) -> None:
     raise ClavisError(f"Quickshell instance {pid} did not exit")
 
 
+def _shell_mode_label(mode: str) -> str:
+    return {
+        "release": "release",
+        "development": "development",
+        "development-native": "native development",
+    }[mode]
+
+
+def _shell_log_path(paths: ClavisPaths, mode: str) -> Path:
+    try:
+        filename = SHELL_LOG_NAMES[mode]
+    except KeyError as error:
+        raise ClavisError(f"unknown Shell runtime mode: {mode}") from error
+    return paths.logs_home / filename
+
+
+def _ensure_shell_log_directory(paths: ClavisPaths) -> None:
+    directory = paths.logs_home
+    if directory.is_symlink():
+        raise ClavisError(f"Shell log directory must not be a symlink: {directory}")
+    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if not directory.is_dir():
+        raise ClavisError(f"Shell log path is not a directory: {directory}")
+    directory.chmod(0o700)
+
+
+def _rotate_live_shell_log(path: Path) -> None:
+    if not path.is_file() or path.is_symlink():
+        return
+    candidates = [
+        Path(f"{path}.{index}") for index in range(1, SHELL_LOG_BACKUPS + 1)
+    ]
+    if any(
+        candidate.is_symlink()
+        or (candidate.exists() and not candidate.is_file())
+        for candidate in candidates
+    ):
+        return
+    oldest = Path(f"{path}.{SHELL_LOG_BACKUPS}")
+    if oldest.exists():
+        oldest.unlink()
+    for index in range(SHELL_LOG_BACKUPS - 1, 0, -1):
+        source = Path(f"{path}.{index}")
+        if source.exists():
+            os.replace(source, Path(f"{path}.{index + 1}"))
+    backup = Path(f"{path}.1")
+    shutil.copyfile(path, backup)
+    backup.chmod(0o600)
+    flags = os.O_WRONLY | os.O_TRUNC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags)
+    os.close(descriptor)
+    path.chmod(0o600)
+
+
+def run_shell_log_monitor(
+    paths: ClavisPaths,
+    pid: int,
+    start_ticks: int,
+    token: str,
+    log_path: Path,
+) -> int:
+    while _process_start_ticks(pid) == start_ticks:
+        try:
+            if log_path.is_file() and log_path.stat().st_size >= SHELL_LOG_MAX_BYTES:
+                _rotate_live_shell_log(log_path)
+        except OSError as error:
+            try:
+                with log_path.open("a", encoding="utf-8") as handle:
+                    handle.write(f"Log monitor error: {error}\n")
+            except OSError:
+                pass
+        time.sleep(1)
+    _remove_active_shell(paths, token)
+    return 0
+
+
+def _start_shell_log_monitor(
+    environment: dict[str, str],
+    pid: int,
+    start_ticks: int,
+    token: str,
+    log_path: Path,
+) -> None:
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "shell-log-monitor",
+        "--pid",
+        str(pid),
+        "--start-ticks",
+        str(start_ticks),
+        "--token",
+        token,
+        "--log-path",
+        str(log_path),
+    ]
+    subprocess.Popen(
+        command,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        env=environment,
+        start_new_session=True,
+        close_fds=True,
+    )
+
+
+def _open_shell_log(paths: ClavisPaths, mode: str) -> tuple[Path, Any]:
+    _ensure_shell_log_directory(paths)
+    path = _shell_log_path(paths, mode)
+    if path.is_symlink() or (path.exists() and not path.is_file()):
+        raise ClavisError(f"Shell log path is not a regular file: {path}")
+    flags = os.O_CREAT | os.O_WRONLY | os.O_APPEND
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    os.fchmod(descriptor, 0o600)
+    return path, os.fdopen(descriptor, "a", encoding="utf-8", buffering=1)
+
+
+def _tail_log(path: Path, line_count: int = SHELL_LOG_TAIL_LINES) -> list[str]:
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as handle:
+            return list(deque(handle, maxlen=line_count))
+    except OSError:
+        return []
+
+
+def _report_background_failure(
+    mode: str,
+    log_path: Path,
+    reason: str,
+    replaced: bool,
+) -> int:
+    print(
+        f"Failed to start Clavis {_shell_mode_label(mode)} Shell: {reason}",
+        file=sys.stderr,
+    )
+    lines = _tail_log(log_path)
+    if lines:
+        print(f"\nLast {min(len(lines), SHELL_LOG_TAIL_LINES)} log lines:", file=sys.stderr)
+        for line in lines:
+            print(f"  {line.rstrip()}", file=sys.stderr)
+    print(f"\nFull log: {log_path}", file=sys.stderr)
+    if replaced:
+        print(
+            "The previous Shell was stopped. Restore the installed release with:\n"
+            "  key shell --replace",
+            file=sys.stderr,
+        )
+    return 1
+
+
+def _report_log_setup_failure(paths: ClavisPaths, mode: str, error: Exception) -> int:
+    path = _shell_log_path(paths, mode)
+    print(
+        f"Failed to start Clavis {_shell_mode_label(mode)} Shell: "
+        f"cannot create the launch log: {error}",
+        file=sys.stderr,
+    )
+    print(f"\nLog path: {path}", file=sys.stderr)
+    return 1
+
+
+def _latest_shell_log(paths: ClavisPaths, mode: str | None) -> Path:
+    if mode is not None:
+        return _shell_log_path(paths, SHELL_MODE_ARGUMENTS[mode])
+    active = read_active_shell(paths)
+    if active is not None:
+        recorded = active.get("logPath")
+        if isinstance(recorded, str) and recorded:
+            candidate = Path(recorded)
+            allowed = {
+                _shell_log_path(paths, runtime_mode)
+                for runtime_mode in SHELL_LOG_NAMES
+            }
+            if (
+                candidate in allowed
+                and candidate.is_file()
+                and not candidate.is_symlink()
+            ):
+                return candidate
+    candidates = [
+        _shell_log_path(paths, runtime_mode)
+        for runtime_mode in SHELL_LOG_NAMES
+    ]
+    existing = [
+        path for path in candidates if path.is_file() and not path.is_symlink()
+    ]
+    if not existing:
+        raise ClavisError(f"no Clavis Shell log exists in {paths.logs_home}")
+    return max(existing, key=lambda path: path.stat().st_mtime_ns)
+
+
+def run_shell_logs(paths: ClavisPaths, arguments: list[str]) -> int:
+    if arguments.count("--follow") > 1:
+        raise ClavisError("duplicate Shell logs option: --follow")
+    mode_options = [
+        argument
+        for argument in arguments
+        if argument == "--mode" or argument.startswith("--mode=")
+    ]
+    if len(mode_options) > 1:
+        raise ClavisError("duplicate Shell logs option: --mode")
+    parser = argparse.ArgumentParser(
+        prog="key shell logs",
+        description="Show the active or most recent Clavis Shell log.",
+    )
+    parser.add_argument("--follow", action="store_true", help="follow log updates")
+    parser.add_argument(
+        "--mode",
+        choices=sorted(SHELL_MODE_ARGUMENTS),
+        help="select release, dev, or dev-native logs",
+    )
+    parsed = parser.parse_args(arguments)
+    _ensure_shell_log_directory(paths)
+    path = _latest_shell_log(paths, parsed.mode)
+    if not path.is_file() or path.is_symlink():
+        raise ClavisError(f"Clavis Shell log does not exist: {path}")
+    if parsed.follow:
+        tail = executable("tail")
+        try:
+            return subprocess.run(
+                [tail, "-n", "80", "-F", str(path)], check=False
+            ).returncode
+        except KeyboardInterrupt:
+            return 130
+    for line in _tail_log(path, 80):
+        print(line, end="")
+    return 0
+
+
+def _reject_duplicate_shell_options(arguments: list[str]) -> None:
+    tracked = {
+        "--dev",
+        "--native",
+        "--source",
+        "--replace",
+        "--foreground",
+        "--no-duplicate",
+    }
+    seen: set[str] = set()
+    for argument in arguments:
+        name = argument.split("=", 1)[0]
+        if name not in tracked:
+            continue
+        if name in seen:
+            raise ClavisError(f"duplicate Shell option: {name}")
+        seen.add(name)
+
+
+def _validate_quickshell_arguments(arguments: list[str]) -> None:
+    forbidden = {
+        "--path",
+        "-p",
+        "--config",
+        "-c",
+        "--manifest",
+        "-m",
+        "--daemonize",
+        "-d",
+        "--no-duplicate",
+        "-n",
+    }
+    for argument in arguments:
+        name = argument.split("=", 1)[0]
+        if name in forbidden:
+            raise ClavisError(
+                f"Quickshell option {name} is managed by `key shell` and cannot be passed after --"
+            )
+
+
 def _shell_arguments(arguments: list[str]) -> tuple[argparse.Namespace, list[str]]:
+    if "--" in arguments:
+        separator = arguments.index("--")
+        own_arguments = arguments[:separator]
+        passthrough = arguments[separator + 1 :]
+    else:
+        own_arguments = arguments
+        passthrough = []
+    _reject_duplicate_shell_options(own_arguments)
     parser = argparse.ArgumentParser(
         prog="key shell",
         usage="key shell [--dev [--native] [--source PATH]] [--replace] "
-        "[--no-duplicate] [QUICKSHELL_OPTIONS...]",
+        "[--foreground] [--no-duplicate] [-- QUICKSHELL_OPTIONS...]",
+        description="Start Clavis Shell in the background by default.",
+        epilog="Use --foreground to keep Quickshell attached and show live logs. "
+        "Use `key shell logs --help` for saved background logs.",
+        allow_abbrev=False,
     )
     parser.add_argument(
         "--dev", action="store_true", help="run QML and resources from source"
@@ -620,40 +928,82 @@ def _shell_arguments(arguments: list[str]) -> tuple[argparse.Namespace, list[str
     )
     parser.add_argument("--source", metavar="PATH", help="explicit Clavis source tree")
     parser.add_argument(
-        "--replace", action="store_true", help="replace the active Clavis Shell instance"
+        "--replace", action="store_true", help="replace the active Clavis Shell"
+    )
+    parser.add_argument(
+        "--foreground",
+        action="store_true",
+        help="run in the foreground with live stdout/stderr",
     )
     parser.add_argument(
         "--no-duplicate",
         action="store_true",
-        help="exit successfully if this exact Shell is already running",
+        help="succeed if this exact Shell is already running",
     )
-    parsed, passthrough = parser.parse_known_args(arguments)
+    parsed = parser.parse_args(own_arguments)
     if parsed.native and not parsed.dev:
         raise ClavisError("--native requires --dev")
     if parsed.source and not parsed.dev:
         raise ClavisError("--source requires --dev")
-    if parsed.dev and ("--daemonize" in passthrough or "-d" in passthrough):
-        raise ClavisError("--daemonize is not supported in source development mode")
+    _validate_quickshell_arguments(passthrough)
     if parsed.no_duplicate:
         passthrough.insert(0, "--no-duplicate")
     return parsed, passthrough
 
 
-def _launch_shell(
-    paths: ClavisPaths,
+def _wait_for_shell_registration(
+    process: subprocess.Popen[Any],
     qs: str,
     qml_root: Path,
-    arguments: list[str],
-    environment: dict[str, str],
+    timeout: float = SHELL_START_TIMEOUT_SECONDS,
+) -> tuple[bool, str]:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        return_code = process.poll()
+        if return_code is not None:
+            return (
+                False,
+                "Quickshell exited during startup with status "
+                f"{_exit_status(return_code)}",
+            )
+        if any(
+            str(instance.get("pid", "")).isdigit()
+            and int(instance["pid"]) == process.pid
+            for instance in _list_instances(qs, qml_root)
+        ):
+            return True, ""
+        time.sleep(SHELL_START_POLL_SECONDS)
+    return False, f"Quickshell did not register within {timeout:g} seconds"
+
+
+def _exit_status(return_code: int) -> int:
+    return 128 + (-return_code) if return_code < 0 else return_code
+
+
+def _stop_failed_process(process: subprocess.Popen[Any]) -> None:
+    if process.poll() is not None:
+        process.wait()
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
+def _registered_metadata(
+    process: subprocess.Popen[Any],
+    qml_root: Path,
     metadata: dict[str, Any],
-) -> int:
-    command = [qs, "--path", str(qml_root), *arguments]
-    process = subprocess.Popen(command, env=environment)
+    log_path: Path | None,
+) -> tuple[dict[str, Any], str] | tuple[None, str]:
     start_ticks = _process_start_ticks(process.pid)
     if start_ticks is None:
-        return process.wait()
+        return None, "unable to verify the Quickshell process identity"
     token = f"{process.pid}-{start_ticks}-{os.urandom(8).hex()}"
-    metadata.update(
+    registered = dict(metadata)
+    registered.update(
         {
             "schemaVersion": ACTIVE_SHELL_SCHEMA,
             "pid": process.pid,
@@ -661,9 +1011,131 @@ def _launch_shell(
             "qmlRoot": str(qml_root),
             "startedAt": utc_now(),
             "token": token,
+            "logPath": str(log_path) if log_path is not None else "",
         }
     )
-    atomic_json(active_shell_path(paths), metadata, 0o600)
+    return registered, token
+
+
+def _write_launch_context(
+    handle: Any,
+    mode: str,
+    command: list[str],
+    qml_root: Path,
+    metadata: dict[str, Any],
+    commit: str,
+    dirty: bool,
+) -> None:
+    handle.write("\n=== Clavis Shell launch ===\n")
+    handle.write(f"Started at: {utc_now()}\n")
+    handle.write(f"Runtime mode: {mode}\n")
+    handle.write(f"Release: {metadata.get('release', '')}\n")
+    handle.write(f"Source root: {metadata.get('sourceRoot') or '(installed release)'}\n")
+    handle.write(f"QML root: {qml_root}\n")
+    handle.write(f"Backend key: {metadata.get('backendKey', '')}\n")
+    handle.write(f"Native QML import root: {metadata.get('nativeImportRoot', '')}\n")
+    handle.write(f"Git commit: {commit}\n")
+    handle.write(f"Working tree dirty: {'yes' if dirty else 'no'}\n")
+    handle.write(f"Command: {shlex.join(command)}\n")
+    handle.flush()
+
+
+def _launch_background_shell(
+    paths: ClavisPaths,
+    command: list[str],
+    qs: str,
+    qml_root: Path,
+    environment: dict[str, str],
+    metadata: dict[str, Any],
+    commit: str,
+    dirty: bool,
+    log_path: Path,
+    log_handle: Any,
+    replaced: bool,
+) -> int:
+    mode = str(metadata["mode"])
+    if os.fstat(log_handle.fileno()).st_size >= SHELL_LOG_MAX_BYTES:
+        _rotate_live_shell_log(log_path)
+    _write_launch_context(log_handle, mode, command, qml_root, metadata, commit, dirty)
+    try:
+        process = subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=log_handle,
+            stderr=subprocess.STDOUT,
+            env=environment,
+            start_new_session=True,
+            close_fds=True,
+        )
+    except OSError as error:
+        log_handle.write(f"Launcher error: {error}\n")
+        log_handle.close()
+        return _report_background_failure(mode, log_path, str(error), replaced)
+    log_handle.write(f"PID: {process.pid}\n")
+    registered, reason = _wait_for_shell_registration(process, qs, qml_root)
+    if not registered:
+        _stop_failed_process(process)
+        log_handle.write(f"Startup failed: {reason}\n")
+        log_handle.close()
+        return _report_background_failure(mode, log_path, reason, replaced)
+    runtime_metadata, token = _registered_metadata(process, qml_root, metadata, log_path)
+    if runtime_metadata is None:
+        _stop_failed_process(process)
+        log_handle.write(f"Startup failed: {token}\n")
+        log_handle.close()
+        return _report_background_failure(mode, log_path, token, replaced)
+    try:
+        atomic_json(active_shell_path(paths), runtime_metadata, 0o600)
+        verified = read_active_shell(paths)
+        if verified is None or int(verified["pid"]) != process.pid:
+            raise ClavisError("runtime metadata verification failed")
+        _start_shell_log_monitor(
+            environment,
+            process.pid,
+            int(runtime_metadata["processStartTicks"]),
+            token,
+            log_path,
+        )
+    except (OSError, ClavisError) as error:
+        _stop_failed_process(process)
+        _remove_active_shell(paths, token)
+        log_handle.write(f"Startup failed: {error}\n")
+        log_handle.close()
+        return _report_background_failure(mode, log_path, str(error), replaced)
+    log_handle.write("Startup verified.\n")
+    log_handle.close()
+    print(f"Started Clavis {_shell_mode_label(mode)} Shell (PID {process.pid}).")
+    print(f"Log: {log_path}")
+    return 0
+
+
+def _launch_foreground_shell(
+    paths: ClavisPaths,
+    command: list[str],
+    qs: str,
+    qml_root: Path,
+    environment: dict[str, str],
+    metadata: dict[str, Any],
+    commit: str,
+    dirty: bool,
+    replaced: bool,
+) -> int:
+    mode = str(metadata["mode"])
+    _write_launch_context(sys.stdout, mode, command, qml_root, metadata, commit, dirty)
+    try:
+        process = subprocess.Popen(command, env=environment, close_fds=True)
+    except OSError as error:
+        print(
+            f"Failed to start Clavis {_shell_mode_label(mode)} Shell: {error}",
+            file=sys.stderr,
+        )
+        if replaced:
+            print(
+                "Restore the installed release with: key shell --replace",
+                file=sys.stderr,
+            )
+        return 1
+    print(f"PID: {process.pid}", flush=True)
     previous_handlers: dict[int, Any] = {}
 
     def forward(signum: int, _frame: Any) -> None:
@@ -672,20 +1144,63 @@ def _launch_shell(
 
     for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         previous_handlers[signum] = signal.signal(signum, forward)
+    token = ""
     try:
-        return process.wait()
+        registered, reason = _wait_for_shell_registration(process, qs, qml_root)
+        if not registered:
+            _stop_failed_process(process)
+            print(
+                f"Failed to start Clavis {_shell_mode_label(mode)} Shell: {reason}",
+                file=sys.stderr,
+            )
+            if replaced:
+                print(
+                    "Restore the installed release with: key shell --replace",
+                    file=sys.stderr,
+                )
+            return 1
+        runtime_metadata, token_or_reason = _registered_metadata(
+            process, qml_root, metadata, None
+        )
+        if runtime_metadata is None:
+            _stop_failed_process(process)
+            print(f"Failed to register Clavis Shell: {token_or_reason}", file=sys.stderr)
+            if replaced:
+                print(
+                    "Restore the installed release with: key shell --replace",
+                    file=sys.stderr,
+                )
+            return 1
+        token = token_or_reason
+        try:
+            atomic_json(active_shell_path(paths), runtime_metadata, 0o600)
+            verified = read_active_shell(paths)
+            if verified is None or int(verified["pid"]) != process.pid:
+                raise ClavisError("runtime metadata verification failed")
+        except (OSError, ClavisError) as error:
+            _stop_failed_process(process)
+            print(f"Failed to register Clavis Shell: {error}", file=sys.stderr)
+            if replaced:
+                print(
+                    "Restore the installed release with: key shell --replace",
+                    file=sys.stderr,
+                )
+            return 1
+        return _exit_status(process.wait())
     finally:
         for signum, handler in previous_handlers.items():
             signal.signal(signum, handler)
-        _remove_active_shell(paths, token)
+        if token:
+            _remove_active_shell(paths, token)
 
 
 def run_shell(paths: ClavisPaths, arguments: list[str]) -> int:
+    if arguments and arguments[0] == "logs":
+        return run_shell_logs(paths, arguments[1:])
     options, qs_arguments = _shell_arguments(arguments)
     release = resolve_active_release(paths)
     release_metadata = read_release_metadata(release)
     release_qml = release / "share/clavis/qml"
-    qs = executable("qs")
     source_root: Path | None = None
     backend_key = release / "bin/key"
     native_import = release / "lib/qml"
@@ -695,13 +1210,61 @@ def run_shell(paths: ClavisPaths, arguments: list[str]) -> int:
     commit = str(release_metadata.get("commit", "unknown"))
     dirty = bool(release_metadata.get("sourceDirty", False))
     if options.dev:
-        source_root = locate_source_tree(Path.cwd(), options.source)
         mode = "development-native" if options.native else "development"
-        qml_root = source_root
-        environment, backend_key, native_import, _handshake = _development_environment(
-            paths, release, source_root, options.native
-        )
-        commit, dirty = _git_identity(source_root)
+
+    log_path: Path | None = None
+    log_handle: Any = None
+    if not options.foreground:
+        try:
+            log_path, log_handle = _open_shell_log(paths, mode)
+        except (ClavisError, OSError) as error:
+            return _report_log_setup_failure(paths, mode, error)
+
+    if options.dev:
+        try:
+            source_root = locate_source_tree(Path.cwd(), options.source)
+            qml_root = source_root
+            if log_handle is not None:
+                candidate_native = (
+                    source_root / ".build/dev"
+                    if options.native
+                    else release / "lib/qml"
+                )
+                candidate_key = (
+                    source_root / ".build/dev/bin/key"
+                    if options.native
+                    else release / "bin/key"
+                )
+                log_handle.write(
+                    "\n=== Clavis Shell preparation ===\n"
+                    f"Started at: {utc_now()}\n"
+                    f"Runtime mode: {mode}\n"
+                    f"Release: {release_metadata.get('release', '')}\n"
+                    f"Source root: {source_root}\n"
+                    f"QML root: {qml_root}\n"
+                    f"Backend key: {candidate_key}\n"
+                    f"Native QML import root: {candidate_native}\n"
+                )
+            environment, backend_key, native_import, _handshake = (
+                _development_environment(
+                    paths,
+                    release,
+                    source_root,
+                    options.native,
+                    log_handle if options.native else None,
+                )
+            )
+            commit, dirty = _git_identity(source_root)
+        except ClavisError as error:
+            if options.foreground:
+                raise
+            assert log_path is not None and log_handle is not None
+            log_handle.write(
+                f"\n=== Clavis Shell launch preparation failed ===\n"
+                f"Started at: {utc_now()}\nRuntime mode: {mode}\nError: {error}\n"
+            )
+            log_handle.close()
+            return _report_background_failure(mode, log_path, str(error), False)
     else:
         environment["CLAVIS_KEY"] = str(backend_key)
         path_entries = [
@@ -712,19 +1275,59 @@ def run_shell(paths: ClavisPaths, arguments: list[str]) -> int:
             [release_bin, *(entry for entry in path_entries if entry != release_bin)]
         )
 
+    def fail_static_check(reason: str) -> int:
+        if options.foreground:
+            raise ClavisError(reason)
+        assert log_path is not None and log_handle is not None
+        log_handle.write(
+            f"\n=== Clavis Shell static check failed ===\n"
+            f"Started at: {utc_now()}\n"
+            f"Runtime mode: {mode}\n"
+            f"Release: {release_metadata.get('release', '')}\n"
+            f"Source root: {source_root or '(installed release)'}\n"
+            f"QML root: {qml_root}\n"
+            f"Backend key: {backend_key}\n"
+            f"Native QML import root: {native_import}\n"
+            f"Error: {reason}\n"
+        )
+        log_handle.close()
+        return _report_background_failure(mode, log_path, reason, False)
+
+    qs = shutil.which("qs")
+    if qs is None:
+        return fail_static_check("required executable is missing: qs")
+    if not qml_root.is_dir() or qml_root.is_symlink():
+        return fail_static_check(f"QML root is not a real directory: {qml_root}")
+    shell_entry = qml_root / "shell.qml"
+    if not shell_entry.is_file() or shell_entry.is_symlink():
+        return fail_static_check(f"Clavis shell.qml is missing: {shell_entry}")
+    if not backend_key.is_file() or not os.access(backend_key, os.X_OK):
+        return fail_static_check(f"Clavis backend key is not executable: {backend_key}")
+
+    command = [qs, "--path", str(qml_root), *qs_arguments]
+
+    def close_pending_log() -> None:
+        nonlocal log_handle
+        if log_handle is not None and not log_handle.closed:
+            log_handle.close()
+
     active = read_active_shell(paths)
+    replaced = False
     if active is not None:
         active_pid = int(active["pid"])
         same = Path(str(active["qmlRoot"])) == qml_root and active.get("mode") == mode
         if same and options.no_duplicate and not options.replace:
+            close_pending_log()
             print(f"Clavis Shell is already running ({mode}, pid {active_pid}).")
             return 0
         if not options.replace:
+            close_pending_log()
             raise ClavisError(
                 f"a Clavis Shell is already running ({active['mode']}, pid {active_pid}); "
                 "rerun with --replace to switch instances"
             )
         _kill_instance(qs, active_pid)
+        replaced = True
         active_token = active.get("token")
         if isinstance(active_token, str) and active_token:
             _remove_active_shell(paths, active_token)
@@ -741,38 +1344,51 @@ def run_shell(paths: ClavisPaths, arguments: list[str]) -> int:
             str(item.get("config_path", "")).startswith(str(qml_root))
             for item in unique.values()
         ):
+            close_pending_log()
             print(f"Clavis Shell is already running ({mode}).")
             return 0
         if unique and not options.replace:
+            close_pending_log()
             raise ClavisError(
-                "a Clavis Quickshell instance is already running; rerun with --replace to switch instances"
+                "a Clavis Quickshell instance is already running; "
+                "rerun with --replace to switch instances"
             )
         for pid in unique:
             _kill_instance(qs, pid)
+            replaced = True
 
-    print(f"Runtime mode: {mode}")
-    print(
-        "Source root: "
-        f"{source_root if source_root is not None else '(installed release)'}"
-    )
-    print(f"QML root: {qml_root}")
-    print(f"Backend key: {backend_key}")
-    print(f"Native QML import root: {native_import}")
-    print(f"Git commit: {commit}")
-    print(f"Working tree dirty: {'yes' if dirty else 'no'}", flush=True)
-    return _launch_shell(
+    metadata = {
+        "mode": mode,
+        "backendKey": str(backend_key),
+        "nativeImportRoot": str(native_import),
+        "release": str(release_metadata.get("release", "")),
+        "sourceRoot": str(source_root) if source_root is not None else "",
+    }
+    if options.foreground:
+        return _launch_foreground_shell(
+            paths,
+            command,
+            qs,
+            qml_root,
+            environment,
+            metadata,
+            commit,
+            dirty,
+            replaced,
+        )
+    assert log_path is not None and log_handle is not None
+    return _launch_background_shell(
         paths,
+        command,
         qs,
         qml_root,
-        qs_arguments,
         environment,
-        {
-            "mode": mode,
-            "backendKey": str(backend_key),
-            "nativeImportRoot": str(native_import),
-            "release": str(release_metadata.get("release", "")),
-            "sourceRoot": str(source_root) if source_root is not None else "",
-        },
+        metadata,
+        commit,
+        dirty,
+        log_path,
+        log_handle,
+        replaced,
     )
 
 
@@ -1131,27 +1747,55 @@ def restart_long_running(paths: ClavisPaths, old_root: Path | None) -> None:
     manual_shell_running = False
     if qs and old_root is not None:
         old_qml = old_root / "share/clavis/qml"
-        listed = subprocess.run(
-            [qs, "list", "--json", "--path", str(old_qml)],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        try:
-            manual_shell_running = bool(json.loads(listed.stdout or "[]"))
-        except json.JSONDecodeError:
-            manual_shell_running = False
-        if manual_shell_running:
-            subprocess.run([qs, "kill", "--path", str(old_qml)], check=False)
+        active = read_active_shell(paths)
+        target_pid: int | None = None
+        active_token = ""
+        if active is not None and Path(str(active.get("qmlRoot", ""))) == old_qml:
+            target_pid = int(active["pid"])
+            token = active.get("token")
+            active_token = token if isinstance(token, str) else ""
+        else:
+            instances = _list_instances(qs, old_qml)
+            pids = {
+                int(instance["pid"])
+                for instance in instances
+                if str(instance.get("pid", "")).isdigit()
+            }
+            if len(pids) == 1:
+                target_pid = pids.pop()
+            elif len(pids) > 1:
+                print(
+                    "Warning: multiple old Clavis Shell instances were found; "
+                    "none were stopped automatically.",
+                    file=sys.stderr,
+                )
+        if target_pid is not None:
+            try:
+                _kill_instance(qs, target_pid)
+            except ClavisError as error:
+                print(
+                    f"Warning: the old Clavis Shell was not stopped: {error}",
+                    file=sys.stderr,
+                )
+            else:
+                manual_shell_running = True
+                if active_token:
+                    _remove_active_shell(paths, active_token)
 
     if manual_shell_running:
-        subprocess.Popen(
+        restarted = subprocess.run(
             [str(paths.stable_key), "shell", "--no-duplicate"],
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
+            capture_output=True,
+            text=True,
+            check=False,
         )
+        if restarted.returncode != 0:
+            print(
+                "Warning: the updated release was activated, but Clavis Shell "
+                f"did not restart: {restarted.stderr.strip()}",
+                file=sys.stderr,
+            )
 
 
 def rollback(paths: ClavisPaths, requested: str | None, dry_run: bool) -> int:
@@ -1737,6 +2381,11 @@ def parser_for(command: str) -> argparse.ArgumentParser:
         parser.add_argument("--dry-run", action="store_true")
     elif command in {"shell", "session", "ipc"}:
         parser.add_argument("arguments", nargs=argparse.REMAINDER)
+    elif command == "shell-log-monitor":
+        parser.add_argument("--pid", required=True, type=int)
+        parser.add_argument("--start-ticks", required=True, type=int)
+        parser.add_argument("--token", required=True)
+        parser.add_argument("--log-path", required=True, type=Path)
     elif command == "install-finalize":
         parser.add_argument("--partial", required=True, type=Path)
         parser.add_argument("--release", required=True)
@@ -1762,6 +2411,32 @@ def main(argv: list[str]) -> int:
             return run_session(paths, parsed.arguments)
         if command == "ipc":
             return run_ipc(paths, parsed.arguments)
+        if command == "shell-log-monitor":
+            allowed_logs = {
+                _shell_log_path(paths, mode).absolute() for mode in SHELL_LOG_NAMES
+            }
+            log_path = parsed.log_path.absolute()
+            if (
+                log_path not in allowed_logs
+                or paths.logs_home.is_symlink()
+                or log_path.is_symlink()
+                or not log_path.is_file()
+            ):
+                raise ClavisError(f"invalid Shell log monitor path: {log_path}")
+            if (
+                parsed.pid <= 0
+                or parsed.start_ticks <= 0
+                or re.fullmatch(r"[0-9]+-[0-9]+-[0-9a-f]{16}", parsed.token)
+                is None
+            ):
+                raise ClavisError("invalid Shell log monitor identity")
+            return run_shell_log_monitor(
+                paths,
+                parsed.pid,
+                parsed.start_ticks,
+                parsed.token,
+                log_path,
+            )
         if command == "rollback":
             return rollback(paths, parsed.release, parsed.dry_run)
         if command == "release":
