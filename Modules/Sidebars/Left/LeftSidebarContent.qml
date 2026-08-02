@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -10,6 +11,7 @@ Item {
     property string screenName: ""
     property bool foreground: false
     property bool presentationActive: false
+    readonly property string activeView: WidgetState.leftSidebarView
 
     ColumnLayout {
         anchors.fill: parent
@@ -191,28 +193,62 @@ Item {
             color: "transparent"
             radius: Appearance.rounding.large
 
-            InfoView {
-                anchors.fill: parent
-                visible: WidgetState.leftSidebarView === "info"
-                screenName: root.screenName
-                foreground: root.foreground
-                    && WidgetState.leftSidebarView === "info"
+            Repeater {
+                model: ["info", "sys", "weather"]
+
+                Loader {
+                    id: viewLoader
+
+                    required property string modelData
+                    property bool loadedOnce: false
+
+                    anchors.fill: parent
+                    active: modelData === root.activeView
+                        || (PersonalizationConfig.keepSidebarsLoaded
+                            && loadedOnce)
+                    visible: active && modelData === root.activeView
+                    sourceComponent: modelData === "info"
+                        ? infoComponent
+                        : modelData === "sys"
+                            ? systemComponent : weatherComponent
+
+                    onLoaded: loadedOnce = true
+                    onActiveChanged: {
+                        if (!active
+                                && !PersonalizationConfig.keepSidebarsLoaded)
+                            loadedOnce = false
+                    }
+                }
             }
 
-            SystemView {
-                anchors.fill: parent
-                visible: WidgetState.leftSidebarView === "sys"
-                foreground: root.foreground
-                    && WidgetState.leftSidebarView === "sys"
+            Component {
+                id: infoComponent
+
+                InfoView {
+                    screenName: root.screenName
+                    foreground: root.foreground
+                        && root.activeView === "info"
+                }
             }
 
-            WeatherView {
-                anchors.fill: parent
-                visible: WidgetState.leftSidebarView === "weather"
-                foreground: root.foreground
-                    && WidgetState.leftSidebarView === "weather"
-                presentationActive: root.presentationActive
-                    && WidgetState.leftSidebarView === "weather"
+            Component {
+                id: systemComponent
+
+                SystemView {
+                    foreground: root.foreground
+                        && root.activeView === "sys"
+                }
+            }
+
+            Component {
+                id: weatherComponent
+
+                WeatherView {
+                    foreground: root.foreground
+                        && root.activeView === "weather"
+                    presentationActive: root.presentationActive
+                        && root.activeView === "weather"
+                }
             }
         }
     }
