@@ -17,8 +17,10 @@ Item {
         Math.max(0, height - sidebarY - gap)
     property bool panelPresented: false
     property bool contentRetained: false
-    readonly property bool panelActive:
+    readonly property bool panelVisuallyPresent:
         WidgetState.leftSidebarOpen || panelPresented
+    readonly property bool panelInteractive: WidgetState.leftSidebarOpen
+    readonly property string activeView: WidgetState.leftSidebarView
 
     function beginPresentation() {
         panelPresented = true
@@ -135,7 +137,7 @@ Item {
     Rectangle {
         id: panelSurface
 
-        visible: root.panelActive
+        visible: root.panelVisuallyPresent
         x: animController.slideOffset + root.gap
         y: root.sidebarY
         width: root.sidebarWidth
@@ -148,7 +150,7 @@ Item {
     Item {
         id: sidebarContentFrame
 
-        visible: root.panelActive
+        visible: root.panelVisuallyPresent
         x: panelSurface.x
         y: panelSurface.y
         width: panelSurface.width
@@ -170,8 +172,8 @@ Item {
         LeftSidebarContent {
             anchors.fill: parent
             screenName: root.panelScreen ? root.panelScreen.name : ""
-            foreground: WidgetState.leftSidebarOpen
-            presentationActive: root.panelActive
+            foreground: root.panelInteractive
+            presentationActive: root.panelVisuallyPresent
         }
     }
 }

@@ -70,11 +70,16 @@ Item {
         transformOrigin: Item.Center
         visible: root.animated && status === LottieAnimation.Ready
         source: root.lottieSource
-        autoPlay: true
+        autoPlay: root.playing
         loops: LottieAnimation.Infinite
 
         onStatusChanged: {
-            if (status === LottieAnimation.Ready && root.playing) play()
+            if (status !== LottieAnimation.Ready)
+                return
+            if (root.playing)
+                play()
+            else
+                pause()
         }
     }
 

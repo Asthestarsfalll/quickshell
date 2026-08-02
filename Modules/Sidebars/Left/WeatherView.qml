@@ -280,7 +280,7 @@ Item {
             night: root.currentIsNight()
             rainBounceY: flick.y + dailyForecastCard.y - flick.contentY
             scrollProgress: Math.max(0, Math.min(1, flick.contentY / 340))
-            animate: root.foreground
+            animate: root.presentationActive
         }
 
         Rectangle {
@@ -481,6 +481,7 @@ Item {
                                 weatherCode: WeatherPlugin.currentWeatherCode
                                 iconName: WeatherPlugin.currentIconName
                                 night: root.currentIsNight()
+                                playing: root.presentationActive
                             }
                         }
 
@@ -512,14 +513,14 @@ Item {
                     width: parent.width
                     height: 452
                     sourceModel: WeatherPlugin.dailyTrendForecast
-                    foreground: root.foreground
+                    foreground: root.presentationActive
                 }
 
                 HourlyForecastTrendCard {
                     width: parent.width
                     height: 286
                     sourceModel: WeatherPlugin.hourlyForecast
-                    foreground: root.foreground
+                    foreground: root.presentationActive
                 }
 
                 RowLayout {
