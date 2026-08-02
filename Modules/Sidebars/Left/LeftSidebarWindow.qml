@@ -5,6 +5,8 @@ import qs.Services
 Item {
     id: root
 
+    signal presentationClosed()
+
     property var panelScreen: null
     property int sidebarWidth: 540
     property int gap: 24
@@ -44,6 +46,7 @@ Item {
         panelPresented = false
         if (!root.keepLoaded)
             contentRetained = false
+        root.presentationClosed()
     }
 
     Component.onCompleted: {

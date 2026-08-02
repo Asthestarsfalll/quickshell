@@ -3,6 +3,9 @@ import QtQuick
 QtObject {
     id: root
 
+    // Development weather preview values. Edit this block, save the file, and
+    // invoke `key ipc call sidebar previewWeather`. No network is accessed.
+
     property bool loading: false
     property string status: "fresh"
     property double lastUpdated: Date.now()
@@ -11,7 +14,7 @@ QtObject {
     property real currentTemperatureC: 22
     property real currentFeelsLikeC: 21
     property int currentWeatherCode: 0
-    property string currentIconName: "clear_day"
+    property string currentIconName: "thunderstorms_day"
     property bool night: false
     property real currentWindSpeedMs: 2
     property real currentWindGustsMs: 4

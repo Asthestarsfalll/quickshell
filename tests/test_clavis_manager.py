@@ -292,6 +292,54 @@ class ClavisManagerTest(unittest.TestCase):
                 self.assertEqual(command[-4:], ["ipc", "call", "launcher", "toggle"])
                 self.assertEqual(environment["HOME"], str(paths.home))
 
+    def test_weather_preview_ipc_requires_development_shell(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="clavis-weather-ipc-test.") as name:
+            fixture = EnvironmentFixture(Path(name))
+            with fixture as paths:
+                executable(fixture.bin / "qs")
+                partial, launcher = self.make_partial_release(paths, "2026.08.01")
+                with mock.patch.object(manager, "restart_long_running"):
+                    manager.finalize_install(paths, partial, "2026.08.01", launcher)
+
+                arguments = ["call", "sidebar", "previewWeather"]
+                with self.assertRaisesRegex(manager.ClavisError, "development Shell"):
+                    manager.run_ipc(paths, arguments)
+
+                def active_metadata(mode: str) -> dict[str, object]:
+                    return {
+                        "schemaVersion": manager.ACTIVE_SHELL_SCHEMA,
+                        "mode": mode,
+                        "pid": 4242,
+                        "processStartTicks": 99,
+                        "qmlRoot": str(SOURCE_ROOT),
+                        "token": "weather-preview-test",
+                    }
+
+                manager.atomic_json(
+                    manager.active_shell_path(paths), active_metadata("release"), 0o600
+                )
+                with (
+                    mock.patch.object(manager, "_process_start_ticks", return_value=99),
+                    mock.patch.object(manager, "_process_is_quickshell", return_value=True),
+                    self.assertRaisesRegex(manager.ClavisError, "development Shell"),
+                ):
+                    manager.run_ipc(paths, arguments)
+
+                for mode in ("development", "development-native"):
+                    manager.atomic_json(
+                        manager.active_shell_path(paths), active_metadata(mode), 0o600
+                    )
+                    with (
+                        mock.patch.object(manager, "_process_start_ticks", return_value=99),
+                        mock.patch.object(manager, "_process_is_quickshell", return_value=True),
+                        mock.patch.object(manager.os, "execvpe") as exec_mock,
+                    ):
+                        manager.run_ipc(paths, arguments)
+                    self.assertEqual(
+                        exec_mock.call_args.args[1][-6:],
+                        ["ipc", "--pid", "4242", *arguments],
+                    )
+
     def test_source_tree_discovery_walks_up_and_rejects_other_directories(self) -> None:
         with tempfile.TemporaryDirectory(prefix="clavis-source-test.") as name:
             root = Path(name) / "checkout"

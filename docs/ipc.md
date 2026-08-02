@@ -47,6 +47,7 @@ weather-map mapTilerStatus
 sidebar open left|right
 sidebar close left|right
 sidebar toggle left|right
+sidebar previewWeather
 
 keystone cancelRecord
 keystone closeAllOthers
@@ -58,3 +59,9 @@ keystone tools
 
 底层 Quickshell 的 `wait`、`listen` 和 `prop` 子命令仍由 `key ipc` 原样转发；
 当前 Clavis handlers 没有额外公开 signal 或 property。
+
+`sidebar previewWeather` 只允许路由到 `key shell --dev` 或
+`key shell --dev --native` 启动的源码实例。release 实例会返回非零错误，不会加载测试
+天气源。预览字段统一位于
+`tests/manual/weather_preview/MockWeatherSource.qml`；该命令关闭右侧栏、切换到左侧
+weather 标签，并让正式 WeatherView 消费本地 Mock。左侧栏退场完成后自动解除注入。

@@ -1398,6 +1398,15 @@ def run_ipc(paths: ClavisPaths, arguments: list[str]) -> int:
     release = resolve_active_release(paths)
     qml_root = release / "share/clavis/qml"
     active = read_active_shell(paths)
+    weather_preview = arguments == ["call", "sidebar", "previewWeather"]
+    if weather_preview and (
+        active is None
+        or active.get("mode") not in {"development", "development-native"}
+    ):
+        raise ClavisError(
+            "sidebar weather preview is only available in a development Shell; "
+            "start it with `key shell --dev --replace`"
+        )
     if active is not None:
         command = [executable("qs"), "ipc", "--pid", str(active["pid"]), *arguments]
     else:
