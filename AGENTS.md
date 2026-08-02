@@ -21,7 +21,7 @@ Clavis 是以 QML/Quickshell 构建的 Wayland 桌面 Shell。`shell.qml` 是极
 `AppShell.qml` 装配 Bar、Keystone、Sidebars、Launcher、Lock 等顶层模块。
 
 `Keystone` 是仿照 iOS Dynamic Island 的顶部交互区域。交流中的“灵动岛”、
-“Dynamic Island”、“dynamic”、“daynamic”或“钥石”，没有额外说明时均指
+“Dynamic Island”、“dynamic”或“钥石”，没有额外说明时均指
 `Modules/Keystone/`。
 
 `key` 是唯一稳定 CLI；用户级入口为 `~/.local/bin/key`，实际程序来自
