@@ -367,9 +367,22 @@ for relative in (
 print("release metadata, Shell roots, and native QML module paths: OK")
 PY
     if command -v qmlimportscanner >/dev/null 2>&1; then
-        run qmlimportscanner -importPath "$build_dir/lib/qml" -rootPath "$setup_dir" \
-            "$setup_dir/shell.qml" >/dev/null
-        printf 'QML import scanner: OK\n'
+        local scanner_log
+        scanner_log=$(mktemp)
+        if qmlimportscanner -importPath "$build_dir/lib/qml" -rootPath "$setup_dir" \
+            "$setup_dir/shell.qml" >/dev/null 2>"$scanner_log"; then
+            if [[ -s "$scanner_log" ]]; then
+                printf 'QML import scanner: completed with diagnostics (first 8 lines):\n'
+                sed -n '1,8p' "$scanner_log"
+            else
+                printf 'QML import scanner: OK\n'
+            fi
+        else
+            cat "$scanner_log" >&2
+            rm -f -- "$scanner_log"
+            return 1
+        fi
+        rm -f -- "$scanner_log"
     else
         printf 'QML import scanner: SKIP (not installed)\n'
     fi
