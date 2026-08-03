@@ -5,7 +5,7 @@
 
 ## 1. 只读审计
 
-先完成用户级安装，再生成报告：
+先完成各仓库的用户级安装，再生成报告：
 
 ```bash
 ./setup.sh install
@@ -39,11 +39,12 @@ idle policy 文件到 `$XDG_CONFIG_HOME/clavis`。目标已存在时报告 confl
 ```bash
 key version --json
 key shell
-key top
+keytop
+keytop value --format json
 ```
 
-确认 `key` 来自 `~/.local/bin`，Shell 能加载 current release 的私有 plugin，剪贴板与
-sysmon 协议兼容。新安装会替换旧 unit，并启用绑定 `niri.service` 的 Shell 与剪贴板
+确认 `key` 来自 `~/.local/bin`，Shell 能加载 current release 的私有 plugin，且系统
+监测直接由独立 `keytop` 提供。新安装会替换旧 unit，并启用绑定 `niri.service` 的 Shell 与剪贴板
 service；不会在安装时立即启动。Niri 主配置迁移见 [配置管理](../niri-configuration.md)。
 
 旧 root-owned 文件只应在审计其来源后手动清理；普通安装和迁移不会请求 sudo。示例

@@ -1,42 +1,49 @@
-# 运行时版本、协议与能力
+# 运行时版本与协议
 
-每个 release 的 `release.json` 和 `key version --json` 都提供 release、commit、UTC
-build time、channel、协议、feature 列表、mutable data schema 和 dependency manifest
-版本。当前协议为：
+Clavis 的版本兼容检查集中在 `key-cli` 的 Shell 启动和 release metadata 中。页面不再
+逐个执行 `key --version`，也不因为外部命令短暂不可用而替换成醒目的整页红色错误。
+数值、图表和列表分别降级为空状态；启动失败写日志并按服务自身策略退避重试。
+
+## Release metadata
+
+每个 Shell release 的 `release.json` 至少包含：
 
 ```json
 {
-  "core": 1,
-  "clipboard": 2,
-  "sysmon": 1,
-  "raplHelper": 1
+  "component": "quickshell",
+  "release": "2026.08.03",
+  "commit": "…",
+  "channel": "stable",
+  "sourceFingerprint": "…",
+  "buildTime": "…",
+  "minimumKeyCli": "0.1.0",
+  "minimumKeytop": "0.1.0",
+  "shellProtocol": 1,
+  "paths": {"qml": "share/clavis/qml", "plugins": "lib/qml", "assets": "share/clavis/assets"},
+  "protocols": {"core": 1, "clipboard": 2},
+  "dataSchemas": {"config": 1, "manifest": 1, "profile": 1}
 }
 ```
 
-release 日期用于运维与展示，不作为协议兼容判断。`RuntimeCompatibilityService.qml`
-是 QML 的唯一握手入口，提供 `keyAvailable`、`release`、`commit`、
-`protocolCompatible()`、`hasFeature()`、`clipboardCompatible` 和
-`sysmonCompatible`。
+`key shell` 在启动前检查 release 组件、最小 CLI/Keytop 版本、Shell protocol、相对
+路径和 plugin 根；不兼容时拒绝启动该 release，并保留当前可用 release。`key release`
+负责列出、激活、回滚和移除经过校验的 release。
 
-处理规则：
+## 外部命令协议
 
-- key 不存在或 JSON 无效：明确错误并禁用依赖 backend 的模块；
-- core 或必需子协议不同：禁用对应模块；
-- 必需 feature 缺失：禁用该功能；可选 feature 缺失只降级；
-- Shell 与 key 日期或 commit 不同但协议兼容：显示 stale-service 警告；
-- `Clavis.Runtime` plugin 导出编译时 release/commit；它与 Shell 不同视为安装损坏；
-- Clipboard 的 inspect、MIME restore 与 MIME-aware store 检查保留，但从中央服务读取；
-- SystemMonitor 在 sysmon 握手完成前不启动 stream。
+- 系统监测由 `keytop value`/`keytop stream` 提供，Shell 直接启动 `keytop`，不经过
+  `key top` 兼容转发。
+- 结构化天气由 `key weather --json` 提供；天气地图的图像 provider 是 Quickshell
+  内嵌的 `Clavis.WeatherMap`，两条链路不共享短进程接口。
+- 音量、录音、投屏和剪贴板使用稳定的 `key audio`、`key record`、`key cast`、
+  `key clipboard` 命令；高频音频可视化仍由内嵌 native plugin 完成。
 
-`key shell` 同时设置 `CLAVIS_SHELL_RELEASE`/`CLAVIS_SHELL_COMMIT`，并且私有 plugin、
-QML 与 key 都从同一 current release 解析。这是正常安装中避免“新 QML + 系统旧
-plugin”的主要保证。
+协议破坏时提升相应的 `protocols` 或 `dataSchemas` 版本，并同步 key-cli、Shell
+消费者、协议文档和集成测试。新增可选字段应保持旧消费者可解析；缺失的数值使用
+`—`、缺失的图表停在空轨道或占位、缺失的列表使用普通空状态。
 
-`key shell --dev` 仍执行相同握手。普通开发模式把 expected release/commit 设置为
-`current` release，并使用该 release 的 key 与 plugins；`--native` 则让
-`.build/dev/bin/key` 和 `.build/dev/Clavis.*` 共享 `development`/Git commit 标识。
-源码 QML 的位置不参与协议版本判断，因而不会因清除 `CLAVIS_RELEASE_ROOT` 而误判。
+## 开发模式
 
-兼容性升级约定：向后兼容的新能力添加 feature；破坏命令或 JSON 语义时提升相应
-子协议；改变所有管理命令共同语义时提升 core。QML 必须按协议和 feature 判断，
-不得按日期硬编码功能可用性。
+`key shell --dev` 使用当前源码 QML 与稳定 native plugin；`--native` 改用
+`.build/dev/lib/qml` 的当前增量 plugin。两种模式的启动、日志和实例注册仍由
+`key-cli` 负责，Quickshell 不内置第二份 `key`，也不创建 Key daemon 或常驻 Key socket。

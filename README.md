@@ -1,7 +1,9 @@
 # Clavis Shell
 
-Clavis 是以 QML/Quickshell 构建的 Wayland 桌面 Shell，原生 backend、`key`
-CLI、M3 shapes 与系统监测核心位于 `core/`。源码工作区与运行时安装完全分离；
+Clavis 是以 QML/Quickshell 构建的 Wayland 桌面 Shell。`quickshell` 仓库只拥有
+Shell QML、Niri 模型、M3Shapes、音频/媒体可视化、天气地图和仍与 QML 生命周期耦合的
+原生 plugin；稳定 CLI 与系统监测分别由同级的 `key-cli`、`keytop` 仓库提供。源码
+工作区与运行时安装完全分离；
 仓库可放在任意绝对路径，推荐 `~/Projects/clavis`。
 
 ## 安装
@@ -30,9 +32,11 @@ Arch Linux 是当前优先支持的平台。先查看依赖，不会安装任何
 正式 release 默认拒绝未提交工作树，避免同一 commit 隐藏不同产物。仅本地验证
 可明确使用 `--allow-dirty`；release metadata 会记录 dirty 状态与内容指纹。
 
-安装会先构建并运行 CTest，再暂存到 `releases/<version>.partial`；验证版本握手后
-原子发布并切换 `current`。不会向系统 Qt QML 目录复制 plugin，也不会覆盖当前正在
-运行的 release。完整依赖见 [docs/dependencies.md](docs/dependencies.md)。
+安装只构建 Shell runtime，将产物暂存到 `releases/<version>.partial`，检查 metadata
+和文件布局后交给外部 `key-cli` 原子注册并切换 `current`。它不会隐式运行 CTest、
+smoke 或全量 qmllint，不会向系统 Qt QML 目录复制 plugin，也不会覆盖当前正在运行的
+release。需要测试时显式运行 `./setup.sh test` 和 `./setup.sh smoke`。完整依赖见
+[docs/dependencies.md](docs/dependencies.md)。
 
 确保用户级命令目录排在旧系统安装之前，并刷新 shell 的命令缓存：
 
@@ -57,7 +61,12 @@ key shell --foreground
 key shell logs
 key ipc list
 key ipc call keystone dashboard
-key top
+keytop
+keytop value --format json
+key top                 # key-cli 兼容转发
+key weather --json
+key install keytop --source ~/Projects/keytop
+key component status
 key doctor
 key doctor legacy
 key rollback
@@ -96,8 +105,8 @@ Niri 快捷键应调用稳定入口，例如
 默认路径如下；所有 XDG 根目录和 `CLAVIS_*_HOME` 均可覆盖：
 
 ```text
-~/.local/bin/key
-~/.local/lib/clavis/current -> releases/<date-release>
+~/.local/bin/key                         # key-cli 的稳定入口
+~/.local/lib/clavis/current -> releases/<date-release>  # 只有 Shell runtime
 ~/.local/lib/clavis/releases/<date-release>/
 ~/.config/clavis/
 ~/.config/clavis/profiles/default/
@@ -108,8 +117,8 @@ Niri 快捷键应调用稳定入口，例如
 $XDG_RUNTIME_DIR/clavis/
 ```
 
-原生 `Clavis.*` 与 `M3Shapes` plugin 位于每个 release 的 `lib/qml/`，import
-路径只注入 Clavis 子进程。详细布局见
+每个 release 不包含 `bin/key`、Keytop 或主题包；原生 `Clavis.*` 与 `M3Shapes` plugin
+位于 release 的 `lib/qml/`，import 路径只注入 Clavis 子进程。详细布局见
 [安装布局](docs/architecture/install-layout.md) 与
 [配置隔离](docs/architecture/config-isolation.md)。
 
@@ -136,22 +145,10 @@ key uninstall --purge-cache
 
 回滚会先验证 manifest 中的 release 文件，再原子切换并重启运行中的 Shell 与用户
 服务。普通卸载保留配置、数据和个人壁纸；清除配置或数据必须显式使用相应 purge
-参数。系统级 CPU helper 是独立集成，不属于普通卸载范围。
-如果已经启用 helper，应先执行 `key setup cpu-power --disable`，再卸载用户程序。
+参数。系统级功耗读取属于 `keytop` 的可选能力，不属于 `key-cli` 或 Shell release。
 
-## CPU 功耗（可选）
-
-普通 `key` 没有 capability，RAPL 不可读时 `key top` 的其余指标继续工作：
-
-```bash
-key doctor cpu-power --json
-key setup cpu-power --dry-run
-key setup cpu-power
-key setup cpu-power --disable
-```
-
-只有最后两个非 dry-run 命令会清楚列出操作并请求一次 `sudo`。安全边界和取舍见
-[CPU 功耗安全](docs/architecture/cpu-power-security.md)。
+`keytop` 在 RAPL 不可读时保留其余指标；如需处理 RAPL 集成，应按照
+`keytop/docs/` 中的说明单独操作，不能通过 `key` 安装 daemon、socket 或 setcap。
 
 ## 开发与验证
 
@@ -164,12 +161,16 @@ key shell logs --follow
 ./setup.sh configure
 ./setup.sh build
 ./setup.sh test
-qmllint -I . Common/Paths.qml Services/RuntimeCompatibilityService.qml
+./setup.sh smoke
+./setup.sh dev-build
+./setup.sh run-source -- --replace
+qmllint -I . Common/Paths.qml Services/SystemMonitorService.qml Services/WeatherPlugin.qml
 bash tests/test_matugen_templates.sh
 ```
 
 普通开发模式直接监视源码，QML 与资源修改由 Quickshell 原生 reload 立即加载；它仍
-使用 `current` release 的 `bin/key` 和 `lib/qml` 原生模块。修改 `core/` 时使用
+复用外部 `key-cli` 的稳定 `key` 和 `current` release 的 `lib/qml` 原生模块。修改
+`core/` 时使用
 `--native`：命令会在 `.build/dev` 做增量 CMake 构建，并以新进程加载更新后的共享库，
 不会创建 release 或切换 `current`。另一套完整 Shell 正在运行时必须显式加
 `--replace`，该选项只停止记录到的 Clavis 实例。新实例启动失败时不会改变 `current`，
@@ -189,7 +190,7 @@ bash tests/test_matugen_templates.sh
 
 不要编辑生成的 build 目录。涉及 `core/` 的改动需重新构建；纯 QML 改动至少运行
 一次 `qmllint`。协议与能力模型见
-[运行时兼容](docs/architecture/runtime-compatibility.md)。旧安装迁移见
+[运行时协议](docs/architecture/runtime-compatibility.md)。旧安装迁移见
 [迁移指南](docs/migration/from-legacy-layout.md)。
 
 ## 移动源码仓库

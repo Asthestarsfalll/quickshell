@@ -3,119 +3,85 @@
 ## 三个互不混用的根
 
 源码工作区只用于编辑和构建，推荐位于 `~/Projects/clavis`。构建树默认位于源码根的
-`.build/<release>`，可以用 `CLAVIS_BUILD_ROOT` 或 `--build-dir` 改到源码树外。
-运行时从不要求源码位于特定目录。
+`.build/<name>`，也可以用 `--build-dir` 放到其他位置。Shell release 由
+`quickshell` 构建，注册、切换和回滚由同级 `key-cli` 管理；release 内不再复制一份
+`key`。
 
-用户程序安装前缀默认为 `$HOME/.local/lib/clavis`：
+用户级运行时根默认为 `$HOME/.local/lib/clavis`：
 
 ```text
 clavis/
-├── current -> releases/2026.07.31.1
+├── current -> releases/2026.08.03
 └── releases/
-    └── 2026.07.31.1/
-        ├── bin/key
+    └── 2026.08.03/
         ├── lib/qml/Clavis/*
         ├── lib/qml/M3Shapes/*
         ├── share/clavis/qml/*
         ├── share/clavis/assets/*
         ├── share/clavis/scripts/*
         ├── share/clavis/defaults/*
+        ├── share/clavis/libexec/clavis_paths.py
         └── release.json
 ```
 
-`$HOME/.local/bin/key` 是稳定 launcher，只解析同一 HOME 下的 `current/bin/key`。
-它不搜索 `/usr/local/bin`，也不会递归调用自己。`key shell` 才把当前 release 的
-`lib/qml` 注入 Clavis 子进程的 `QML_IMPORT_PATH`/`QML2_IMPORT_PATH`；登录环境和
-普通 Qt 应用不会看到私有 plugin。交互式 `key shell` 默认以独立 session 后台启动，
-完成实例注册后返回；需要监督长期主进程时必须显式使用 `--foreground`。
-
-`key ipc` 优先验证 runtime 中的活动 Shell 记录并按 Quickshell PID 精确路由；没有
-有效记录时，使用和 `key shell` 完全相同的物理 release QML 根。桌面快捷键不得调用
-未指定配置的裸 `quickshell ipc`，因为 Quickshell 的实例身份包含配置绝对路径，移动
-源码或切换开发/release 模式后该身份会发生变化。
-
-`key ipc list` 是 `key ipc show` 的兼容别名；完整 target 和 method 清单见
-[IPC 命令](../ipc.md)。
+`$HOME/.local/bin/key` 是 `key-cli` 的稳定入口，实际程序来自 `key-cli` 自己的安装
+位置；`$HOME/.local/lib/clavis/current` 只指向 Shell runtime。Keytop、Zsh 主题和
+Fcitx5 主题是独立组件，不进入上述 release。`key shell` 只把当前 release 的
+`lib/qml` 注入 Shell 子进程，不向系统 Qt QML import 根复制 plugin。
 
 ## 统一路径解析
 
-同一组语义由以下薄实现映射到各运行环境：
-
-- C++：`core/src/runtime/clavis_paths.*`；
-- QML：`Common/Paths.qml`；
-- 安装管理器：`packaging/clavis_paths.py`；
-- shell：`scripts/lib/clavis-paths.sh`。
-
-支持 `CLAVIS_INSTALL_PREFIX`、`CLAVIS_BIN_HOME`、`CLAVIS_CONFIG_HOME`、
-`CLAVIS_DATA_HOME`、`CLAVIS_STATE_HOME`、`CLAVIS_CACHE_HOME`、
-`CLAVIS_RUNTIME_HOME`、`CLAVIS_PROFILE`、`CLAVIS_PROFILE_HOME`、
-`CLAVIS_PROFILE_CONFIG_HOME`、`CLAVIS_GENERATED_HOME` 与
-`CLAVIS_QML_IMPORT_HOME`。未设置时按 XDG Base
-Directory 解析。路径覆盖值必须是绝对路径；内部协议不使用 `~` 展开。
+运行时路径由 `key-cli` 的 `packaging/clavis_paths.py` 与 Quickshell 的
+`core/src/runtime/clavis_paths.*` 对齐；QML 和 shell 侧分别使用
+`Common/Paths.qml`、`scripts/lib/clavis-paths.sh`。路径覆盖值必须是绝对路径，内部
+协议不使用 `~` 展开。`CMAKE_INSTALL_PREFIX`/`DESTDIR` 只影响组件的系统安装，不能
+改变已经安装的用户级 release 根。
 
 ## 发布事务
 
-日期 release 只接受 `YYYY.MM.DD` 或 `YYYY.MM.DD.N`，比较时解析成年、月、日和
-修订号，不进行字符串猜测。`./setup.sh install` 的事务顺序是：
+`quickshell/setup.sh install` 的职责是：
 
-1. 在独立 build 目录配置并构建；
-2. 运行完整 CTest；
-3. CMake 安装到 `releases/<release>.partial`；
-4. 检查必要文件、`release.json`、协议和可执行权限；
-5. 执行暂存 `key version --json` smoke test；
-6. 原子重命名为不可变 release；
-7. 冲突预检后更新稳定 launcher、active-release、manifest 与 Niri user units；
-8. 最后原子替换 `current` symlink；
-9. 任一步失败时恢复上述可变文件，并移除尚未激活的新 release。
+1. 检查构建和运行依赖；
+2. 增量构建 Shell；
+3. 把 CMake 产物安装到 `releases/<release>.partial`；
+4. 检查 `release.json`、Shell 入口、plugin、assets 和相对路径；
+5. 调用外部 `key release install-finalize RELEASE --partial PATH`。
 
-发布事务在切换前保存可变文件快照，因此多文件更新失败不会留下互相矛盾的
-launcher、unit、manifest 与 `current`。失败会清理 `.partial`，不会覆盖当前 release。正式安装默认拒绝 dirty
-工作树；本地测试需明确 `--allow-dirty`。metadata 记录 source fingerprint，相同
-内容的重复安装是幂等的；不同 commit 或内容不得复用同一 release 名称。
-同日第二个发布应使用 `.1`。
+最后一步由 `key-cli` 完成 release 注册、manifest、`current` 的原子切换以及用户
+unit 的渲染。失败时保留原有 `current`，并清理未激活的 `.partial`。安装器不会隐式
+运行 CTest、smoke 或全量 qmllint；开发者需要显式运行：
+
+```bash
+./setup.sh test
+./setup.sh smoke
+./setup.sh install
+```
+
+正式安装默认拒绝 dirty 工作树；只有明确的本地临时验证才使用 `--allow-dirty`。
 
 ## Manifest 与所有权
 
-`$XDG_STATE_HOME/clavis/install-manifest.json` 记录 release 中每个文件的相对路径、
-SHA-256 与模式，以及 launcher、profile、协议和可选
-系统集成。release 在发布后去掉 owner write bit。
+release manifest 由 `key-cli` 生成，记录组件、版本、commit、source fingerprint、
+协议、依赖版本和每个安装文件的校验值。`key release list`、`key rollback` 和
+`key release remove` 只操作精确的 release 目录，不执行宽泛递归删除；卸载时保留被
+用户修改或未被 manifest 记录的文件并报告原因。
 
-`key rollback` 只切换通过 metadata 与所有文件校验的 release；随后重启手工运行的 Shell。
-`key release remove` 拒绝删除 active release，并拒绝删除含未记录文件的目录。
+稳定 CLI、Keytop 和主题包各自使用自己的安装 manifest。组件 provider 只允许明确
+registry 中的官方组件，更新前检查 Git 工作树并使用 `git pull --ff-only`，不会执行
+`git reset --hard`、`git clean` 或任意 URL 脚本。
 
-`key uninstall` 按 manifest 删除。默认保留配置、profile、壁纸、缓存和用户修改过的
-导出；`--purge-cache`、`--purge-config`、`--purge-data` 必须显式选择。CPU helper
-位于独立系统安全边界，只由 `key setup cpu-power --disable` 撤销；若仍处于已安装状态，
-程序卸载会要求先完成该独立撤销步骤。purge 拒绝 `/`、HOME、安装前缀、符号链接或
-其他过宽目标，即使这些路径来自显式环境覆盖。若 release 文件已被用户修改，
-或 release 中出现未登记文件，卸载会保留它并把原因、原始校验和及恢复动作写入
-`preservedItems`；后续卸载可以在内容恢复为已知版本后安全重试，而不会丢失残留来源。
+## 会话与开发模式
 
-## 会话启动项
+安装可以部署 `clavis-shell.service` 和 `clavis-clipboard.service` 模板；它们由
+`key-cli` 使用稳定 `key` 路径渲染，只 enable，不在安装时立即启动。后台 Shell 日志
+写入 `$XDG_STATE_HOME/clavis/logs/`，活动实例记录写入 `$XDG_RUNTIME_DIR/clavis/`。
 
-release 携带 `clavis-shell.service` 和 `clavis-clipboard.service` 模板。安装器用稳定
-`$XDG_BIN_HOME/key` 绝对路径渲染到 user unit 目录，执行 daemon-reload 后只 enable，
-不在当前会话 `--now`。两者由 `niri.service.wants/` 拉起，并以 `PartOf=` 和
-`Requisite=` 保证退出 Niri 时停止、其他桌面不启动。Shell unit 必须调用
-`key shell --foreground --no-duplicate`，使 systemd 跟踪真实 Quickshell 主进程。
-
-用户 `startup.kdl` 仅保留 Polkit agent。Fcitx5、nm-applet、blueman-applet 属于 XDG
-Autostart；Clavis 不为它们创建重复 service。
-
-后台 Shell 日志位于 `$XDG_STATE_HOME/clavis/logs/`，不写入 release 或源码树。release、
-普通开发和原生开发分别使用独立日志文件；每个文件限制为 2 MiB 并保留 3 份轮转备份。
-短生命周期 active metadata 仍位于 `$XDG_RUNTIME_DIR/clavis/active-shell.json`。
-
-## 源码开发树
-
-`key shell --dev` 是唯一把源码树作为 Quickshell QML 根的入口。普通模式复用
-`current/bin/key` 与 `current/lib/qml`；`--native` 使用固定 `.build/dev` 中的增量
-构件。两者均不把 `current` 指向源码，也不复制源码进 release。完整流程见
-[源码开发工作流](../development.md)。
+`key shell --dev` 使用当前源码 QML 与稳定 release 的原生 plugin；
+`key shell --dev --native` 使用 `quickshell/.build/dev/lib/qml` 中的增量 plugin。
+两者都不把 `current` 指向源码，也不创建临时 release。
 
 ## 在线更新边界
 
-本地源码 release、原子 current、rollback 与 artifact 参数接口已经存在。由于当前
-没有发布签名与经过验证的 artifact provider，`key update` 不下载任何内容，并在
-不改变 current 的前提下明确报错。启用在线更新前必须同时实现签名校验、archive
-路径穿越防护、临时下载清理和与本地 release 相同的发布验证。
+本地 source provider 可管理 `keytop`、`clavis-zsh-theme` 和
+`clavis-fcitx5-theme`。没有签名 artifact provider 前，`key update` 不下载未知内容，
+也不伪装成 pacman 或 AUR helper。

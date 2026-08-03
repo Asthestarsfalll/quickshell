@@ -18,7 +18,7 @@ help-zh:
         '    build                  使用 setup.sh 构建正式构件，不创建 release' \
         '    test                   构建项目并运行完整 CTest，不创建 release' \
         '    doctor                 只读检查构建与运行依赖，不安装软件' \
-        '    install                构建、测试并安装新的不可变用户级 release' \
+        '    install                构建并安装 Shell-only 用户级 release（不隐式测试）' \
         '    releases               查看当前版本和所有已安装 release' \
         '    help-zh                显示中文命令帮助，不执行任何操作'
 
@@ -66,7 +66,7 @@ test:
 doctor:
     ./setup.sh doctor
 
-# Build, test, and install a new immutable user-level release
+# Build and install a Shell-only user-level release without implicit tests
 install:
     ./setup.sh install
 

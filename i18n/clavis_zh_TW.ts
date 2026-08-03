@@ -3902,8 +3902,8 @@
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="388" />
-        <source>无法解析 key 系统监测数据</source>
-        <translation>無法解析 key 系統監測資料</translation>
+        <source>无法解析 keytop 系统监测数据</source>
+        <translation>無法解析 keytop 系統監測資料</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="400" />
@@ -3912,13 +3912,13 @@
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="401" />
-        <source>需要重新构建 key 后端（需要 schema v</source>
-        <translation>需要重新構建 key 後端（需要 schema v</translation>
+        <source>需要重新构建 keytop（需要 schema v</source>
+        <translation>需要重新構建 keytop（需要 schema v</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="412" />
-        <source>key 返回的系统监测数据不完整</source>
-        <translation>key 返回的系統監測資料不完整</translation>
+        <source>keytop 返回的系统监测数据不完整</source>
+        <translation>keytop 返回的系統監測資料不完整</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="447" />
@@ -3932,13 +3932,13 @@
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="512" />
-        <source>key top 不可用，请重新构建并安装 key 后端</source>
-        <translation>key top 不可用，請重新構建並安裝 key 後端</translation>
+        <source>keytop 不可用，请安装独立 keytop</source>
+        <translation>keytop 不可用，請安裝獨立 keytop</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="525" />
-        <source>未找到可用终端，无法打开 key top</source>
-        <translation>未找到可用終端，無法開啟 key top</translation>
+        <source>未找到可用终端，无法打开 keytop</source>
+        <translation>未找到可用終端，無法開啟 keytop</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="581" />
@@ -3947,13 +3947,13 @@
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="622" />
-        <source>正在重新启动 key 数据流。</source>
-        <translation>正在重新啟動 key 資料流。</translation>
+        <source>正在重新启动 keytop 数据流。</source>
+        <translation>正在重新啟動 keytop 資料流。</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="643" />
-        <source>正在重新连接 key 数据流。</source>
-        <translation>正在重新連線 key 資料流。</translation>
+        <source>正在重新连接 keytop 数据流。</source>
+        <translation>正在重新連線 keytop 資料流。</translation>
     </message>
 </context>
 <context>

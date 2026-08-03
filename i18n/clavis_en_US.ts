@@ -3902,8 +3902,8 @@ detected</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="388" />
-        <source>无法解析 key 系统监测数据</source>
-        <translation>Could not parse key system monitor data</translation>
+        <source>无法解析 keytop 系统监测数据</source>
+        <translation>Could not parse keytop system monitor data</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="400" />
@@ -3912,13 +3912,13 @@ detected</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="401" />
-        <source>需要重新构建 key 后端（需要 schema v</source>
-        <translation>Rebuild the key backend (schema v</translation>
+        <source>需要重新构建 keytop（需要 schema v</source>
+        <translation>Rebuild keytop (schema v</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="412" />
-        <source>key 返回的系统监测数据不完整</source>
-        <translation>System monitor data returned by key is incomplete</translation>
+        <source>keytop 返回的系统监测数据不完整</source>
+        <translation>System monitor data returned by keytop is incomplete</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="447" />
@@ -3932,13 +3932,13 @@ detected</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="512" />
-        <source>key top 不可用，请重新构建并安装 key 后端</source>
-        <translation>key top is unavailable; rebuild and install the key backend</translation>
+        <source>keytop 不可用，请安装独立 keytop</source>
+        <translation>keytop is unavailable; install the independent keytop command</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="525" />
-        <source>未找到可用终端，无法打开 key top</source>
-        <translation>No usable terminal was found, so key top could not be opened</translation>
+        <source>未找到可用终端，无法打开 keytop</source>
+        <translation>No usable terminal was found, so keytop could not be opened</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="581" />
@@ -3947,13 +3947,13 @@ detected</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="622" />
-        <source>正在重新启动 key 数据流。</source>
-        <translation>Restarting the key data stream.</translation>
+        <source>正在重新启动 keytop 数据流。</source>
+        <translation>Restarting the keytop data stream.</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="643" />
-        <source>正在重新连接 key 数据流。</source>
-        <translation>Reconnecting to the key data stream.</translation>
+        <source>正在重新连接 keytop 数据流。</source>
+        <translation>Reconnecting to the keytop data stream.</translation>
     </message>
 </context>
 <context>

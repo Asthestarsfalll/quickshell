@@ -1,7 +1,8 @@
 # Clavis sysmon JSON schema v1
 
-`key sysmon` exposes one stable JSON envelope to the CLI, the QML
-`SystemMonitorService`, and `key top`.
+`keytop value` and `keytop stream` expose one stable JSON envelope to the QML
+`SystemMonitorService` and other machine consumers. `key top` is only a key-cli
+compatibility forwarder and is not part of the Shell data path.
 
 ```json
 {
@@ -100,7 +101,7 @@ a battery is valid: `available: true`, `present: false`.
 
 ### `processes`
 
-Collected only for `key top`, `key sysmon processes`, or an explicit
+Collected only for `keytop`, `keytop value processes`, or an explicit
 `--modules processes`. Each row provides PID, PPID, name, full command, user,
 state, CPU usage, memory bytes/percent, thread count, start time, runtime,
 executable path, and optional derived `treeDepth`. PID plus start ticks is used
@@ -108,7 +109,7 @@ as the sampling identity to avoid PID-reuse spikes.
 
 ## JSON Lines
 
-`key sysmon stream --format jsonl` emits one compact, complete JSON object
+`keytop stream --format jsonl` emits one compact, complete JSON object
 followed by `\n` for every sample and flushes after each line. A consumer must
 validate `schemaVersion` before applying a line. A malformed or unsupported
 line must not replace the last valid state.

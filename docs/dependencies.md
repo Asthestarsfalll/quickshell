@@ -1,47 +1,45 @@
 # 依赖清单
 
-权威机器可读清单位于 `packaging/dependencies.toml`。Arch Linux 是当前优先支持且用于
-包名映射的平台；其他发行版只视为 experimental，不声明未验证的包名。
+`quickshell`、`key-cli`、`keytop` 和两个主题仓库各自检查自己的依赖。Shell 构建不再
+因为 Keytop、ncurses、RAPL helper 或普通天气网络客户端缺失而失败。
 
-## 构建必需
+## Quickshell 构建依赖
 
 - CMake、C++17 compiler、pkg-config、Python 3；
 - Qt 6 Core/Gui/Network/QML/Quick、ShaderTools、Tools；
-- QtKeychain 6、PipeWire headers、ncursesw、libcava；
-- 用于 runtime QML import 的 Qt 6 5Compat 与 Lottie 模块。
+- Qt 6 5Compat 与 Lottie（运行时 QML import）；
+- PipeWire/Cava headers 与 libraries（仅用于内嵌音频可视化）；
+- 项目仍保留的 Niri、MediaPalette、WeatherMap 和 M3Shapes native plugin 所需开发包。
 
-`./setup.sh doctor` 逐项检测 CMake/pkg-config 条目并打印 Arch 安装命令，但不执行。
-`./setup.sh deps --install` 是唯一允许安装系统依赖的 setup 操作，且必须由用户明确
-选择。目前自动包管理仅实现 Arch/pacman。
+`./setup.sh doctor` 分开显示 Build、Runtime 和 Optional runtime 依赖，不安装任何
+软件。`./setup.sh deps --install` 仅在用户明确执行时通过 pacman 请求安装。
 
-## Runtime 核心
+## key-cli 运行依赖
 
-Quickshell、Python 3、Bash/coreutils、`which`、Qt runtime 模块与 systemd user 工具是核心。
-niri 是主要 compositor 集成和设置中心 Niri 页所需，作为推荐依赖，以便 `key shell`
-仍能在诊断场景下独立处理。
+`key-cli` 是普通 CLI，不是 daemon。构建需要 CMake、C++17、Qt 6 Core/Gui/Network 和
+Python 3；运行 Shell/IPC 时需要稳定的 Quickshell、systemd user 工具、`keytop`（仅
+系统监测页面）以及相应功能的外部工具。天气请求由 `key weather` 的 Python provider
+处理，使用 Open-Meteo/IP location 时才需要网络。
 
-## 可降级功能
+录屏、投屏、音量和剪贴板工具属于可降级运行依赖：gpu-screen-recorder、FFmpeg、
+PipeWire/Pulse tools、wl-clipboard、cliphist、NetworkManager 等缺失时只禁用对应
+控制，不应阻止无关的 Shell 启动。
 
-清单按功能记录检测方式、用途和 `degradable=true`：
+## keytop 依赖
 
-- clipboard：cliphist、wl-clipboard；
-- wallpaper/power menu：awww、wlogout、ImageMagick、gettext；
-- recording/audio：gpu-screen-recorder、FFmpeg、PipeWire/Pulse tools、pavucontrol、
-  wlsunset 与 procps-ng；
-- theming：matugen、gsettings；
-- network/Bluetooth：NetworkManager、BlueZ；
-- display/tools：brightnessctl、ddcutil、hyprpicker、grim、wlsunset；
-- external UI/cloud：xdg-utils、gnome-system-monitor、rclone、freedesktop sound theme；
-- package updates：pacman 与 Paru；
-- profile apps：Kitty、btop、Cava、Yazi；
-- CPU power：kernel powercap，及用户显式选择的独立 helper。
+`keytop` 独立构建，需要 CMake、C++17、ncursesw 和 Linux `/proc`、`/sys` 接口；Qt
+仅用于其现有运行时路径。它不链接 `key-cli` 或 Quickshell C++ target。RAPL 是可选
+硬件/权限能力，读取失败时 CPU、内存、网络、磁盘和进程采样仍可用。
 
-缺少可降级依赖时应只禁用对应功能并显示诊断，不应导致整个 Shell 或 `key top` 失败。
-新增 QML `Process`、C++ `QProcess`、脚本命令、QML import 或 link dependency 时，必须
-同时更新 TOML 与本文档分类。
+## 主题包依赖
 
-## 开发工具
+`clavis-zsh-theme` 需要 CMake、C++17 和 zsh；Matugen 是 apply/hook 时的可选生成器。
+`clavis-fcitx5-theme` 需要 Python 3；Matugen 与 Fcitx5 Classic UI 的 user bus reload
+是可选运行依赖。两个主题包都支持临时 `HOME`、`XDG_*`、`CMAKE_INSTALL_PREFIX` 和
+`DESTDIR`，测试不修改真实用户配置。
 
-Git 用于 commit metadata；qmllint 用于 QML 静态检查；CTest/QtTest 和仓库中的 Python
-与 shell 测试覆盖 backend、路径、release manager、Matugen 与 CLI。模板完整测试还会
-使用已安装的 matugen、Yazi、Zsh，并在可用时调用 niri 配置验证器。
+## 打包
+
+未来 AUR 可分别以 `CMAKE_INSTALL_PREFIX=/usr DESTDIR="$pkgdir"` 打包各仓库。不要把
+`keytop`、主题包或 Quickshell 的私有 QML plugin复制到系统 Qt import 根；Shell plugin
+只安装到 release 私有的 `lib/qml/`。

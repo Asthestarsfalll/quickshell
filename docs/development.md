@@ -57,7 +57,7 @@ root、Git commit、dirty 状态、PID 与最终命令，便于确认没有混�
 
 ## C++ 与原生 QML 开发
 
-修改 `core/src/`、`core/cli/`、`core/plugin/`、`core/helper/` 或其他 CMake 构件后运行：
+修改 `core/src/`、`core/plugin/` 或其他 Quickshell CMake 构件后运行：
 
 ```bash
 key shell --dev --native
@@ -65,8 +65,8 @@ key shell --dev --native
 
 该命令调用 `./setup.sh dev-build --build-dir .build/dev`。CMake 每次增量配置并执行
 `cmake --build`，不会删除 `.build/dev`；Ninja/Make 只重新构建受变更影响的目标。
-开发 Shell 使用 `.build/dev/bin/key`、`.build/dev/Clavis/` 和
-`.build/dev/M3Shapes/`，而 QML 与资源仍直接来自源码。
+开发 Shell 使用外部稳定 `key-cli`，以及 `.build/dev/lib/qml/Clavis/` 和
+`.build/dev/lib/qml/M3Shapes/` 中的 native plugin；QML 与资源仍直接来自源码。
 
 共享库不能在已经载入它的进程中可靠热替换。已有 Shell 时应明确替换开发实例：
 
@@ -163,9 +163,10 @@ just help-zh
 | `build` | 通过 setup.sh 构建，不安装 |
 | `test` | 构建并运行完整 CTest |
 | `doctor` | 只读检查依赖 |
-| `install` | 构建、测试并创建正式 release |
+| `install` | 构建并创建 Shell-only release，不隐式运行测试 |
 | `releases` | 查看当前版本和 release 列表 |
 
-完成开发后先运行 `just test`（或 `./setup.sh test`）。只有准备让正式桌面使用新快照时
+完成开发后先运行 `just test`（或 `./setup.sh test`），需要时单独运行
+`./setup.sh smoke`。只有准备让正式桌面使用新快照时
 才运行 `just install`（或 `./setup.sh install`）。安装成功后，`just shell`（或
 `key shell --replace`）切换回新的正式 release。
