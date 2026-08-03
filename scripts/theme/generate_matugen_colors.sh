@@ -90,21 +90,23 @@ all_external_templates=(
     btop
     cava
     kitty
-    fcitx5
-    fcitx5_panel_svg
-    fcitx5_highlight_svg
     niri
     yazi
 )
 
 selected_templates=(quickshell)
+fcitx_requested=false
 if [[ "$templates_requested" == false ]]; then
     selected_templates+=("${all_external_templates[@]}")
 elif [[ -n "$templates_csv" ]]; then
     IFS=',' read -r -a requested_templates <<< "$templates_csv"
     for template_id in "${requested_templates[@]}"; do
         case "$template_id" in
-            btop|cava|kitty|fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg|niri|yazi)
+            btop|cava|kitty|niri|yazi)
+                ;;
+            fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg)
+                fcitx_requested=true
+                continue
                 ;;
             *)
                 printf 'Unknown matugen template: %s\n' "$template_id" >&2
@@ -130,9 +132,6 @@ template_file() {
         btop) printf '%s\n' btop.theme ;;
         cava) printf '%s\n' cava-colors.ini ;;
         kitty) printf '%s\n' kitty-colors.conf ;;
-        fcitx5) printf '%s\n' fcitx5-theme.conf ;;
-        fcitx5_panel_svg) printf '%s\n' fcitx5-panel.svg ;;
-        fcitx5_highlight_svg) printf '%s\n' fcitx5-highlight.svg ;;
         niri) printf '%s\n' niri-colors.kdl ;;
         yazi) printf '%s\n' yazi-theme.toml ;;
     esac
@@ -154,9 +153,6 @@ if [[ "$dry_run" == false ]]; then
             btop) mkdir -p "$HOME/.config/btop/themes" ;;
             cava) mkdir -p "$HOME/.config/cava/themes" ;;
             kitty) mkdir -p "$HOME/.config/kitty/themes" ;;
-            fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg)
-                mkdir -p "$HOME/.local/share/fcitx5/themes/Matugen"
-                ;;
             niri) mkdir -p "$CLAVIS_NIRI_HOME/clavis" ;;
             yazi) mkdir -p "$HOME/.config/yazi" ;;
         esac
@@ -210,4 +206,20 @@ if [[ -n "$image_path" ]]; then
     matugen --source-color-index 0 image "$image_path" "${common_args[@]}"
 else
     matugen color hex "$source_color" "${common_args[@]}"
+fi
+
+if [[ "$fcitx_requested" == true ]]; then
+    fcitx_provider=${CLAVIS_FCITX5_THEME_COMMAND:-clavis-fcitx5-theme}
+    if command -v "$fcitx_provider" >/dev/null 2>&1; then
+        fcitx_args=(apply --mode "$mode" --scheme "$scheme")
+        if [[ -n "$image_path" ]]; then
+            fcitx_args+=(--source-image "$image_path")
+        else
+            fcitx_args+=(--color "$source_color")
+        fi
+        "$fcitx_provider" "${fcitx_args[@]}"
+    else
+        printf 'Warning: Fcitx5 theme provider is unavailable (%s); preserving its previous theme.\n' \
+            "$fcitx_provider" >&2
+    fi
 fi

@@ -66,6 +66,14 @@ HOME="$quickshell_home" "$generator" --color '#6750a4' --templates '' >/dev/null
 [[ ! -e "$quickshell_home/.config" ]] \
     || fail "Quickshell-only generation modified external app config"
 
+provider_home="$test_dir/provider"
+provider_log="$test_dir/provider.log"
+HOME="$provider_home" CLAVIS_FCITX5_THEME_COMMAND="$repo_dir/tests/fixtures/fcitx5-theme-provider.sh" \
+    CLAVIS_FCITX5_TEST_LOG="$provider_log" "$generator" \
+    --color '#6750a4' --mode light --scheme scheme-vibrant --templates fcitx5 >/dev/null
+grep -Fq 'apply --mode light --scheme scheme-vibrant --color #6750a4' "$provider_log" \
+    || fail "Fcitx5 provider did not receive the source and Matugen options"
+
 for render_mode in dark light; do
     output_dir="$test_dir/render-$render_mode"
     render_config="$output_dir/config.toml"
@@ -77,19 +85,15 @@ for render_mode in dark light; do
         -e "s|~/.config/btop/themes/matugen.theme|$output_dir/btop.theme|" \
         -e "s|~/.config/cava/themes/matugen|$output_dir/cava|" \
         -e "s|~/.config/kitty/themes/Matugen.conf|$output_dir/kitty.conf|" \
-        -e "s|~/.local/share/fcitx5/themes/Matugen/theme.conf|$output_dir/fcitx5.conf|" \
         -e "s|~/.config/yazi/theme.toml|$output_dir/yazi/theme.toml|" \
-        -e "s|~/.local/share/fcitx5/themes/Matugen/panel.svg|$output_dir/panel.svg|" \
-        -e "s|~/.local/share/fcitx5/themes/Matugen/highlight.svg|$output_dir/highlight.svg|" \
         -e '/^post_hook = /d' \
         "$repo_dir/matugen/config.toml" > "$render_config"
     matugen color hex '#6750a4' --mode "$render_mode" \
         --type scheme-tonal-spot --config "$render_config" --quiet
     outputs=(
         "$output_dir/colors.json" "$output_dir/btop.theme" "$output_dir/cava"
-        "$output_dir/kitty.conf" "$output_dir/fcitx5.conf"
+        "$output_dir/kitty.conf"
         "$output_dir/niri-colors.kdl" "$output_dir/yazi/theme.toml"
-        "$output_dir/panel.svg" "$output_dir/highlight.svg"
     )
     for output in "${outputs[@]}"; do
         [[ -s "$output" ]] || fail "missing rendered output: $output"
