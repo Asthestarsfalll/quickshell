@@ -1,7 +1,7 @@
 qt_add_library(ClavisWeatherMap SHARED)
 
 set_target_properties(ClavisWeatherMap PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/WeatherMap
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/WeatherMap
 )
 
 qt_add_qml_module(ClavisWeatherMap
@@ -10,7 +10,7 @@ qt_add_qml_module(ClavisWeatherMap
     SOURCES
         src/weather_map_plugin.h
         src/weather_map_plugin.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/WeatherMap
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/WeatherMap
 )
 
 target_include_directories(ClavisWeatherMap PUBLIC src)

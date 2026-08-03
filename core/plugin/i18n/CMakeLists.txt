@@ -1,7 +1,7 @@
 qt_add_library(ClavisI18n SHARED)
 
 set_target_properties(ClavisI18n PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/I18n
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/I18n
 )
 
 qt_add_qml_module(ClavisI18n
@@ -10,7 +10,7 @@ qt_add_qml_module(ClavisI18n
     SOURCES
         src/i18n_manager.h
         src/i18n_manager.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/I18n
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/I18n
 )
 
 qt_add_translations(ClavisI18n

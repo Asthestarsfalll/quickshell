@@ -1,7 +1,6 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import M3Shapes
-import Clavis.Sysmon 1.0
 import qs.Common
 import qs.Components
 import qs.Services
@@ -12,15 +11,15 @@ Rectangle {
 
     signal avatarEditRequested()
 
-    readonly property string systemUser: SysmonPlugin.systemUser || "user"
-    readonly property string hostName: SysmonPlugin.hostName || "host"
-    readonly property string wmName: SysmonPlugin.wmName || "unknown"
-    readonly property string distroName: SysmonPlugin.distroName || "Linux"
-    readonly property string chassis: SysmonPlugin.chassis || qsTr("电脑")
-    readonly property string uptime: SysmonPlugin.uptime || "0m"
+    readonly property string systemUser: SystemIdentityService.accountName
+    readonly property string hostName: SystemIdentityService.hostName
+    readonly property string wmName: SystemIdentityService.wmName
+    readonly property string distroName: SystemIdentityService.distroName
+    readonly property string chassis: SystemIdentityService.chassis
+    readonly property string uptime: SystemIdentityService.uptimeText
 
     function distroLogo() {
-        const id = String(SysmonPlugin.distroId || "").toLowerCase();
+        const id = String(SystemIdentityService.distroId || "").toLowerCase();
         const logos = {
             "arch": "󰣇",
             "archlinux": "󰣇",

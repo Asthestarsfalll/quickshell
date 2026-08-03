@@ -1,7 +1,7 @@
 qt_add_library(ClavisNiri SHARED)
 
 set_target_properties(ClavisNiri PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Niri
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Niri
 )
 
 qt_add_qml_module(ClavisNiri
@@ -10,7 +10,7 @@ qt_add_qml_module(ClavisNiri
     SOURCES
         src/niri_plugin.h
         src/niri_plugin.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Niri
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Niri
 )
 
 target_include_directories(ClavisNiri PUBLIC src)

@@ -1,14 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
-import Clavis.Sysmon 1.0
 import qs.Common
+import qs.Services
 
 Rectangle {
     id: root
 
-    readonly property string systemUser: SysmonPlugin.systemUser || "user"
-    readonly property string hostName: SysmonPlugin.hostName || "host"
-    readonly property string distroId: SysmonPlugin.distroId || "linux"
+    readonly property string systemUser: SystemIdentityService.accountName
+    readonly property string hostName: SystemIdentityService.hostName
+    readonly property string distroId: SystemIdentityService.distroId
     readonly property int sidePadding: Sizes.lockOuterPadding * 2
     readonly property int topPadding: Sizes.lockOuterPadding
     readonly property int bottomPadding: Sizes.lockOuterPadding * 2
@@ -154,14 +154,14 @@ Rectangle {
                 FetchLine {
                     icon: "desktop_windows"
                     label: "OS"
-                    value: SysmonPlugin.distroName
+                    value: SystemIdentityService.distroName
                     accent: Appearance.colors.colPrimary
                 }
 
                 FetchLine {
                     icon: "window"
                     label: "WM"
-                    value: SysmonPlugin.wmName
+                    value: SystemIdentityService.wmName
                     accent: Appearance.colors.colSecondary
                 }
 
@@ -175,21 +175,21 @@ Rectangle {
                 FetchLine {
                     icon: "schedule"
                     label: "UP"
-                    value: SysmonPlugin.uptime
+                    value: SystemIdentityService.uptimeText
                     accent: Appearance.colors.colSecondary
                 }
 
                 FetchLine {
                     icon: "memory"
                     label: "KERN"
-                    value: SysmonPlugin.kernelRelease
+                    value: SystemIdentityService.kernelRelease
                     accent: Appearance.colors.colPrimary
                 }
 
                 FetchLine {
                     icon: "terminal"
                     label: "SH"
-                    value: SysmonPlugin.shellName
+                    value: SystemIdentityService.shellName
                     accent: Appearance.colors.colTertiary
                 }
 

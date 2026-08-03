@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 
 Rectangle {

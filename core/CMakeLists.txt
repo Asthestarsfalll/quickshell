@@ -51,7 +51,6 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network ShaderTools Ling
 find_package(Qt6Keychain REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(Pipewire IMPORTED_TARGET libpipewire-0.3 REQUIRED)
-pkg_check_modules(NCursesW IMPORTED_TARGET ncursesw REQUIRED)
 pkg_check_modules(Cava IMPORTED_TARGET libcava QUIET)
 if(NOT Cava_FOUND)
     pkg_check_modules(Cava IMPORTED_TARGET cava REQUIRED)
@@ -61,17 +60,11 @@ qt_standard_project_setup(REQUIRES 6.5)
 # Base reusable logic
 add_subdirectory(src)
 
-# Standalone command line tools
-add_subdirectory(cli)
-add_subdirectory(helper/rapl)
-
 if(BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 
 # Quickshell plugins
-add_subdirectory(plugin/sysmon)
-add_subdirectory(plugin/weather)
 add_subdirectory(plugin/weathermap)
 add_subdirectory(plugin/niri)
 add_subdirectory(plugin/audio)
@@ -81,10 +74,11 @@ add_subdirectory(plugin/m3shapes)
 add_subdirectory(plugin/i18n)
 add_subdirectory(plugin/runtime)
 
-# A release prefix is self-contained: the CLI, native QML modules and the
-# Quickshell source tree are installed together and selected through `current`.
+# A release contains only the Shell runtime.  The stable `key` executable and
+# Keytop are installed by their own repositories and are deliberately not
+# copied into this tree.
 install(
-    DIRECTORY "${CMAKE_BINARY_DIR}/Clavis/"
+    DIRECTORY "${CMAKE_BINARY_DIR}/lib/qml/Clavis/"
     DESTINATION "${CLAVIS_QML_INSTALL_DIR}/Clavis"
     FILES_MATCHING
         PATTERN "qmldir"
@@ -92,7 +86,7 @@ install(
         PATTERN "*.so*"
 )
 install(
-    DIRECTORY "${CMAKE_BINARY_DIR}/M3Shapes/"
+    DIRECTORY "${CMAKE_BINARY_DIR}/lib/qml/M3Shapes/"
     DESTINATION "${CLAVIS_QML_INSTALL_DIR}/M3Shapes"
     FILES_MATCHING
         PATTERN "qmldir"
@@ -141,19 +135,8 @@ install(
     DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/defaults"
 )
 install(
-    FILES
-        "${CLAVIS_SOURCE_ROOT}/packaging/clavis-manager.py"
-        "${CLAVIS_SOURCE_ROOT}/packaging/clavis_paths.py"
+    FILES "${CLAVIS_SOURCE_ROOT}/packaging/clavis_paths.py"
     DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/libexec"
-)
-install(
-    FILES
-        "${CLAVIS_SOURCE_ROOT}/packaging/dependencies.toml"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}"
-)
-install(
-    DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/systemd/system/"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/systemd/system"
 )
 install(
     DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/systemd/user/"

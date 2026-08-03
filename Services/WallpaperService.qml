@@ -233,7 +233,7 @@ Singleton {
             return false;
 
         Quickshell.execDetached(
-            RuntimeCompatibilityService.ipcCommand("wallpaper", args));
+            [Paths.stableKey, "ipc", "call", "wallpaper"].concat(args));
         return true;
     }
 

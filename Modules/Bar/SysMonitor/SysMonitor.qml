@@ -6,9 +6,6 @@ import qs.Common
 import qs.Services
 import qs.Widgets.common
 
-// 新增引入我们的 C++ 高性能监控库
-import Clavis.Sysmon 1.0
-
 Item {
     id: root
 
@@ -52,7 +49,7 @@ Item {
             }
             Text { 
                 // 同时保全了原始流的传递。并在这里调取新的 ramUsedGB。toFixed(1) 可保留如 14.2G 格式：
-                text: SysmonPlugin.ramUsedGB.toFixed(1) + "G"
+                text: root.ramUsedGB.toFixed(1) + "G"
                 color: Appearance.colors.colOnSurface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -75,7 +72,7 @@ Item {
                 font.pixelSize: 16
             }
             Text { 
-                text: Math.round(SysmonPlugin.diskUsage) + "%"
+                text: Math.round(root.diskUsage) + "%"
                 color: Appearance.colors.colOnSurface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -98,7 +95,7 @@ Item {
                 font.pixelSize: 16
             }
             Text { 
-                text: Math.round(SysmonPlugin.coreTemp) + "°C"
+                text: Math.round(root.coreTemp) + "°C"
                 color: Appearance.colors.colOnSurface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -121,7 +118,7 @@ Item {
                 font.pixelSize: 16
             }
             Text { 
-                text: Math.round(SysmonPlugin.cpuUsage) + "%"
+                text: Math.round(root.cpuUsage) + "%"
                 color: Appearance.colors.colOnSurface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -141,4 +138,18 @@ Item {
             Quickshell.execDetached(["gnome-system-monitor"]);
         }
     }
+
+    readonly property real ramUsedGB:
+        Number(SystemMonitorService.memory.usedBytes) / 1073741824
+    readonly property real diskUsage:
+        SystemMonitorService.disks.length > 0
+            ? Number(SystemMonitorService.disks[0].usagePercent) : NaN
+    readonly property real coreTemp:
+        Number(SystemMonitorService.cpu.packageTemperatureCelsius)
+            || Number(SystemMonitorService.cpu.temperatureCelsius)
+    readonly property real cpuUsage:
+        Number(SystemMonitorService.cpu.usagePercent)
+
+    Component.onCompleted: SystemMonitorService.acquire()
+    Component.onDestruction: SystemMonitorService.release()
 }

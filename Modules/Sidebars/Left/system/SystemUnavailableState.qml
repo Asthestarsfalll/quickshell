@@ -16,12 +16,10 @@ Rectangle {
     implicitHeight: unavailableLayout.implicitHeight
         + Appearance.spacing.large * 2
     radius: Appearance.rounding.small
-    color: reconnecting
-        ? Appearance.colors.colTertiaryContainer
-        : Appearance.colors.colErrorContainer
+    color: Appearance.colors.colSurfaceContainer
     readonly property color foregroundColor: reconnecting
-        ? Appearance.colors.colOnTertiaryContainer
-        : Appearance.colors.colOnErrorContainer
+        ? Appearance.colors.colOnSurface
+        : Appearance.colors.colOnSurface
 
     ColumnLayout {
         id: unavailableLayout
@@ -74,8 +72,7 @@ Rectangle {
             visible: !root.reconnecting
             text: qsTr("重试")
             highlighted: true
-            Material.accent: Appearance.colors.colOnErrorContainer
-            Material.foreground: Appearance.colors.colErrorContainer
+            Material.accent: Appearance.colors.colPrimary
             Accessible.name: qsTr("重试系统监测连接")
             onClicked: root.retryRequested()
         }

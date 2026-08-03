@@ -8,7 +8,7 @@ qt_add_qml_module(M3Shapes
         src/MaterialShapeItem.cpp
         src/SmoothShapeMaterial.hpp
         src/SmoothShapeMaterial.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/M3Shapes
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/M3Shapes
 )
 
 # Compile and embed the analytic-antialiasing shaders at the resource paths

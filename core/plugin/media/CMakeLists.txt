@@ -1,7 +1,7 @@
 qt_add_library(ClavisMedia SHARED)
 
 set_target_properties(ClavisMedia PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Media
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Media
 )
 
 qt_add_qml_module(ClavisMedia
@@ -10,7 +10,7 @@ qt_add_qml_module(ClavisMedia
     SOURCES
         src/media_palette_plugin.h
         src/media_palette_plugin.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Media
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Media
 )
 
 target_include_directories(ClavisMedia PUBLIC src)

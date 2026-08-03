@@ -3,12 +3,16 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.Common
 import qs.Services
 
 Singleton {
     id: root
 
-    property string commandName: RuntimeCompatibilityService.commandName
+    property string commandName: {
+        const configured = String(Quickshell.env("CLAVIS_KEY") || "").trim()
+        return configured !== "" ? configured : Paths.stableKey
+    }
     property bool loading: false
     property bool actionRunning: false
     property bool inspecting: false
@@ -27,8 +31,6 @@ Singleton {
     property string lastActionStderr: ""
     property int revision: 0
     property int detailsRevision: 0
-    property bool _refreshPending: false
-
     property string _listOutput: ""
     property string _listErrorOutput: ""
     property bool _listExited: false
@@ -87,8 +89,8 @@ Singleton {
                 qsTr("wl-copy 写入系统剪贴板失败"),
             invalid_clipboard_response:
                 qsTr("剪贴板服务返回了无效数据"),
-            stale_key_cli:
-                qsTr("当前 key CLI 版本过旧；请构建并安装仓库中的新版 key"),
+            clipboard_capability_missing:
+                qsTr("当前 key 不提供所需的剪贴板能力"),
             clipboard_action_busy:
                 qsTr("已有剪贴板操作正在执行")
         };
@@ -111,8 +113,7 @@ Singleton {
     }
 
     function responseIsCurrent(response) {
-        return RuntimeCompatibilityService.clipboardCompatible
-            && response
+        return response
             && response.capabilities
             && response.capabilities.inspect === true
             && response.capabilities.mimeRestore === true
@@ -143,8 +144,8 @@ Singleton {
             };
             root.entries = [];
             root.error = root.normalizedError(
-                null, "stale_key_cli",
-                qsTr("当前 key CLI 不支持新版剪贴板协议"));
+                null, "clipboard_capability_missing",
+                qsTr("当前 key 不支持所需的剪贴板能力"));
             root.revision += 1;
             return;
         }
@@ -171,22 +172,6 @@ Singleton {
     function refresh(limit) {
         if (listProcess.running)
             return false;
-        if (!RuntimeCompatibilityService.ready) {
-            root._refreshPending = true;
-            RuntimeCompatibilityService.refresh();
-            return false;
-        }
-        if (!RuntimeCompatibilityService.clipboardCompatible) {
-            root.available = false;
-            root.canList = false;
-            root.canRestore = false;
-            root.error = root.normalizedError(
-                null, "stale_key_cli",
-                RuntimeCompatibilityService.errorMessage
-                    || qsTr("当前 key 不支持所需剪贴板协议与功能"));
-            root.revision += 1;
-            return false;
-        }
         const safeLimit = Math.max(1, Math.min(500, Number(limit) || 100));
         root.loading = true;
         root._listOutput = "";
@@ -200,17 +185,6 @@ Singleton {
         ];
         listProcess.running = true;
         return true;
-    }
-
-    Connections {
-        target: RuntimeCompatibilityService
-
-        function onReadyChanged() {
-            if (!RuntimeCompatibilityService.ready || !root._refreshPending)
-                return;
-            root._refreshPending = false;
-            root.refresh(100);
-        }
     }
 
     function finalizeListIfReady() {

@@ -14,10 +14,12 @@ Singleton {
     readonly property int maximumDiagnosticLines: 20
     readonly property int maximumDiagnosticCharacters: 2048
 
-    // CLAVIS_KEY is treated as one argv executable, never as shell input.
-    // Production uses the installed `key`; local smoke tests can select the
-    // just-built backend without changing the service.
-    property string commandName: RuntimeCompatibilityService.commandName
+    // keytop is an independent CLI.  CLAVIS_KEYTOP is useful for local
+    // fixtures; production resolves the executable through PATH.
+    property string commandName: {
+        const configured = String(Quickshell.env("CLAVIS_KEYTOP") || "").trim()
+        return configured !== "" ? configured : "keytop"
+    }
     property int configuredIntervalMs: 1000
     property double sourceIntervalMs: 0
     readonly property int intervalMs: configuredIntervalMs
@@ -121,7 +123,7 @@ Singleton {
     function _streamCommand() {
         return [
             root.commandName,
-            "sysmon",
+            "value",
             "stream",
             "--format",
             "jsonl",
@@ -135,20 +137,6 @@ Singleton {
     function _startStream() {
         if (!root.active || streamProcess.running || root._fatalError)
             return;
-        if (!RuntimeCompatibilityService.ready) {
-            root.state = "loading";
-            RuntimeCompatibilityService.refresh();
-            return;
-        }
-        if (!RuntimeCompatibilityService.sysmonCompatible) {
-            root._fatalError = true;
-            root.state = "error";
-            root.errorMessage = qsTr("系统监测协议不兼容");
-            root.errorDetails = RuntimeCompatibilityService.errorMessage
-                || qsTr("请安装与当前 Shell 兼容的 key release。");
-            return;
-        }
-
         reconnectTimer.stop();
         forceStopTimer.stop();
         root._stopRequested = false;
@@ -214,7 +202,7 @@ Singleton {
             if (!root.errorMessage)
                 root.errorMessage = qsTr("系统监测服务不可用");
             root.errorDetails = root.errorDetails
-                || qsTr("已达到自动重连次数上限，可检查 key 后端后重试。");
+                || qsTr("已达到自动重连次数上限，可检查 keytop 后端后重试。");
             return;
         }
 
@@ -226,7 +214,7 @@ Singleton {
         root.state = "reconnecting";
         if (!root.errorMessage) {
             root.errorMessage = reason === "failed_to_start"
-                ? qsTr("无法启动 key 系统监测服务")
+                ? qsTr("无法启动 keytop 系统监测服务")
                 : qsTr("系统监测数据流已中断");
         }
         reconnectTimer.interval = root._retryDelayMs;
@@ -261,22 +249,22 @@ Singleton {
         }
 
         if (reason === "failed_to_start") {
-            root.errorMessage = qsTr("找不到或无法启动 key");
-            root.errorDetails = qsTr("请重新构建并安装 key 后端，然后重试。");
+            root.errorMessage = qsTr("找不到或无法启动 keytop");
+            root.errorDetails = qsTr("请安装独立 keytop 后重试。");
         } else if (reason === "data_timeout") {
             root.errorMessage = qsTr("系统监测数据长时间未更新");
             root.errorDetails = qsTr("数据流没有按预期间隔产生新快照。");
         } else if (reason === "first_snapshot_timeout") {
             root.errorMessage = qsTr("系统监测服务未返回首个快照");
-            root.errorDetails = qsTr("key 已启动，但没有按时输出 JSONL 数据。");
+            root.errorDetails = qsTr("keytop 已启动，但没有按时输出 JSONL 数据。");
         } else if (reason === "invalid_json") {
-            root.errorMessage = qsTr("key 持续输出无效的 JSONL");
+            root.errorMessage = qsTr("keytop 持续输出无效的 JSONL");
             root.errorDetails = qsTr("连续多行数据无法通过 JSON v1 校验。");
         } else {
             root.errorMessage = qsTr("系统监测数据流意外退出");
             root.errorDetails = exitCode >= 0
-                ? qsTr("key 退出码：") + exitCode
-                : qsTr("key 未报告退出码");
+                ? qsTr("keytop 退出码：") + exitCode
+                : qsTr("keytop 未报告退出码");
         }
 
         root._scheduleReconnect(reason);
@@ -378,7 +366,9 @@ Singleton {
             return;
         if (text.indexOf("Unknown command") >= 0
                 || text.indexOf("Unknown subcommand") >= 0) {
-            root._markBackendOutdated();
+            root.errorMessage = qsTr("keytop 不支持当前系统监测接口");
+            root.errorDetails = text;
+            root._terminateStream("invalid_json");
             return;
         }
 
@@ -390,9 +380,9 @@ Singleton {
             root._consecutiveMalformedLines += 1;
             root.errorDetails = qsTr("收到损坏的 JSONL 数据行");
             if (!root.hasData)
-                root.errorMessage = qsTr("无法解析 key 系统监测数据");
+                root.errorMessage = qsTr("无法解析 keytop 系统监测数据");
             if (root._consecutiveMalformedLines >= 3 && streamProcess.running) {
-                root.errorMessage = qsTr("key 持续输出无效的 JSONL");
+                root.errorMessage = qsTr("keytop 持续输出无效的 JSONL");
                 root._terminateStream("invalid_json");
             }
             return;
@@ -402,8 +392,8 @@ Singleton {
         if (validationError === "schemaVersion") {
             root.schemaMismatchCount += 1;
             root._fatalError = true;
-            root.errorMessage = qsTr("系统监测协议版本不兼容");
-            root.errorDetails = qsTr("需要重新构建 key 后端（需要 schema v")
+            root.errorMessage = qsTr("系统监测数据 schema 不兼容");
+            root.errorDetails = qsTr("需要重新构建 keytop（需要 schema v")
                 + root.supportedSchemaVersion + "）。";
             root.state = "error";
             root._terminateStream("schema_mismatch");
@@ -414,7 +404,7 @@ Singleton {
             root._consecutiveMalformedLines += 1;
             root.errorMessage = root.hasData
                 ? root.errorMessage
-                : qsTr("key 返回的系统监测数据不完整");
+                : qsTr("keytop 返回的系统监测数据不完整");
             root.errorDetails = validationError;
             if (root._consecutiveMalformedLines >= 3
                     && streamProcess.running) {
@@ -432,7 +422,9 @@ Singleton {
             return;
         if (text.indexOf("Unknown command") >= 0
                 || text.indexOf("Unknown subcommand") >= 0) {
-            root._markBackendOutdated();
+            root.errorMessage = qsTr("keytop 不支持当前系统监测接口");
+            root.errorDetails = text;
+            root._terminateStream("invalid_json");
             return;
         }
 
@@ -445,15 +437,6 @@ Singleton {
         root.errorDetails = next.join("\n").slice(
             -root.maximumDiagnosticCharacters
         );
-    }
-
-    function _markBackendOutdated() {
-        root._fatalError = true;
-        root.errorMessage = qsTr("key 版本过旧");
-        root.errorDetails =
-            qsTr("当前 key 不支持 sysmon，请重新构建并安装 key 后端。");
-        root.state = "error";
-        root._terminateStream("outdated_backend");
     }
 
     function _safeTerminalEnvironmentValue() {
@@ -494,7 +477,7 @@ Singleton {
         root._keyTopProbeGeneration += 1;
         root._keyTopProbeHandledGeneration = -1;
         const generation = root._keyTopProbeGeneration;
-        keyTopProbe.command = [root.commandName, "top", "--help"];
+        keyTopProbe.command = [root.commandName, "--help"];
         keyTopProbe.running = true;
 
         Qt.callLater(function() {
@@ -514,7 +497,7 @@ Singleton {
         if (exitCode !== 0) {
             root.actionBusy = false;
             root.actionError =
-                qsTr("key top 不可用，请重新构建并安装 key 后端");
+                qsTr("keytop 不可用，请安装独立 keytop");
             return;
         }
 
@@ -527,7 +510,7 @@ Singleton {
         root._terminalCandidateIndex += 1;
         if (root._terminalCandidateIndex >= root._terminalCandidates.length) {
             root.actionBusy = false;
-            root.actionError = qsTr("未找到可用终端，无法打开 key top");
+            root.actionError = qsTr("未找到可用终端，无法打开 keytop");
             return;
         }
 
@@ -556,15 +539,15 @@ Singleton {
         switch (executable) {
         case "kitty":
         case "foot":
-            return [program, root.commandName, "top"];
+            return [program, root.commandName];
         case "wezterm":
-            return [program, "start", "--", root.commandName, "top"];
+            return [program, "start", "--", root.commandName];
         case "gnome-terminal":
-            return [program, "--", root.commandName, "top"];
+            return [program, "--", root.commandName];
         case "alacritty":
         case "konsole":
         default:
-            return [program, "-e", root.commandName, "top"];
+            return [program, "-e", root.commandName];
         }
     }
 
@@ -598,18 +581,6 @@ Singleton {
             root._stopStream();
     }
 
-    Connections {
-        target: RuntimeCompatibilityService
-
-        function onReadyChanged() {
-            if (RuntimeCompatibilityService.ready && root.active
-                    && !streamProcess.running) {
-                root._fatalError = false;
-                root._startStream();
-            }
-        }
-    }
-
     Timer {
         id: reconnectTimer
 
@@ -636,7 +607,7 @@ Singleton {
                         && !root._terminationPending) {
                     root.errorMessage =
                         qsTr("系统监测服务未返回首个快照");
-                    root.errorDetails = qsTr("正在重新启动 key 数据流。");
+                    root.errorDetails = qsTr("正在重新启动 keytop 数据流。");
                     root._terminateStream("first_snapshot_timeout");
                 }
                 return;
@@ -657,7 +628,7 @@ Singleton {
                     && !root._timeoutRestartIssued) {
                 root._timeoutRestartIssued = true;
                 root.errorMessage = qsTr("系统监测数据长时间未更新");
-                root.errorDetails = qsTr("正在重新连接 key 数据流。");
+                    root.errorDetails = qsTr("正在重新连接 keytop 数据流。");
                 root._terminateStream("data_timeout");
             }
         }

@@ -16,11 +16,12 @@ build_dir=""
 dry_run=false
 deps_install=false
 allow_dirty=${CLAVIS_ALLOW_DIRTY:-false}
-pending_partial=""
+build_testing=OFF
+source_shell_args=()
 
 usage() {
     cat <<'EOF'
-Clavis source build and user-level release installer
+Clavis Shell source build and user-level release installer
 
 Usage:
   ./setup.sh doctor
@@ -28,26 +29,33 @@ Usage:
   ./setup.sh configure [--release YYYY.MM.DD[.N]] [--build-dir PATH]
   ./setup.sh build [--release VERSION] [--build-dir PATH]
   ./setup.sh test [--release VERSION] [--build-dir PATH]
+  ./setup.sh smoke [--release VERSION] [--build-dir PATH]
   ./setup.sh dev-build [--build-dir PATH]
+  ./setup.sh run-source [-- QS_OPTIONS...]
   ./setup.sh install [--release VERSION] [--build-dir PATH] [--dry-run] [--allow-dirty]
   ./setup.sh uninstall-build [--release VERSION] [--build-dir PATH] [--dry-run]
-  ./setup.sh dry-run [--release VERSION] [--build-dir PATH]
 
-The default install is entirely user-level. Only `deps --install` may invoke
-the distribution package manager with sudo, and only when explicitly requested.
+Build and test responsibilities are intentionally separate. `build` never
+runs CTest, smoke checks, installs, or changes user configuration. `install`
+publishes a Shell-only runtime through the already installed stable `key` CLI;
+Keytop and the CLI are owned by their own repositories.
 
 Environment overrides:
   CLAVIS_BIN_HOME, CLAVIS_INSTALL_PREFIX, CLAVIS_CONFIG_HOME,
   CLAVIS_DATA_HOME, CLAVIS_STATE_HOME, CLAVIS_CACHE_HOME,
   CLAVIS_RUNTIME_HOME, CLAVIS_PROFILE, CLAVIS_PROFILE_HOME,
   CLAVIS_PROFILE_CONFIG_HOME, CLAVIS_GENERATED_HOME,
-  CLAVIS_QML_IMPORT_HOME, CLAVIS_BUILD_ROOT and CLAVIS_ALLOW_DIRTY
-  (local development releases only).
+  CLAVIS_QML_IMPORT_HOME, CLAVIS_BUILD_ROOT and CLAVIS_ALLOW_DIRTY.
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --)
+            shift
+            source_shell_args=("$@")
+            break
+            ;;
         --release)
             [[ $# -ge 2 ]] || { printf 'Missing value for --release\n' >&2; exit 2; }
             release=$2
@@ -93,6 +101,34 @@ validate_release() {
         | grep -Fx -- "$date_part" >/dev/null
 }
 
+source_fingerprint() {
+    if ! git -C "$setup_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        printf 'unknown'
+        return
+    fi
+    git -C "$setup_dir" ls-files -co --exclude-standard -z \
+        | sort -z \
+        | while IFS= read -r -d '' source_path; do
+            printf '%s\0' "$source_path"
+            local absolute_path=$setup_dir/$source_path
+            if [[ -L "$absolute_path" ]]; then
+                printf 'symlink:%s\0' "$(readlink -- "$absolute_path")"
+            elif [[ -f "$absolute_path" ]]; then
+                printf 'file:%s:' "$(stat -c '%a' -- "$absolute_path")"
+                sha256sum "$absolute_path" | awk '{printf "%s\\0", $1}'
+            else
+                printf 'missing\0'
+            fi
+        done \
+        | sha256sum \
+        | awk '{print $1}'
+}
+
+source_is_dirty() {
+    ! git -C "$setup_dir" diff-index --quiet HEAD -- \
+        || [[ -n "$(git -C "$setup_dir" ls-files --others --exclude-standard)" ]]
+}
+
 resolve_release() {
     if [[ -n "$release" ]]; then
         validate_release "$release"
@@ -118,43 +154,6 @@ resolve_release() {
         revision=$((revision + 1))
         release="$base.$revision"
     done
-}
-
-source_fingerprint() {
-    if ! git -C "$setup_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        printf 'unknown'
-        return
-    fi
-    {
-        git -C "$setup_dir" ls-files -co --exclude-standard -z
-        if [[ -d "$setup_dir/local/profiles/default" ]]; then
-            find "$setup_dir/local/profiles/default" \
-                \( -type f -o -type l \) -printf '%P\0' \
-                | while IFS= read -r -d '' local_path; do
-                    printf 'local/profiles/default/%s\0' "$local_path"
-                done
-        fi
-    } \
-        | sort -z \
-        | while IFS= read -r -d '' source_path; do
-            printf '%s\0' "$source_path"
-            local absolute_path=$setup_dir/$source_path
-            if [[ -L "$absolute_path" ]]; then
-                printf 'symlink:%s\0' "$(readlink -- "$absolute_path")"
-            elif [[ -f "$absolute_path" ]]; then
-                printf 'file:%s:' "$(stat -c '%a' -- "$absolute_path")"
-                sha256sum "$absolute_path" | awk '{printf "%s\\0", $1}'
-            else
-                printf 'missing\0'
-            fi
-        done \
-        | sha256sum \
-        | awk '{print $1}'
-}
-
-source_is_dirty() {
-    ! git -C "$setup_dir" diff-index --quiet HEAD -- \
-        || [[ -n "$(git -C "$setup_dir" ls-files --others --exclude-standard)" ]]
 }
 
 resolve_build_dir() {
@@ -192,21 +191,22 @@ run() {
     fi
 }
 
-required_commands=(
-    cmake c++ pkg-config python3 bash git qs systemctl loginctl which
-)
-required_pkg_modules=(Qt6Core Qt6Qml Qt6Quick libpipewire-0.3 ncursesw)
+build_commands=(cmake c++ pkg-config python3 bash git)
+build_modules=(Qt6Core Qt6Qml Qt6Quick Qt6Network libpipewire-0.3)
+runtime_commands=(qs key keytop)
+runtime_optional=(niri systemctl loginctl busctl matugen)
 required_arch_packages=(
     cmake gcc pkgconf qt6-base qt6-declarative qt6-shadertools qt6-tools
-    qt6-5compat qt6-lottie qtkeychain-qt6 pipewire ncurses cava quickshell
-    python bash coreutils systemd git which
+    qt6-5compat qt6-lottie qtkeychain-qt6 pipewire cava quickshell
+    python bash coreutils systemd git
 )
 
-doctor() {
-    local failed=0
-    printf 'Clavis build/install diagnostics\n'
-    local dependency
-    for dependency in "${required_commands[@]}"; do
+check_command_group() {
+    local label=$1
+    shift
+    printf '%s dependencies:\n' "$label"
+    local failed=0 dependency
+    for dependency in "$@"; do
         if command -v "$dependency" >/dev/null 2>&1; then
             printf '  [OK]   %s\n' "$dependency"
         else
@@ -214,43 +214,32 @@ doctor() {
             failed=1
         fi
     done
-    for dependency in "${required_pkg_modules[@]}"; do
+    return "$failed"
+}
+
+doctor() {
+    local failed=0 dependency
+    printf 'Clavis Shell diagnostics\n'
+    check_command_group "Build" "${build_commands[@]}" || failed=1
+    for dependency in "${build_modules[@]}"; do
         if pkg-config --exists "$dependency" 2>/dev/null; then
-            printf '  [OK]   pkg-config %s\n' "$dependency"
-        elif [[ "$dependency" == "ncursesw" ]] && pkg-config --exists ncurses 2>/dev/null; then
-            printf '  [OK]   pkg-config ncurses (ncursesw fallback)\n'
+            printf '  [OK]   build pkg-config %s\n' "$dependency"
         else
-            printf '  [FAIL] pkg-config %s\n' "$dependency"
+            printf '  [FAIL] build pkg-config %s\n' "$dependency"
             failed=1
         fi
     done
-    if pkg-config --exists libcava 2>/dev/null || pkg-config --exists cava 2>/dev/null; then
-        printf '  [OK]   pkg-config libcava/cava\n'
-    else
-        printf '  [FAIL] pkg-config libcava/cava\n'
-        failed=1
-    fi
     if cmake --find-package -DNAME=Qt6Keychain -DCOMPILER_ID=GNU \
         -DLANGUAGE=CXX -DMODE=EXIST >/dev/null 2>&1; then
-        printf '  [OK]   Qt6Keychain CMake package\n'
+        printf '  [OK]   build Qt6Keychain CMake package\n'
     else
-        printf '  [WARN] Qt6Keychain check deferred to CMake configure\n'
+        printf '  [WARN] build Qt6Keychain CMake package (configure will confirm)\n'
     fi
-    local qt_host_root=""
-    qt_host_root=$(pkg-config --variable=libexecdir Qt6Core 2>/dev/null || true)
-    for dependency in \
-        "$qt_host_root/bin/qsb" \
-        "$qt_host_root/bin/lrelease" \
-        "$qt_host_root/qml/Qt5Compat" \
-        "$qt_host_root/qml/Qt/labs/lottieqt"; do
-        if [[ -n "$qt_host_root" && ( -x "$dependency" || -d "$dependency" ) ]]; then
-            printf '  [OK]   %s\n' "$dependency"
-        else
-            printf '  [FAIL] Qt 6 runtime/tool path %s\n' "$dependency"
-            failed=1
-        fi
-    done
-    printf '\nArch Linux install command (not executed):\n  sudo pacman -S --needed'
+
+    check_command_group "Runtime" "${runtime_commands[@]}" || true
+    check_command_group "Optional runtime" "${runtime_optional[@]}" || true
+    printf '\nRuntime paths are checked again by install; missing optional tools do not block build.\n'
+    printf 'Arch Linux dependency command (not executed):\n  sudo pacman -S --needed'
     printf ' %q' "${required_arch_packages[@]}"
     printf '\n'
     return "$failed"
@@ -262,7 +251,7 @@ deps() {
         return
     fi
     if ! command -v pacman >/dev/null 2>&1; then
-        printf 'Automatic dependency installation is currently implemented only for Arch Linux.\n' >&2
+        printf 'Automatic dependency installation is implemented only for Arch Linux.\n' >&2
         exit 1
     fi
     run sudo pacman -S --needed "${required_arch_packages[@]}"
@@ -270,30 +259,22 @@ deps() {
 
 configure() {
     resolve_build_dir
-    local commit
+    local commit dirty=false fingerprint build_time=""
     commit=$(git -C "$setup_dir" rev-parse HEAD 2>/dev/null || printf 'unknown')
-    local dirty=false
-    if source_is_dirty; then
-        dirty=true
-    fi
-    local fingerprint
+    source_is_dirty && dirty=true
     fingerprint=$(source_fingerprint)
-    local build_time=""
-    local installed_metadata=$CLAVIS_INSTALL_PREFIX/releases/$release/release.json
-    if [[ -f "$installed_metadata" ]]; then
+    if [[ -f "$CLAVIS_INSTALL_PREFIX/releases/$release/release.json" ]]; then
         build_time=$(python3 -c \
-            'import json,sys; data=json.load(open(sys.argv[1])); print(data.get("buildTime", ""))' \
-            "$installed_metadata" 2>/dev/null || true)
+            'import json,sys; print(json.load(open(sys.argv[1])).get("buildTime", ""))' \
+            "$CLAVIS_INSTALL_PREFIX/releases/$release/release.json" 2>/dev/null || true)
     fi
-    if [[ -z "$build_time" ]]; then
-        build_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-    fi
+    [[ -n "$build_time" ]] || build_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
     run cmake \
         -S "$setup_dir/core" \
         -B "$build_dir" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_MESSAGE=NEVER \
-        -DBUILD_TESTING=ON \
+        -DBUILD_TESTING="$build_testing" \
         -DCLAVIS_RELEASE="$release" \
         -DCLAVIS_COMMIT="$commit" \
         -DCLAVIS_SOURCE_DIRTY="$dirty" \
@@ -304,29 +285,20 @@ configure() {
 
 configure_development() {
     resolve_dev_build_dir
-    local commit
+    local commit dirty=false fingerprint build_time=""
     commit=$(git -C "$setup_dir" rev-parse HEAD 2>/dev/null || printf 'unknown')
-    local dirty=false
-    if source_is_dirty; then
-        dirty=true
-    fi
-    local fingerprint
+    source_is_dirty && dirty=true
     fingerprint=$(source_fingerprint)
-    local build_time=""
     if [[ -f "$build_dir/CMakeCache.txt" ]]; then
-        build_time=$(sed -n \
-            's/^CLAVIS_BUILD_TIME:[^=]*=//p' "$build_dir/CMakeCache.txt" \
-            | head -n 1)
+        build_time=$(sed -n 's/^CLAVIS_BUILD_TIME:[^=]*=//p' "$build_dir/CMakeCache.txt" | head -n 1)
     fi
-    if [[ -z "$build_time" ]]; then
-        build_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-    fi
+    [[ -n "$build_time" ]] || build_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
     run cmake \
         -S "$setup_dir/core" \
         -B "$build_dir" \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DCMAKE_INSTALL_MESSAGE=NEVER \
-        -DBUILD_TESTING=ON \
+        -DBUILD_TESTING=OFF \
         -DCLAVIS_RELEASE=development \
         -DCLAVIS_COMMIT="$commit" \
         -DCLAVIS_SOURCE_DIRTY="$dirty" \
@@ -335,18 +307,16 @@ configure_development() {
         -DCLAVIS_CHANNEL=development
 }
 
-dev_build() {
-    configure_development
-    run cmake --build "$build_dir" --parallel
-}
-
 build() {
+    build_testing=OFF
     configure
     run cmake --build "$build_dir" --parallel
 }
 
 test_release() {
-    build
+    build_testing=ON
+    configure
+    run cmake --build "$build_dir" --parallel
     if [[ "$dry_run" == true ]]; then
         print_command env -u QT_QPA_PLATFORMTHEME QT_QPA_PLATFORM=offscreen \
             ctest --test-dir "$build_dir" --output-on-failure
@@ -356,22 +326,99 @@ test_release() {
     fi
 }
 
+dev_build() {
+    configure_development
+    run cmake --build "$build_dir" --parallel
+    printf 'Development native QML modules: %s\n' "$build_dir/lib/qml"
+}
+
+smoke() {
+    resolve_build_dir
+    local metadata=$build_dir/generated/release.json
+    [[ -f "$metadata" ]] || {
+        printf 'Smoke requires a configured build with %s\n' "$metadata" >&2
+        exit 1
+    }
+    python3 - "$metadata" "$setup_dir" "$build_dir" <<'PY'
+import json
+import pathlib
+import sys
+
+metadata = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+root = pathlib.Path(sys.argv[2])
+build = pathlib.Path(sys.argv[3])
+required = ("component", "release", "minimumKeyCli", "minimumKeytop", "shellProtocol")
+missing = [field for field in required if field not in metadata]
+if missing:
+    raise SystemExit("release metadata missing: " + ", ".join(missing))
+if metadata["component"] != "quickshell":
+    raise SystemExit("release metadata component is not quickshell")
+for relative in (
+    "shell.qml",
+    "AppShell.qml",
+    "Common/Paths.qml",
+    "lib/qml/Clavis/Runtime/qmldir",
+    "lib/qml/Clavis/WeatherMap/qmldir",
+    "lib/qml/M3Shapes/qmldir",
+):
+    path = root / relative if not relative.startswith("lib/") else build / relative
+    if not path.exists():
+        raise SystemExit(f"smoke missing: {path}")
+print("release metadata, Shell roots, and native QML module paths: OK")
+PY
+    if command -v qmlimportscanner >/dev/null 2>&1; then
+        run qmlimportscanner -importPath "$build_dir/lib/qml" -rootPath "$setup_dir" \
+            "$setup_dir/shell.qml" >/dev/null
+        printf 'QML import scanner: OK\n'
+    else
+        printf 'QML import scanner: SKIP (not installed)\n'
+    fi
+}
+
+check_install_runtime() {
+    local failed=0 dependency
+    for dependency in qs key keytop; do
+        if [[ "$dependency" == key && -x "$CLAVIS_BIN_HOME/key" ]]; then
+            printf '  [OK]   stable %s: %s\n' "$dependency" "$CLAVIS_BIN_HOME/key"
+        elif [[ "$dependency" == keytop && -x "$CLAVIS_BIN_HOME/keytop" ]]; then
+            printf '  [OK]   stable %s: %s\n' "$dependency" "$CLAVIS_BIN_HOME/keytop"
+        elif command -v "$dependency" >/dev/null 2>&1; then
+            printf '  [OK]   %s\n' "$dependency"
+        else
+            printf '  [FAIL] %s\n' "$dependency"
+            failed=1
+        fi
+    done
+    if [[ "$failed" -ne 0 ]]; then
+        printf 'Install requires both the stable key CLI and independent keytop runtime.\n' >&2
+        return 1
+    fi
+}
+
+validate_partial() {
+    local partial=$1
+    [[ -f "$partial/release.json" ]] || { printf 'partial release has no release.json\n' >&2; return 1; }
+    [[ -f "$partial/share/clavis/qml/shell.qml" ]] || { printf 'partial release has no Shell root\n' >&2; return 1; }
+    [[ -d "$partial/lib/qml/Clavis" ]] || { printf 'partial release has no Clavis QML modules\n' >&2; return 1; }
+    [[ -d "$partial/lib/qml/M3Shapes" ]] || { printf 'partial release has no M3Shapes module\n' >&2; return 1; }
+    [[ ! -e "$partial/bin/key" ]] || { printf 'partial release must not contain bin/key\n' >&2; return 1; }
+}
+
 install_release() {
+    check_install_runtime
     if source_is_dirty && [[ "$allow_dirty" != true ]]; then
         printf 'Refusing to publish a dirty source tree. Commit the release or rerun with --allow-dirty.\n' >&2
         exit 1
     fi
+    build
+    local partial
     resolve_build_dir
-    test_release
-    local partial=$CLAVIS_INSTALL_PREFIX/releases/$release.partial
-    pending_partial=$partial
-    local launcher=$setup_dir/packaging/defaults/key-launcher
+    partial=$CLAVIS_INSTALL_PREFIX/releases/$release.partial
     if [[ "$dry_run" == true ]]; then
         print_command mkdir -p "$CLAVIS_INSTALL_PREFIX/releases"
         print_command cmake --install "$build_dir" --prefix "$partial"
-        print_command python3 "$setup_dir/packaging/clavis-manager.py" \
-            install-finalize --partial "$partial" --release "$release" \
-            --launcher "$launcher"
+        print_command "$CLAVIS_BIN_HOME/key" release install-finalize \
+            "$release" --partial "$partial"
         return
     fi
 
@@ -380,31 +427,35 @@ install_release() {
         rm -rf -- "$partial"
     fi
     cleanup_partial() {
-        if [[ -n "$pending_partial" && -d "$pending_partial" ]]; then
-            rm -rf -- "$pending_partial"
+        if [[ -n "$partial" && -d "$partial" ]]; then
+            rm -rf -- "$partial"
         fi
     }
     trap cleanup_partial EXIT
     cmake --install "$build_dir" --prefix "$partial"
-    python3 "$setup_dir/packaging/clavis-manager.py" \
-        install-finalize --partial "$partial" --release "$release" \
-        --launcher "$launcher"
-    pending_partial=""
+    validate_partial "$partial"
+    "$CLAVIS_BIN_HOME/key" release install-finalize \
+        "$release" --partial "$partial"
     trap - EXIT
+}
+
+run_source() {
+    local stable_key=$CLAVIS_BIN_HOME/key
+    [[ -x "$stable_key" ]] || {
+        printf 'run-source requires an installed stable key at %s\n' "$stable_key" >&2
+        exit 1
+    }
+    exec "$stable_key" shell --dev --native --source "$setup_dir" "${source_shell_args[@]}"
 }
 
 uninstall_build() {
     resolve_build_dir
-    local default_root
-    default_root=$(realpath -m -- "$setup_dir/.build")
-    local allowed_root=$default_root
-    if [[ -n "${CLAVIS_BUILD_ROOT:-}" ]]; then
-        allowed_root=$CLAVIS_BUILD_ROOT
-        if [[ "$allowed_root" != /* ]]; then
-            allowed_root=$setup_dir/$allowed_root
-        fi
-        allowed_root=$(realpath -m -- "$allowed_root")
+    local allowed_root
+    allowed_root=$(realpath -m -- "${CLAVIS_BUILD_ROOT:-$setup_dir/.build}")
+    if [[ "$allowed_root" != /* ]]; then
+        allowed_root=$setup_dir/$allowed_root
     fi
+    allowed_root=$(realpath -m -- "$allowed_root")
     if [[ "$build_dir" == / || "$build_dir" == "$HOME" \
         || "$build_dir" == "$setup_dir" || "$build_dir" == "$allowed_root" \
         || "$build_dir" != "$allowed_root/"* ]]; then
@@ -420,37 +471,17 @@ uninstall_build() {
 }
 
 case "$command_name" in
-    help|-h|--help)
-        usage
-        ;;
-    doctor)
-        doctor
-        ;;
-    deps)
-        deps
-        ;;
-    configure)
-        configure
-        ;;
-    build)
-        build
-        ;;
-    test)
-        test_release
-        ;;
-    dev-build)
-        dev_build
-        ;;
-    install)
-        install_release
-        ;;
-    dry-run)
-        dry_run=true
-        install_release
-        ;;
-    uninstall-build)
-        uninstall_build
-        ;;
+    help|-h|--help) usage ;;
+    doctor) doctor ;;
+    deps) deps ;;
+    configure) configure ;;
+    build) build ;;
+    test) test_release ;;
+    smoke) smoke ;;
+    dev-build) dev_build ;;
+    run-source) run_source ;;
+    install) install_release ;;
+    uninstall-build) uninstall_build ;;
     *)
         printf 'Unknown command: %s\n' "$command_name" >&2
         usage >&2

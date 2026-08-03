@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 import qs.Components
 import qs.Widgets.weather

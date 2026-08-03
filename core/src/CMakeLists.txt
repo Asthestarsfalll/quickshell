@@ -3,59 +3,10 @@ qt_add_library(ClavisRuntimeCore STATIC)
 target_sources(ClavisRuntimeCore PRIVATE
     runtime/clavis_paths.h
     runtime/clavis_paths.cpp
-    runtime/rapl_helper_client.h
-    runtime/rapl_helper_client.cpp
 )
 set_target_properties(ClavisRuntimeCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(ClavisRuntimeCore PRIVATE Qt6::Core Qt6::Network)
 target_include_directories(ClavisRuntimeCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-qt_add_library(ClavisSysmonCore STATIC)
-target_sources(ClavisSysmonCore PRIVATE
-    sysmon/types.h
-    sysmon/parsers.h
-    sysmon/parsers.cpp
-    sysmon/collector.h
-    sysmon/collector_system.cpp
-    sysmon/collector_devices.cpp
-    sysmon/collector_processes.cpp
-    sysmon/sampler.h
-    sysmon/sampler.cpp
-    sysmon/serialization.h
-    sysmon/serialization.cpp
-    sysmon_types.h
-    sysmon_backend.h
-    sysmon_backend.cpp
-)
-
-# 确保在共享库被链接时开启 -fPIC
-set_target_properties(ClavisSysmonCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-target_link_libraries(ClavisSysmonCore PRIVATE ClavisRuntimeCore Qt6::Core)
-target_include_directories(ClavisSysmonCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-qt_add_library(ClavisWeatherCore STATIC)
-target_sources(ClavisWeatherCore PRIVATE
-    weather_types.h
-    weather_types.cpp
-    weather_calculator.h
-    weather_calculator.cpp
-    weather_cache.h
-    weather_cache.cpp
-    openmeteo_client.h
-    openmeteo_client.cpp
-    weather_backend.h
-    weather_backend.cpp
-)
-
-set_target_properties(ClavisWeatherCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-target_link_libraries(ClavisWeatherCore PRIVATE
-    ClavisRuntimeCore
-    Qt6::Core
-    Qt6::Network
-)
-target_include_directories(ClavisWeatherCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(ClavisWeatherMapCore STATIC)
 target_sources(ClavisWeatherMapCore PRIVATE
@@ -100,43 +51,6 @@ target_link_libraries(ClavisNiriCore PRIVATE
     Qt6::Network
 )
 target_include_directories(ClavisNiriCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-qt_add_library(ClavisRecordingCore STATIC)
-target_sources(ClavisRecordingCore PRIVATE
-    recording/recording_types.h
-    recording/recording_types.cpp
-    recording/process_identity.h
-    recording/process_identity.cpp
-    recording/capture_session_guard.h
-    recording/capture_session_guard.cpp
-    recording/recording_state_store.h
-    recording/recording_state_store.cpp
-    recording/gsr_backend.h
-    recording/gsr_backend.cpp
-    recording/ffmpeg_postprocessor.h
-    recording/ffmpeg_postprocessor.cpp
-    recording/dependency_probe.h
-    recording/dependency_probe.cpp
-    recording/recorder_controller.h
-    recording/recorder_controller.cpp
-    recording/audio/audio_recording_types.h
-    recording/audio/audio_recording_types.cpp
-    recording/audio/audio_recording_state_store.h
-    recording/audio/audio_recording_state_store.cpp
-    recording/audio/audio_source_resolver.h
-    recording/audio/audio_source_resolver.cpp
-    recording/audio/ffmpeg_audio_backend.h
-    recording/audio/ffmpeg_audio_backend.cpp
-    recording/audio/audio_file_finalizer.h
-    recording/audio/audio_file_finalizer.cpp
-    recording/audio/audio_recorder_controller.h
-    recording/audio/audio_recorder_controller.cpp
-)
-
-set_target_properties(ClavisRecordingCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-target_link_libraries(ClavisRecordingCore PRIVATE ClavisRuntimeCore Qt6::Core)
-target_include_directories(ClavisRecordingCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(ClavisAudioCore STATIC)
 target_sources(ClavisAudioCore PRIVATE

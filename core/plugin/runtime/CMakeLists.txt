@@ -1,7 +1,7 @@
 qt_add_library(ClavisRuntime SHARED)
 
 set_target_properties(ClavisRuntime PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Runtime
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Runtime
 )
 
 qt_add_qml_module(ClavisRuntime
@@ -10,7 +10,7 @@ qt_add_qml_module(ClavisRuntime
     SOURCES
         src/clavis_build_info.h
         src/clavis_build_info.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Runtime
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Runtime
 )
 
 target_include_directories(ClavisRuntime PRIVATE

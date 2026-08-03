@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Quickshell
-import Clavis.Weather 1.0
 import Clavis.WeatherMap 1.0
 import qs.Common
 import qs.Components

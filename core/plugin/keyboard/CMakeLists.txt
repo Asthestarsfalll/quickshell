@@ -1,7 +1,7 @@
 qt_add_library(ClavisKeyboard SHARED)
 
 set_target_properties(ClavisKeyboard PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Keyboard
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Keyboard
 )
 
 qt_add_qml_module(ClavisKeyboard
@@ -10,7 +10,7 @@ qt_add_qml_module(ClavisKeyboard
     SOURCES
         src/keyboard_lock_plugin.h
         src/keyboard_lock_plugin.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Clavis/Keyboard
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/Clavis/Keyboard
 )
 
 target_include_directories(ClavisKeyboard PUBLIC src)
