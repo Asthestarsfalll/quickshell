@@ -3921,16 +3921,6 @@
         <translation>keytop 返回的系统监测数据不完整</translation>
     </message>
     <message>
-        <location filename="../Services/SystemMonitorService.qml" line="447" />
-        <source>key 版本过旧</source>
-        <translation>key 版本过旧</translation>
-    </message>
-    <message>
-        <location filename="../Services/SystemMonitorService.qml" line="449" />
-        <source>当前 key 不支持 sysmon，请重新构建并安装 key 后端。</source>
-        <translation>当前 key 不支持 sysmon，请重新构建并安装 key 后端。</translation>
-    </message>
-    <message>
         <location filename="../Services/SystemMonitorService.qml" line="512" />
         <source>keytop 不可用，请安装独立 keytop</source>
         <translation>keytop 不可用，请安装独立 keytop</translation>

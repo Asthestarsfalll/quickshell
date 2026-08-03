@@ -3921,16 +3921,6 @@ detected</translation>
         <translation>System monitor data returned by keytop is incomplete</translation>
     </message>
     <message>
-        <location filename="../Services/SystemMonitorService.qml" line="447" />
-        <source>key 版本过旧</source>
-        <translation>The key version is too old</translation>
-    </message>
-    <message>
-        <location filename="../Services/SystemMonitorService.qml" line="449" />
-        <source>当前 key 不支持 sysmon，请重新构建并安装 key 后端。</source>
-        <translation>The current key build does not support sysmon; rebuild and install the key backend.</translation>
-    </message>
-    <message>
         <location filename="../Services/SystemMonitorService.qml" line="512" />
         <source>keytop 不可用，请安装独立 keytop</source>
         <translation>keytop is unavailable; install the independent keytop command</translation>
