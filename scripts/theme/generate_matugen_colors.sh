@@ -224,6 +224,7 @@ fi
 generate_external_colors() {
     local template_id=$1
     local config_dir template_path color_path color_temp target_config status
+    external_colors_updated=false
     case "$template_id" in
         zsh) config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/clavis-zsh-theme" ;;
         keytop) config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/keytop" ;;
@@ -257,6 +258,7 @@ generate_external_colors() {
     fi
     if (( status == 0 )) && [[ -s "$color_temp" ]]; then
         mv -f -- "$color_temp" "$color_path"
+        external_colors_updated=true
         printf 'Updated %s\n' "$color_path"
         return 0
     fi
@@ -274,13 +276,15 @@ fi
 
 if [[ "$keytop_requested" == true && "$dry_run" == false ]]; then
     if generate_external_colors keytop; then
-        keytop_reload=${CLAVIS_KEYTOP_RELOAD_COMMAND:-keytop}
-        if command -v "$keytop_reload" >/dev/null 2>&1; then
-            "$keytop_reload" reload >/dev/null \
-                || printf 'Warning: Keytop color reload failed; existing TUI continues.\n' >&2
-        else
-            printf 'Warning: Keytop reload command is unavailable (%s).\n' \
-                "$keytop_reload" >&2
+        if [[ "$external_colors_updated" == true ]]; then
+            keytop_reload=${CLAVIS_KEYTOP_RELOAD_COMMAND:-keytop}
+            if command -v "$keytop_reload" >/dev/null 2>&1; then
+                "$keytop_reload" reload >/dev/null \
+                    || printf 'Warning: Keytop color reload failed; existing TUI continues.\n' >&2
+            else
+                printf 'Warning: Keytop reload command is unavailable (%s).\n' \
+                    "$keytop_reload" >&2
+            fi
         fi
     else
         printf 'Warning: Keytop color generation failed; other targets continue.\n' >&2
@@ -289,7 +293,11 @@ fi
 
 if [[ "$fcitx_requested" == true && "$dry_run" == false ]]; then
     fcitx_provider=${CLAVIS_FCITX5_THEME_COMMAND:-fcitx5-theme}
-    if command -v "$fcitx_provider" >/dev/null 2>&1; then
+    fcitx_config="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5-matugen-theme/matugen.conf"
+    if [[ ! -f "$fcitx_config" ]]; then
+        printf 'Warning: Fcitx5 target is not installed; skipped (%s is missing).\n' \
+            "$fcitx_config" >&2
+    elif command -v "$fcitx_provider" >/dev/null 2>&1; then
         if ! "$fcitx_provider" apply; then
             printf 'Warning: Fcitx5 theme apply failed; preserving its previous complete theme.\n' >&2
         fi

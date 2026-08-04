@@ -105,6 +105,9 @@ HOME="$quickshell_home" "$generator" --color '#6750a4' --templates '' >/dev/null
 
 provider_home="$test_dir/provider"
 provider_log="$test_dir/provider.log"
+mkdir -p "$provider_home/.config/fcitx5-matugen-theme"
+cp "$repo_dir/../clavis-fcitx5-theme/defaults/matugen.conf" \
+    "$provider_home/.config/fcitx5-matugen-theme/matugen.conf"
 HOME="$provider_home" CLAVIS_FCITX5_THEME_COMMAND="$repo_dir/tests/fixtures/fcitx5-theme-provider.sh" \
     CLAVIS_FCITX5_TEST_LOG="$provider_log" "$generator" \
     --color '#6750a4' --mode light --scheme scheme-vibrant --templates fcitx5 >/dev/null
