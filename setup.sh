@@ -18,6 +18,8 @@ deps_install=false
 allow_dirty=${CLAVIS_ALLOW_DIRTY:-false}
 build_testing=OFF
 source_shell_args=()
+stable_key=""
+partial_cleanup_path=""
 
 usage() {
     cat <<'EOF'
@@ -389,14 +391,21 @@ PY
 }
 
 check_install_runtime() {
-    local failed=0 dependency
+    local failed=0 dependency resolved
+    stable_key=""
     for dependency in qs key keytop; do
-        if [[ "$dependency" == key && -x "$CLAVIS_BIN_HOME/key" ]]; then
-            printf '  [OK]   stable %s: %s\n' "$dependency" "$CLAVIS_BIN_HOME/key"
-        elif [[ "$dependency" == keytop && -x "$CLAVIS_BIN_HOME/keytop" ]]; then
-            printf '  [OK]   stable %s: %s\n' "$dependency" "$CLAVIS_BIN_HOME/keytop"
-        elif command -v "$dependency" >/dev/null 2>&1; then
-            printf '  [OK]   %s\n' "$dependency"
+        resolved=""
+        if [[ "$dependency" == key ]]; then
+            resolved=$(resolve_stable_key || true)
+        elif [[ -x "$CLAVIS_BIN_HOME/$dependency" ]]; then
+            resolved=$CLAVIS_BIN_HOME/$dependency
+        else
+            resolved=$(command -v "$dependency" 2>/dev/null || true)
+        fi
+        if [[ -n "$resolved" ]]; then
+            [[ "$resolved" == /* ]] || resolved=$(realpath -m -- "$resolved")
+            printf '  [OK]   %s: %s\n' "$dependency" "$resolved"
+            [[ "$dependency" == key ]] && stable_key=$resolved
         else
             printf '  [FAIL] %s\n' "$dependency"
             failed=1
@@ -405,6 +414,50 @@ check_install_runtime() {
     if [[ "$failed" -ne 0 ]]; then
         printf 'Install requires both the stable key CLI and independent keytop runtime.\n' >&2
         return 1
+    fi
+}
+
+key_cli_is_standalone() {
+    local candidate=$1 output
+    output=$(env \
+        CLAVIS_INSTALL_PREFIX="$CLAVIS_RUNTIME_HOME/setup-key-probe-$$" \
+        CLAVIS_RELEASE_ROOT= \
+        CLAVIS_KEY="$candidate" \
+        "$candidate" version --json 2>/dev/null) || return 1
+    python3 -c '
+import json, sys
+payload = json.loads(sys.argv[1])
+raise SystemExit(0 if payload.get("product") == "clavis-key" else 1)
+' "$output" >/dev/null 2>&1
+}
+
+resolve_stable_key() {
+    local candidate seen=":"
+    local -a candidates=()
+    if [[ -n "${CLAVIS_KEY:-}" && "$CLAVIS_KEY" == /* ]]; then
+        candidates+=("$CLAVIS_KEY")
+    fi
+    candidates+=("$CLAVIS_BIN_HOME/key")
+    while IFS= read -r candidate; do
+        [[ -n "$candidate" ]] && candidates+=("$candidate")
+    done < <(type -aP key 2>/dev/null || true)
+
+    for candidate in "${candidates[@]}"; do
+        [[ "$candidate" == /* && -x "$candidate" ]] || continue
+        [[ "$seen" != *":$candidate:"* ]] || continue
+        seen+="$candidate:"
+        if key_cli_is_standalone "$candidate"; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+cleanup_partial() {
+    local candidate=${partial_cleanup_path:-}
+    if [[ -n "$candidate" && -d "$candidate" ]]; then
+        rm -rf -- "$candidate"
     fi
 }
 
@@ -430,7 +483,7 @@ install_release() {
     if [[ "$dry_run" == true ]]; then
         print_command mkdir -p "$CLAVIS_INSTALL_PREFIX/releases"
         print_command cmake --install "$build_dir" --prefix "$partial"
-        print_command "$CLAVIS_BIN_HOME/key" release install-finalize \
+        print_command "$stable_key" release install-finalize \
             "$release" --partial "$partial"
         return
     fi
@@ -439,26 +492,24 @@ install_release() {
     if [[ -e "$partial" || -L "$partial" ]]; then
         rm -rf -- "$partial"
     fi
-    cleanup_partial() {
-        if [[ -n "$partial" && -d "$partial" ]]; then
-            rm -rf -- "$partial"
-        fi
-    }
+    partial_cleanup_path=$partial
     trap cleanup_partial EXIT
     cmake --install "$build_dir" --prefix "$partial"
     validate_partial "$partial"
-    "$CLAVIS_BIN_HOME/key" release install-finalize \
+    "$stable_key" release install-finalize \
         "$release" --partial "$partial"
     trap - EXIT
+    partial_cleanup_path=""
 }
 
 run_source() {
-    local stable_key=$CLAVIS_BIN_HOME/key
-    [[ -x "$stable_key" ]] || {
-        printf 'run-source requires an installed stable key at %s\n' "$stable_key" >&2
+    local source_key
+    source_key=$(resolve_stable_key || true)
+    [[ -n "$source_key" ]] || {
+        printf 'run-source requires an installed key CLI in CLAVIS_KEY, CLAVIS_BIN_HOME, or PATH\n' >&2
         exit 1
     }
-    exec "$stable_key" shell --dev --native --source "$setup_dir" "${source_shell_args[@]}"
+    exec "$source_key" shell --dev --native --source "$setup_dir" "${source_shell_args[@]}"
 }
 
 uninstall_build() {

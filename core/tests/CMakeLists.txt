@@ -69,6 +69,11 @@ add_test(
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_install_clavis_user_services.py
 )
 
+add_test(
+    NAME clavis_setup_install_tests
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_setup_install.sh
+)
+
 qt_add_executable(m3shapes_tests
     m3shapes_test.cpp
 )
