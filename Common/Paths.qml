@@ -49,7 +49,8 @@ Singleton {
         || homeDir + "/.local/share"
     readonly property string binHome: root.absoluteEnvironment("CLAVIS_BIN_HOME")
         || homeDir + "/.local/bin"
-    readonly property string stableKey: binHome + "/key"
+    readonly property string stableKey: root.absoluteEnvironment("CLAVIS_KEY")
+        || binHome + "/key"
     readonly property string installPrefix: root.absoluteEnvironment("CLAVIS_INSTALL_PREFIX")
         || homeDir + "/.local/lib/clavis"
     readonly property string currentRelease: releaseRoot !== ""

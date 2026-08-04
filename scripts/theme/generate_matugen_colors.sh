@@ -228,6 +228,7 @@ generate_external_colors() {
     case "$template_id" in
         zsh) config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/clavis-zsh-theme" ;;
         keytop) config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/keytop" ;;
+        fcitx5) config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5-matugen-theme" ;;
         *) printf 'Unknown external color target: %s\n' "$template_id" >&2; return 2 ;;
     esac
     template_path="$config_dir/matugen.conf"
@@ -291,18 +292,20 @@ if [[ "$keytop_requested" == true && "$dry_run" == false ]]; then
     fi
 fi
 
-if [[ "$fcitx_requested" == true && "$dry_run" == false ]]; then
-    fcitx_provider=${CLAVIS_FCITX5_THEME_COMMAND:-fcitx5-theme}
-    fcitx_config="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5-matugen-theme/matugen.conf"
-    if [[ ! -f "$fcitx_config" ]]; then
-        printf 'Warning: Fcitx5 target is not installed; skipped (%s is missing).\n' \
-            "$fcitx_config" >&2
-    elif command -v "$fcitx_provider" >/dev/null 2>&1; then
-        if ! "$fcitx_provider" apply; then
-            printf 'Warning: Fcitx5 theme apply failed; preserving its previous complete theme.\n' >&2
+if [[ "$fcitx_requested" == true ]]; then
+    if generate_external_colors fcitx5; then
+        if [[ "$dry_run" == false && "$external_colors_updated" == true ]]; then
+            fcitx_provider=${CLAVIS_FCITX5_THEME_COMMAND:-fcitx5-theme}
+            if command -v "$fcitx_provider" >/dev/null 2>&1; then
+                if ! "$fcitx_provider" apply; then
+                    printf 'Warning: Fcitx5 theme apply failed; preserving its previous complete theme.\n' >&2
+                fi
+            else
+                printf 'Warning: Fcitx5 theme provider is unavailable (%s); preserving its previous theme.\n' \
+                    "$fcitx_provider" >&2
+            fi
         fi
     else
-        printf 'Warning: Fcitx5 theme provider is unavailable (%s); preserving its previous theme.\n' \
-            "$fcitx_provider" >&2
+        printf 'Warning: Fcitx5 color generation failed; other targets continue.\n' >&2
     fi
 fi

@@ -7,6 +7,8 @@ import qs.Widgets.common
 StyledFlickable {
     id: root
 
+    Component.onCompleted: ThemeService.detectMatugenTargets()
+
     clip: true
     contentWidth: width
     contentHeight: contentColumn.y + contentColumn.implicitHeight + 24

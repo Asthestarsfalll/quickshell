@@ -11,7 +11,8 @@
         │
         ├─ Zsh Prompt：下一次 prompt 绘制自动读取
         ├─ Keytop：执行一次 `keytop reload`，不重启采样器
-        └─ Fcitx5：执行一次 `fcitx5-theme apply`，事务发布完整主题后 reload
+        └─ Fcitx5：先原子更新 colors.conf，再执行一次 `fcitx5-theme apply`，
+                    事务发布完整主题后 reload
 ```
 
 固定目标路径为：

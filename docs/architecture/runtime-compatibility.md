@@ -34,7 +34,9 @@ Clavis 的版本兼容检查集中在 `key-cli` 的 Shell 启动和 release meta
 - 系统监测由 `keytop value`/`keytop stream` 提供，Shell 直接启动 `keytop`，不经过
   `key top` 兼容转发。
 - 结构化天气由 `key weather --json` 提供；天气地图的图像 provider 是 Quickshell
-  内嵌的 `Clavis.WeatherMap`，两条链路不共享短进程接口。
+  内嵌的 `Clavis.WeatherMap`，两条链路不共享短进程接口。Shell 优先使用
+  `CLAVIS_KEY` 中由启动器传入的当前实际 CLI 路径，不假定 release 内存在
+  `bin/key`，因此安装模式和 `--dev` 模式使用同一数据接口。
 - 音量、录音、投屏和剪贴板使用稳定的 `key audio`、`key record`、`key cast`、
   `key clipboard` 命令；高频音频可视化仍由内嵌 native plugin 完成。
 
