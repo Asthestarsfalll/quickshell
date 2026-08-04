@@ -95,16 +95,29 @@ all_external_templates=(
 )
 
 selected_templates=(quickshell)
+zsh_requested=false
+keytop_requested=false
 fcitx_requested=false
 if [[ "$templates_requested" == false ]]; then
     selected_templates+=("${all_external_templates[@]}")
+    zsh_requested=true
+    keytop_requested=true
+    fcitx_requested=true
 elif [[ -n "$templates_csv" ]]; then
     IFS=',' read -r -a requested_templates <<< "$templates_csv"
     for template_id in "${requested_templates[@]}"; do
         case "$template_id" in
             btop|cava|kitty|niri|yazi)
                 ;;
-            fcitx5|fcitx5_panel_svg|fcitx5_highlight_svg)
+            zsh)
+                zsh_requested=true
+                continue
+                ;;
+            keytop)
+                keytop_requested=true
+                continue
+                ;;
+            fcitx5)
                 fcitx_requested=true
                 continue
                 ;;
@@ -208,16 +221,78 @@ else
     matugen color hex "$source_color" "${common_args[@]}"
 fi
 
-if [[ "$fcitx_requested" == true ]]; then
-    fcitx_provider=${CLAVIS_FCITX5_THEME_COMMAND:-clavis-fcitx5-theme}
-    if command -v "$fcitx_provider" >/dev/null 2>&1; then
-        fcitx_args=(apply --mode "$mode" --scheme "$scheme")
-        if [[ -n "$image_path" ]]; then
-            fcitx_args+=(--source-image "$image_path")
+generate_external_colors() {
+    local template_id=$1
+    local config_dir template_path color_path color_temp target_config status
+    case "$template_id" in
+        zsh) config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/clavis-zsh-theme" ;;
+        keytop) config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/keytop" ;;
+        *) printf 'Unknown external color target: %s\n' "$template_id" >&2; return 2 ;;
+    esac
+    template_path="$config_dir/matugen.conf"
+    color_path="$config_dir/colors.conf"
+    if [[ ! -f "$template_path" ]]; then
+        printf 'Warning: %s target is not installed; skipped (%s is missing).\n' \
+            "$template_id" "$template_path" >&2
+        return 0
+    fi
+    if [[ "$dry_run" == true ]]; then
+        printf 'Dry run: would generate %s/colors.conf from %s.\n' "$template_id" "$template_path"
+        return 0
+    fi
+
+    mkdir -p "$config_dir"
+    color_temp=$(mktemp "${color_path}.XXXXXX")
+    target_config=$(mktemp "$runtime_dir/${template_id}.config.XXXXXX")
+    printf '[config]\nversion_check = false\n\n[templates.%s]\ninput_path = "%s"\noutput_path = "%s"\n' \
+        "$template_id" "$template_path" "$color_temp" > "$target_config"
+    status=0
+    if [[ -n "$image_path" ]]; then
+        matugen --source-color-index 0 image "$image_path" \
+            --mode "$mode" --type "$scheme" --config "$target_config" --quiet \
+            || status=$?
+    else
+        matugen color hex "$source_color" --mode "$mode" --type "$scheme" \
+            --config "$target_config" --quiet || status=$?
+    fi
+    if (( status == 0 )) && [[ -s "$color_temp" ]]; then
+        mv -f -- "$color_temp" "$color_path"
+        printf 'Updated %s\n' "$color_path"
+        return 0
+    fi
+    rm -f -- "$color_temp"
+    printf 'Warning: Matugen failed for %s; preserving its previous colors.conf.\n' \
+        "$template_id" >&2
+    return 1
+}
+
+if [[ "$zsh_requested" == true ]]; then
+    if ! generate_external_colors zsh; then
+        printf 'Warning: Zsh Prompt color generation failed; other targets continue.\n' >&2
+    fi
+fi
+
+if [[ "$keytop_requested" == true && "$dry_run" == false ]]; then
+    if generate_external_colors keytop; then
+        keytop_reload=${CLAVIS_KEYTOP_RELOAD_COMMAND:-keytop}
+        if command -v "$keytop_reload" >/dev/null 2>&1; then
+            "$keytop_reload" reload >/dev/null \
+                || printf 'Warning: Keytop color reload failed; existing TUI continues.\n' >&2
         else
-            fcitx_args+=(--color "$source_color")
+            printf 'Warning: Keytop reload command is unavailable (%s).\n' \
+                "$keytop_reload" >&2
         fi
-        "$fcitx_provider" "${fcitx_args[@]}"
+    else
+        printf 'Warning: Keytop color generation failed; other targets continue.\n' >&2
+    fi
+fi
+
+if [[ "$fcitx_requested" == true && "$dry_run" == false ]]; then
+    fcitx_provider=${CLAVIS_FCITX5_THEME_COMMAND:-fcitx5-theme}
+    if command -v "$fcitx_provider" >/dev/null 2>&1; then
+        if ! "$fcitx_provider" apply; then
+            printf 'Warning: Fcitx5 theme apply failed; preserving its previous complete theme.\n' >&2
+        fi
     else
         printf 'Warning: Fcitx5 theme provider is unavailable (%s); preserving its previous theme.\n' \
             "$fcitx_provider" >&2

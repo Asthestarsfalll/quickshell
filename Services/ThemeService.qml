@@ -18,6 +18,35 @@ Singleton {
 
     readonly property string sessionDesktop: (Quickshell.env("XDG_CURRENT_DESKTOP") || Quickshell.env("XDG_SESSION_DESKTOP") || "").toLowerCase()
     readonly property bool isNiriSession: sessionDesktop.indexOf("niri") !== -1 || (Quickshell.env("NIRI_SOCKET") || "") !== ""
+    property var matugenAvailability: ({
+        "fcitx5": false,
+        "zsh": false,
+        "keytop": false
+    })
+
+    function matugenTargetAvailable(id) {
+        if (id !== "fcitx5" && id !== "zsh" && id !== "keytop")
+            return true;
+        return root.matugenAvailability[id] === true;
+    }
+
+    function detectMatugenTargets() {
+        const configHome = Paths.xdgConfigHome;
+        const zshConfig = root.shellQuote(configHome + "/clavis-zsh-theme/matugen.conf");
+        const keytopConfig = root.shellQuote(configHome + "/keytop/matugen.conf");
+        const fcitxConfig = root.shellQuote(configHome + "/fcitx5-matugen-theme/matugen.conf");
+        detectMatugenTargetsProcess.command = [
+            "bash", "-c",
+            "if command -v zsh-theme >/dev/null 2>&1 && test -f " + zshConfig
+                + "; then echo zsh=true; else echo zsh=false; fi; "
+            + "if command -v keytop >/dev/null 2>&1 && test -f " + keytopConfig
+                + "; then echo keytop=true; else echo keytop=false; fi; "
+            + "if command -v fcitx5-theme >/dev/null 2>&1 && test -f " + fcitxConfig
+                + "; then echo fcitx5=true; else echo fcitx5=false; fi"
+        ];
+        detectMatugenTargetsProcess.running = false;
+        detectMatugenTargetsProcess.running = true;
+    }
 
     function applyConfigToAppearance() {
         Appearance.matugenScheme = PersonalizationConfig.matugenScheme;
@@ -45,12 +74,6 @@ Singleton {
     function setMatugenTemplateEnabled(id, enabled) {
         let changed =
             PersonalizationConfig.setMatugenTemplateEnabled(id, enabled);
-        if (id === "fcitx5") {
-            changed = PersonalizationConfig.setMatugenTemplateEnabled(
-                "fcitx5_panel_svg", enabled) || changed;
-            changed = PersonalizationConfig.setMatugenTemplateEnabled(
-                "fcitx5_highlight_svg", enabled) || changed;
-        }
         if (changed && enabled)
             root.regenerateFromCurrentWallpaper();
     }
@@ -304,6 +327,7 @@ cursor {
     Component.onCompleted: {
         root.applyConfigToAppearance();
         root.detectAvailableThemes();
+        root.detectMatugenTargets();
         if (PersonalizationConfig.themeMode === "dark" && !UiPreferences.darkMode)
             UiPreferences.setDarkMode(true);
     }
@@ -334,6 +358,24 @@ cursor {
         stdout: StdioCollector {
             onStreamFinished: {
                 root.availableCursorThemes = root.parseDetectedThemes(this.text, qsTr("系统默认"), PersonalizationConfig.cursorTheme, true);
+            }
+        }
+    }
+
+    Process {
+        id: detectMatugenTargetsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const next = {};
+                const lines = String(this.text || "").split("\n");
+                for (let i = 0; i < lines.length; i += 1) {
+                    const separator = lines[i].indexOf("=");
+                    if (separator <= 0)
+                        continue;
+                    next[lines[i].slice(0, separator)] =
+                        lines[i].slice(separator + 1).trim() === "true";
+                }
+                root.matugenAvailability = next;
             }
         }
     }

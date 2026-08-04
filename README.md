@@ -125,10 +125,13 @@ $XDG_RUNTIME_DIR/clavis/
 ## 主题与 Matugen 配置
 
 Matugen 始终生成 Clavis/Quickshell 配色。设置中心“高级”页可分别启用 btop、Cava、
-Kitty、Fcitx5、Niri 与 Yazi 模板；Fcitx5 的三文件生成由独立
-`clavis-fcitx5-theme` provider 完成。Niri 配色写入 `~/.config/niri/clavis/colors.kdl`；
-其他程序的主题文件直接写入它们在 `~/.config` 或 `~/.local/share` 下的标准位置，
-与重构用户级 release 架构之前的行为一致。Clavis 不托管这些程序的完整配置。
+Kitty、Fcitx5、Zsh Prompt、Keytop、Niri 与 Yazi 目标。Zsh Prompt 和 Keytop 的
+`matugen.conf`/`colors.conf` 位于各自固定 XDG 配置目录；Keytop 成功生成后通过一次性
+`keytop reload` 通知正在运行的 TUI。Fcitx5 的完整 `theme.conf`、`panel.svg` 和
+`highlight.svg` 以及菜单资源由独立 `fcitx5-theme apply` 事务渲染，Quickshell 不复制模板或直接
+写最终主题文件。Niri 配色写入 `~/.config/niri/clavis/colors.kdl`；其他程序的主题
+文件直接写入它们在 `~/.config` 或 `~/.local/share` 下的标准位置。Clavis 不托管这些
+程序的完整配置。
 
 ## 更新、回滚与卸载
 

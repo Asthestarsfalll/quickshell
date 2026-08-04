@@ -30,8 +30,18 @@ StyledFlickable {
         }),
         ({
             "id": "fcitx5",
-            "title": "Fcitx5",
+            "title": qsTr("Fcitx5"),
             "icon": "keyboard"
+        }),
+        ({
+            "id": "zsh",
+            "title": qsTr("Zsh Prompt"),
+            "icon": "terminal"
+        }),
+        ({
+            "id": "keytop",
+            "title": qsTr("Keytop"),
+            "icon": "monitoring"
         }),
         ({
             "id": "niri",
@@ -71,18 +81,22 @@ StyledFlickable {
 
                 SettingsRow {
                     required property var modelData
+                    readonly property bool providerAvailable:
+                        ThemeService.matugenTargetAvailable(modelData.id)
 
                     Layout.fillWidth: true
                     iconName: modelData.icon
                     title: modelData.title
                     supportingText:
-                        PersonalizationConfig
+                        !providerAvailable
+                        ? qsTr("未安装或配置模板不可用")
+                        : PersonalizationConfig
                             .isMatugenTemplateEnabled(modelData.id)
                         ? qsTr("生成并更新 Matugen 配色")
                         : qsTr("已停止后续生成；现有配色文件会保留")
 
                     trailing: StyledSwitch {
-                        enabled: !ThemeService.generating
+                        enabled: !ThemeService.generating && providerAvailable
                         checked: PersonalizationConfig
                             .isMatugenTemplateEnabled(modelData.id)
                         Accessible.name:

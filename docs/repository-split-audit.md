@@ -330,3 +330,15 @@ release。
 6. 改 QML 消费路径、移除红色 fallback，再验证 Shell source/dev-native 与 release
    runtime 的相对 import 路径。
 
+## 10. 后续实现注记（2026-08-04）
+
+初始审计中的“仓库不存在”和“尚待定位”描述是迁移前快照，不代表当前工作区状态。
+本次主题修复使用的 Prompt 源码实际位于 `/home/archirithm/prompt_dev`；该工作树在
+开始时已有用户未提交修改，本任务只读检查，没有覆盖或提交它。可安装的独立主题包是
+同级 `/home/archirithm/Projects/clavis-zsh-theme`，其实现保留 Prompt renderer、
+ZLE 集成和 managed block 接入，并把模板与配置所有权放在主题包内。
+
+当前外部主题调用关系已收敛为：Quickshell 只运行 Matugen 并原子更新三个组件的
+`colors.conf`；Keytop 用 `keytop reload` 重载已运行 TUI 的颜色；Fcitx5 用
+`fcitx5-theme apply` 在完整临时主题目录中发布 `theme.conf`、`panel.svg`、
+`highlight.svg` 及菜单 SVG 资源，然后只 reload 一次。

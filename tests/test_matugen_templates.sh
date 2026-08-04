@@ -9,7 +9,8 @@ mkdir -p "$test_runtime_dir"
 unset CLAVIS_BIN_HOME CLAVIS_INSTALL_PREFIX CLAVIS_CONFIG_HOME \
     CLAVIS_DATA_HOME CLAVIS_STATE_HOME CLAVIS_CACHE_HOME \
     CLAVIS_PROFILE_HOME CLAVIS_PROFILE_CONFIG_HOME CLAVIS_GENERATED_HOME \
-    CLAVIS_QML_IMPORT_HOME
+    CLAVIS_QML_IMPORT_HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME \
+    XDG_CACHE_HOME
 export XDG_RUNTIME_DIR="$test_runtime_dir"
 export CLAVIS_RUNTIME_HOME="$test_runtime_dir/clavis"
 
@@ -19,6 +20,16 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
 command -v matugen >/dev/null 2>&1 || fail "matugen is required"
 command -v python3 >/dev/null 2>&1 || fail "python3 is required"
+
+mkdir -p "$test_dir/bin"
+cat > "$test_dir/bin/keytop" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "${CLAVIS_KEYTOP_TEST_LOG:?}"
+EOF
+chmod +x "$test_dir/bin/keytop"
+export PATH="$test_dir/bin:$PATH"
+export CLAVIS_KEYTOP_RELOAD_COMMAND=keytop
+export CLAVIS_KEYTOP_TEST_LOG="$test_dir/keytop-reloads"
 
 test_home="$test_dir/home"
 mkdir -p "$test_home"
@@ -52,6 +63,32 @@ generated="$filtered_home/.local/share/clavis/profiles/default/generated"
 [[ ! -e "$filtered_home/.config/clavis/profiles/default/matugen/config.toml" ]] \
     || fail "an editable per-user Matugen config was recreated"
 
+keytop_home="$test_dir/keytop"
+mkdir -p "$keytop_home/.config/keytop"
+cp "$repo_dir/../keytop/defaults/matugen.conf" \
+    "$keytop_home/.config/keytop/matugen.conf"
+HOME="$keytop_home" "$generator" --color '#6750a4' --templates keytop >/dev/null
+[[ -s "$keytop_home/.config/keytop/colors.conf" ]] \
+    || fail "Keytop colors were not generated"
+grep -Fxq 'reload' "$CLAVIS_KEYTOP_TEST_LOG" \
+    || fail "Keytop reload provider was not called"
+keytop_colors_sha=$(sha256sum "$keytop_home/.config/keytop/colors.conf" | awk '{print $1}')
+HOME="$keytop_home" "$generator" --color '#ff0000' --templates keytop >/dev/null
+[[ "$keytop_colors_sha" != "$(sha256sum "$keytop_home/.config/keytop/colors.conf" | awk '{print $1}')" ]] \
+    || fail "Keytop colors did not change with the source color"
+[[ $(grep -Fc 'reload' "$CLAVIS_KEYTOP_TEST_LOG") -eq 2 ]] \
+    || fail "Keytop was not reloaded once per successful generation"
+
+zsh_home="$test_dir/zsh"
+mkdir -p "$zsh_home/.config/clavis-zsh-theme"
+cp "$repo_dir/../clavis-zsh-theme/defaults/matugen.conf" \
+    "$zsh_home/.config/clavis-zsh-theme/matugen.conf"
+HOME="$zsh_home" "$generator" --color '#6750a4' --templates zsh >/dev/null
+zsh_colors_sha=$(sha256sum "$zsh_home/.config/clavis-zsh-theme/colors.conf" | awk '{print $1}')
+HOME="$zsh_home" "$generator" --color '#ff0000' --templates zsh >/dev/null
+[[ "$zsh_colors_sha" != "$(sha256sum "$zsh_home/.config/clavis-zsh-theme/colors.conf" | awk '{print $1}')" ]] \
+    || fail "Zsh colors did not change with the source color"
+
 kitty_home="$test_dir/kitty"
 HOME="$kitty_home" "$generator" --color '#6750a4' --templates kitty >/dev/null
 [[ -s "$kitty_home/.config/kitty/themes/Matugen.conf" ]] \
@@ -71,8 +108,8 @@ provider_log="$test_dir/provider.log"
 HOME="$provider_home" CLAVIS_FCITX5_THEME_COMMAND="$repo_dir/tests/fixtures/fcitx5-theme-provider.sh" \
     CLAVIS_FCITX5_TEST_LOG="$provider_log" "$generator" \
     --color '#6750a4' --mode light --scheme scheme-vibrant --templates fcitx5 >/dev/null
-grep -Fq 'apply --mode light --scheme scheme-vibrant --color #6750a4' "$provider_log" \
-    || fail "Fcitx5 provider did not receive the source and Matugen options"
+grep -Fxq 'apply' "$provider_log" \
+    || fail "Fcitx5 provider was not called through its apply interface"
 
 for render_mode in dark light; do
     output_dir="$test_dir/render-$render_mode"
