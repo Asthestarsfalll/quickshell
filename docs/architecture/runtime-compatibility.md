@@ -1,51 +1,11 @@
-# 运行时版本与协议
+# 运行时边界
 
-Clavis 的版本兼容检查集中在 `key-cli` 的 Shell 启动和 release metadata 中。页面不再
-逐个执行 `key --version`，也不因为外部命令短暂不可用而替换成醒目的整页红色错误。
-数值、图表和列表分别降级为空状态；启动失败写日志并按服务自身策略退避重试。
+Shell 的原生 module 与 QML 源码由同一次 CMake 构建产生，所有自制 QML import 使用
+无版本 URI。产品版本和 JSON `schemaVersion` 独立于 QML import 版本。
 
-## Release metadata
+系统监测协议由 `keytop value stream --format jsonl` 提供，Shell 校验
+`schemaVersion`、时间戳、序列号和模块字段；失联时显示明确的 stale/error 状态。
+录屏、录音和剪贴板协议由 `key-cli` 提供，Shell 只消费参数数组和机器 JSON。
 
-每个 Shell release 的 `release.json` 至少包含：
-
-```json
-{
-  "component": "quickshell",
-  "release": "2026.08.03",
-  "commit": "…",
-  "channel": "stable",
-  "sourceFingerprint": "…",
-  "buildTime": "…",
-  "minimumKeyCli": "0.1.0",
-  "minimumKeytop": "0.1.0",
-  "shellProtocol": 1,
-  "paths": {"qml": "share/clavis/qml", "plugins": "lib/qml", "assets": "share/clavis/assets"},
-  "protocols": {"core": 1, "clipboard": 2},
-  "dataSchemas": {"config": 1, "manifest": 1, "profile": 1}
-}
-```
-
-`key shell` 在启动前检查 release 组件、最小 CLI/Keytop 版本、Shell protocol、相对
-路径和 plugin 根；不兼容时拒绝启动该 release，并保留当前可用 release。`key release`
-负责列出、激活、回滚和移除经过校验的 release。
-
-## 外部命令协议
-
-- 系统监测由 `keytop value`/`keytop stream` 提供，Shell 直接启动 `keytop`，不经过
-  `key top` 兼容转发。
-- 结构化天气由 `key weather --json` 提供；天气地图的图像 provider 是 Quickshell
-  内嵌的 `Clavis.WeatherMap`，两条链路不共享短进程接口。Shell 优先使用
-  `CLAVIS_KEY` 中由启动器传入的当前实际 CLI 路径，不假定 release 内存在
-  `bin/key`，因此安装模式和 `--dev` 模式使用同一数据接口。
-- 音量、录音、投屏和剪贴板使用稳定的 `key audio`、`key record`、`key cast`、
-  `key clipboard` 命令；高频音频可视化仍由内嵌 native plugin 完成。
-
-协议破坏时提升相应的 `protocols` 或 `dataSchemas` 版本，并同步 key-cli、Shell
-消费者、协议文档和集成测试。新增可选字段应保持旧消费者可解析；缺失的数值使用
-`—`、缺失的图表停在空轨道或占位、缺失的列表使用普通空状态。
-
-## 开发模式
-
-`key shell --dev` 使用当前源码 QML 与稳定 native plugin；`--native` 改用
-`.build/dev/lib/qml` 的当前增量 plugin。两种模式的启动、日志和实例注册仍由
-`key-cli` 负责，Quickshell 不内置第二份 `key`，也不创建 Key daemon 或常驻 Key socket。
+天气、Cava、歌词和 Niri 状态在 Shell 进程内提供响应式模型，避免高频数据经过 CLI
+或 Python 中转。

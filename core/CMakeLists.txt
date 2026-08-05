@@ -1,8 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
-project(ClavisCore VERSION 0.1.0 LANGUAGES CXX)
-
 include(GNUInstallDirs)
-include(CTest)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,9 +7,6 @@ set(CMAKE_AUTOMOC ON)
 
 set(CLAVIS_RELEASE "development" CACHE STRING "Clavis date release")
 set(CLAVIS_COMMIT "unknown" CACHE STRING "Git commit embedded in the release")
-set(CLAVIS_CHANNEL "stable" CACHE STRING "Clavis release channel")
-set(CLAVIS_SOURCE_DIRTY "false" CACHE STRING "Whether the source tree was dirty")
-set(CLAVIS_SOURCE_FINGERPRINT "unknown" CACHE STRING "Content fingerprint for reproducibility")
 set(CLAVIS_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
 get_filename_component(CLAVIS_SOURCE_ROOT "${CLAVIS_SOURCE_ROOT}" ABSOLUTE)
 if(CLAVIS_COMMIT STREQUAL "unknown")
@@ -34,18 +27,21 @@ endif()
 if(NOT CLAVIS_BUILD_TIME)
     string(TIMESTAMP CLAVIS_BUILD_TIME "%Y-%m-%dT%H:%M:%SZ" UTC)
 endif()
-# Older development builds wrote release metadata at the build root, which can
-# make a source-tree `key` look like an installed release. Remove only that
-# obsolete generated location; installed prefixes are unaffected.
-file(REMOVE "${CMAKE_BINARY_DIR}/release.json")
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/clavis_release.h.in"
     "${CMAKE_BINARY_DIR}/generated/clavis_release.h"
     @ONLY
 )
 
-set(CLAVIS_QML_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/qml")
-set(CLAVIS_SHARE_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/clavis")
+if(NOT DEFINED CLAVIS_QML_BUILD_DIR)
+    set(CLAVIS_QML_BUILD_DIR "${CMAKE_BINARY_DIR}/qml")
+endif()
+if(NOT DEFINED CLAVIS_QML_INSTALL_DIR)
+    set(CLAVIS_QML_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/qt6/qml")
+endif()
+if(NOT DEFINED CLAVIS_CONFIG_INSTALL_DIR)
+    set(CLAVIS_CONFIG_INSTALL_DIR "etc/xdg/quickshell/clavis")
+endif()
 # Find Qt 6 basics
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network ShaderTools LinguistTools)
 find_package(Qt6Keychain REQUIRED)
@@ -65,20 +61,19 @@ if(BUILD_TESTING)
 endif()
 
 # Quickshell plugins
+add_subdirectory(plugin/weather)
 add_subdirectory(plugin/weathermap)
 add_subdirectory(plugin/niri)
-add_subdirectory(plugin/audio)
+add_subdirectory(plugin/cava)
 add_subdirectory(plugin/media)
 add_subdirectory(plugin/keyboard)
+add_subdirectory(plugin/lyrics)
 add_subdirectory(plugin/m3shapes)
 add_subdirectory(plugin/i18n)
 add_subdirectory(plugin/runtime)
 
-# A release contains only the Shell runtime.  The stable `key` executable and
-# Keytop are installed by their own repositories and are deliberately not
-# copied into this tree.
 install(
-    DIRECTORY "${CMAKE_BINARY_DIR}/lib/qml/Clavis/"
+    DIRECTORY "${CLAVIS_QML_BUILD_DIR}/Clavis/"
     DESTINATION "${CLAVIS_QML_INSTALL_DIR}/Clavis"
     FILES_MATCHING
         PATTERN "qmldir"
@@ -86,7 +81,7 @@ install(
         PATTERN "*.so*"
 )
 install(
-    DIRECTORY "${CMAKE_BINARY_DIR}/lib/qml/M3Shapes/"
+    DIRECTORY "${CLAVIS_QML_BUILD_DIR}/M3Shapes/"
     DESTINATION "${CLAVIS_QML_INSTALL_DIR}/M3Shapes"
     FILES_MATCHING
         PATTERN "qmldir"
@@ -101,7 +96,7 @@ install(
         "${CLAVIS_SOURCE_ROOT}/Modules"
         "${CLAVIS_SOURCE_ROOT}/Services"
         "${CLAVIS_SOURCE_ROOT}/Widgets"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/qml"
+    DESTINATION "${CLAVIS_CONFIG_INSTALL_DIR}"
     PATTERN "*.qmlc" EXCLUDE
 )
 install(
@@ -109,43 +104,29 @@ install(
         "${CLAVIS_SOURCE_ROOT}/shell.qml"
         "${CLAVIS_SOURCE_ROOT}/AppShell.qml"
         "${CLAVIS_SOURCE_ROOT}/controlcenter.qml"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/qml"
+    DESTINATION "${CLAVIS_CONFIG_INSTALL_DIR}"
 )
 install(
     DIRECTORY "${CLAVIS_SOURCE_ROOT}/assets/"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/assets"
+    DESTINATION "${CLAVIS_CONFIG_INSTALL_DIR}/assets"
 )
 install(
     DIRECTORY "${CLAVIS_SOURCE_ROOT}/scripts/"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/scripts"
+    DESTINATION "${CLAVIS_CONFIG_INSTALL_DIR}/scripts"
     USE_SOURCE_PERMISSIONS
     PATTERN "__pycache__" EXCLUDE
     PATTERN "*.pyc" EXCLUDE
 )
 install(
     DIRECTORY "${CLAVIS_SOURCE_ROOT}/matugen/templates/"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/defaults/matugen/templates"
+    DESTINATION "${CLAVIS_CONFIG_INSTALL_DIR}/matugen/templates"
 )
 install(
     FILES "${CLAVIS_SOURCE_ROOT}/matugen/config.toml"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/defaults/matugen"
-)
-install(
-    DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/defaults/"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/defaults"
-)
-install(
-    FILES "${CLAVIS_SOURCE_ROOT}/packaging/clavis_paths.py"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/libexec"
-)
-install(
-    DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/systemd/user/"
-    DESTINATION "${CLAVIS_SHARE_INSTALL_DIR}/systemd/user"
+    DESTINATION "${CLAVIS_CONFIG_INSTALL_DIR}/matugen"
 )
 
-configure_file(
-    "${CLAVIS_SOURCE_ROOT}/packaging/release.json.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/release.json"
-    @ONLY
+install(
+    DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/systemd/user/"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/clavis/systemd/user"
 )
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/release.json" DESTINATION ".")

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Clavis.WeatherMap 1.0
+import Clavis.WeatherMap
 import qs.Common
 import qs.Modules.Bar
 import qs.Modules.Keystone

@@ -2,13 +2,12 @@
 # Keep the URI and output directory stable: existing QML imports `M3Shapes`.
 qt_add_qml_module(M3Shapes
     URI M3Shapes
-    VERSION 1.0
     SOURCES
         src/MaterialShapeItem.hpp
         src/MaterialShapeItem.cpp
         src/SmoothShapeMaterial.hpp
         src/SmoothShapeMaterial.cpp
-    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/qml/M3Shapes
+    OUTPUT_DIRECTORY ${CLAVIS_QML_BUILD_DIR}/M3Shapes
 )
 
 # Compile and embed the analytic-antialiasing shaders at the resource paths
@@ -26,7 +25,7 @@ set_target_properties(M3Shapes PROPERTIES CXX_EXTENSIONS OFF)
 
 target_include_directories(M3Shapes PUBLIC
     src
-    ${PROJECT_SOURCE_DIR}/src
+    ${CLAVIS_SOURCE_ROOT}/core/src
 )
 
 target_link_libraries(M3Shapes PUBLIC

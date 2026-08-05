@@ -32,17 +32,12 @@ Singleton {
 
     function detectMatugenTargets() {
         const configHome = Paths.xdgConfigHome;
-        const zshConfig = root.shellQuote(configHome + "/clavis-zsh-theme/matugen.conf");
-        const keytopConfig = root.shellQuote(configHome + "/keytop/matugen.conf");
-        const fcitxConfig = root.shellQuote(configHome + "/fcitx5-matugen-theme/matugen.conf");
+        const script = Paths.scriptPath("theme", "detect_matugen_targets.sh");
         detectMatugenTargetsProcess.command = [
-            "bash", "-c",
-            "if command -v zsh-theme >/dev/null 2>&1 && test -f " + zshConfig
-                + "; then echo zsh=true; else echo zsh=false; fi; "
-            + "if command -v keytop >/dev/null 2>&1 && test -f " + keytopConfig
-                + "; then echo keytop=true; else echo keytop=false; fi; "
-            + "if command -v fcitx5-theme >/dev/null 2>&1 && test -f " + fcitxConfig
-                + "; then echo fcitx5=true; else echo fcitx5=false; fi"
+            "bash", script,
+            configHome + "/clavis-zsh-theme/matugen.conf",
+            configHome + "/keytop/matugen.conf",
+            configHome + "/fcitx5-matugen-theme/matugen.conf"
         ];
         detectMatugenTargetsProcess.running = false;
         detectMatugenTargetsProcess.running = true;
@@ -117,10 +112,6 @@ Singleton {
         return PersonalizationConfig.cursorTheme !== "" ? PersonalizationConfig.cursorTheme : root.systemDefaultCursorTheme;
     }
 
-    function shellQuote(value) {
-        return "'" + String(value).replace(/'/g, "'\\''") + "'";
-    }
-
     function escapeKdlString(value) {
         return String(value).replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     }
@@ -190,40 +181,12 @@ Singleton {
         return options;
     }
 
-    function iconThemeDetectionScript() {
-        const paths = root.dataDirs().map(dir => dir + "/icons").concat([Paths.homeDir + "/.icons"]);
-        const pathsArg = paths.map(path => root.shellQuote(path)).join(" ");
-        return `
-            printf 'SYSDEFAULT:%s\\n' "$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | sed "s/'//g" || true)"
-            for dir in ${pathsArg}; do
-                [ -d "$dir" ] || continue
-                for theme in "$dir"/*/; do
-                    [ -d "$theme" ] || continue
-                    basename "$theme"
-                done
-            done | grep -v '^icons$' | grep -v '^default$' | grep -v '^hicolor$' | grep -v '^locolor$' | sort -u
-        `;
-    }
-
-    function cursorThemeDetectionScript() {
-        const paths = root.dataDirs().map(dir => dir + "/icons").concat([Paths.homeDir + "/.icons"]);
-        const pathsArg = root.unique(paths).map(path => root.shellQuote(path)).join(" ");
-        return `
-            printf 'SYSDEFAULT:%s\\n' "$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null | sed "s/'//g" || true)"
-            for dir in ${pathsArg}; do
-                [ -d "$dir" ] || continue
-                for theme in "$dir"/*/; do
-                    [ -d "$theme" ] || continue
-                    [ -d "$theme/cursors" ] || continue
-                    basename "$theme"
-                done
-            done | grep -v '^icons$' | grep -v '^default$' | sort -u
-        `;
-    }
-
     function detectAvailableThemes() {
-        detectIconThemesProcess.command = ["bash", "-c", root.iconThemeDetectionScript()];
-        detectCursorThemesProcess.command = ["bash", "-c", root.cursorThemeDetectionScript()];
+        const paths = root.dataDirs().map(dir => dir + "/icons")
+            .concat([Paths.homeDir + "/.icons"]);
+        const script = Paths.scriptPath("theme", "list_cursor_icon_themes.sh");
+        detectIconThemesProcess.command = ["bash", script, "icon", ...paths];
+        detectCursorThemesProcess.command = ["bash", script, "cursor", ...paths];
         detectIconThemesProcess.running = false;
         detectCursorThemesProcess.running = false;
         detectIconThemesProcess.running = true;
@@ -263,8 +226,10 @@ cursor {
         }
 
         writeNiriCursorProcess.command = [
-            "bash", "-c",
-            "mkdir -p " + root.shellQuote(niriDmsDir) + " && printf '%s' " + root.shellQuote(content) + " > " + root.shellQuote(cursorPath)
+            "bash",
+            Paths.scriptPath("theme", "write_niri_cursor_config.sh"),
+            cursorPath,
+            content
         ];
         writeNiriCursorProcess.running = false;
         writeNiriCursorProcess.running = true;

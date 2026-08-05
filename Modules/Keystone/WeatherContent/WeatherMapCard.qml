@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
-import Clavis.WeatherMap 1.0
+import Clavis.WeatherMap
 import qs.Common
 import qs.Components
 import qs.Widgets.common

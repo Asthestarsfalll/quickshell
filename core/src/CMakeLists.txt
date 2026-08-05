@@ -25,11 +25,26 @@ target_link_libraries(ClavisWeatherMapCore PRIVATE
 )
 target_include_directories(ClavisWeatherMapCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+qt_add_library(ClavisWeatherCore STATIC)
+target_sources(ClavisWeatherCore PRIVATE
+    weather_types.h
+    weather_types.cpp
+    weather_calculator.h
+    weather_calculator.cpp
+    weather_cache.h
+    weather_cache.cpp
+    openmeteo_client.h
+    openmeteo_client.cpp
+    weather_backend.h
+    weather_backend.cpp
+)
+set_target_properties(ClavisWeatherCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(ClavisWeatherCore PRIVATE Qt6::Core Qt6::Network)
+target_include_directories(ClavisWeatherCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 qt_add_library(ClavisNiriCore STATIC)
 target_sources(ClavisNiriCore PRIVATE
     niri_types.h
-    niri_cast_parser.h
-    niri_cast_parser.cpp
     niri_icon_lookup.h
     niri_icon_lookup.cpp
     niri_ipc_client.h
@@ -52,8 +67,8 @@ target_link_libraries(ClavisNiriCore PRIVATE
 )
 target_include_directories(ClavisNiriCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-qt_add_library(ClavisAudioCore STATIC)
-target_sources(ClavisAudioCore PRIVATE
+qt_add_library(ClavisCavaCore STATIC)
+target_sources(ClavisCavaCore PRIVATE
     audio_collector.h
     audio_collector.cpp
     audio_level_collector.h
@@ -62,13 +77,13 @@ target_sources(ClavisAudioCore PRIVATE
     audio_visual_analyzer.cpp
 )
 
-set_target_properties(ClavisAudioCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(ClavisCavaCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(ClavisAudioCore PRIVATE
+target_link_libraries(ClavisCavaCore PRIVATE
     Qt6::Core
     PkgConfig::Pipewire
 )
-target_include_directories(ClavisAudioCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ClavisCavaCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(ClavisMediaCore STATIC)
 target_sources(ClavisMediaCore PRIVATE

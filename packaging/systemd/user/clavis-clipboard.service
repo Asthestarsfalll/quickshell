@@ -9,7 +9,7 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-ExecStart=@CLAVIS_KEY@ clipboard watch
+ExecStart=key clipboard watch
 Restart=on-failure
 RestartSec=2
 TimeoutStopSec=5

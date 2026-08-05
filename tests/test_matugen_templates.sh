@@ -6,10 +6,10 @@ generator="$repo_dir/scripts/theme/generate_matugen_colors.sh"
 test_dir=$(mktemp -d /tmp/clavis-matugen-test.XXXXXX)
 test_runtime_dir="$test_dir/runtime"
 mkdir -p "$test_runtime_dir"
-unset CLAVIS_BIN_HOME CLAVIS_INSTALL_PREFIX CLAVIS_CONFIG_HOME \
+unset CLAVIS_CONFIG_HOME \
     CLAVIS_DATA_HOME CLAVIS_STATE_HOME CLAVIS_CACHE_HOME \
     CLAVIS_PROFILE_HOME CLAVIS_PROFILE_CONFIG_HOME CLAVIS_GENERATED_HOME \
-    CLAVIS_QML_IMPORT_HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME \
+    XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME \
     XDG_CACHE_HOME
 export XDG_RUNTIME_DIR="$test_runtime_dir"
 export CLAVIS_RUNTIME_HOME="$test_runtime_dir/clavis"
@@ -105,26 +105,30 @@ HOME="$quickshell_home" "$generator" --color '#6750a4' --templates '' >/dev/null
 
 provider_home="$test_dir/provider"
 provider_log="$test_dir/provider.log"
-mkdir -p "$provider_home/.config/fcitx5-matugen-theme"
-cp "$repo_dir/../clavis-fcitx5-theme/defaults/matugen.conf" \
-    "$provider_home/.config/fcitx5-matugen-theme/matugen.conf"
-HOME="$provider_home" CLAVIS_FCITX5_THEME_COMMAND="$repo_dir/tests/fixtures/fcitx5-theme-provider.sh" \
-    CLAVIS_FCITX5_TEST_LOG="$provider_log" "$generator" \
-    --color '#6750a4' --mode light --scheme scheme-vibrant --templates fcitx5 >/dev/null
-[[ -s "$provider_home/.config/fcitx5-matugen-theme/colors.conf" ]] \
-    || fail "Fcitx5 colors were not generated before apply"
-grep -Fxq 'apply' "$provider_log" \
-    || fail "Fcitx5 provider was not called through its apply interface"
-fcitx_colors_sha=$(sha256sum \
-    "$provider_home/.config/fcitx5-matugen-theme/colors.conf" | awk '{print $1}')
-HOME="$provider_home" CLAVIS_FCITX5_THEME_COMMAND="$repo_dir/tests/fixtures/fcitx5-theme-provider.sh" \
-    CLAVIS_FCITX5_TEST_LOG="$provider_log" "$generator" \
-    --color '#ff0000' --mode dark --scheme scheme-tonal-spot --templates fcitx5 >/dev/null
-[[ "$fcitx_colors_sha" != "$(sha256sum \
-    "$provider_home/.config/fcitx5-matugen-theme/colors.conf" | awk '{print $1}')" ]] \
-    || fail "Fcitx5 colors did not change with the source color"
-[[ $(grep -Fc 'apply' "$provider_log") -eq 2 ]] \
-    || fail "Fcitx5 provider was not applied once per successful generation"
+fcitx_template="$repo_dir/../clavis-fcitx5-theme/defaults/matugen.conf"
+if [[ -f "$fcitx_template" ]]; then
+    mkdir -p "$provider_home/.config/fcitx5-matugen-theme"
+    cp "$fcitx_template" "$provider_home/.config/fcitx5-matugen-theme/matugen.conf"
+    HOME="$provider_home" CLAVIS_FCITX5_THEME_COMMAND="$repo_dir/tests/fixtures/fcitx5-theme-provider.sh" \
+        CLAVIS_FCITX5_TEST_LOG="$provider_log" "$generator" \
+        --color '#6750a4' --mode light --scheme scheme-vibrant --templates fcitx5 >/dev/null
+    [[ -s "$provider_home/.config/fcitx5-matugen-theme/colors.conf" ]] \
+        || fail "Fcitx5 colors were not generated before apply"
+    grep -Fxq 'apply' "$provider_log" \
+        || fail "Fcitx5 provider was not called through its apply interface"
+    fcitx_colors_sha=$(sha256sum \
+        "$provider_home/.config/fcitx5-matugen-theme/colors.conf" | awk '{print $1}')
+    HOME="$provider_home" CLAVIS_FCITX5_THEME_COMMAND="$repo_dir/tests/fixtures/fcitx5-theme-provider.sh" \
+        CLAVIS_FCITX5_TEST_LOG="$provider_log" "$generator" \
+        --color '#ff0000' --mode dark --scheme scheme-tonal-spot --templates fcitx5 >/dev/null
+    [[ "$fcitx_colors_sha" != "$(sha256sum \
+        "$provider_home/.config/fcitx5-matugen-theme/colors.conf" | awk '{print $1}')" ]] \
+        || fail "Fcitx5 colors did not change with the source color"
+    [[ $(grep -Fc 'apply' "$provider_log") -eq 2 ]] \
+        || fail "Fcitx5 provider was not applied once per successful generation"
+else
+    printf '%s\n' "Warning: fcitx5 provider project is not installed; skipped." >&2
+fi
 
 for render_mode in dark light; do
     output_dir="$test_dir/render-$render_mode"

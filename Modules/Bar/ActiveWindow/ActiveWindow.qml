@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import Clavis.Niri 1.0
+import Clavis.Niri
 import qs.Common
 import qs.Services
 import qs.Widgets.common

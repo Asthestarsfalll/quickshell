@@ -9,7 +9,7 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-ExecStart=@CLAVIS_KEY@ shell --foreground --no-duplicate
+ExecStart=key shell --foreground --no-duplicate
 Restart=on-failure
 RestartSec=2
 TimeoutStopSec=10

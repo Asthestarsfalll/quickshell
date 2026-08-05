@@ -44,6 +44,8 @@ Item {
 
     readonly property int lyricCount: !root.lyrics ? 0 : (root.lyrics.count !== undefined ? root.lyrics.count : root.lyrics.length)
 
+    signal lyricClicked(int index)
+
     property real _currentStiffness: baseStiffness
     property real _currentDamping: baseDamping
     property bool _animating: false
@@ -378,6 +380,11 @@ Item {
                     horizontalAlignment: root.horizontalAlignment
                     wrapMode: root.wrapMode
                     elide: Text.ElideNone
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.lyricClicked(lyricItem.index)
                 }
             }
         }

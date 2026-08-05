@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Clavis.Audio 1.0
+import Clavis.Cava
 
 Singleton {
     id: root

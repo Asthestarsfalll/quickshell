@@ -3253,14 +3253,6 @@ Right-click to change shape; scroll to reorder</translation>
     </message>
 </context>
 <context>
-    <name>ScreencastService</name>
-    <message>
-        <location filename="../Services/ScreencastService.qml" line="14" />
-        <source>屏幕正在被捕获</source>
-        <translation>The screen is being captured</translation>
-    </message>
-</context>
-<context>
     <name>SearchSelectMenuField</name>
     <message>
         <location filename="../Widgets/common/SearchSelectMenuField.qml" line="16" />

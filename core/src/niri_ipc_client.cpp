@@ -110,7 +110,7 @@ QJsonValue NiriIpcClient::sendRequest(const QJsonValue &request, bool *ok)
 
     QJsonValue value = reply.value(QStringLiteral("Ok"));
     // Newer niri versions retain the Response enum variant inside Ok,
-    // for example {"Ok":{"Casts":[]}}. Older versions returned the
+    // for example {"Ok":{"Workspaces":[]}}. Older versions returned the
     // payload directly, so support both wire formats in the shared client.
     if (request.isString() && value.isObject()) {
         const QJsonObject wrapped = value.toObject();

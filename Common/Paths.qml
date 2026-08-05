@@ -18,12 +18,10 @@ Singleton {
     }
 
     readonly property string shellDir: Quickshell.shellDir
-    readonly property string runtimeMode: Quickshell.env("CLAVIS_RUNTIME_MODE") || "release"
-    readonly property string sourceRoot: root.absoluteEnvironment("CLAVIS_SOURCE_ROOT")
-    readonly property string releaseRoot: root.absoluteEnvironment("CLAVIS_RELEASE_ROOT")
-    readonly property string shareRoot: runtimeMode.startsWith("development")
-        && sourceRoot !== "" ? sourceRoot
-        : releaseRoot !== "" ? releaseRoot + "/share/clavis" : shellDir
+    // Quickshell chooses the user XDG shell directory before the system XDG
+    // directory. Both installed and source shells therefore use the same
+    // relative resource paths.
+    readonly property string shareRoot: shellDir
     readonly property string assetsDir: shareRoot + "/assets"
     readonly property string fontsDir: assetsDir + "/fonts"
     readonly property string iconsDir: assetsDir + "/icons"
@@ -51,10 +49,6 @@ Singleton {
         || homeDir + "/.local/bin"
     readonly property string stableKey: root.absoluteEnvironment("CLAVIS_KEY")
         || binHome + "/key"
-    readonly property string installPrefix: root.absoluteEnvironment("CLAVIS_INSTALL_PREFIX")
-        || homeDir + "/.local/lib/clavis"
-    readonly property string currentRelease: releaseRoot !== ""
-        ? releaseRoot : installPrefix + "/current"
     readonly property string configHome: root.absoluteEnvironment("CLAVIS_CONFIG_HOME")
         || xdgConfigHome + "/clavis"
     readonly property string dataHome: root.absoluteEnvironment("CLAVIS_DATA_HOME")
@@ -75,8 +69,6 @@ Singleton {
         || dataHome + "/profiles/" + profileName
     readonly property string generatedHome: root.absoluteEnvironment("CLAVIS_GENERATED_HOME")
         || profileHome + "/generated"
-    readonly property string qmlImportHome: root.absoluteEnvironment("CLAVIS_QML_IMPORT_HOME")
-        || currentRelease + "/lib/qml"
     readonly property string currentWallpaper: stateHome + "/wallpaper/current"
     readonly property string scheduleCache: cacheHome + "/schedule.json"
     readonly property string profileAvatar: homeDir + "/.face"

@@ -51,16 +51,3 @@ struct NiriOutput {
     bool vrrSupported = false;
     bool vrrEnabled = false;
 };
-
-struct NiriCast {
-    quint64 streamId = 0;
-    QString sessionId;
-    QString kind;
-    QString targetType;
-    QString targetName;
-    quint64 targetWindowId = 0;
-    bool isActive = false;
-    bool isDynamicTarget = false;
-    qint64 pid = -1;
-    qint64 pwNodeId = -1;
-};

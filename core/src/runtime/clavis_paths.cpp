@@ -1,7 +1,6 @@
 #include "clavis_paths.h"
 
 #include <QDir>
-#include <QFileInfo>
 
 namespace Clavis::Runtime {
 namespace {
@@ -9,16 +8,6 @@ namespace {
 QString env(const char *name)
 {
     return QString::fromLocal8Bit(qgetenv(name)).trimmed();
-}
-
-QString prependPath(const QString &path, const QString &existing)
-{
-    if (existing.isEmpty())
-        return path;
-    const QStringList entries = existing.split(QLatin1Char(':'), Qt::SkipEmptyParts);
-    if (entries.contains(path))
-        return existing;
-    return path + QLatin1Char(':') + existing;
 }
 
 } // namespace
@@ -39,10 +28,6 @@ ClavisPaths ClavisPaths::fromEnvironment()
         paths.m_stableKey = QDir(paths.m_binHome).filePath(
             QStringLiteral("key"));
     }
-
-    paths.m_installPrefix = cleanAbsolute(env("CLAVIS_INSTALL_PREFIX"));
-    if (paths.m_installPrefix.isEmpty())
-        paths.m_installPrefix = paths.m_home + QStringLiteral("/.local/lib/clavis");
 
     paths.m_configHome = environmentPath(
         "CLAVIS_CONFIG_HOME", "XDG_CONFIG_HOME",
@@ -88,25 +73,11 @@ ClavisPaths ClavisPaths::fromEnvironment()
         paths.m_generatedHome = QDir(paths.m_profileHome).filePath(
             QStringLiteral("generated"));
     }
-    paths.m_qmlImportHome = cleanAbsolute(env("CLAVIS_QML_IMPORT_HOME"));
-    if (paths.m_qmlImportHome.isEmpty()) {
-        paths.m_qmlImportHome = QDir(paths.currentRelease()).filePath(
-            QStringLiteral("lib/qml"));
-    }
     return paths;
 }
 
 QString ClavisPaths::home() const { return m_home; }
 QString ClavisPaths::binHome() const { return m_binHome; }
-QString ClavisPaths::installPrefix() const { return m_installPrefix; }
-QString ClavisPaths::releasesHome() const
-{
-    return QDir(m_installPrefix).filePath(QStringLiteral("releases"));
-}
-QString ClavisPaths::currentRelease() const
-{
-    return QDir(m_installPrefix).filePath(QStringLiteral("current"));
-}
 QString ClavisPaths::configHome() const { return m_configHome; }
 QString ClavisPaths::dataHome() const { return m_dataHome; }
 QString ClavisPaths::stateHome() const { return m_stateHome; }
@@ -122,45 +93,9 @@ QString ClavisPaths::generatedHome() const
 {
     return m_generatedHome;
 }
-QString ClavisPaths::qmlImportHome() const
-{
-    return m_qmlImportHome;
-}
 QString ClavisPaths::stableKey() const
 {
     return m_stableKey;
-}
-
-QProcessEnvironment ClavisPaths::processEnvironment(const QString &releaseRoot) const
-{
-    const QString normalizedRelease = cleanAbsolute(releaseRoot);
-    const QString qmlImport = QDir(normalizedRelease).filePath(QStringLiteral("lib/qml"));
-    QProcessEnvironment result = QProcessEnvironment::systemEnvironment();
-    result.insert(QStringLiteral("CLAVIS_BIN_HOME"), m_binHome);
-    result.insert(QStringLiteral("CLAVIS_INSTALL_PREFIX"), m_installPrefix);
-    result.insert(QStringLiteral("CLAVIS_RELEASE_ROOT"), normalizedRelease);
-    result.insert(QStringLiteral("CLAVIS_CONFIG_HOME"), m_configHome);
-    result.insert(QStringLiteral("CLAVIS_DATA_HOME"), m_dataHome);
-    result.insert(QStringLiteral("CLAVIS_STATE_HOME"), m_stateHome);
-    result.insert(QStringLiteral("CLAVIS_CACHE_HOME"), m_cacheHome);
-    result.insert(QStringLiteral("CLAVIS_RUNTIME_HOME"), m_runtimeHome);
-    result.insert(QStringLiteral("CLAVIS_PROFILE"), m_profileName);
-    result.insert(QStringLiteral("CLAVIS_PROFILE_CONFIG_HOME"), profileConfigHome());
-    result.insert(QStringLiteral("CLAVIS_PROFILE_HOME"), profileHome());
-    result.insert(QStringLiteral("CLAVIS_GENERATED_HOME"), generatedHome());
-    result.insert(QStringLiteral("CLAVIS_QML_IMPORT_HOME"), qmlImport);
-    result.insert(QStringLiteral("CLAVIS_KEY"), stableKey());
-    result.insert(
-        QStringLiteral("PATH"),
-        prependPath(QFileInfo(stableKey()).absolutePath(),
-                    prependPath(m_binHome, result.value(QStringLiteral("PATH")))));
-    result.insert(
-        QStringLiteral("QML_IMPORT_PATH"),
-        prependPath(qmlImport, result.value(QStringLiteral("QML_IMPORT_PATH"))));
-    result.insert(
-        QStringLiteral("QML2_IMPORT_PATH"),
-        prependPath(qmlImport, result.value(QStringLiteral("QML2_IMPORT_PATH"))));
-    return result;
 }
 
 QString ClavisPaths::cleanAbsolute(const QString &value)

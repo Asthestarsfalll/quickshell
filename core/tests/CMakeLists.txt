@@ -4,15 +4,15 @@ find_program(BASH_EXECUTABLE bash REQUIRED)
 
 add_test(
     NAME shader_asset_tests
-    COMMAND ${BASH_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_shader_assets.sh
+    COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
 )
 
 add_test(
     NAME qml_unit_tests
-    COMMAND Qt6::qmltestrunner -input ${CMAKE_SOURCE_DIR}/../tests/qml
+    COMMAND Qt6::qmltestrunner -input ${CLAVIS_SOURCE_ROOT}/tests/qml
 )
 set_tests_properties(qml_unit_tests PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME="
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=;QML_IMPORT_PATH=${CLAVIS_QML_BUILD_DIR}"
 )
 
 qt_add_executable(niri_workspace_deriver_tests
@@ -35,12 +35,30 @@ qt_add_executable(audio_visual_analyzer_tests
 )
 
 target_link_libraries(audio_visual_analyzer_tests PRIVATE
-    ClavisAudioCore
+    ClavisCavaCore
     Qt6::Core
     Qt6::Test
 )
 
 add_test(NAME audio_visual_analyzer_tests COMMAND audio_visual_analyzer_tests)
+
+qt_add_executable(lyrics_tests
+    lyrics_test.cpp
+)
+
+target_link_libraries(lyrics_tests PRIVATE
+    ClavisLyrics
+    Qt6::Core
+    Qt6::Network
+    Qt6::Qml
+    Qt6::Test
+)
+
+target_include_directories(lyrics_tests PRIVATE
+    ${CLAVIS_SOURCE_ROOT}/core/plugin/lyrics/src
+)
+
+add_test(NAME lyrics_tests COMMAND lyrics_tests)
 
 qt_add_executable(clavis_paths_tests
     clavis_paths_test.cpp
@@ -56,22 +74,17 @@ add_test(NAME clavis_paths_tests COMMAND clavis_paths_tests)
 
 add_test(
     NAME niri_config_manager_tests
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_manage_niri_config.py
+    COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_manage_niri_config.py
 )
 
 add_test(
     NAME xdg_autostart_manager_tests
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_manage_xdg_autostart.py
+    COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_manage_xdg_autostart.py
 )
 
 add_test(
     NAME clavis_user_service_installer_tests
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_install_clavis_user_services.py
-)
-
-add_test(
-    NAME clavis_setup_install_tests
-    COMMAND ${BASH_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../tests/test_setup_install.sh
+    COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_install_clavis_user_services.py
 )
 
 qt_add_executable(m3shapes_tests
@@ -89,9 +102,13 @@ target_link_libraries(m3shapes_tests PRIVATE
     Qt6::Test
 )
 
+target_include_directories(m3shapes_tests PRIVATE
+    ${CLAVIS_SOURCE_ROOT}/core/src
+)
+
 target_compile_features(m3shapes_tests PRIVATE cxx_std_20)
 target_compile_definitions(m3shapes_tests PRIVATE
-    M3SHAPES_IMPORT_PATH="$<SHELL_PATH:${CMAKE_BINARY_DIR}/lib/qml>"
+    M3SHAPES_IMPORT_PATH="$<SHELL_PATH:${CLAVIS_QML_BUILD_DIR}>"
 )
 add_dependencies(m3shapes_tests M3Shapes)
 

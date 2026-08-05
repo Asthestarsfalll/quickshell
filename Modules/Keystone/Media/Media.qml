@@ -3,8 +3,8 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Mpris
+import Clavis.Lyrics
 import qs.Common
 import qs.Services
 import qs.Widgets.common
@@ -38,30 +38,9 @@ Item {
     Component.onDestruction: AudioSpectrum.release(root.spectrumToken)
 
     // ==========================================
-    // 歌词抓取与解析引擎
+    // Lyrics are fetched and parsed by the in-process Clavis.Lyrics service.
     // ==========================================
     ListModel { id: lyricsModel }
-    
-    Process {
-        id: lyricsProc
-        running: false
-        command: ["python3", Paths.scriptPath("media", "lyrics_fetcher.py"), root.title, root.artist, root.playerName]
-        
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => {
-                if (data.trim() === "") return;
-                try {
-                    let parsed = JSON.parse(data);
-                    lyricsModel.clear();
-                    for(let i = 0; i < parsed.length; i++) {
-                        lyricsModel.append({"time": parsed[i].time, "text": parsed[i].text});
-                    }
-                    lyricsView.resetToLine(0);
-                } catch(e) {}
-            }
-        }
-    }
 
     Connections {
         target: root
@@ -71,14 +50,26 @@ Item {
     }
 
     function reloadLyrics() {
-        if (!root.title || root.title === qsTr("未在播放"))
+        if (!root.title || root.title === qsTr("未在播放")) {
+            Lyrics.cancel();
             return;
+        }
 
         lyricsModel.clear();
         lyricsModel.append({"time": 0, "text": qsTr("🎵 正在搜寻歌词...")});
         lyricsView.resetToLine(0);
-        lyricsProc.running = false;
-        lyricsProc.running = true;
+        Lyrics.setTrack(root.artist, root.title, root.album, root.player ? root.player.length : 0);
+    }
+
+    Connections {
+        target: Lyrics
+        function onLyricsChanged() {
+            lyricsModel.clear();
+            const lines = Lyrics.lyrics || [];
+            for (let i = 0; i < lines.length; ++i)
+                lyricsModel.append(lines[i]);
+            lyricsView.resetToLine(0);
+        }
     }
 
     Connections {
@@ -117,11 +108,8 @@ Item {
                 root.currentPos = root.player.position;
                 if (root.showLyrics && lyricsModel.count > 0) {
                     let pos = root.currentPos;
-                    let newIdx = 0;
-                    for (let i = 0; i < lyricsModel.count; i++) {
-                        if (lyricsModel.get(i).time <= pos) newIdx = i;
-                        else break;
-                    }
+                    let newIdx = Lyrics.indexForTime(pos);
+                    if (newIdx < 0) newIdx = 0;
                     if (lyricsView.activeLine !== newIdx)
                         lyricsView.syncToLine(newIdx, pos, false);
                 }
@@ -310,6 +298,16 @@ Item {
                     fontBold: true
                     horizontalAlignment: Text.AlignLeft
                     wrapMode: Text.WordWrap
+
+                    onLyricClicked: (index) => {
+                        if (!root.player || root.player.canSeek === false)
+                            return;
+                        const target = Lyrics.timeForIndex(index);
+                        if (target >= 0) {
+                            root.player.position = target;
+                            root.currentPos = target;
+                        }
+                    }
                 }
 
                 layer.enabled: true

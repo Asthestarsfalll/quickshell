@@ -23,10 +23,7 @@ CavaProvider::~CavaProvider()
     destroyCava();
 }
 
-bool CavaProvider::active() const
-{
-    return m_active;
-}
+bool CavaProvider::active() const { return m_active; }
 
 void CavaProvider::setActive(bool active)
 {
@@ -47,15 +44,8 @@ void CavaProvider::setActive(bool active)
     }
 }
 
-bool CavaProvider::available() const
-{
-    return m_available;
-}
-
-int CavaProvider::bars() const
-{
-    return m_bars;
-}
+bool CavaProvider::available() const { return m_available; }
+int CavaProvider::bars() const { return m_bars; }
 
 void CavaProvider::setBars(int bars)
 {
@@ -71,10 +61,7 @@ void CavaProvider::setBars(int bars)
     rebuildCava();
 }
 
-QVector<double> CavaProvider::values() const
-{
-    return m_values;
-}
+QVector<double> CavaProvider::values() const { return m_values; }
 
 void CavaProvider::process()
 {
@@ -115,7 +102,7 @@ void CavaProvider::rebuildCava()
 
     m_plan = cava_init(m_bars, AudioCollector::SampleRate, 1, 1, 0.85, 50, 10000);
     if (!m_plan) {
-        qWarning() << "[ClavisAudio] Failed to initialise libcava";
+        qWarning() << "[ClavisCava] Failed to initialise libcava";
         setAvailable(false);
         return;
     }
@@ -128,7 +115,6 @@ void CavaProvider::destroyCava()
 {
     if (!m_plan)
         return;
-
     cava_destroy(m_plan);
     m_plan = nullptr;
 }
@@ -137,7 +123,6 @@ void CavaProvider::setAvailable(bool available)
 {
     if (m_available == available)
         return;
-
     m_available = available;
     emit availableChanged();
 }
@@ -147,7 +132,6 @@ void CavaProvider::resetValues()
     QVector<double> zeroes(m_bars, 0.0);
     if (m_values == zeroes)
         return;
-
     m_values = zeroes;
     emit valuesChanged();
 }

@@ -21,10 +21,7 @@ AudioLevelProvider::~AudioLevelProvider()
     m_collector.stop();
 }
 
-bool AudioLevelProvider::active() const
-{
-    return m_active;
-}
+bool AudioLevelProvider::active() const { return m_active; }
 
 void AudioLevelProvider::setActive(bool active)
 {
@@ -35,10 +32,7 @@ void AudioLevelProvider::setActive(bool active)
     restart();
 }
 
-QString AudioLevelProvider::sourceNodeName() const
-{
-    return m_sourceNodeName;
-}
+QString AudioLevelProvider::sourceNodeName() const { return m_sourceNodeName; }
 
 void AudioLevelProvider::setSourceNodeName(const QString &sourceNodeName)
 {
@@ -49,10 +43,7 @@ void AudioLevelProvider::setSourceNodeName(const QString &sourceNodeName)
     restart();
 }
 
-bool AudioLevelProvider::captureSink() const
-{
-    return m_captureSink;
-}
+bool AudioLevelProvider::captureSink() const { return m_captureSink; }
 
 void AudioLevelProvider::setCaptureSink(bool captureSink)
 {
@@ -63,45 +54,14 @@ void AudioLevelProvider::setCaptureSink(bool captureSink)
     restart();
 }
 
-bool AudioLevelProvider::available() const
-{
-    return m_snapshot.available;
-}
-
-qint64 AudioLevelProvider::timestampMs() const
-{
-    return m_snapshot.timestampMs;
-}
-
-double AudioLevelProvider::rms() const
-{
-    return m_snapshot.rms;
-}
-
-double AudioLevelProvider::peak() const
-{
-    return m_snapshot.peak;
-}
-
-double AudioLevelProvider::normalizedAmplitude() const
-{
-    return m_snapshot.normalizedAmplitude;
-}
-
-qint64 AudioLevelProvider::visualTimestampMs() const
-{
-    return m_visualTimestampMs;
-}
-
-double AudioLevelProvider::visualAmplitude() const
-{
-    return m_visualAmplitude;
-}
-
-QString AudioLevelProvider::errorString() const
-{
-    return QString::fromStdString(m_snapshot.error);
-}
+bool AudioLevelProvider::available() const { return m_snapshot.available; }
+qint64 AudioLevelProvider::timestampMs() const { return m_snapshot.timestampMs; }
+double AudioLevelProvider::rms() const { return m_snapshot.rms; }
+double AudioLevelProvider::peak() const { return m_snapshot.peak; }
+double AudioLevelProvider::normalizedAmplitude() const { return m_snapshot.normalizedAmplitude; }
+qint64 AudioLevelProvider::visualTimestampMs() const { return m_visualTimestampMs; }
+double AudioLevelProvider::visualAmplitude() const { return m_visualAmplitude; }
+QString AudioLevelProvider::errorString() const { return QString::fromStdString(m_snapshot.error); }
 
 void AudioLevelProvider::poll()
 {

@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
-import Clavis.Keyboard 1.0
+import Clavis.Keyboard
 import qs.Common
 import qs.Services
 import "Cards"

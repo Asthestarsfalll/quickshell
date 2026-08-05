@@ -1,192 +1,59 @@
 pragma Singleton
 
 import QtQuick
-import Quickshell
-import Quickshell.Io
-import qs.Common
-import qs.Services
+import Clavis.Weather as NativeWeather
 
-Singleton {
+// Compatibility facade for the existing QML service namespace. All weather
+// state and network work lives in the in-process Clavis.Weather singleton.
+QtObject {
     id: root
 
-    // Structured weather data belongs to `key weather`; the native map
-    // provider remains Clavis.WeatherMap because it owns image/tile work.
-    property string commandName: {
-        const configured = String(Quickshell.env("CLAVIS_KEY") || "").trim()
-        return configured !== "" ? configured : Paths.stableKey
-    }
-    property bool loading: false
-    property bool hasValidData: _valid
-    property bool hasManualLocation: _manualLatitude !== null
-        && _manualLongitude !== null
-    property string status: "idle"
-    property string errorMessage: ""
-    property string locationName: ""
-    property real latitude: _number(_snapshot.latitude)
-    property real longitude: _number(_snapshot.longitude)
-    property string lastUpdated: String(_snapshot.lastUpdated || "")
-    property string nextRefreshAt: String(_snapshot.nextRefreshAt || "")
+    readonly property var backend: NativeWeather.WeatherPlugin
+    readonly property bool loading: backend.loading
+    readonly property bool hasValidData: backend.hasValidData
+    readonly property bool hasManualLocation: backend.hasManualLocation
+    readonly property string status: backend.status
+    readonly property string errorMessage: backend.errorMessage
+    readonly property string locationName: backend.locationName
+    readonly property real latitude: backend.latitude
+    readonly property real longitude: backend.longitude
+    readonly property string lastUpdated: backend.lastUpdated
+    readonly property string nextRefreshAt: backend.nextRefreshAt
 
-    property var _snapshot: ({})
-    property var _current: ({})
-    property bool _valid: false
-    property var _manualLatitude: null
-    property var _manualLongitude: null
-    property string _manualName: ""
-    property string _output: ""
-    property string _errorOutput: ""
-    property int _exitCode: -1
-    property bool _exited: false
-    property bool _stdoutFinished: false
+    readonly property real currentTemperatureC: backend.currentTemperatureC
+    readonly property real currentFeelsLikeC: backend.currentFeelsLikeC
+    readonly property int currentWeatherCode: backend.currentWeatherCode
+    readonly property string currentWeatherText: backend.currentWeatherText
+    readonly property string currentIconName: backend.currentIconName
+    readonly property real currentWindSpeedMs: backend.currentWindSpeedMs
+    readonly property real currentWindDirection: backend.currentWindDirection
+    readonly property real currentWindGustsMs: backend.currentWindGustsMs
+    readonly property real currentUvIndex: backend.currentUvIndex
+    readonly property real currentRelativeHumidity: backend.currentRelativeHumidity
+    readonly property real currentDewPointC: backend.currentDewPointC
+    readonly property real currentPressureHpa: backend.currentPressureHpa
+    readonly property real currentCloudCover: backend.currentCloudCover
+    readonly property real currentVisibilityM: backend.currentVisibilityM
+    readonly property var currentAirQuality: backend.currentAirQuality
 
-    readonly property real currentTemperatureC: _number(_current.temperatureC)
-    readonly property real currentFeelsLikeC: _number(_current.feelsLikeC)
-    readonly property int currentWeatherCode: _integer(_current.weatherCode, -1)
-    readonly property string currentWeatherText: String(_current.weatherText || "")
-    readonly property string currentIconName: String(_current.iconName || "cloud")
-    readonly property real currentWindSpeedMs: _number(_current.windSpeedMs)
-    readonly property real currentWindDirection: _number(_current.windDirection)
-    readonly property real currentWindGustsMs: _number(_current.windGustsMs)
-    readonly property real currentUvIndex: _number(_current.uvIndex)
-    readonly property real currentRelativeHumidity: _number(_current.relativeHumidity)
-    readonly property real currentDewPointC: _number(_current.dewPointC)
-    readonly property real currentPressureHpa: _number(_current.pressureHpa)
-    readonly property real currentCloudCover: _number(_current.cloudCover)
-    readonly property real currentVisibilityM: _number(_current.visibilityM)
-    readonly property var currentAirQuality: _current.airQuality || ({})
-
-    property var hourlyForecast: WeatherListModel {}
-    property var dailyForecast: WeatherListModel {}
-    property var dailyTrendForecast: WeatherListModel {}
-    property var minutelyForecast: WeatherListModel {}
+    readonly property var hourlyForecast: backend.hourlyForecast
+    readonly property var dailyForecast: backend.dailyForecast
+    readonly property var dailyTrendForecast: backend.dailyTrendForecast
+    readonly property var minutelyForecast: backend.minutelyForecast
 
     signal dataChanged()
+    signal loadingChanged()
 
-    function _number(value) {
-        const number = Number(value)
-        return isFinite(number) ? number : NaN
-    }
-
-    function _integer(value, fallback) {
-        const number = Number(value)
-        return isFinite(number) ? Math.round(number) : fallback
-    }
-
-    function _command() {
-        const command = [root.commandName, "weather", "--json"]
-        const fixture = String(Quickshell.env("CLAVIS_WEATHER_FIXTURE") || "").trim()
-        if (fixture !== "")
-            command.push("--fixture", fixture)
-        if (root._manualLatitude !== null && root._manualLongitude !== null) {
-            command.push("--latitude", String(root._manualLatitude))
-            command.push("--longitude", String(root._manualLongitude))
-            if (root._manualName !== "")
-                command.push("--name", root._manualName)
-        }
-        return command
-    }
-
-    function refresh() {
-        if (weatherProcess.running)
-            return false
-        root.loading = true
-        root.errorMessage = ""
-        root._output = ""
-        root._errorOutput = ""
-        root._exitCode = -1
-        root._exited = false
-        root._stdoutFinished = false
-        weatherProcess.command = root._command()
-        weatherProcess.running = true
-        return true
-    }
-
-    function _finish() {
-        if (!root._exited || !root._stdoutFinished)
-            return
-        root.loading = false
-
-        let response = null
-        try {
-            const text = String(root._output || "").trim()
-            if (text !== "")
-                response = JSON.parse(text)
-        } catch (exception) {
-            response = null
-        }
-
-        if (root._exitCode !== 0 || !response || typeof response !== "object") {
-            root.status = root._valid ? "stale" : "error"
-            root.errorMessage = String(root._errorOutput || "").trim()
-                || qsTr("天气数据不可用")
-            root.dataChanged()
-            return
-        }
-
-        root._snapshot = response
-        root._current = response.current || ({})
-        root._valid = response.valid === true
-        root.status = String(response.status || (root._valid ? "fresh" : "error"))
-        root.errorMessage = String(response.errorMessage || "")
-        root.locationName = String(response.locationName || "")
-        root.hourlyForecast.replace(response.hourly)
-        root.dailyForecast.replace(response.daily)
-        root.dailyTrendForecast.replace(response.dailyTrend || response.daily)
-        root.minutelyForecast.replace(response.minutely)
-        root.dataChanged()
-    }
-
-    function current() {
-        return root._current
-    }
-
+    function refresh() { return backend.refresh() }
     function setManualLocation(latitudeValue, longitudeValue, name) {
-        const latitudeNumber = Number(latitudeValue)
-        const longitudeNumber = Number(longitudeValue)
-        if (!isFinite(latitudeNumber) || !isFinite(longitudeNumber))
-            return false
-        root._manualLatitude = latitudeNumber
-        root._manualLongitude = longitudeNumber
-        root._manualName = String(name || "")
-        root.refresh()
-        return true
+        return backend.setManualLocation(latitudeValue, longitudeValue, name)
     }
+    function clearManualLocation() { return backend.clearManualLocation() }
+    function current() { return backend.current() }
 
-    function clearManualLocation() {
-        root._manualLatitude = null
-        root._manualLongitude = null
-        root._manualName = ""
-        root.refresh()
+    Connections {
+        target: root.backend
+        function onDataChanged() { root.dataChanged() }
+        function onLoadingChanged() { root.loadingChanged() }
     }
-
-    Process {
-        id: weatherProcess
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root._output = this.text
-                root._stdoutFinished = true
-                root._finish()
-            }
-        }
-
-        stderr: StdioCollector {
-            onStreamFinished: root._errorOutput = this.text
-        }
-
-        onExited: exitCode => {
-            root._exitCode = exitCode
-            root._exited = true
-            root._finish()
-        }
-    }
-
-    Timer {
-        interval: 30 * 60 * 1000
-        repeat: true
-        running: true
-        onTriggered: root.refresh()
-    }
-
-    Component.onCompleted: root.refresh()
 }

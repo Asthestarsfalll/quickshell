@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Quickshell
-import Clavis.Niri 1.0
+import Clavis.Niri
 import qs.Common
 import qs.Services
 import qs.Widgets.common

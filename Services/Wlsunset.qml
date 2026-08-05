@@ -20,7 +20,7 @@ Singleton {
     }
 
     function stopWlsunset() {
-        Quickshell.execDetached(["bash", "-c", "pkill -x wlsunset 2>/dev/null || true"]);
+        Quickshell.execDetached(["pkill", "-x", "wlsunset"]);
     }
 
     function applyGamma() {
@@ -29,10 +29,14 @@ Singleton {
             return;
         }
 
+        root.stopWlsunset();
         Quickshell.execDetached([
-            "bash",
-            "-c",
-            "pkill -x wlsunset 2>/dev/null || true; wlsunset -T 6501 -t 6500 -S 00:00 -s 00:00 -g " + root.gammaArgument() + " >/dev/null 2>&1 &"
+            "wlsunset",
+            "-T", "6501",
+            "-t", "6500",
+            "-S", "00:00",
+            "-s", "00:00",
+            "-g", root.gammaArgument()
         ]);
     }
 

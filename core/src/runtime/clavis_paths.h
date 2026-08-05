@@ -11,9 +11,6 @@ public:
 
     QString home() const;
     QString binHome() const;
-    QString installPrefix() const;
-    QString releasesHome() const;
-    QString currentRelease() const;
     QString configHome() const;
     QString dataHome() const;
     QString stateHome() const;
@@ -23,10 +20,7 @@ public:
     QString profileConfigHome() const;
     QString profileHome() const;
     QString generatedHome() const;
-    QString qmlImportHome() const;
     QString stableKey() const;
-
-    QProcessEnvironment processEnvironment(const QString &releaseRoot) const;
 
 private:
     static QString cleanAbsolute(const QString &value);
@@ -38,7 +32,6 @@ private:
     QString m_home;
     QString m_binHome;
     QString m_stableKey;
-    QString m_installPrefix;
     QString m_configHome;
     QString m_dataHome;
     QString m_stateHome;
@@ -48,7 +41,6 @@ private:
     QString m_profileConfigHome;
     QString m_profileHome;
     QString m_generatedHome;
-    QString m_qmlImportHome;
 };
 
 } // namespace Clavis::Runtime

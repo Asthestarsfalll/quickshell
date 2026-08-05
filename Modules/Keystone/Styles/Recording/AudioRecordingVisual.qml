@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import Clavis.Audio 1.0
+import Clavis.Cava
 import qs.Common
 
 Item {

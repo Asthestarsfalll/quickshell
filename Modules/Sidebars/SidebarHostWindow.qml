@@ -11,11 +11,6 @@ import qs.Widgets.common
 PanelWindow {
     id: root
 
-    readonly property bool developmentRuntime:
-        Paths.runtimeMode.startsWith("development")
-            && Paths.sourceRoot !== ""
-    property bool weatherPreviewActive: false
-
     function sidebarOpen(side) {
         const normalized = String(side || "").toLowerCase();
         if (normalized === "left")
@@ -36,19 +31,6 @@ PanelWindow {
             return open ? "RIGHT_OPEN" : "RIGHT_CLOSED";
         }
         return "INVALID_SIDE";
-    }
-
-    function openWeatherPreview() {
-        if (!root.developmentRuntime)
-            return "DEVELOPMENT_ONLY";
-        if (!developerWeatherSource.item)
-            return "MOCK_UNAVAILABLE";
-
-        root.weatherPreviewActive = true;
-        WidgetState.qsOpen = false;
-        WidgetState.leftSidebarView = "weather";
-        WidgetState.leftSidebarOpen = true;
-        return "WEATHER_PREVIEW_OPEN";
     }
 
     readonly property bool anySidebarOpen:
@@ -98,22 +80,6 @@ PanelWindow {
             return root.setSidebarOpen(side, !current);
         }
 
-        function previewWeather(): string {
-            return root.openWeatherPreview();
-        }
-    }
-
-    // The development source is loaded synchronously before an IPC request so
-    // WeatherView never renders a first frame from WeatherPlugin and then swaps
-    // to the mock. Release shells neither resolve nor instantiate this file.
-    Loader {
-        id: developerWeatherSource
-
-        active: root.developmentRuntime
-        source: active
-            ? Paths.fileUrl(Paths.sourceRoot
-                + "/tests/manual/weather_preview/MockWeatherSource.qml")
-            : ""
     }
 
     mask: Region {
@@ -176,10 +142,6 @@ PanelWindow {
 
         anchors.fill: parent
         panelScreen: root.screen
-        weatherSourceOverride: root.weatherPreviewActive
-            ? developerWeatherSource.item : null
-
-        onPresentationClosed: root.weatherPreviewActive = false
     }
 
     RightSidebar {

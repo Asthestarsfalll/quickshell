@@ -2,7 +2,6 @@
 
 #include <QDir>
 #include <QFile>
-#include <QProcessEnvironment>
 #include <QTemporaryDir>
 #include <QTest>
 
@@ -38,7 +37,6 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     qputenv("CLAVIS_PROFILE_CONFIG_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("profile-config"))));
     qputenv("CLAVIS_PROFILE_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("profile"))));
     qputenv("CLAVIS_GENERATED_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("generated"))));
-    qputenv("CLAVIS_QML_IMPORT_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("override-qml"))));
     qputenv("CLAVIS_KEY", QFile::encodeName(QDir(root).filePath(QStringLiteral("system-bin/key"))));
 
     QCOMPARE(
@@ -55,19 +53,7 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     QCOMPARE(paths.profileConfigHome(), QDir(root).filePath(QStringLiteral("profile-config")));
     QCOMPARE(paths.profileHome(), QDir(root).filePath(QStringLiteral("profile")));
     QCOMPARE(paths.generatedHome(), QDir(root).filePath(QStringLiteral("generated")));
-    QCOMPARE(paths.qmlImportHome(), QDir(root).filePath(QStringLiteral("override-qml")));
     QCOMPARE(paths.stableKey(), QDir(root).filePath(QStringLiteral("system-bin/key")));
-
-    const QString release = QDir(root).filePath(QStringLiteral("release"));
-    const QProcessEnvironment environment = paths.processEnvironment(release);
-    QCOMPARE(environment.value(QStringLiteral("CLAVIS_BIN_HOME")), paths.binHome());
-    QCOMPARE(environment.value(QStringLiteral("CLAVIS_KEY")), paths.stableKey());
-    QCOMPARE(environment.value(QStringLiteral("CLAVIS_PROFILE_HOME")), paths.profileHome());
-    QCOMPARE(environment.value(QStringLiteral("CLAVIS_PROFILE_CONFIG_HOME")), paths.profileConfigHome());
-    QCOMPARE(environment.value(QStringLiteral("CLAVIS_GENERATED_HOME")), paths.generatedHome());
-    QCOMPARE(
-        environment.value(QStringLiteral("CLAVIS_QML_IMPORT_HOME")),
-        QDir(release).filePath(QStringLiteral("lib/qml")));
 }
 
 void ClavisPathsTest::rejectsUnsafeProfileNamesByFallingBack()

@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Clavis.Niri 1.0
+import Clavis.Niri
 
 Singleton {
     id: root

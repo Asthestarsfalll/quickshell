@@ -1,6 +1,6 @@
 import QtQuick
 import QtQml.Models
-import Clavis.WeatherMap 1.0
+import Clavis.WeatherMap
 
 Item {
     id: root

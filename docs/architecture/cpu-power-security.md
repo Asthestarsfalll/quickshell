@@ -1,14 +1,12 @@
 # CPU 功耗读取边界
 
-RAPL 属于独立的 `keytop` 能力，不属于 `key-cli`、Quickshell release 或任何 Key
-daemon。`keytop` 以普通用户尝试读取固定的 Linux powercap 接口；不可读时报告
-unsupported、permission denied 或 read failed，并继续提供其他系统指标。
+RAPL 和其他 CPU 功耗指标属于独立的 `keytop` 能力。Clavis Shell 只消费
+`keytop value stream` 的结果，不请求 sudo、不安装 capability，也不管理权限 helper。
 
 ```bash
-keytop value --modules cpu --format json
-keytop value --modules cpu,system,memory --format json
+keytop value cpu --format json
+keytop value snapshot --format json --modules cpu,system,memory
 ```
 
-本次拆分不新增常驻 `key.service`、Key socket、setcap 或自动 sudo 流程。若发行版未来
-需要独立的 RAPL 权限集成，应作为 `keytop` 的明确可选打包/系统组件单独设计、审核和
-卸载；普通 `key install`、Shell release 安装、更新和回滚不得改变系统权限。
+不可读的 powercap 接口应报告 unsupported 或 permission denied，同时继续提供其他
+系统指标。任何需要系统权限的打包集成都应由 keytop 的发行版包单独设计和审核。

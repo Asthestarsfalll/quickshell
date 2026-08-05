@@ -1,214 +1,118 @@
 # Clavis Shell
 
-Clavis 是以 QML/Quickshell 构建的 Wayland 桌面 Shell。`quickshell` 仓库只拥有
-Shell QML、Niri 模型、M3Shapes、音频/媒体可视化、天气地图和仍与 QML 生命周期耦合的
-原生 plugin；稳定 CLI 与系统监测分别由同级的 `key-cli`、`keytop` 仓库提供。源码
-工作区与运行时安装完全分离；
-仓库可放在任意绝对路径，推荐 `~/Projects/clavis`。
+Clavis 是基于 QML/Quickshell 的 Wayland 桌面 Shell。这个仓库只负责长期运行的
+响应式状态、QML UI、高频原生 plugin 和实时音频可视化；离散外部命令由独立的
+`key-cli` 处理，系统监测由独立的 `keytop` 处理。
 
-## 安装
-
-Arch Linux 是当前优先支持的平台。先查看依赖，不会安装任何包：
-
-```bash
-./setup.sh doctor
-./setup.sh deps
-```
-
-只有明确执行 `./setup.sh deps --install` 才会通过 pacman 请求 `sudo`。Clavis
-本身的配置、构建、测试与安装始终是用户级操作：
-
-```bash
-./setup.sh install
-```
-
-也可以指定日期 release：
-
-```bash
-./setup.sh install --release 2026.07.31
-./setup.sh install --release 2026.07.31.1
-```
-
-正式 release 默认拒绝未提交工作树，避免同一 commit 隐藏不同产物。仅本地验证
-可明确使用 `--allow-dirty`；release metadata 会记录 dirty 状态与内容指纹。
-
-安装只构建 Shell runtime，将产物暂存到 `releases/<version>.partial`，检查 metadata
-和文件布局后交给外部 `key-cli` 原子注册并切换 `current`。它不会隐式运行 CTest、
-smoke 或全量 qmllint，不会向系统 Qt QML 目录复制 plugin，也不会覆盖当前正在运行的
-release。需要测试时显式运行 `./setup.sh test` 和 `./setup.sh smoke`。完整依赖见
-[docs/dependencies.md](docs/dependencies.md)。
-
-确保用户级命令目录排在旧系统安装之前，并刷新 shell 的命令缓存：
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-hash -r
-command -v key
-```
-
-最后一条应输出 `$HOME/.local/bin/key`，而不是旧的 `/usr/local/bin/key`。
-
-## 使用
-
-`key` 是唯一用户 CLI，稳定入口默认安装为 `~/.local/bin/key`：
-
-```bash
-key version --json
-key shell
-key shell --dev
-key shell --dev --native
-key shell --foreground
-key shell logs
-key ipc list
-key ipc call keystone dashboard
-keytop
-keytop value --format json
-key top                 # key-cli 兼容转发
-key weather --json
-key install keytop --source ~/Projects/keytop
-key component status
-key doctor
-key doctor legacy
-key rollback
-key release list
-```
-
-`key shell` 从 `current` 指向的不可变 release 运行 Shell；源码工作区中的未提交修改
-不会影响它。`key shell --dev` 则从当前目录向上寻找 Clavis 仓库，直接加载源码中的
-QML、JavaScript、脚本与资源。三种 Shell 模式默认都在完成实例注册后转入后台并返回
-终端；加 `--foreground` 可在前台观察实时输出并用 `Ctrl+C` 结束。后台日志可通过
-`key shell logs` 或 `key shell logs --follow` 查看。
-
-Niri 会话由系统的 `niri-session` 启动。`$XDG_CONFIG_HOME/niri/config.kdl` 及用户
-include 始终归用户所有；Clavis 只生成 `$XDG_CONFIG_HOME/niri/clavis/*.kdl` 中已在
-设置中心启用的域。每次写入先验证完整候选树，再原子替换并等待 Niri 的
-`ConfigLoaded`；失败会恢复 `.last-good`。
-
-安装会加入 `clavis-shell.service` 和 `clavis-clipboard.service`，两者只挂到
-`niri.service`，不会在其他桌面或安装时立即启动。Fcitx5、nm-applet 与
-blueman-applet 使用 XDG Autostart。所有权、迁移和回滚见
-[Niri 配置管理](docs/niri-configuration.md)。
-
-完整 IPC target 与 method 清单见 [docs/ipc.md](docs/ipc.md)。
-
-Niri 快捷键应调用稳定入口，例如
-`spawn-sh "$CLAVIS_KEY ipc call keystone dashboard"`，不要调用裸
-`quickshell ipc`。后者按配置绝对路径选择实例，源码迁移或 release 更新后容易命中
-错误实例；`key ipc` 优先验证 `$XDG_RUNTIME_DIR/clavis/active-shell.json` 并按精确 PID
-路由到当前正式或开发实例，陈旧记录会被清理，随后安全回退到 `current`。
-
-从显示管理器选择系统提供的 Niri 会话；不要嵌套第二个 compositor。源码开发仍使用
-`key shell --dev`，生产 service 不替代开发命令。
-
-## 目录边界
-
-默认路径如下；所有 XDG 根目录和 `CLAVIS_*_HOME` 均可覆盖：
+## 运行关系
 
 ```text
-~/.local/bin/key                         # key-cli 的稳定入口
-~/.local/lib/clavis/current -> releases/<date-release>  # 只有 Shell runtime
-~/.local/lib/clavis/releases/<date-release>/
-~/.config/clavis/
-~/.config/clavis/profiles/default/
-~/.local/share/clavis/profiles/default/
-~/.local/state/clavis/
-~/.local/state/clavis/logs/
-~/.cache/clavis/
-$XDG_RUNTIME_DIR/clavis/
+QML UI ── Clavis.* native modules
+       ├─ key record / key audio / key clipboard
+       └─ keytop value stream
+
+key shell ── qs -c clavis -n
+key ipc   ── qs -c clavis ipc ...
 ```
 
-每个 release 不包含 `bin/key`、Keytop 或主题包；原生 `Clavis.*` 与 `M3Shapes` plugin
-位于 release 的 `lib/qml/`，import 路径只注入 Clavis 子进程。详细布局见
-[安装布局](docs/architecture/install-layout.md) 与
-[配置隔离](docs/architecture/config-isolation.md)。
+`key shell` 不探测源码、构建、安装、切换或回滚版本。用户级配置目录优先于系统
+目录：
 
-## 主题与 Matugen 配置
+```text
+~/.config/quickshell/clavis     用户源码/开发配置
+/etc/xdg/quickshell/clavis      系统安装回退配置
+```
 
-Matugen 始终生成 Clavis/Quickshell 配色。设置中心“高级”页可分别启用 btop、Cava、
-Kitty、Fcitx5、Zsh Prompt、Keytop、Niri 与 Yazi 目标。Zsh Prompt 和 Keytop 的
-`matugen.conf`/`colors.conf` 位于各自固定 XDG 配置目录；Keytop 成功生成后通过一次性
-`keytop reload` 通知正在运行的 TUI。Fcitx5 的完整 `theme.conf`、`panel.svg` 和
-`highlight.svg` 以及菜单资源由独立 `fcitx5-theme apply` 事务渲染，Quickshell 不复制模板或直接
-写最终主题文件。Niri 配色写入 `~/.config/niri/clavis/colors.kdl`；其他程序的主题
-文件直接写入它们在 `~/.config` 或 `~/.local/share` 下的标准位置。Clavis 不托管这些
-程序的完整配置。
-
-## 更新、回滚与卸载
-
-当前可靠入口是本地源码 release。在线 `key update` 在没有签名 artifact provider
-前会明确拒绝，不会伪装成安全下载器。
+开发者可以建立源码入口：
 
 ```bash
-key rollback [RELEASE]
-key release remove OLD_RELEASE --dry-run
-key release remove OLD_RELEASE
-key uninstall --dry-run
-key uninstall
-key uninstall --purge-cache
+mkdir -p ~/.config/quickshell
+ln -sfn ~/Projects/clavis ~/.config/quickshell/clavis
 ```
 
-回滚会先验证 manifest 中的 release 文件，再原子切换并重启运行中的 Shell 与用户
-服务。普通卸载保留配置、数据和个人壁纸；清除配置或数据必须显式使用相应 purge
-参数。系统级功耗读取属于 `keytop` 的可选能力，不属于 `key-cli` 或 Shell release。
+## 开发构建
 
-`keytop` 在 RAPL 不可读时保留其余指标；如需处理 RAPL 集成，应按照
-`keytop/docs/` 中的说明单独操作，不能通过 `key` 安装 daemon、socket 或 setcap。
-
-## 开发与验证
+依赖包括 Qt 6、Quickshell、Ninja、PipeWire/libcava 和 Qt Keychain。配置与构建不需要
+sudo：
 
 ```bash
-key shell --dev
-key shell --dev --native
-key shell --dev --foreground --replace
-key shell logs --mode dev
-key shell logs --follow
-./setup.sh configure
-./setup.sh build
-./setup.sh test
-./setup.sh smoke
-./setup.sh dev-build
-./setup.sh run-source -- --replace
-qmllint -I . Common/Paths.qml Services/SystemMonitorService.qml Services/WeatherPlugin.qml
-bash tests/test_matugen_templates.sh
+cmake -S . -B build \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=Debug
+
+cmake --build build
+
+QML_IMPORT_PATH="$PWD/build/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}" \
+  key shell
 ```
 
-普通开发模式直接监视源码，QML 与资源修改由 Quickshell 原生 reload 立即加载；它仍
-复用外部 `key-cli` 的稳定 `key` 和 `current` release 的 `lib/qml` 原生模块。修改
-`core/` 时使用
-`--native`：命令会在 `.build/dev` 做增量 CMake 构建，并以新进程加载更新后的共享库，
-不会创建 release 或切换 `current`。另一套完整 Shell 正在运行时必须显式加
-`--replace`，该选项只停止记录到的 Clavis 实例。新实例启动失败时不会改变 `current`，
-但已停止的旧实例不会自动恢复；运行 `key shell --replace` 回到正式版。
+QML 文件保存后由源码 Shell 热重载；修改 C++ plugin 后运行
+`cmake --build build`，再重启或重新加载 Shell。`build/qml` 是开发 import tree，
+不会写入系统 Qt import 根。
 
-后台启动将 stdout/stderr 分模式写入 `$XDG_STATE_HOME/clavis/logs/`，单个日志到达
-2 MiB 后轮转并保留 3 份备份。启动器在最多 8 秒内按 Quickshell 实例 PID 验证注册，
-失败时返回非零并打印最近 50 行。前台模式不写这些后台日志，而是保留真实退出码并
-将 `SIGINT`、`SIGTERM` 和 `SIGHUP` 转发给 Quickshell。
-
-`just` 是可选的开发工作流缩写，不是 Clavis 运行依赖。安装了 `just` 时，从仓库任意
-子目录执行 `just` 或 `just --list` 可查看英文命令说明；执行 `just help-zh` 只显示
-中文命令说明。`just shell`、`just dev`、`just dev-native` 是后台切换入口；`just sf`、
-`just df`、`just dnf` 分别以前台方式启动并显示实时日志。未安装时上述 `key` 与
-`setup.sh` 命令照常可用。详细说明见
-[开发工作流](docs/development.md)。
-
-不要编辑生成的 build 目录。涉及 `core/` 的改动需重新构建；纯 QML 改动至少运行
-一次 `qmllint`。协议与能力模型见
-[运行时协议](docs/architecture/runtime-compatibility.md)。旧安装迁移见
-[迁移指南](docs/migration/from-legacy-layout.md)。
-
-## 移动源码仓库
-
-确认工作区状态后，可在本次开发会话结束时手动移动：
+## 正式构建
 
 ```bash
-git -C ~/.config/quickshell status
-mkdir -p ~/Projects
-mv ~/.config/quickshell ~/Projects/clavis
-cd ~/Projects/clavis
-codex resume --all
+cmake -S . -B build \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/
+
+cmake --build build
+sudo cmake --install build
 ```
 
-`AGENTS.md` 会随 Git 仓库一起移动；不需要复制 Codex 会话数据库。恢复旧会话时选择
-新的工作目录。通常新会话比携带大量旧绝对路径历史更干净。确认迁移成功前，不要
-删除或覆盖任何旧目录。
+CMake 支持 `DESTDIR="$pkgdir" cmake --install build`，安装器本身不调用 sudo。默认
+布局为 `/etc/xdg/quickshell/clavis`、`/lib/qt6/qml/Clavis`、`/lib/qt6/qml/M3Shapes`
+以及必要的 `/usr/share/clavis` systemd 用户单元；Arch 的 `/lib` 合并布局由系统处理。
+
+## 原生 QML modules
+
+```text
+Clavis.Niri
+Clavis.Weather
+Clavis.WeatherMap
+Clavis.Cava
+Clavis.Lyrics
+Clavis.Media
+Clavis.Keyboard
+Clavis.I18n
+Clavis.Runtime
+M3Shapes
+```
+
+所有自制 module 使用无版本 import，例如 `import Clavis.Cava`。天气在 Shell 进程内
+使用 Open-Meteo、TTL 缓存、逐小时/每日预报和 WeatherMapProvider；`Clavis.Cava`
+只负责 PipeWire 实时电平、RMS/Peak、频谱和动画，不录制音频文件；`Clavis.Lyrics`
+负责异步歌词 provider、LRC 时间轴和 MPRIS seek 映射。
+
+## 外部命令
+
+`key-cli` 的安装、升级和卸载由发行版/AUR/pacman 负责。常用命令：
+
+```bash
+key shell
+key shell --daemon
+key shell --kill
+key shell --log
+key ipc show
+key ipc call TARGET METHOD [ARGUMENTS...]
+key record start|status|pause|resume|stop --json
+key audio start --source mic|system --json
+key audio status|stop --json
+key clipboard list|inspect|restore|delete|clear --format json
+keytop value stream --format jsonl --interval 1000 \
+  --modules system,cpu,memory,gpu,disk,network,battery
+```
+
+录屏、录音状态只写入 `$XDG_RUNTIME_DIR/key/`，剪贴板后端使用 cliphist、wl-copy 和
+wl-paste。Shell 通过参数数组消费这些机器 JSON，不拼接 shell 字符串。
+
+## 验证
+
+```bash
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+开发任务默认只修改源码和构建目录，不自动安装、重启运行中的 Shell、提交或推送。

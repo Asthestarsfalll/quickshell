@@ -3253,14 +3253,6 @@
     </message>
 </context>
 <context>
-    <name>ScreencastService</name>
-    <message>
-        <location filename="../Services/ScreencastService.qml" line="14" />
-        <source>屏幕正在被捕获</source>
-        <translation>屏幕正在被捕获</translation>
-    </message>
-</context>
-<context>
     <name>SearchSelectMenuField</name>
     <message>
         <location filename="../Widgets/common/SearchSelectMenuField.qml" line="16" />
