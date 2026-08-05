@@ -42,7 +42,6 @@ QtObject {
     readonly property var minutelyForecast: backend.minutelyForecast
 
     signal dataChanged()
-    signal loadingChanged()
 
     function refresh() { return backend.refresh() }
     function setManualLocation(latitudeValue, longitudeValue, name) {
@@ -51,9 +50,8 @@ QtObject {
     function clearManualLocation() { return backend.clearManualLocation() }
     function current() { return backend.current() }
 
-    Connections {
+    readonly property Connections backendConnections: Connections {
         target: root.backend
         function onDataChanged() { root.dataChanged() }
-        function onLoadingChanged() { root.loadingChanged() }
     }
 }
