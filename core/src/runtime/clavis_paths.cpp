@@ -24,10 +24,8 @@ ClavisPaths ClavisPaths::fromEnvironment()
         paths.m_binHome = paths.m_home + QStringLiteral("/.local/bin");
 
     paths.m_stableKey = cleanAbsolute(env("CLAVIS_KEY"));
-    if (paths.m_stableKey.isEmpty()) {
-        paths.m_stableKey = QDir(paths.m_binHome).filePath(
-            QStringLiteral("key"));
-    }
+    if (paths.m_stableKey.isEmpty())
+        paths.m_stableKey = QStringLiteral("key");
 
     paths.m_configHome = environmentPath(
         "CLAVIS_CONFIG_HOME", "XDG_CONFIG_HOME",

@@ -48,7 +48,7 @@ Singleton {
     readonly property string binHome: root.absoluteEnvironment("CLAVIS_BIN_HOME")
         || homeDir + "/.local/bin"
     readonly property string stableKey: root.absoluteEnvironment("CLAVIS_KEY")
-        || binHome + "/key"
+        || "key"
     readonly property string configHome: root.absoluteEnvironment("CLAVIS_CONFIG_HOME")
         || xdgConfigHome + "/clavis"
     readonly property string dataHome: root.absoluteEnvironment("CLAVIS_DATA_HOME")

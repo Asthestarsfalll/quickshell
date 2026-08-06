@@ -10,6 +10,7 @@ class ClavisPathsTest : public QObject {
 
 private slots:
     void honorsXdgAndExplicitOverrides();
+    void usesPathKeyFallback();
     void rejectsUnsafeProfileNamesByFallingBack();
 };
 
@@ -54,6 +55,15 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     QCOMPARE(paths.profileHome(), QDir(root).filePath(QStringLiteral("profile")));
     QCOMPARE(paths.generatedHome(), QDir(root).filePath(QStringLiteral("generated")));
     QCOMPARE(paths.stableKey(), QDir(root).filePath(QStringLiteral("system-bin/key")));
+}
+
+void ClavisPathsTest::usesPathKeyFallback()
+{
+    qunsetenv("CLAVIS_KEY");
+    qputenv("CLAVIS_BIN_HOME", "/tmp/obsolete-clavis-bin");
+
+    const auto paths = Clavis::Runtime::ClavisPaths::fromEnvironment();
+    QCOMPARE(paths.stableKey(), QStringLiteral("key"));
 }
 
 void ClavisPathsTest::rejectsUnsafeProfileNamesByFallingBack()

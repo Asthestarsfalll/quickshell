@@ -34,7 +34,6 @@ FloatingWindow {
     property string selectionPrompt: qsTr("选择一张图片")
     property string acceptLabel: qsTr("选择")
     property string formatSummary: "JPG · PNG · WebP\nBMP · GIF"
-    property bool acceptFilesOnSingleClick: false
     property string currentPath: startPath
     property string selectedPath: ""
     property string selectedName: ""
@@ -43,6 +42,7 @@ FloatingWindow {
     property bool pathEditing: false
     property string pathDraft: ""
     property bool _completionHandled: true
+    property bool _folderModelAttached: true
 
     readonly property string homeDir: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     readonly property string desktopDir: StandardPaths.writableLocation(StandardPaths.DesktopLocation)
@@ -248,19 +248,39 @@ FloatingWindow {
     }
 
     function selectEntry(path, name, isDir) {
-        selectedPath = path;
-        selectedName = name;
-        selectedIsDir = isDir;
+        const normalized = normalizePath(path);
+        if (normalized === "") {
+            clearSelection();
+            return;
+        }
+        selectedPath = normalized;
+        selectedName = String(name || "");
+        selectedIsDir = Boolean(isDir);
     }
 
-    function openEntry(path, isDir) {
+    function openEntry(path, name, isDir) {
         if (isDir)
             navigateTo(path);
         else {
-            selectedPath = path;
-            selectedIsDir = false;
+            selectEntry(path, name, false);
             acceptSelection();
         }
+    }
+
+    function setHiddenFilesVisible(visible) {
+        if (showHiddenFiles === visible)
+            return;
+
+        clearSelection();
+        _folderModelAttached = false;
+        Qt.callLater(() => {
+            showHiddenFiles = visible;
+            Qt.callLater(() => {
+                _folderModelAttached = true;
+                fileGrid.positionViewAtBeginning();
+                Qt.callLater(fileGrid.refreshLayout);
+            });
+        });
     }
 
     function isImageName(name) {
@@ -668,7 +688,8 @@ FloatingWindow {
                                 iconName: root.showHiddenFiles ? "visibility_off" : "visibility"
                                 tooltipText: root.showHiddenFiles ? qsTr("隐藏隐藏文件") : qsTr("显示隐藏文件")
                                 active: root.showHiddenFiles
-                                onClicked: root.showHiddenFiles = !root.showHiddenFiles
+                                onClicked: root.setHiddenFilesVisible(
+                                    !root.showHiddenFiles)
                             }
                         }
                     }
@@ -715,7 +736,7 @@ FloatingWindow {
                             clip: true
                             cellWidth: width > 0 ? width / Math.max(1, Math.floor(width / 146)) : 146
                             cellHeight: 142
-                            model: folderModel
+                            model: root._folderModelAttached ? folderModel : null
                             animateAppearance: false
                             animateMovement: false
                             onWidthChanged:
@@ -723,8 +744,6 @@ FloatingWindow {
                             onHeightChanged:
                                 Qt.callLater(fileGrid.refreshLayout)
                             onCellWidthChanged:
-                                Qt.callLater(fileGrid.refreshLayout)
-                            onCountChanged:
                                 Qt.callLater(fileGrid.refreshLayout)
 
                             delegate: MaterialRippleButton {
@@ -736,7 +755,8 @@ FloatingWindow {
                                 required property bool fileIsDir
 
                                 property bool appeared: false
-                                readonly property bool selected: root.selectedPath === filePath
+                                readonly property bool selected: root.selectedPath
+                                    === root.normalizePath(filePath)
                                 readonly property real initialX: ((index * 37) % 3 - 1) * 24
                                 readonly property real initialY: ((index * 53) % 5 - 2) * 10
 
@@ -757,11 +777,9 @@ FloatingWindow {
                                 releaseAction: () => {
                                     root.selectEntry(
                                         filePath, fileName, fileIsDir);
-                                    if (!fileIsDir
-                                            && root.acceptFilesOnSingleClick)
-                                        root.acceptSelection();
                                 }
-                                doubleClickAction: () => root.openEntry(filePath, fileIsDir)
+                                doubleClickAction: () => root.openEntry(
+                                    filePath, fileName, fileIsDir)
                                 transform: Translate {
                                     x: fileItem.appeared ? 0 : fileItem.initialX
                                     y: fileItem.appeared ? 0 : fileItem.initialY
