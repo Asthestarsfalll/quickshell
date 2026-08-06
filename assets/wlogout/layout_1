@@ -1,6 +1,6 @@
 {
     "label": "lock",
-    "action": "${keyCommand} ipc call lock open",
+    "action": "qs -c clavis ipc call lock open",
     "text": "锁定",
     "keybind": "l"
 }
@@ -14,7 +14,7 @@
 
 {
     "label": "suspend",
-    "action": "${keyCommand} ipc call lock open && systemctl suspend",
+    "action": "qs -c clavis ipc call lock open && systemctl suspend",
     "text": "挂起",
     "keybind": "u"
 }
@@ -28,7 +28,7 @@
 
 {
     "label": "hibernate",
-    "action": "${keyCommand} ipc call lock open && systemctl hibernate",
+    "action": "qs -c clavis ipc call lock open && systemctl hibernate",
     "text": "休眠",
     "keybind": "h"
 }
