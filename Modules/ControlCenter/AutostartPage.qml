@@ -17,18 +17,13 @@ StyledFlickable {
 
     property var selectedApplication: null
     property var pendingRemoveEntry: null
+    property var parentModal: null
     readonly property real pageContentWidth: Metrics.scaled(720)
 
     function openApplicationBrowser() {
         appBrowserLoader.active = true;
-        if (!appBrowserLoader.item)
-            return;
-        if (appBrowserLoader.item.visible) {
-            appBrowserLoader.item.raise();
-            appBrowserLoader.item.requestActivate();
-        } else {
+        if (appBrowserLoader.item)
             appBrowserLoader.item.show();
-        }
     }
 
     function requestRemove(entry) {
@@ -57,13 +52,8 @@ StyledFlickable {
         active: false
         asynchronous: false
         source: Qt.resolvedUrl("AppBrowserPopup.qml")
-    }
 
-    Binding {
-        target: appBrowserLoader.item
-        property: "ownerWindow"
-        value: root.Window.window
-        when: appBrowserLoader.status === Loader.Ready
+        onLoaded: item.parentModal = root.parentModal
     }
 
     Binding {
@@ -86,7 +76,7 @@ StyledFlickable {
         target: AutostartService
 
         function onOperationFinished(success, operation) {
-            if (success && operation === "add-application")
+            if (success && operation === "add")
                 root.selectedApplication = null;
         }
     }
@@ -103,6 +93,7 @@ StyledFlickable {
         InlineStatusBanner {
             Layout.fillWidth: true
             visible: AutostartService.lastError !== ""
+                && !AutostartService.initializationFailed
             tone: "error"
             message: AutostartService.lastError
         }
@@ -114,9 +105,44 @@ StyledFlickable {
             message: AutostartService.lastMessage
         }
 
+        InlineStatusBanner {
+            Layout.fillWidth: true
+            visible: AutostartService.initializing
+            iconName: "progress_activity"
+            message: qsTr("正在初始化用户 autostart 目录…")
+        }
+
+        InlineStatusBanner {
+            Layout.fillWidth: true
+            visible: AutostartService.initialized
+                && AutostartService.listing
+            iconName: "progress_activity"
+            message: qsTr("正在加载用户自启条目…")
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: !AutostartService.initializing
+                && AutostartService.initializationFailed
+            spacing: Metrics.spacingS
+
+            InlineStatusBanner {
+                Layout.fillWidth: true
+                tone: "error"
+                message: AutostartService.lastError
+            }
+
+            DialogActionButton {
+                text: qsTr("重试")
+                filled: true
+                onClicked: AutostartService.initialize()
+            }
+        }
+
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Metrics.spacingL
+            visible: AutostartService.ready
 
             MaterialCard {
                 Layout.fillWidth: true
@@ -242,7 +268,7 @@ StyledFlickable {
 
                     DialogActionButton {
                         text: qsTr("刷新")
-                        enabled: !AutostartService.busy
+                        enabled: AutostartService.ready
                         onClicked: AutostartService.refresh()
                     }
                 }
@@ -428,5 +454,12 @@ StyledFlickable {
         }
     }
 
-    Component.onCompleted: AutostartService.refresh()
+    Component.onCompleted: {
+        AutostartService.initialize();
+    }
+
+    function closeChildWindows() {
+        if (appBrowserLoader.item)
+            appBrowserLoader.item.hide();
+    }
 }

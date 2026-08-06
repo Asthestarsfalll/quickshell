@@ -10,7 +10,7 @@ import qs.Widgets.common
 FloatingWindow {
     id: root
 
-    property var ownerWindow: null
+    property var parentModal: null
     property var appsModel: []
     property string searchQuery: ""
     property var filteredApps: []
@@ -19,7 +19,7 @@ FloatingWindow {
 
     signal appSelected(var application)
 
-    parentWindow: root.ownerWindow
+    parentWindow: root.parentModal
     objectName: "clavisAutostartAppBrowser"
     title: qsTr("选择应用")
     minimumSize: Qt.size(420, 380)
@@ -77,10 +77,16 @@ FloatingWindow {
     }
 
     function show() {
+        if (!root.parentModal) {
+            console.warn("AppBrowserPopup cannot open without parentModal");
+            return;
+        }
         root.updateFilteredApps();
         root.visible = true;
-        root.raise();
-        root.requestActivate();
+        root.focusSearch();
+    }
+
+    function focusSearch() {
         Qt.callLater(() => searchField.forceActiveFocus());
     }
 

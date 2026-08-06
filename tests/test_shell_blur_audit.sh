@@ -24,13 +24,20 @@ for file in \
     Modules/Bar/Bar.qml \
     Modules/Bar/Tray/Tray.qml \
     Modules/Bar/Tray/TrayMenu.qml \
-    Modules/ControlCenter/BezierCurveLayerEditor.qml \
-    Modules/ControlCenter/WallpaperColorPicker.qml \
     Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     Modules/Launcher/LauncherWindow.qml \
     Modules/Sidebars/SidebarHostWindow.qml
 do
     require_text "$file" 'WlrLayershell.namespace: "clavis-shell-'
+done
+
+for file in \
+    Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    Modules/ControlCenter/WallpaperColorPicker.qml
+do
+    require_text "$file" 'FloatingWindow {'
+    require_text "$file" 'parentWindow: root.parentModal'
+    require_text "$file" 'CompositorBlurRegion {'
 done
 
 for file in \

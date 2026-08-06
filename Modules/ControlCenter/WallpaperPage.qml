@@ -13,6 +13,7 @@ import qs.Widgets.common
 StyledFlickable {
     id: root
 
+    property var parentModal: null
     clip: true
     contentWidth: width
     contentHeight: contentColumn.y + contentColumn.implicitHeight + 20
@@ -84,6 +85,14 @@ StyledFlickable {
 
     function chooseWallpaperColor() {
         wallpaperColorPicker.showWithColor(root.currentWallpaperIsColor ? root.currentWallpaperPath : Appearance.colors.colPrimary);
+    }
+
+    function closeChildWindows() {
+        wallpaperFileBrowser.dismiss();
+        wallpaperColorPicker.close();
+        overviewFileBrowser.dismiss();
+        overviewColorPicker.close();
+        bezierCurveLayerEditor.dismiss();
     }
 
     function chooseOverviewFile() {
@@ -1558,6 +1567,7 @@ StyledFlickable {
 
     WallpaperFileBrowser {
         id: wallpaperFileBrowser
+        parentModal: root.parentModal
         startPath: PersonalizationConfig.wallpaperFolder
         onFolderSelected: path => {
             WallpaperService.setWallpaperFolder(path);
@@ -1570,12 +1580,14 @@ StyledFlickable {
 
     WallpaperColorPicker {
         id: wallpaperColorPicker
+        parentModal: root.parentModal
         onColorSelected: color => WallpaperService.setWallpaper(
             color, root.selectedDesktopOutput)
     }
 
     WallpaperFileBrowser {
         id: overviewFileBrowser
+        parentModal: root.parentModal
         startPath: PersonalizationConfig.wallpaperFolder
         onFileSelected: path =>
             WallpaperService.setOverviewWallpaper(
@@ -1584,6 +1596,7 @@ StyledFlickable {
 
     WallpaperColorPicker {
         id: overviewColorPicker
+        parentModal: root.parentModal
         onColorSelected: color =>
             WallpaperService.setOverviewWallpaper(
                 color, root.selectedOverviewOutput)
@@ -1591,6 +1604,7 @@ StyledFlickable {
 
     BezierCurveLayerEditor {
         id: bezierCurveLayerEditor
+        parentModal: root.parentModal
         onCurveEdited: nextCurve => WallpaperService.setTransitionBezierCurve(nextCurve)
     }
 }

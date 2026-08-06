@@ -617,12 +617,9 @@ Item {
 
                     const playPoint = root.curvePathPoint(root.playhead);
                     ctx.fillStyle = root.chartTertiaryColor;
-                    ctx.strokeStyle = root.chartSurfaceColor;
-                    ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.arc(root.plotX(playPoint[0]), root.plotY(playPoint[1]), 9, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.stroke();
                 }
             }
 
@@ -813,6 +810,7 @@ Item {
                         text: "content_copy"
                         iconSize: 16
                         color: copyMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
+                        fill: copyMouse.containsMouse ? 1 : 0
                     }
 
                     MouseArea {

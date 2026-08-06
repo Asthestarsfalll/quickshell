@@ -4,7 +4,6 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import qs.Common
 import qs.Components
 import qs.Services
@@ -13,6 +12,7 @@ import qs.Widgets.common
 Item {
     id: root
 
+    property var parentModal: null
     property string pickerTitle: qsTr("选择壁纸颜色")
     property color currentColor: Appearance.colors.colPrimary
     property real hue: 0
@@ -26,8 +26,8 @@ Item {
     property int formatFieldResetRevision: 0
 
     readonly property real dialogMargin: 14
-    readonly property real dialogWidth: Math.max(560, Math.min(680, modalWindow.width - 64))
-    readonly property real dialogHeight: Math.max(620, Math.min(704, modalWindow.height - 64))
+    readonly property real dialogWidth: Math.max(560, Math.min(680, modalWindow.width || 680))
+    readonly property real dialogHeight: Math.max(620, Math.min(704, modalWindow.height || 704))
     readonly property real paletteHeight: dialogHeight < 660 ? 220 : 250
     readonly property real colorCellStride: Math.floor((dialogWidth - dialogMargin * 2) / 17)
     readonly property real colorCellSize: Math.max(28, Math.min(36, colorCellStride - 2))
@@ -58,6 +58,10 @@ Item {
     }
 
     function open() {
+        if (!root.parentModal) {
+            console.warn("WallpaperColorPicker cannot open without parentModal");
+            return;
+        }
         shouldBeVisible = true;
         Qt.callLater(() => modalContent.forceActiveFocus());
     }
@@ -140,24 +144,18 @@ Item {
         pickColorProcess.running = true;
     }
 
-    PanelWindow {
+    FloatingWindow {
         id: modalWindow
 
+        parentWindow: root.parentModal
         visible: root.shouldBeVisible
+        title: root.pickerTitle
+        implicitWidth: 680
+        implicitHeight: 704
+        minimumSize: Qt.size(560, 620)
         color: "transparent"
 
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "clavis-shell-wallpaper-color-picker"
-        WlrLayershell.keyboardFocus: modalWindow.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        exclusiveZone: 0
+        onClosed: root.close()
 
         onVisibleChanged: {
             if (visible)

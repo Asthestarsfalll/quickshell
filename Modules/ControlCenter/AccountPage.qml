@@ -15,7 +15,13 @@ import qs.Widgets.common
 Item {
     id: root
 
+    property var parentModal: null
     signal navigateRequested(string pageId)
+
+    function closeChildWindows() {
+        avatarPicker.dismiss();
+        backupPicker.dismiss();
+    }
 
     readonly property bool wideLayout: width >= 720
     readonly property real cardGap: Appearance.spacing.medium
@@ -646,6 +652,8 @@ Item {
     FilePickerWindow {
         id: avatarPicker
 
+        parentModal: root.parentModal
+        requiresParentWindow: true
         dialogTitle: qsTr("选择头像")
         onAccepted: (path, isDirectory) => {
             if (!isDirectory)
@@ -656,6 +664,8 @@ Item {
     FilePickerWindow {
         id: backupPicker
 
+        parentModal: root.parentModal
+        requiresParentWindow: true
         selectionMode: FilePickerWindow.FilesAndFolders
         dialogTitle: qsTr("选择要备份的文件或文件夹")
         description: qsTr("备份到所选云存储的 Clavis Backups 文件夹")

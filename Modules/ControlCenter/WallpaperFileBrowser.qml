@@ -4,6 +4,7 @@ import qs.Modules.FilePicker
 FilePickerWindow {
     id: root
 
+    requiresParentWindow: true
     selectionMode: FilePickerWindow.FilesAndFolders
     dialogTitle: qsTr("选择壁纸或文件夹")
     description: qsTr("选择图片作为壁纸，或选择文件夹作为壁纸目录")

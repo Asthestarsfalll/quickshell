@@ -39,6 +39,42 @@ require_text Modules/ControlCenter/ControlCenterWindow.qml \
     'signal popoutClosed'
 require_text Modules/ControlCenter/ControlCenterWindow.qml \
     'function showWindow()'
+require_text Modules/ControlCenter/ControlCenterWindow.qml \
+    'property var parentModal: root'
+require_text Modules/ControlCenter/ControlCenterWindow.qml \
+    'item.parentModal = parentModal'
+require_text Modules/ControlCenter/ControlCenterWindow.qml \
+    'function closeChildWindows()'
+
+require_text Modules/ControlCenter/AccountPage.qml \
+    'parentModal: root.parentModal'
+require_text Modules/ControlCenter/AutostartPage.qml \
+    'onLoaded: item.parentModal = root.parentModal'
+require_text Modules/ControlCenter/WallpaperPage.qml \
+    'parentModal: root.parentModal'
+require_text Modules/ControlCenter/AppBrowserPopup.qml \
+    'parentWindow: root.parentModal'
+require_text Modules/FilePicker/FilePickerWindow.qml \
+    'parentWindow: root.parentModal'
+require_text Modules/ControlCenter/WallpaperColorPicker.qml \
+    'parentWindow: root.parentModal'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'parentWindow: root.parentModal'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'PauseAnimation {'
+reject_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'delay: miniFab.motionDelay'
+
+for file in \
+    Modules/ControlCenter/AppBrowserPopup.qml \
+    Modules/FilePicker/FilePickerWindow.qml \
+    Modules/ControlCenter/WallpaperColorPicker.qml \
+    Modules/ControlCenter/BezierCurveLayerEditor.qml
+do
+    reject_text "$file" 'Window.window'
+    reject_text "$file" 'raise('
+    reject_text "$file" 'requestActivate('
+done
 
 for file in \
     Modules/QuickSettings/QuickSettingsSurface.qml \
@@ -52,6 +88,14 @@ done
 if rg -n 'controlcenter\.qml|qs[[:space:]]+--path|Paths\.shellDir[[:space:]]*\+[[:space:]]*"/controlcenter\.qml"' \
         AppShell.qml Modules Services core >/dev/null; then
     fail "a detached control center launch reference remains"
+fi
+
+legacy_open_floating="open-"floating
+legacy_toggle_floating="toggle-"window-"floating"
+legacy_app_browser="clavis-"autostart-"app-"browser
+if rg -n "$legacy_open_floating|$legacy_toggle_floating|$legacy_app_browser" \
+        Modules/ControlCenter Modules/FilePicker Services scripts tests/test_manage_niri_config.py >/dev/null; then
+    fail "a compositor floating workaround for an internal control-center window remains"
 fi
 
 echo "control center architecture tests passed"

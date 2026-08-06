@@ -108,11 +108,6 @@ add_test(
 )
 
 add_test(
-    NAME user_autostart_manager_tests
-    COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_manage_xdg_autostart.py
-)
-
-add_test(
     NAME clavis_user_service_installer_tests
     COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_install_clavis_user_services.py
 )

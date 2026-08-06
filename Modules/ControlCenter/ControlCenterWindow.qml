@@ -28,13 +28,13 @@ FloatingWindow {
     function showWindow() {
         root._wasShown = true;
         root.visible = true;
-        root.raise();
-        root.requestActivate();
     }
 
     function hideWindow() {
-        if (root.visible)
+        if (root.visible) {
+            root.closeChildWindows();
             root.visible = false;
+        }
     }
 
     function toggleWindow() {
@@ -46,6 +46,7 @@ FloatingWindow {
 
     onVisibleChanged: {
         if (!root.visible && root._wasShown) {
+            root.closeChildWindows();
             root._wasShown = false;
             root.popoutClosed();
         }
@@ -87,6 +88,14 @@ FloatingWindow {
         }
         return false;
     }
+
+    function closeChildWindows() {
+        const page = pageLoader.item;
+        if (page && typeof page.closeChildWindows === "function")
+            page.closeChildWindows();
+    }
+
+    onCurrentPageChanged: root.closeChildWindows()
 
     function openConfig() {
         Qt.openUrlExternally(Paths.fileUrl(PersonalizationConfig.filePath));
@@ -265,8 +274,15 @@ FloatingWindow {
 
                     Loader {
                         id: pageLoader
+
+                        property var parentModal: root
                         anchors.fill: parent
                         source: root.pageSource(root.currentPage)
+
+                        onLoaded: {
+                            if (item && "parentModal" in item)
+                                item.parentModal = parentModal;
+                        }
                     }
 
                     Connections {

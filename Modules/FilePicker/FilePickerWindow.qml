@@ -34,6 +34,8 @@ FloatingWindow {
     property string selectionPrompt: qsTr("选择一张图片")
     property string acceptLabel: qsTr("选择")
     property string formatSummary: "JPG · PNG · WebP\nBMP · GIF"
+    property var parentModal: null
+    property bool requiresParentWindow: false
     property string currentPath: startPath
     property string selectedPath: ""
     property string selectedName: ""
@@ -61,6 +63,7 @@ FloatingWindow {
     signal rejected()
 
     visible: false
+    parentWindow: root.parentModal
     title: "clavis-file-picker"
     implicitWidth: 920
     implicitHeight: 600
@@ -185,6 +188,10 @@ FloatingWindow {
     }
 
     function openAt(path) {
+        if (root.requiresParentWindow && !root.parentModal) {
+            console.warn("FilePickerWindow cannot open without parentModal");
+            return;
+        }
         currentPath = normalizePath(path && path !== "" ? path : picturesDir)
             || normalizePath(picturesDir)
             || "/";
