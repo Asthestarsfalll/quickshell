@@ -27,6 +27,12 @@ add_test(
 )
 
 add_test(
+    NAME autostart_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_autostart_architecture.sh
+)
+
+add_test(
     NAME shader_asset_tests
     COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
 )
@@ -102,7 +108,7 @@ add_test(
 )
 
 add_test(
-    NAME xdg_autostart_manager_tests
+    NAME user_autostart_manager_tests
     COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_manage_xdg_autostart.py
 )
 

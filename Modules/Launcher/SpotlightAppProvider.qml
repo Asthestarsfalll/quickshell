@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs.Services
 
 Item {
     id: root
@@ -76,11 +77,11 @@ Item {
 
     function rebuild() {
         const needle = normalized(root.query);
-        const source = DesktopEntries.applications.values || [];
+        const source = ApplicationService.getVisibleApplications();
         const next = [];
         for (let index = 0; index < source.length; index += 1) {
             const app = source[index];
-            if (!app || app.noDisplay)
+            if (!app)
                 continue;
             const score = appScore(app, needle);
             if (score < 0)

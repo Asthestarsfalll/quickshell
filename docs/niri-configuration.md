@@ -43,7 +43,7 @@ journalctl --user -u clavis-clipboard.service
 ```
 
 Fcitx5、NetworkManager applet 和 Blueman 使用 `/etc/xdg/autostart` 中发行版条目。
-设置中心“开机启动”只在用户目录创建覆盖或 Clavis 自建条目，不修改系统 Desktop Entry。
+设置中心“开机启动”只读取和管理 `$XDG_CONFIG_HOME/autostart/*.desktop`，不扫描、覆盖或修改系统 Desktop Entry。
 
 ## 回滚
 
