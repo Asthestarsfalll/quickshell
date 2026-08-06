@@ -62,8 +62,30 @@ require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
     'parentWindow: root.parentModal'
 require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
     'PauseAnimation {'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'readonly property real collapsedMainSize: 72'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'readonly property real expandedMainSize: 50'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'Appearance.animation.elementMoveFast'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'radius: height / 2'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'property real morphProgress: expanded ? 1 : 0'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'property real revealProgress: expanded ? 1 : 0'
+require_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'rotation: 45 * fab.morphProgress'
 reject_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
     'delay: miniFab.motionDelay'
+reject_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'Behavior on x {'
+reject_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'Behavior on y {'
+reject_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'collapsedY'
+reject_text Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    'Appearance.animation.emphasizedAccel'
 
 for file in \
     Modules/ControlCenter/AppBrowserPopup.qml \
