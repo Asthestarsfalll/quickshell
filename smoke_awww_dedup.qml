@@ -30,11 +30,6 @@ ShellRoot {
             + "/clavis-awww-dedup-" + name + ".png";
     }
 
-    Component.onCompleted: {
-        WallpaperService.primaryInstance = true;
-        AwwwWallpaperService.primaryInstance = true;
-    }
-
     Timer {
         interval: 25
         repeat: true

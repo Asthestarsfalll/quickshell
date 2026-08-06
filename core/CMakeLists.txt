@@ -103,7 +103,6 @@ install(
     FILES
         "${CLAVIS_SOURCE_ROOT}/shell.qml"
         "${CLAVIS_SOURCE_ROOT}/AppShell.qml"
-        "${CLAVIS_SOURCE_ROOT}/controlcenter.qml"
     DESTINATION "${CLAVIS_CONFIG_INSTALL_DIR}"
 )
 install(

@@ -20,6 +20,12 @@ assert_contains() {
     grep -Fq -- "$2" "$1" || fail "$1 does not contain: $2"
 }
 
+assert_not_contains() {
+    if grep -Fq -- "$2" "$1"; then
+        fail "$1 unexpectedly contains: $2"
+    fi
+}
+
 mkdir -p "$test_dir/bin"
 
 cat > "$test_dir/bin/niri" <<'EOF'
@@ -34,6 +40,12 @@ cat > "$test_dir/bin/wlogout" <<'EOF'
 #!/bin/sh
 printf '%s\n' "$@" > "$MOCK_WLOGOUT_ARGS"
 while [ "$#" -gt 0 ]; do
+    if [ "$1" = "--layout" ]; then
+        shift
+        cp -- "$1" "$MOCK_WLOGOUT_LAYOUT"
+        shift
+        continue
+    fi
     if [ "$1" = "--css" ]; then
         shift
         cp -- "$1" "$MOCK_WLOGOUT_CSS"
@@ -44,7 +56,14 @@ done
 exit 1
 EOF
 
-chmod +x "$test_dir/bin/niri" "$test_dir/bin/wlogout"
+mkdir -p "$test_dir/bin/key tools"
+cat > "$test_dir/bin/key tools/key" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+
+chmod +x "$test_dir/bin/niri" "$test_dir/bin/wlogout" \
+    "$test_dir/bin/key tools/key"
 mkdir -p "$test_dir/config/clavis" "$test_dir/runtime"
 printf '%s\n' \
     '{"effects":{"shellBackgroundOpacity":0.42}}' \
@@ -56,9 +75,12 @@ run_style() {
     expected_columns=$3
     args="$test_dir/$style.args"
     css="$test_dir/$style.css"
+    layout="$test_dir/$style.layout"
 
     MOCK_WLOGOUT_ARGS="$args" \
     MOCK_WLOGOUT_CSS="$css" \
+    MOCK_WLOGOUT_LAYOUT="$layout" \
+    CLAVIS_KEY="$test_dir/bin/key tools/key" \
     HOME="$test_dir/home" \
     XDG_CONFIG_HOME="$test_dir/config" \
     XDG_DATA_HOME="$test_dir/data" \
@@ -70,13 +92,22 @@ run_style() {
 
     assert_contains "$args" "--buttons-per-row"
     assert_contains "$args" "$expected_columns"
-    assert_contains "$args" "$repo_dir/assets/wlogout/$expected_layout"
+    assert_contains "$args" "--layout"
     assert_contains "$args" "--protocol"
     assert_contains "$args" "layer-shell"
     assert_contains "$css" 'font-family: "LXGW WenKai GB Screen"'
     assert_contains "$css" "$repo_dir/assets/wlogout/icons/lock_white.png"
     assert_contains "$css" "cubic-bezier(.55, 0, .28, 1.682)"
     assert_contains "$css" "background-color: alpha(#2a4a5f, 0.42)"
+    assert_contains "$layout" '"action": "/tmp/clavis-power-menu-test.'
+    assert_contains "$layout" 'key\\ tools/key ipc call lock open'
+    assert_contains "$layout" 'ipc call lock open'
+    assert_not_contains "$layout" 'qs ipc call lock open'
+
+    if [ "$style" = row ]; then
+        assert_contains "$layout" 'ipc call lock open && systemctl suspend'
+        assert_contains "$layout" 'ipc call lock open && systemctl hibernate'
+    fi
 
     if grep -Fq '${' "$css"; then
         fail "$style CSS contains an unresolved template variable"

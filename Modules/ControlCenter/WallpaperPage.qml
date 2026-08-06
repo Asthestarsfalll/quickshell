@@ -1563,10 +1563,7 @@ StyledFlickable {
             WallpaperService.setWallpaperFolder(path);
         }
         onFileSelected: path => {
-            const folder = WallpaperService.parentFolder(path);
-            if (folder !== "")
-                WallpaperService.setWallpaperFolder(folder);
-            WallpaperService.setWallpaper(
+            WallpaperService.setWallpaperFromFile(
                 path, root.selectedDesktopOutput);
         }
     }

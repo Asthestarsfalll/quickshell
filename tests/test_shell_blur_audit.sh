@@ -58,7 +58,10 @@ reject_text Modules/ControlCenter/ControlCenterWindow.qml \
     'ApplicationWindow {'
 reject_text Modules/ControlCenter/ControlCenterWindow.qml \
     'flags: Qt.Window | Qt.FramelessWindowHint'
-require_text controlcenter.qml \
+if [ -e controlcenter.qml ]; then
+    fail "the old detached controlcenter.qml entry point still exists"
+fi
+require_text shell.qml \
     '//@ pragma Env QT_WAYLAND_DISABLE_WINDOWDECORATION=1'
 require_text Modules/FilePicker/FilePickerWindow.qml \
     'color: "transparent"'

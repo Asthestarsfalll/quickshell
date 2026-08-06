@@ -22,6 +22,42 @@ if ! command -v envsubst >/dev/null 2>&1; then
     exit 127
 fi
 
+key_command=${CLAVIS_KEY:-}
+if [[ -z "$key_command" ]]; then
+    key_command=$(command -v key 2>/dev/null || true)
+elif [[ "$key_command" != /* ]]; then
+    if [[ "$key_command" == */* ]]; then
+        if [[ ! -x "$key_command" ]]; then
+            printf 'Clavis power menu: CLAVIS_KEY is not executable: %s\n' \
+                "$key_command" >&2
+            exit 127
+        fi
+        key_command=$(cd -- "$(dirname -- "$key_command")" \
+            && pwd -P)/$(basename -- "$key_command")
+    else
+        key_command=$(command -v "$key_command" 2>/dev/null || true)
+    fi
+fi
+
+if [[ -z "$key_command" || ! -x "$key_command" ]]; then
+    printf 'Clavis power menu: key CLI is not executable.\n' >&2
+    exit 127
+fi
+
+json_escape() {
+    local value=$1
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    value=${value//$'\n'/\\n}
+    value=${value//$'\r'/\\r}
+    value=${value//$'\t'/\\t}
+    printf '%s' "$value"
+}
+
+printf -v key_command '%q' "$key_command"
+export keyCommand
+keyCommand=$(json_escape "$key_command")
+
 read_color() {
     local key=$1
     local fallback=$2
@@ -105,14 +141,16 @@ esac
 
 mkdir -p "$CLAVIS_RUNTIME_HOME/temporary"
 generated_css=$(mktemp "$CLAVIS_RUNTIME_HOME/temporary/wlogout.XXXXXX.css")
-trap 'rm -f -- "$generated_css"' EXIT
+generated_layout=$(mktemp "$CLAVIS_RUNTIME_HOME/temporary/wlogout.XXXXXX.layout")
+trap 'rm -f -- "$generated_css" "$generated_layout"' EXIT
 
 envsubst < "$template" > "$generated_css"
+envsubst '${keyCommand}' < "$layout" > "$generated_layout"
 wlogout \
     --buttons-per-row "$columns" \
     --column-spacing 0 \
     --row-spacing 0 \
     --margin 0 \
-    --layout "$layout" \
+    --layout "$generated_layout" \
     --css "$generated_css" \
     --protocol layer-shell

@@ -15,7 +15,6 @@ Singleton {
         Quickshell.env("CLAVIS_AWWW_DAEMON_COMMAND")
             || "awww-daemon"
 
-    property bool primaryInstance: false
     property bool available: false
     property bool probeComplete: false
     property bool daemonRunning: false
@@ -111,12 +110,6 @@ Singleton {
     function setRequestedBackend(value) {
         const backend = value === "awww" ? "awww" : "quickshell";
         root.requestedBackend = backend;
-        if (!root.primaryInstance) {
-            root.quickshellContentVisible = true;
-            root.effectiveBackend = "quickshell";
-            root.state = root.probeComplete ? "passive" : "probing";
-            return;
-        }
         if (backend === "awww")
             root.beginAwwwActivation();
         else
@@ -124,8 +117,6 @@ Singleton {
     }
 
     function beginAwwwActivation() {
-        if (!root.primaryInstance)
-            return;
         if (!root.probeComplete) {
             root.state = "probing";
             return;
@@ -165,8 +156,6 @@ Singleton {
     }
 
     function beginQuickshellActivation() {
-        if (!root.primaryInstance)
-            return;
         queryRetry.stop();
         root.quickshellContentVisible = true;
         root.effectiveBackend = "quickshell";
@@ -206,8 +195,7 @@ Singleton {
     }
 
     function runQuery() {
-        if (!root.primaryInstance
-                || queryProcess.running || !root.backendIsAwww())
+        if (queryProcess.running || !root.backendIsAwww())
             return;
         root.state = "waiting-socket";
         queryProcess.command = AwwwCommand.query(
@@ -216,7 +204,7 @@ Singleton {
     }
 
     function startDaemon() {
-        if (!root.primaryInstance || !root.backendIsAwww())
+        if (!root.backendIsAwww())
             return;
         root.daemonStartAttempted = true;
         if (daemonProcess.running) {
@@ -230,7 +218,7 @@ Singleton {
     }
 
     function scheduleApplyAll() {
-        if (!root.primaryInstance || !root.backendIsAwww()
+        if (!root.backendIsAwww()
                 || !root.available || !root.daemonRunning)
             return;
         const targets = root.applyTargets();
@@ -311,8 +299,6 @@ Singleton {
     }
 
     function stopDaemon() {
-        if (!root.primaryInstance)
-            return;
         root.daemonStopRequested = true;
         if (stopProcess.running)
             return;
@@ -323,16 +309,8 @@ Singleton {
 
     Component.onCompleted: probeClient.running = true
 
-    onPrimaryInstanceChanged: {
-        if (root.primaryInstance && root.probeComplete) {
-            root.setRequestedBackend(
-                PersonalizationConfig.desktopWallpaperBackend);
-        }
-    }
-
     Connections {
         target: PersonalizationConfig
-        enabled: root.primaryInstance
 
         function onDesktopWallpaperBackendChanged() {
             root.setRequestedBackend(
@@ -342,7 +320,6 @@ Singleton {
 
     Connections {
         target: WallpaperService
-        enabled: root.primaryInstance
 
         function onRevisionChanged() {
             if (root.backendIsAwww()
@@ -353,7 +330,6 @@ Singleton {
 
     Connections {
         target: Quickshell
-        enabled: root.primaryInstance
 
         function onScreensChanged() {
             if (root.backendIsAwww()

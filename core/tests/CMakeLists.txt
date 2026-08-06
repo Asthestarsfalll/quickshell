@@ -3,6 +3,30 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_program(BASH_EXECUTABLE bash REQUIRED)
 
 add_test(
+    NAME control_center_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_control_center_architecture.sh
+)
+
+add_test(
+    NAME wallpaper_picker_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_wallpaper_picker_architecture.sh
+)
+
+add_test(
+    NAME shell_blur_audit_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_shell_blur_audit.sh
+)
+
+add_test(
+    NAME power_menu_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_power_menu.sh
+)
+
+add_test(
     NAME shader_asset_tests
     COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
 )

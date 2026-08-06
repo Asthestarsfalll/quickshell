@@ -27,11 +27,7 @@ WidgetPanel {
 
     function openControlCenter() {
         WidgetState.qsOpen = false;
-        Quickshell.execDetached([
-            "qs",
-            "--path",
-            Paths.shellDir + "/controlcenter.qml"
-        ]);
+        ControlCenterService.open();
     }
 
     function sizeForToggle(toggle) {

@@ -1,7 +1,7 @@
 import QtQuick
-import Quickshell
 import qs.Common
 import qs.Components
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -45,11 +45,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton) {
-                Quickshell.execDetached([
-                    "qs",
-                    "--path",
-                    Paths.shellDir + "/controlcenter.qml"
-                ]);
+                ControlCenterService.open();
                 return;
             }
             if (root.screen && root.screen.name)

@@ -13,7 +13,7 @@ import qs.Widgets.common
 FloatingWindow {
     id: root
 
-    visible: true
+    visible: false
     title: "clavis-control-center"
     implicitWidth: 1100
     implicitHeight: 750
@@ -21,8 +21,35 @@ FloatingWindow {
     color: "transparent"
     Material.theme: PersonalizationConfig.themeMode === "light" ? Material.Light : Material.Dark
     Material.accent: Appearance.colors.colPrimary
-    onClosed: Qt.quit()
-    Component.onCompleted: I18nService.initialize()
+
+    signal popoutClosed
+    property bool _wasShown: false
+
+    function showWindow() {
+        root._wasShown = true;
+        root.visible = true;
+        root.raise();
+        root.requestActivate();
+    }
+
+    function hideWindow() {
+        if (root.visible)
+            root.visible = false;
+    }
+
+    function toggleWindow() {
+        if (root.visible)
+            root.hideWindow();
+        else
+            root.showWindow();
+    }
+
+    onVisibleChanged: {
+        if (!root.visible && root._wasShown) {
+            root._wasShown = false;
+            root.popoutClosed();
+        }
+    }
 
     Binding {
         target: Metrics
@@ -142,10 +169,7 @@ FloatingWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.visible = false;
-                        Qt.quit();
-                    }
+                    onClicked: root.hideWindow()
                 }
             }
 

@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets.common
@@ -31,10 +30,6 @@ AccountProfileHeader {
 
     onAvatarActivated: {
         WidgetState.leftSidebarOpen = false;
-        Quickshell.execDetached([
-            "qs",
-            "--path",
-            Paths.shellDir + "/controlcenter.qml"
-        ]);
+        ControlCenterService.open();
     }
 }

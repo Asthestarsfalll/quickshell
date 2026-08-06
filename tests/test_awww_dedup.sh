@@ -27,6 +27,10 @@ if grep -Fq 'function onSettingsRevisionChanged' \
         "$repo_dir/Services/AwwwWallpaperService.qml"; then
     fail "awww still reapplies on transition setting changes"
 fi
+if grep -Fq 'primaryInstance' "$repo_dir/Services/AwwwWallpaperService.qml" \
+        || grep -Fq 'primaryInstance' "$repo_dir/Services/WallpaperService.qml"; then
+    fail "wallpaper services still contain the old process-instance gate"
+fi
 
 printf '{}\n' > "$config_path"
 for source in initial b c d; do
