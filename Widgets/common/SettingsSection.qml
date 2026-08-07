@@ -27,7 +27,7 @@ Rectangle {
             visible: root.title.length > 0
             text: root.title
             color: Appearance.colors.colOnLayer2
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 15
             font.weight: Font.DemiBold
             elide: Text.ElideRight
@@ -38,7 +38,7 @@ Rectangle {
             visible: root.supportingText.length > 0
             text: root.supportingText
             color: Appearance.colors.colOnLayer1
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             wrapMode: Text.Wrap
         }

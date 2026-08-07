@@ -18,7 +18,7 @@ StyledFlickable {
     property var selectedApplication: null
     property var pendingRemoveEntry: null
     property var parentModal: null
-    readonly property real pageContentWidth: Metrics.scaled(720)
+    readonly property real pageContentWidth: 720
 
     function openApplicationBrowser() {
         appBrowserLoader.active = true;
@@ -196,8 +196,8 @@ StyledFlickable {
                                         color: root.selectedApplication
                                             ? Appearance.colors.colOnSecondaryContainer
                                             : Appearance.colors.colOnSurfaceVariant
-                                        font.family: Sizes.fontFamily
-                                        font.pixelSize: Sizes.typeBodyMedium
+                                        font.family: Typography.bodyMedium.family
+                                        font.pixelSize: Typography.bodyMedium.pixelSize
                                         font.weight: Font.Medium
                                         elide: Text.ElideRight
                                     }
@@ -208,8 +208,8 @@ StyledFlickable {
                                             && root.selectedApplicationDescription() !== ""
                                         text: root.selectedApplicationDescription()
                                         color: Appearance.colors.colOnSecondaryContainer
-                                        font.family: Sizes.fontFamily
-                                        font.pixelSize: Sizes.typeBodySmall
+                                        font.family: Typography.bodySmall.family
+                                        font.pixelSize: Typography.bodySmall.pixelSize
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -230,8 +230,8 @@ StyledFlickable {
                             ? qsTr("Desktop Entry ID：%1").arg(
                                 root.selectedApplication.id) : ""
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamilyMono
-                        font.pixelSize: Sizes.typeBodySmall
+                        font.family: Fonts.mono
+                        font.pixelSize: Typography.bodySmall.pixelSize
                         elide: Text.ElideMiddle
                     }
 
@@ -262,8 +262,8 @@ StyledFlickable {
                         text: AutostartService.entries.length > 0
                             ? qsTr("只显示用户目录中的 .desktop 条目") : ""
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodySmall
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodySmall.pixelSize
                     }
 
                     DialogActionButton {
@@ -320,8 +320,8 @@ StyledFlickable {
                                         color: modelData.valid
                                             ? Appearance.colors.colOnSurface
                                             : Appearance.colors.colOnErrorContainer
-                                        font.family: Sizes.fontFamily
-                                        font.pixelSize: Sizes.typeBodyMedium
+                                        font.family: Fonts.ui
+                                        font.pixelSize: Typography.bodyMedium.pixelSize
                                         font.weight: Font.Medium
                                         elide: Text.ElideRight
                                     }
@@ -333,8 +333,8 @@ StyledFlickable {
                                         color: modelData.valid
                                             ? Appearance.colors.colOnSurfaceVariant
                                             : Appearance.colors.colOnErrorContainer
-                                        font.family: Sizes.fontFamilyMono
-                                        font.pixelSize: Sizes.typeBodySmall
+                                        font.family: Fonts.mono
+                                        font.pixelSize: Typography.bodySmall.pixelSize
                                         elide: Text.ElideMiddle
                                     }
                                 }
@@ -373,8 +373,8 @@ StyledFlickable {
                             text: qsTr("暂无自启应用")
                             horizontalAlignment: Text.AlignHCenter
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodyMedium
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodyMedium.pixelSize
                             font.weight: Font.Medium
                         }
 
@@ -383,8 +383,8 @@ StyledFlickable {
                             text: qsTr("从已安装应用中选择一个加入用户级开机启动。")
                             horizontalAlignment: Text.AlignHCenter
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodySmall
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodySmall.pixelSize
                         }
 
                         DialogActionButton {
@@ -418,8 +418,8 @@ StyledFlickable {
         header: Text {
             text: qsTr("删除自启条目？")
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeTitleMedium
+            font.family: Fonts.ui
+            font.pixelSize: Typography.titleMedium.pixelSize
             font.weight: Font.DemiBold
             leftPadding: Metrics.spacingM
             rightPadding: Metrics.spacingM
@@ -431,8 +431,8 @@ StyledFlickable {
                 ? qsTr("将删除“%1”在用户 autostart 目录中的条目。")
                     .arg(root.pendingRemoveEntry.name) : ""
             color: Appearance.colors.colOnSurfaceVariant
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodyMedium
+            font.family: Fonts.ui
+            font.pixelSize: Typography.bodyMedium.pixelSize
             wrapMode: Text.Wrap
         }
 

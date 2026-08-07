@@ -106,6 +106,7 @@ WeatherInsightCard {
         Text {
             text: qsTr("降水量")
             color: root.mutedInk
+            font.family: Fonts.expressive
             font.pixelSize: 18
             font.bold: true
         }
@@ -132,6 +133,7 @@ WeatherInsightCard {
                 anchors.bottom: parent.bottom
                 text: root.animatedValueText()
                 color: root.ink
+                font.family: Fonts.expressive
                 font.pixelSize: root.valueNumberSize
                 font.weight: Font.Light
                 lineHeight: 0.9
@@ -146,6 +148,7 @@ WeatherInsightCard {
                 visible: root.displayUnit.length > 0
                 text: root.displayUnit
                 color: root.ink
+                font.family: Fonts.expressive
                 font.pixelSize: root.valueUnitSize
                 font.weight: Font.Normal
             }
@@ -161,6 +164,7 @@ WeatherInsightCard {
         anchors.topMargin: 8
         text: root.footerText
         color: root.ink
+        font.family: Fonts.expressive
         font.pixelSize: 16
         font.bold: true
         elide: Text.ElideRight

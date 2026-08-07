@@ -45,6 +45,44 @@ require_text Modules/ControlCenter/ControlCenterWindow.qml \
     'item.parentModal = parentModal'
 require_text Modules/ControlCenter/ControlCenterWindow.qml \
     'function closeChildWindows()'
+reject_text Modules/ControlCenter/ControlCenterWindow.qml \
+    '"id": "autostart"'
+reject_text Modules/ControlCenter/ControlCenterWindow.qml \
+    '"id": "niri"'
+
+for removed_file in \
+    Modules/ControlCenter/NiriPage.qml \
+    Services/NiriConfigService.qml \
+    Services/NiriOutputConfigService.qml \
+    Services/NiriLayoutConfigService.qml \
+    Services/NiriKeybindService.qml \
+    Services/NiriRuntimeService.qml \
+    scripts/system/manage-niri-config.py \
+    tests/test_manage_niri_config.py \
+    Common/functions/MetricsMath.js \
+    tests/qml/tst_Metrics.qml
+do
+    if [ -e "$removed_file" ]; then
+        fail "$removed_file should have been removed"
+    fi
+done
+
+require_text Modules/ControlCenter/GeneralPage.qml \
+    'case "autostart": return Qt.resolvedUrl("AutostartPage.qml")'
+require_text Modules/ControlCenter/GeneralOverviewPage.qml \
+    'trailingIconName: "chevron_right"'
+for section in sidebar effects scrolling autostart; do
+    require_text Modules/ControlCenter/GeneralOverviewPage.qml \
+        "root.sectionRequested(\"$section\")"
+done
+reject_text AppShell.qml 'property: "uiScale"'
+reject_text Modules/ControlCenter/ControlCenterWindow.qml \
+    'property: "uiScale"'
+reject_text Common/Metrics.qml 'function scaled('
+reject_text Common/Metrics.qml 'property real uiScale'
+reject_text Services/PersonalizationConfig.qml 'uiScale'
+reject_text Services/PersonalizationConfig.qml 'pomodoroSoundEnabled'
+reject_text Services/TimerService.qml 'playSystemSound('
 
 require_text Modules/ControlCenter/AccountPage.qml \
     'parentModal: root.parentModal'
@@ -116,7 +154,7 @@ legacy_open_floating="open-"floating
 legacy_toggle_floating="toggle-"window-"floating"
 legacy_app_browser="clavis-"autostart-"app-"browser
 if rg -n "$legacy_open_floating|$legacy_toggle_floating|$legacy_app_browser" \
-        Modules/ControlCenter Modules/FilePicker Services scripts tests/test_manage_niri_config.py >/dev/null; then
+        Modules/ControlCenter Modules/FilePicker Services scripts tests >/dev/null; then
     fail "a compositor floating workaround for an internal control-center window remains"
 fi
 

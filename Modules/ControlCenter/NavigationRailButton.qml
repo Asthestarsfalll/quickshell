@@ -125,7 +125,7 @@ TabButton {
             anchors.horizontalCenter: itemIconBackground.horizontalCenter
             text: root.buttonText
             color: root.toggled ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer1
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 14
             verticalAlignment: Text.AlignVCenter
 

@@ -62,7 +62,7 @@ Item {
             // 一次性渲染 0-9，通过改变 y 坐标来实现滚动
             text: "0\n1\n2\n3\n4\n5\n6\n7\n8\n9"
             color: digitContainer.digitColor
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 22
             font.weight: Font.Black
             lineHeight: 24 // 必须与视口 height 相同
@@ -90,7 +90,7 @@ Item {
         Text {
             text: root.dateStr
             color: Appearance.colors.colPrimary 
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 13 
             font.bold: true
             anchors.verticalCenter: parent.verticalCenter
@@ -98,7 +98,7 @@ Item {
         Text {
             text: "|"
             color: Appearance.colors.colOutlineVariant
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 13
             anchors.verticalCenter: parent.verticalCenter
         }

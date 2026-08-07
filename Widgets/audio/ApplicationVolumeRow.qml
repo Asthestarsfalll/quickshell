@@ -58,7 +58,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             text: root.title
             color: Appearance.colors.colOnLayer2
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 14
             font.weight: Font.Medium
             elide: Text.ElideRight

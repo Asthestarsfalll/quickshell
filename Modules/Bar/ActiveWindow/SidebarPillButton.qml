@@ -30,7 +30,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: root.iconName
-            font.family: "Material Symbols Rounded"
+            font.family: Fonts.materialSymbolsRounded
             font.pixelSize: root.isHovered ? 18 : 16
             color: root.activeContentColor
             horizontalAlignment: Text.AlignHCenter

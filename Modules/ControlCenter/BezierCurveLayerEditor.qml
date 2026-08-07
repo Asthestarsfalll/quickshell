@@ -745,7 +745,7 @@ FloatingWindow {
                         Layout.fillWidth: true
                         text: "P1 " + root.formatNumber(root.renderX1) + ", " + root.formatNumber(root.renderY1)
                         color: Appearance.colors.colSubtext
-                        font.family: Sizes.fontFamilyMono
+                        font.family: Fonts.mono
                         font.pixelSize: 12
                         fontSizeMode: Text.HorizontalFit
                         minimumPixelSize: 9
@@ -757,7 +757,7 @@ FloatingWindow {
                         Layout.fillWidth: true
                         text: "P2 " + root.formatNumber(root.renderX2) + ", " + root.formatNumber(root.renderY2)
                         color: Appearance.colors.colSubtext
-                        font.family: Sizes.fontFamilyMono
+                        font.family: Fonts.mono
                         font.pixelSize: 12
                         fontSizeMode: Text.HorizontalFit
                         minimumPixelSize: 9
@@ -1306,7 +1306,7 @@ FloatingWindow {
             Text {
                 text: miniFab.labelText
                 color: Appearance.colors.colOnPrimaryContainer
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 13
                 font.weight: Font.Medium
             }
@@ -1383,7 +1383,7 @@ FloatingWindow {
                     y: 0
                     text: "x1, y1, x2, y2"
                     color: root.manualInputInvalid ? Appearance.colors.colError : manualInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                 }
 
@@ -1396,7 +1396,7 @@ FloatingWindow {
                     selectedTextColor: Appearance.colors.colOnPrimary
                     selectionColor: Appearance.colors.colPrimary
                     selectByMouse: true
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.mono
                     font.pixelSize: 13
                     leftPadding: 16
                     rightPadding: 12

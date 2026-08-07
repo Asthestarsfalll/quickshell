@@ -321,7 +321,7 @@ Item {
             chartActive: root.isForeground
             updateInterval: root.chartUpdateInterval
             decorationSize: 50
-            valueSize: Sizes.typeHeadlineMedium
+            valueSize: Typography.headlineMedium.pixelSize
             containerColor:
                 Appearance.colors.colPrimaryContainer
             foregroundColor:
@@ -359,7 +359,7 @@ Item {
             updateInterval: root.chartUpdateInterval
             shapeOverride: MaterialShape.Gem
             decorationSize: 50
-            valueSize: Sizes.typeHeadlineMedium
+            valueSize: Typography.headlineMedium.pixelSize
             containerColor:
                 Appearance.colors.colSecondaryContainer
             foregroundColor:

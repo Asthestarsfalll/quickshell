@@ -166,8 +166,8 @@ Item {
                                         .colOnSecondaryContainer
                                     : Appearance.colors
                                         .colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
-                                font.pixelSize: Sizes.typeBodyMedium
+                                font.family: Fonts.ui
+                                font.pixelSize: Typography.bodyMedium.pixelSize
                                 font.weight: tabButton.active
                                     ? Font.DemiBold : Font.Medium
                             }

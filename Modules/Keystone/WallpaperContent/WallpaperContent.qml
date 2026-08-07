@@ -333,7 +333,7 @@ Item {
 
                 text: delegateRoot.relativePath
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: WallpaperPickerTokens.labelFontSize
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignHCenter
@@ -393,7 +393,7 @@ Item {
                             ? qsTr("未找到匹配壁纸")
                             : qsTr("未找到壁纸")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 17
                     font.weight: Font.Medium
                 }
@@ -405,7 +405,7 @@ Item {
                             ? qsTr("请尝试其他搜索内容")
                             : qsTr("请将图片放入 ") + PersonalizationConfig.wallpaperFolder
                     color: Appearance.applyAlpha(Appearance.colors.colOnSurfaceVariant, 0.72)
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 13
                     elide: Text.ElideMiddle
                     width: Math.min(520, implicitWidth)
@@ -434,7 +434,7 @@ Item {
             color: Appearance.colors.colOnSurface
             selectionColor: Appearance.colors.colSecondaryContainer
             selectedTextColor: Appearance.colors.colOnSecondaryContainer
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: WallpaperPickerTokens.searchFontSize
             renderType: Text.QtRendering
             selectByMouse: true
@@ -496,7 +496,7 @@ Item {
 
             text: qsTr("搜索壁纸")
             color: Appearance.applyAlpha(Appearance.colors.colOnSurfaceVariant, 0.72)
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: WallpaperPickerTokens.searchFontSize
             opacity: searchInput.text.length === 0 ? 1 : 0
 

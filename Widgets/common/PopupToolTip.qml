@@ -20,7 +20,7 @@ Item {
     property font font
 
     font {
-        family: Sizes.fontFamily
+        family: Fonts.ui
         pixelSize: 12
         hintingPreference: Font.PreferNoHinting
     }

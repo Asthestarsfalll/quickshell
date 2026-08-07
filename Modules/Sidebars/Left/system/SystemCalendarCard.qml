@@ -19,12 +19,10 @@ Rectangle {
         qsTr("星期日"), qsTr("星期一"), qsTr("星期二"), qsTr("星期三"),
         qsTr("星期四"), qsTr("星期五"), qsTr("星期六")
     ]
-    readonly property string calendarFamily:
-        displayFont.status === FontLoader.Ready
-            ? displayFont.name
-            : Sizes.fontFamily
+    readonly property string calendarFamily: Fonts.expressive
     readonly property var calendarAxes:
-        displayFont.status === FontLoader.Ready
+        Fonts.familyAvailable(Fonts.bundledFamilyName)
+            && Fonts.expressive === Fonts.bundledFamilyName
             ? ({
                 "ROND": 45,
                 "wdth": 78
@@ -38,17 +36,6 @@ Rectangle {
         + qsTr("年") + (currentDate.getMonth() + 1)
         + qsTr("月") + currentDate.getDate()
         + qsTr("日，") + accessibleWeekdayNames[currentDate.getDay()]
-
-    FontLoader {
-        id: displayFont
-
-        source: Paths.fileUrl(
-            Paths.fontsDir
-                + "/google-sans-flex/"
-                + "GoogleSansFlex-VariableFont_"
-                + "GRAD,ROND,opsz,slnt,wdth,wght.ttf"
-        )
-    }
 
     Timer {
         interval: 30000
@@ -82,7 +69,7 @@ Rectangle {
             font {
                 family: root.calendarFamily
                 pixelSize: Math.min(
-                    Sizes.typeTitleMedium,
+                    Typography.titleMedium.pixelSize,
                     headingBand.height * 0.36
                 )
                 weight: Font.Bold

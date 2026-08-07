@@ -82,7 +82,7 @@ Item {
                         Layout.fillWidth: true
                         text: modelData.label
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: 16
                         elide: Text.ElideRight
                     }
@@ -92,7 +92,7 @@ Item {
                     Layout.fillWidth: true
                     text: modelData.value
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 24
                     font.weight: Font.Medium
                     elide: Text.ElideRight

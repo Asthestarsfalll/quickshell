@@ -103,7 +103,7 @@ Rectangle {
                 Text {
                     text: "calendar_month"
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: "Material Symbols Outlined"
+                    font.family: Fonts.materialSymbolsOutlined
                     font.pixelSize: 22
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -111,7 +111,7 @@ Rectangle {
                 Text {
                     text: qsTr("每日预报")
                     color: Appearance.colors.colOnSurface
-                    font.family: "LXGW WenKai GB Screen"
+                    font.family: Fonts.ui
                     font.bold: true
                     font.pixelSize: 22
                     Layout.alignment: Qt.AlignVCenter
@@ -149,7 +149,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "more_horiz"
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: "Material Symbols Outlined"
+                        font.family: Fonts.materialSymbolsOutlined
                         font.pixelSize: 20
                     }
 
@@ -307,7 +307,7 @@ Rectangle {
                                 ctx.fillStyle = fadedBar
                                     ? Qt.rgba(primaryColor.r, primaryColor.g, primaryColor.b, 0.42)
                                     : primaryColor
-                                ctx.font = "bold 11px \"JetBrainsMono Nerd Font\""
+                                ctx.font = "bold 11px " + Fonts.cssFamily(Fonts.numeric)
                                 ctx.textAlign = "center"
                                 ctx.fillText(root.fmtPercent(popValue), x, trendContent.rainLabelY)
                             }
@@ -386,7 +386,7 @@ Rectangle {
                                     width: parent.width
                                     text: root.dayLabel(index, dayItem.time)
                                     color: Appearance.colors.colOnSurface
-                                    font.family: "LXGW WenKai GB Screen"
+                                    font.family: Fonts.ui
                                     font.pixelSize: 16
                                     font.bold: index === 1
                                     horizontalAlignment: Text.AlignHCenter
@@ -397,7 +397,7 @@ Rectangle {
                                     width: parent.width
                                     text: root.dateLabel(dayItem.time)
                                     color: Appearance.colors.colOnSurfaceVariant
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.family: Fonts.numeric
                                     font.pixelSize: 13
                                     horizontalAlignment: Text.AlignHCenter
                                 }
@@ -420,7 +420,7 @@ Rectangle {
                                 y: trendContent.highTempTextY
                                 text: root.fmtTemp(root.valueAt(dayPart, "temperatureC", root.valueAt(dayItem, "temperatureMaxC", NaN)))
                                 color: Appearance.colors.colOnSurface
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Fonts.numeric
                                 font.pixelSize: 19
                                 font.bold: true
                                 horizontalAlignment: Text.AlignHCenter
@@ -431,7 +431,7 @@ Rectangle {
                                 y: trendContent.lowTempTextY
                                 text: root.fmtTemp(root.valueAt(nightPart, "temperatureC", root.valueAt(dayItem, "temperatureMinC", NaN)))
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Fonts.numeric
                                 font.pixelSize: 18
                                 font.bold: true
                                 horizontalAlignment: Text.AlignHCenter
@@ -516,6 +516,11 @@ Rectangle {
             trendCanvas.requestPaint()
         }
         function onRowsRemoved() { trendCanvas.requestPaint() }
+    }
+
+    Connections {
+        target: Fonts
+        function onNumericChanged() { trendCanvas.requestPaint() }
     }
 
     onSourceModelChanged: {

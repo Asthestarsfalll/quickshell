@@ -1425,21 +1425,6 @@
 <context>
     <name>GeneralPage</name>
     <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="315" />
-        <source>提示音</source>
-        <translation>提示音</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="319" />
-        <source>番茄钟</source>
-        <translation>番茄鍾</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="320" />
-        <source>专注与休息阶段切换时播放系统提示音</source>
-        <translation>專注與休息階段切換時播放系統提示音</translation>
-    </message>
-    <message>
         <location filename="../Modules/ControlCenter/GeneralPage.qml" line="327" />
         <source>侧边栏</source>
         <translation>側邊欄</translation>

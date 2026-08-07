@@ -121,7 +121,7 @@ Rectangle {
             anchors.centerIn: parent
             text: tile.icon
             color: tile.accent
-            font.family: "Material Symbols Outlined"
+            font.family: Fonts.materialSymbolsOutlined
             font.pixelSize: Math.max(Sizes.lockResourceIconMinSize, tile.arcRadius * Sizes.lockResourceIconScale)
             font.weight: 600
             horizontalAlignment: Text.AlignHCenter

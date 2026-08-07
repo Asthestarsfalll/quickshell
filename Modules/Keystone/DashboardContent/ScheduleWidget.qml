@@ -66,7 +66,7 @@ Item {
 
     Rectangle {
         x: 0; y: 0; width: root.timeW; height: root.headerH; color: "transparent"
-        Text { anchors.centerIn: parent; text: qsTr("时间"); color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
+        Text { anchors.centerIn: parent; text: qsTr("时间"); color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Fonts.ui }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { scheduleLoader.running = false; scheduleLoader.running = true; } }
     }
 
@@ -76,7 +76,7 @@ Item {
             x: -scheduleScroll.contentX; spacing: root.gridSpacing
             Repeater {
                 model: root.headers
-                Rectangle { width: root.cellW; height: root.headerH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily } }
+                Rectangle { width: root.cellW; height: root.headerH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Fonts.ui } }
             }
         }
     }
@@ -87,7 +87,7 @@ Item {
             y: -scheduleScroll.contentY; spacing: root.gridSpacing
             Repeater {
                 model: root.timeHeaders
-                Rectangle { width: root.timeW; height: root.cellH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData.replace(" - ", "\n"); color: Appearance.colors.colOutline; font.pixelSize: 9; font.family: Sizes.fontFamily; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter } }
+                Rectangle { width: root.timeW; height: root.cellH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData.replace(" - ", "\n"); color: Appearance.colors.colOutline; font.pixelSize: 9; font.family: Fonts.ui; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter } }
             }
         }
     }
@@ -117,7 +117,7 @@ Item {
                     Text {
                         anchors.fill: parent; anchors.margins: 4; text: modelData.text.replace(" (", "\n(").replace("（", "\n（")
                         color: root.getTextColorById(modelData.colorId)
-                        font.pixelSize: 10; font.bold: !modelData.isEmpty; font.family: Sizes.fontFamily; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; wrapMode: Text.WordWrap; elide: Text.ElideRight
+                        font.pixelSize: 10; font.bold: !modelData.isEmpty; font.family: Fonts.ui; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; wrapMode: Text.WordWrap; elide: Text.ElideRight
                     }
                 }
             }

@@ -66,7 +66,7 @@ Item {
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
         maximumLineCount: 1
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         renderType: Text.NativeRendering
         textFormat: Text.PlainText
 

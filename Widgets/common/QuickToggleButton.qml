@@ -209,7 +209,7 @@ Rectangle {
                 text: root.title
                 elide: Text.ElideRight
                 color: root.textColor
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 13
                 font.weight: 600
             }
@@ -220,7 +220,7 @@ Rectangle {
                 text: root.subtitle
                 elide: Text.ElideRight
                 color: root.textColor
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 12
                 font.weight: 100
             }

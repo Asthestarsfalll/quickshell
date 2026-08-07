@@ -13,7 +13,7 @@ Item {
     required property color iconColor     // 中心图标颜色
 
     // === 可选属性 ===
-    property string iconFont: "Material Symbols Outlined"
+    property string iconFont: Fonts.materialSymbolsOutlined
     property real iconSize: 10
     property real arcRadius: 10
     property real lineWidth: 3

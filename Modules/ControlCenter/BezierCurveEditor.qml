@@ -732,7 +732,7 @@ Item {
                             visible: !coordItem.editing
                             text: root.coordinateText(coordItem.modelData.index)
                             color: coordMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.mono
                             font.pixelSize: 13
                             font.weight: Font.Medium
                         }
@@ -749,7 +749,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             selectByMouse: true
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.mono
                             font.pixelSize: 13
                             padding: 0
                             leftPadding: 0

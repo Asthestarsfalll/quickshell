@@ -223,7 +223,7 @@ WidgetPanel {
                         visible: NetworkService.wifiConnected
                         text: NetworkService.signalStrength + "%"
                         color: Appearance.colors.colOnLayer1
-                        font.family: Sizes.fontFamilyMono
+                        font.family: Fonts.numeric
                         font.pixelSize: 12
                     }
 
@@ -317,7 +317,7 @@ WidgetPanel {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: qsTr("正在查找可选网络")
                                 color: Appearance.colors.colOnLayer1
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 12
                             }
                         }
@@ -389,7 +389,7 @@ WidgetPanel {
         header: Text {
             text: qsTr("遗忘网络")
             color: Appearance.colors.colOnLayer2
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 18
             font.weight: Font.DemiBold
             leftPadding: Appearance.spacing.medium
@@ -402,7 +402,7 @@ WidgetPanel {
                 ? qsTr("将删除“") + root.pendingForgetNetwork.ssid + qsTr("”的已保存连接。")
                 : ""
             color: Appearance.colors.colOnLayer1
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 13
             wrapMode: Text.Wrap
         }

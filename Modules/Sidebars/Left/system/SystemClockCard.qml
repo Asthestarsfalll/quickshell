@@ -16,11 +16,9 @@ Item {
         String(currentTime.getMinutes()).padStart(2, "0")
     readonly property string periodText: hour24 >= 12 ? "PM" : "AM"
     readonly property string clockFamily:
-        displayFont.status === FontLoader.Ready
-            ? displayFont.name
-            : Sizes.fontFamily
+        Fonts.systemClock
     readonly property var clockAxes:
-        displayFont.status === FontLoader.Ready
+        Fonts.familyAvailable(Fonts.systemClock)
             ? ({
                 "ROND": 25,
                 "wdth": 30
@@ -55,17 +53,6 @@ Item {
 
     Accessible.name: hourText + ":" + minuteText
         + " " + periodText + "，" + dateText
-
-    FontLoader {
-        id: displayFont
-
-        source: Paths.fileUrl(
-            Paths.fontsDir
-                + "/google-sans-flex/"
-                + "GoogleSansFlex-VariableFont_"
-                + "GRAD,ROND,opsz,slnt,wdth,wght.ttf"
-        )
-    }
 
     Timer {
         interval: 1000

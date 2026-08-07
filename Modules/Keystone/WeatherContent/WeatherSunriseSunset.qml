@@ -91,7 +91,7 @@ Item {
                 Text {
                     text: qsTr("日出")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 16
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -111,7 +111,7 @@ Item {
                 Text {
                     text: qsTr("日落")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 16
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -174,7 +174,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.sunriseTime > 0 ? Qt.formatDateTime(new Date(root.sunriseTime * 1000), "HH:mm") : "--:--"
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 32
                 font.weight: Font.Medium
             }
@@ -184,7 +184,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.sunsetTime > 0 ? Qt.formatDateTime(new Date(root.sunsetTime * 1000), "HH:mm") : "--:--"
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 32
                 font.weight: Font.Medium
             }

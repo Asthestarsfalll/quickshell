@@ -65,7 +65,7 @@ Rectangle {
                 Text {
                     text: "schedule"
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: "Material Symbols Outlined"
+                    font.family: Fonts.materialSymbolsOutlined
                     font.pixelSize: 22
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -73,7 +73,7 @@ Rectangle {
                 Text {
                     text: qsTr("逐小时预报")
                     color: Appearance.colors.colOnSurface
-                    font.family: "LXGW WenKai GB Screen"
+                    font.family: Fonts.ui
                     font.bold: true
                     font.pixelSize: 22
                     Layout.alignment: Qt.AlignVCenter
@@ -111,7 +111,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "more_horiz"
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: "Material Symbols Outlined"
+                        font.family: Fonts.materialSymbolsOutlined
                         font.pixelSize: 20
                     }
 
@@ -236,7 +236,7 @@ Rectangle {
                             }
 
                             ctx.fillStyle = textColor
-                            ctx.font = "bold 13px \"JetBrainsMono Nerd Font\""
+                            ctx.font = "bold 13px " + Fonts.cssFamily(Fonts.numeric)
                             ctx.textAlign = "center"
                             for (let n = 0; n < count; ++n) {
                                 ctx.fillText(root.fmtTemp(values[n]), pointX(n), yAt(values[n], minTemp, maxTemp) - 10)
@@ -259,7 +259,7 @@ Rectangle {
                                 y: trendContent.topTextY
                                 text: root.hourLabel(hourItem.time)
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Fonts.numeric
                                 font.pixelSize: 13
                                 horizontalAlignment: Text.AlignHCenter
                             }
@@ -335,6 +335,11 @@ Rectangle {
         function onDataChanged() { trendCanvas.requestPaint() }
         function onRowsInserted() { trendCanvas.requestPaint() }
         function onRowsRemoved() { trendCanvas.requestPaint() }
+    }
+
+    Connections {
+        target: Fonts
+        function onNumericChanged() { trendCanvas.requestPaint() }
     }
 
     onSourceModelChanged: trendCanvas.requestPaint()

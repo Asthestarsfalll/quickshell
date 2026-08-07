@@ -292,7 +292,7 @@ WidgetPanel {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: qsTr("正在查找附近设备")
                                 color: Appearance.colors.colOnLayer1
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 12
                             }
                         }
@@ -431,7 +431,7 @@ WidgetPanel {
         header: Text {
             text: qsTr("遗忘蓝牙设备")
             color: Appearance.colors.colOnLayer2
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 18
             font.weight: Font.DemiBold
             leftPadding: Appearance.spacing.medium
@@ -444,7 +444,7 @@ WidgetPanel {
                 ? qsTr("将删除“") + root.pendingForgetDevice.name + qsTr("”的配对信息。")
                 : ""
             color: Appearance.colors.colOnLayer1
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 13
             wrapMode: Text.Wrap
         }

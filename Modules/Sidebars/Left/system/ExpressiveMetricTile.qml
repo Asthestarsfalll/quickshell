@@ -19,7 +19,7 @@ Rectangle {
     property bool chartActive: visible
     property int updateInterval: 1000
     property real decorationSize: 70
-    property real valueSize: Sizes.typeDisplaySmall
+    property real valueSize: Typography.displaySmall.pixelSize
     property color containerColor: Appearance.colors.colPrimaryContainer
     property color foregroundColor: Appearance.colors.colOnPrimaryContainer
     property color accentColor: Appearance.colors.colPrimary
@@ -124,10 +124,10 @@ Rectangle {
             )
             text: root.label
             color: root.foregroundColor
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: root.dense
-                ? Sizes.typeTitleMedium + 2
-                : Sizes.typeTitleLarge
+                ? Typography.titleMedium.pixelSize + 2
+                : Typography.titleLarge.pixelSize
             font.weight: Font.Bold
             elide: Text.ElideRight
         }
@@ -142,8 +142,8 @@ Rectangle {
             text: root.detailText
             color: root.foregroundColor
             opacity: 0.72
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeLabelSmall
+            font.family: Fonts.ui
+            font.pixelSize: Typography.labelSmall.pixelSize
             elide: Text.ElideRight
         }
 
@@ -190,7 +190,7 @@ Rectangle {
                 Layout.fillWidth: true
                 text: root.valueText
                 color: root.foregroundColor
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: root.valueSize
                 font.weight: Font.Bold
                 elide: Text.ElideRight
@@ -210,7 +210,7 @@ Rectangle {
                 MaterialSymbol {
                     text: "thermostat"
                     color: root.foregroundColor
-                    iconSize: Sizes.typeLabelMedium
+                    iconSize: Typography.labelMedium.pixelSize
                     fill: 1
                     opacity: 0.74
                 }
@@ -218,8 +218,8 @@ Rectangle {
                 Text {
                     text: root.temperatureText
                     color: root.foregroundColor
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeLabelMedium
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.labelMedium.pixelSize
                     font.weight: Font.DemiBold
                     opacity: 0.78
                 }
@@ -232,8 +232,8 @@ Rectangle {
             text: root.supportingText
             color: root.foregroundColor
             opacity: 0.74
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodySmall
+            font.family: Fonts.ui
+            font.pixelSize: Typography.bodySmall.pixelSize
             elide: Text.ElideRight
         }
     }

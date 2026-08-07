@@ -9,6 +9,8 @@ service="$repo_dir/Services/AutostartService.qml"
 applications="$repo_dir/Services/ApplicationService.qml"
 spotlight="$repo_dir/Modules/Launcher/SpotlightAppProvider.qml"
 control_center="$repo_dir/Modules/ControlCenter/ControlCenterWindow.qml"
+general_page="$repo_dir/Modules/ControlCenter/GeneralPage.qml"
+general_overview="$repo_dir/Modules/ControlCenter/GeneralOverviewPage.qml"
 helper="$repo_dir/scripts/system/manage-xdg-"'autostart.py'
 helper_test="$repo_dir/tests/test_manage_xdg_"'autostart.py'
 
@@ -27,7 +29,8 @@ assert_not_contains() {
     fi
 }
 
-for file in "$page" "$popup" "$service" "$applications" "$spotlight" "$control_center"; do
+for file in "$page" "$popup" "$service" "$applications" "$spotlight" \
+    "$control_center" "$general_page" "$general_overview"; do
     test -f "$file" || fail "missing autostart architecture file: $file"
 done
 
@@ -59,6 +62,10 @@ assert_contains "$spotlight" 'ApplicationService.getVisibleApplications()'
 assert_not_contains "$spotlight" 'DesktopEntries.applications.values'
 assert_not_contains "$control_center" 'root.raise()'
 assert_not_contains "$control_center" 'root.requestActivate()'
+assert_not_contains "$control_center" '"id": "autostart"'
+assert_contains "$general_page" \
+    'case "autostart": return Qt.resolvedUrl("AutostartPage.qml")'
+assert_contains "$general_overview" 'root.sectionRequested("autostart")'
 
 legacy_xdg_autostart="/etc/xdg/"autostart
 legacy_xdg_dirs="XDG_CONFIG_"DIRS

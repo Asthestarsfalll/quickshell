@@ -28,23 +28,17 @@ Item {
         ? Math.max(0, Math.min(1, root.level))
         : 0
     property real animatedLevel: targetLevel
-    readonly property string metricFontFamily:
-        metricFont.status === FontLoader.Ready
-            ? metricFont.name
-            : Sizes.fontFamily
+    readonly property string metricFontFamily: Fonts.expressive
+    readonly property var metricFontAxes:
+        Fonts.familyAvailable(Fonts.bundledFamilyName)
+            && Fonts.expressive === Fonts.bundledFamilyName
+            ? ({
+                "ROND": 25,
+                "wdth": 62
+            })
+            : ({})
 
     Accessible.name: root.accessibilityName
-
-    FontLoader {
-        id: metricFont
-
-        source: Paths.fileUrl(
-            Paths.fontsDir
-                + "/google-sans-flex/"
-                + "GoogleSansFlex-VariableFont_"
-                + "GRAD,ROND,opsz,slnt,wdth,wght.ttf"
-        )
-    }
 
     Behavior on animatedLevel {
         NumberAnimation {
@@ -161,7 +155,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 text: root.iconName
                 color: root.contentColor
-                iconSize: Sizes.typeHeadlineSmall + 4
+                iconSize: Typography.headlineSmall.pixelSize + 4
                 fill: 1
             }
 
@@ -172,12 +166,9 @@ Item {
                 renderType: Text.NativeRendering
                 font {
                     family: root.metricFontFamily
-                    pixelSize: Sizes.typeHeadlineMedium
+                    pixelSize: Typography.headlineMedium.pixelSize
                     weight: Font.DemiBold
-                    variableAxes: {
-                        "ROND": 25,
-                        "wdth": 62
-                    }
+                    variableAxes: root.metricFontAxes
                 }
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
@@ -187,8 +178,8 @@ Item {
                 Layout.fillWidth: true
                 text: root.supportingText
                 color: root.contentColor
-                font.family: Sizes.fontFamily
-                font.pixelSize: Sizes.typeLabelSmall
+                font.family: Fonts.expressive
+                font.pixelSize: Typography.labelSmall.pixelSize
                 font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideMiddle

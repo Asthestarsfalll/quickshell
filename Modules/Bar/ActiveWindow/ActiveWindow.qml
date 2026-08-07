@@ -61,7 +61,7 @@ Item {
             id: windowTitle
             text: root.activeTitle
 
-            font.family: "LXGW WenKai GB Screen"
+            font.family: Fonts.ui
             font.pointSize: 11
             color: Appearance.colors.colOnSurface
 

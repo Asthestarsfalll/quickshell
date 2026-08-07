@@ -41,8 +41,8 @@ Rectangle {
             Layout.fillWidth: true
             text: root.title
             color: root.foregroundColor
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeTitleMedium
+            font.family: Fonts.ui
+            font.pixelSize: Typography.titleMedium.pixelSize
             font.weight: Font.DemiBold
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -52,8 +52,8 @@ Rectangle {
             Layout.fillWidth: true
             text: root.message
             color: root.foregroundColor
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodyMedium
+            font.family: Fonts.ui
+            font.pixelSize: Typography.bodyMedium.pixelSize
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
         }

@@ -70,7 +70,7 @@ Item {
             text: root.text
             color: Appearance.colors.colOnTooltip
             wrapMode: Text.Wrap
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             font.hintingPreference: Font.PreferNoHinting
         }

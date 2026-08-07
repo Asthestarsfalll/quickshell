@@ -545,7 +545,7 @@ Rectangle {
                     anchors.rightMargin: 8
                     text: root.mapStatusText()
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 10
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
@@ -651,7 +651,7 @@ Rectangle {
                 text: "© MapTiler · © OpenStreetMap contributors"
                     + " · Weather: OpenWeather"
                 color: Appearance.colors.colOnPrimaryFixed
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 11
                 font.weight: Font.Medium
                 textFormat: Text.PlainText
@@ -684,7 +684,7 @@ Rectangle {
                     Text {
                         text: qsTr("正在等待天气位置")
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: 11
                         textFormat: Text.PlainText
                     }

@@ -74,7 +74,7 @@ Item {
                         anchors.centerIn: parent
                         text: "chat"
                         visible: !iconImage.visible
-                        font.family: "Material Symbols Rounded"
+                        font.family: Fonts.materialSymbolsRounded
                         font.pixelSize: 22
                         color: Appearance.colors.colOnSurfaceVariant
                     }
@@ -88,7 +88,7 @@ Item {
                     Text {
                         text: delegateRoot.modelData ? delegateRoot.modelData.summary : ""
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.bold: true
                         font.pixelSize: 14
                         Layout.fillWidth: true
@@ -98,7 +98,7 @@ Item {
                     Text {
                         text: delegateRoot.modelData ? delegateRoot.modelData.body : ""
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: 12
                         Layout.fillWidth: true
                         elide: Text.ElideRight
@@ -109,7 +109,7 @@ Item {
                 Text {
                     text: "close"
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: "Material Symbols Rounded"
+                    font.family: Fonts.materialSymbolsRounded
                     font.pixelSize: 18
                     Layout.alignment: Qt.AlignRight | Qt.AlignTop
                 }

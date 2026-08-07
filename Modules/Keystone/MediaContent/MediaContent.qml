@@ -121,7 +121,7 @@ Item {
                             anchors.centerIn: parent
                             text: "music_note"
                             color: Appearance.colors.colOnLayer3
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 56
                         }
                     }

@@ -151,7 +151,7 @@ Rectangle {
                     transform: Translate { x: root.monthOffset }
                     text: calendarGrid.title
                     color: Appearance.colors.colOnPrimaryContainer
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.DemiBold
                 }
@@ -201,7 +201,7 @@ Rectangle {
                 color: model.day === 0 || model.day === 6
                     ? Appearance.colors.colTertiary
                     : Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 12
                 font.weight: Font.Medium
             }
@@ -252,7 +252,7 @@ Rectangle {
                                 : Appearance.colors.colOnSurfaceVariant;
                         }
                         opacity: dayItem.model.today || dayItem.model.month === calendarGrid.month ? 1 : 0.38
-                        font.family: Sizes.fontFamilyMono
+                        font.family: Fonts.numeric
                         font.pixelSize: 12
                         font.weight: dayItem.model.today ? Font.DemiBold : Font.Normal
                     }

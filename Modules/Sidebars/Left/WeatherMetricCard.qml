@@ -29,7 +29,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: root.icon
                 color: root.accent
-                font.family: "Material Symbols Outlined"
+                font.family: Fonts.materialSymbolsOutlined
                 font.pixelSize: 22
             }
         }
@@ -41,7 +41,7 @@ Rectangle {
             Text {
                 text: root.label
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.expressive
                 font.pixelSize: 11
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -50,7 +50,7 @@ Rectangle {
             Text {
                 text: root.value
                 color: Appearance.colors.colOnSurface
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.expressive
                 font.bold: true
                 font.pixelSize: 14
                 elide: Text.ElideRight
@@ -61,7 +61,7 @@ Rectangle {
                 text: root.detail
                 visible: root.detail.length > 0
                 color: Appearance.colors.colOutline
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.expressive
                 font.pixelSize: 10
                 elide: Text.ElideRight
                 Layout.fillWidth: true

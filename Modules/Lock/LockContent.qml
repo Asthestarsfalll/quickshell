@@ -62,7 +62,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     text: Qt.formatTime(clockTimer.now, "hh")
                     color: Appearance.colors.colSecondary
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: Math.floor(Sizes.lockTimeFontSize * root.centerScale)
                     font.bold: true
                 }
@@ -71,7 +71,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     text: ":"
                     color: Appearance.colors.colPrimary
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: Math.floor(Sizes.lockTimeFontSize * root.centerScale)
                     font.bold: true
                 }
@@ -80,7 +80,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     text: Qt.formatTime(clockTimer.now, "mm")
                     color: Appearance.colors.colSecondary
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: Math.floor(Sizes.lockTimeFontSize * root.centerScale)
                     font.bold: true
                 }
@@ -90,7 +90,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     text: Qt.formatTime(clockTimer.now, "AP")
                     color: Appearance.colors.colPrimary
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: Math.floor(Sizes.lockTimeSuffixFontSize * root.centerScale)
                     font.bold: true
                 }
@@ -101,7 +101,7 @@ Item {
                 Layout.topMargin: -Sizes.lockOuterPadding * 2
                 text: Qt.formatDate(clockTimer.now, "dddd, d MMMM yyyy")
                 color: Appearance.colors.colTertiary
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: Math.floor(Sizes.lockDateFontSize * root.centerScale)
                 font.bold: true
             }
@@ -157,7 +157,7 @@ Item {
                     text: "person"
                     visible: avatarImg.status !== Image.Ready && fallbackAvatarImg.status !== Image.Ready
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: "Material Symbols Rounded"
+                    font.family: Fonts.materialSymbolsRounded
                     font.pixelSize: parent.width * 0.45
                 }
             }
@@ -201,7 +201,7 @@ Item {
                     opacity: 0
                     scale: 0.7
                     color: Appearance.colors.colError
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 15
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -391,7 +391,7 @@ Item {
                     opacity: 0
                     scale: 0.7
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: Math.floor(12 * Sizes.lockReferenceScale)
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere

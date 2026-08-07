@@ -208,7 +208,7 @@ Item {
                         text: Number(control.value).toFixed(
                             root.valueDecimals) + root.valueSuffix
                         color: Appearance.colors.colOnPrimary
-                        font.family: Sizes.fontFamilyMono
+                        font.family: Fonts.numeric
                         font.pixelSize: 12
                         font.weight: Font.Medium
                     }

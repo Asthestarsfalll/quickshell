@@ -58,7 +58,7 @@ Button {
                 visible: root.buttonText !== ""
                 text: root.buttonText
                 verticalAlignment: Text.AlignVCenter
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 12
                 font.weight: Font.Medium
                 color: root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2

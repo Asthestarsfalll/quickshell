@@ -94,7 +94,7 @@ Rectangle {
             anchors.centerIn: parent
             text: "music_note"
             color: Appearance.colors.colOnSurfaceVariant
-            font.family: "Material Symbols Rounded"
+            font.family: Fonts.materialSymbolsRounded
             font.pixelSize: 48
             opacity: 0.2
         }
@@ -114,7 +114,7 @@ Rectangle {
             Layout.bottomMargin: Sizes.lockOuterPadding
             text: qsTr("正在播放")
             color: Appearance.colors.colOnSurfaceVariant
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.numeric
             font.pixelSize: 17
             font.weight: 500
             elide: Text.ElideRight
@@ -124,7 +124,7 @@ Rectangle {
             Layout.fillWidth: true
             text: root.artist
             color: Appearance.colors.colPrimary
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.numeric
             font.pixelSize: 24
             font.weight: 600
             horizontalAlignment: Text.AlignHCenter
@@ -135,7 +135,7 @@ Rectangle {
             Layout.fillWidth: true
             text: root.title
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.numeric
             font.pixelSize: 20
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
@@ -171,7 +171,7 @@ Rectangle {
                 stateLayerPaused: Appearance.colors.colOnPrimaryContainer
                 buttonSize: Math.round(48 * Sizes.lockReferenceScale)
                 iconSize: 31
-                iconFontFamily: "Material Symbols Rounded"
+                iconFontFamily: Fonts.materialSymbolsRounded
                 morphExpandWidth: Sizes.lockOuterPadding
                 morphPressWidth: Sizes.lockOuterPadding * 2
                 morphPlayingRadius: Appearance.rounding.normal
@@ -267,7 +267,7 @@ Rectangle {
             anchors.centerIn: parent
             text: control.icon
             color: control.active ? Appearance.colors[`colOn${control.colour}`] : Appearance.colors[`colOn${control.colour}Container`]
-            font.family: "Material Symbols Rounded"
+            font.family: Fonts.materialSymbolsRounded
             font.pixelSize: 29
             font.weight: 500
             horizontalAlignment: Text.AlignHCenter

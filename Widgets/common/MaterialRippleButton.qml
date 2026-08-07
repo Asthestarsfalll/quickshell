@@ -145,7 +145,7 @@ Button {
     contentItem: Text {
         text: root.buttonText
         color: Appearance.colors.colOnLayer1
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 13
         verticalAlignment: Text.AlignVCenter
     }

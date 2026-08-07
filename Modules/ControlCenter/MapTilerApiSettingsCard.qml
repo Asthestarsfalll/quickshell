@@ -108,7 +108,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: "MapTiler Dataviz"
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 16
                     font.weight: Font.Medium
                     textFormat: Text.PlainText
@@ -118,7 +118,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: qsTr("用于 Dataviz 天气地图底图")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     textFormat: Text.PlainText
                 }
@@ -177,7 +177,7 @@ Rectangle {
                             : WeatherMapPlugin.mapTilerConfigured
                                 ? Appearance.colors.colOnPrimaryContainer
                                 : Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: 13
                         font.weight: Font.DemiBold
                         textFormat: Text.PlainText
@@ -196,7 +196,7 @@ Rectangle {
             Layout.fillWidth: true
             text: "MapTiler API key"
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 14
             font.weight: Font.Medium
             textFormat: Text.PlainText
@@ -285,7 +285,7 @@ Rectangle {
             Layout.fillWidth: true
             text: qsTr("密钥保存在系统密钥环中，保存后立即生效。")
             color: Appearance.colors.colOnSurfaceVariant
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             lineHeight: 1.35
             wrapMode: Text.WordWrap
@@ -327,7 +327,7 @@ Rectangle {
                     color: root.feedbackError
                         ? Appearance.colors.colOnErrorContainer
                         : Appearance.colors.colOnPrimaryContainer
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                     textFormat: Text.PlainText

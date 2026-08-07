@@ -451,7 +451,7 @@ FloatingWindow {
                             Layout.fillWidth: true
                             text: root.dialogTitle
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 19
                             font.weight: Font.DemiBold
                             elide: Text.ElideRight
@@ -461,7 +461,7 @@ FloatingWindow {
                             Layout.fillWidth: true
                             text: root.description
                             color: Appearance.colors.colSubtext
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 12
                             elide: Text.ElideRight
                         }
@@ -506,7 +506,7 @@ FloatingWindow {
                             Layout.bottomMargin: 6
                             text: qsTr("位置")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
                         }
@@ -533,7 +533,7 @@ FloatingWindow {
                                 anchors.rightMargin: 12
                                 text: root.formatSummary
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 11
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
@@ -626,7 +626,7 @@ FloatingWindow {
                                                         visible: breadcrumbEntry.index > 0
                                                         text: "/"
                                                         color: Appearance.colors.colOnSurfaceVariant
-                                                        font.family: Sizes.fontFamilyMono
+                                                        font.family: Fonts.mono
                                                         font.pixelSize: 13
                                                     }
 
@@ -669,7 +669,7 @@ FloatingWindow {
                                     selectionColor: Appearance.colors.colSecondaryContainer
                                     color: Appearance.colors.colOnSurface
                                     verticalAlignment: TextInput.AlignVCenter
-                                    font.family: Sizes.fontFamilyMono
+                                    font.family: Fonts.mono
                                     font.pixelSize: 12
 
                                     background: Rectangle {
@@ -723,7 +723,7 @@ FloatingWindow {
                             Text {
                                 text: root.emptyStateText
                                 color: Appearance.colors.colSubtext
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 14
                             }
                         }
@@ -903,7 +903,7 @@ FloatingWindow {
                                         color: fileItem.selected
                                             ? Appearance.colors.colOnSecondaryContainer
                                             : Appearance.colors.colOnSurface
-                                        font.family: Sizes.fontFamily
+                                        font.family: Fonts.ui
                                         font.pixelSize: 12
                                         font.weight: fileItem.selected ? Font.DemiBold : Font.Normal
                                         horizontalAlignment: Text.AlignHCenter
@@ -955,7 +955,7 @@ FloatingWindow {
                                               ? qsTr("双击进入 ") + root.selectedName
                                               : root.selectedName
                                         color: Appearance.colors.colOnSurfaceVariant
-                                        font.family: Sizes.fontFamily
+                                        font.family: Fonts.ui
                                         font.pixelSize: 13
                                         elide: Text.ElideMiddle
                                     }
@@ -1030,7 +1030,7 @@ FloatingWindow {
                     Layout.alignment: Qt.AlignVCenter
                     text: breadcrumbButton.label
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     font.weight: breadcrumbButton.current ? Font.DemiBold : Font.Medium
                 }
@@ -1116,7 +1116,7 @@ FloatingWindow {
                 color: locationButton.active
                     ? Appearance.colors.colOnSecondaryContainer
                     : Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 13
                 font.weight: locationButton.active ? Font.DemiBold : Font.Normal
                 elide: Text.ElideRight
@@ -1165,7 +1165,7 @@ FloatingWindow {
                     color: actionButton.primary
                         ? Appearance.colors.colOnPrimary
                         : Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 13
                     font.weight: Font.DemiBold
                 }

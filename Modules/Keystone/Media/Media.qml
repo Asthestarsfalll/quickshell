@@ -194,7 +194,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: "lyrics" 
-                font.family: "Material Symbols Outlined"
+                font.family: Fonts.materialSymbolsOutlined
                 font.pixelSize: 18
                 color: root.showLyrics ? root.dynamicOnThemeColor : "white"
             }
@@ -294,7 +294,7 @@ Item {
                     activeColor: "white"
                     inactiveColor: "#99ffffff"
                     fontSize: 18
-                    fontFamily: "LXGW WenKai GB Screen"
+                    fontFamily: Fonts.ui
                     fontBold: true
                     horizontalAlignment: Text.AlignLeft
                     wrapMode: Text.WordWrap
@@ -364,9 +364,9 @@ Item {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: root.isActive ? root.formatTime(root.currentPos) : "0:00"; color: "#dddddd"; font.pixelSize: 12; font.family: "JetBrainsMono Nerd Font" }
+                        Text { text: root.isActive ? root.formatTime(root.currentPos) : "0:00"; color: "#dddddd"; font.pixelSize: 12; font.family: Fonts.numeric }
                         Item { Layout.fillWidth: true }
-                        Text { text: root.isActive ? root.formatTime(root.player.length) : "0:00"; color: "#dddddd"; font.pixelSize: 12; font.family: "JetBrainsMono Nerd Font" }
+                        Text { text: root.isActive ? root.formatTime(root.player.length) : "0:00"; color: "#dddddd"; font.pixelSize: 12; font.family: Fonts.numeric }
                     }
                 }
             }

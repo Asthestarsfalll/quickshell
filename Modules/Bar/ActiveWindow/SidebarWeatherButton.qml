@@ -24,7 +24,7 @@ Item {
     TextMetrics {
         id: temperatureMetrics
         text: root.temperatureText
-        font.family: "JetBrainsMono Nerd Font"
+        font.family: Fonts.numeric
         font.pixelSize: root.temperatureSize
         font.bold: true
     }
@@ -112,7 +112,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: WeatherPlugin.currentIconName || "cloud"
-                font.family: "Material Symbols Rounded"
+                font.family: Fonts.materialSymbolsRounded
                 font.variableAxes: { "FILL": 0 }
                 font.pixelSize: root.iconSize
                 color: Appearance.colors.colOnTertiaryContainer
@@ -129,7 +129,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: root.temperatureText
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.numeric
                 font.pixelSize: root.temperatureSize
                 font.bold: true
                 color: Appearance.colors.colOnTertiaryContainer

@@ -201,7 +201,7 @@ Slider {
                 height: parent.height
                 text: root.valueFormatter(root.value)
                 color: root.valueIndicatorTextColor
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 14
                 fontSizeMode: Text.HorizontalFit
                 minimumPixelSize: 10

@@ -229,7 +229,7 @@ RowLayout {
                     text: segment.labelText
                     visible: !root.iconOnly && segment.labelText !== ""
                     color: segment.inkColor
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: root.textPixelSize
                     font.weight: segment.active ? Font.Medium : Font.Normal
                     anchors.verticalCenter: parent.verticalCenter

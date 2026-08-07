@@ -125,7 +125,7 @@ Item {
             }
             Text {
                 visible: root.artUrl === ""; anchors.centerIn: parent
-                text: "\uf001"; font.family: "Symbols Nerd Font Mono"; font.pixelSize: 14; color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
+                text: "\uf001"; font.family: Fonts.nerdSymbols; font.pixelSize: 14; color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
             }
         }
 
@@ -168,7 +168,7 @@ Item {
                     anchors.centerIn: parent
                     text: modelData.text
                     color: Appearance.colors.colOnLayer0
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Bold
                     elide: Text.ElideRight

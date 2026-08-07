@@ -20,12 +20,6 @@ Item {
         I18nService.initialize();
     }
 
-    Binding {
-        target: Metrics
-        property: "uiScale"
-        value: PersonalizationConfig.uiScale
-    }
-
     WallpaperBackground {}
 
     LazyLoader {

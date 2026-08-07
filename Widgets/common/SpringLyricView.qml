@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Common
 
 Item {
     id: root
@@ -17,7 +18,7 @@ Item {
     property color activeColor: "white"
     property color inactiveColor: "#99ffffff"
     property int fontSize: 18
-    property string fontFamily: "LXGW WenKai GB Screen"
+    property string fontFamily: Fonts.ui
     property bool fontBold: true
     property int horizontalAlignment: Text.AlignLeft
     property int wrapMode: Text.WordWrap

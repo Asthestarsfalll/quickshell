@@ -142,7 +142,7 @@ Rectangle {
             color: root.night
                 ? Qt.rgba(0.96, 0.98, 1.0, 0.96)
                 : Qt.rgba(0.09, 0.14, 0.20, 0.90)
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 15
             font.bold: true
             elide: Text.ElideRight
@@ -154,7 +154,7 @@ Rectangle {
             color: root.night
                 ? Qt.rgba(0.87, 0.91, 0.98, 0.74)
                 : Qt.rgba(0.20, 0.28, 0.38, 0.62)
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.numeric
             font.pixelSize: 10
         }
     }
@@ -170,7 +170,7 @@ Rectangle {
             width: parent.width
             text: root.conditionText()
             color: Appearance.colors.colOnImage
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 24
             font.bold: true
             horizontalAlignment: Text.AlignHCenter
@@ -190,7 +190,7 @@ Rectangle {
                 anchors.bottom: parent.bottom
                 text: root.fmtTempPlain(WeatherPlugin.currentTemperatureC)
                 color: Appearance.colors.colOnImage
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 92
                 font.bold: true
                 font.letterSpacing: 0
@@ -215,7 +215,7 @@ Rectangle {
             width: parent.width
             text: qsTr("体感温度: ") + root.fmtTemp(WeatherPlugin.currentFeelsLikeC)
             color: Appearance.colors.colOnImage
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 16
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
@@ -226,7 +226,7 @@ Rectangle {
             text: qsTr("最高 ") + root.fmtTemp(root.today.temperatureMaxC)
                 + qsTr(" · 最低 ") + root.fmtTemp(root.today.temperatureMinC)
             color: Appearance.colors.colOnImage
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 16
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight

@@ -44,14 +44,14 @@ Item {
             Text { 
                 text: "" 
                 color: Appearance.colors.colSecondary
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.nerdFont
                 font.pixelSize: 16
             }
             Text { 
                 // 同时保全了原始流的传递。并在这里调取新的 ramUsedGB。toFixed(1) 可保留如 14.2G 格式：
                 text: root.ramUsedGB.toFixed(1) + "G"
                 color: Appearance.colors.colOnSurface
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
             }
@@ -68,13 +68,13 @@ Item {
             Text { 
                 text: "" 
                 color: Appearance.colors.colPrimary
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.nerdFont
                 font.pixelSize: 16
             }
             Text { 
                 text: Math.round(root.diskUsage) + "%"
                 color: Appearance.colors.colOnSurface
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
             }
@@ -91,13 +91,13 @@ Item {
             Text { 
                 text: "" 
                 color: Appearance.colors.colTertiary
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.nerdFont
                 font.pixelSize: 16
             }
             Text { 
                 text: Math.round(root.coreTemp) + "°C"
                 color: Appearance.colors.colOnSurface
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
             }
@@ -114,13 +114,13 @@ Item {
             Text { 
                 text: "" 
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.nerdFont
                 font.pixelSize: 16
             }
             Text { 
                 text: Math.round(root.cpuUsage) + "%"
                 color: Appearance.colors.colOnSurface
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
             }

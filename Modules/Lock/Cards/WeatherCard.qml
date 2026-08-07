@@ -107,7 +107,7 @@ Rectangle {
             visible: root.showTitle
             text: qsTr("天气")
             color: Appearance.colors.colPrimary
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 36
             font.weight: 500
             Layout.alignment: Qt.AlignHCenter
@@ -121,7 +121,7 @@ Rectangle {
             Text {
                 text: root.iconName
                 color: Appearance.colors.colSecondary
-                font.family: "Material Symbols Outlined"
+                font.family: Fonts.materialSymbolsOutlined
                 font.pixelSize: root.width < 320 ? 72 : 92
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -135,7 +135,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.width <= 320 ? root.temp + "  " + root.cond : root.cond
                     color: Appearance.colors.colSecondary
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 24
                     font.weight: 500
                     elide: Text.ElideRight
@@ -145,7 +145,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.humidity
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 17
                     elide: Text.ElideRight
                 }
@@ -161,7 +161,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.temp
                     color: Appearance.colors.colPrimary
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 38
                     font.weight: 500
                     horizontalAlignment: Text.AlignRight
@@ -172,7 +172,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.feelsLike
                     color: Appearance.colors.colOutline
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 16
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideLeft
@@ -199,7 +199,7 @@ Rectangle {
                         Layout.fillWidth: true
                         text: root.hourLabel(parent.modelData.time)
                         color: Appearance.colors.colOutline
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: root.forecastFontSize
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
@@ -210,7 +210,7 @@ Rectangle {
                         Layout.preferredHeight: root.forecastIconSize + 8
                         text: parent.modelData.iconName || "cloud_alert"
                         color: Appearance.colors.colOnSurface
-                        font.family: "Material Symbols Outlined"
+                        font.family: Fonts.materialSymbolsOutlined
                         font.pixelSize: root.forecastIconSize
                         font.weight: 500
                         verticalAlignment: Text.AlignVCenter
@@ -220,7 +220,7 @@ Rectangle {
                         Layout.alignment: Qt.AlignHCenter
                         text: root.fmtTemp(parent.modelData.temperatureC, "--")
                         color: Appearance.colors.colSecondary
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: root.forecastFontSize
                     }
                 }

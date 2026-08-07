@@ -226,7 +226,7 @@ Item {
                             Text {
                                 text: root.pickerTitle
                                 color: Appearance.colors.colOnSurface
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 18
                                 font.weight: Font.Medium
                             }
@@ -235,7 +235,7 @@ Item {
                                 Layout.fillWidth: true
                                 text: qsTr("从调色板中选择颜色，或使用自定义滑块")
                                 color: Appearance.colors.colSubtext
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 13
                                 elide: Text.ElideRight
                             }
@@ -493,7 +493,7 @@ Item {
                                     Layout.preferredWidth: 44
                                     text: Math.round(root.alpha * 100) + "%"
                                     color: Appearance.colors.colOnSurface
-                                    font.family: Sizes.fontFamily
+                                    font.family: Fonts.ui
                                     font.pixelSize: 13
                                     horizontalAlignment: Text.AlignRight
                                 }
@@ -575,7 +575,7 @@ Item {
 
     component SectionLabel: Text {
         color: Appearance.colors.colOnSurface
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 15
         font.weight: Font.Medium
     }
@@ -637,7 +637,7 @@ Item {
         Text {
             text: formatField.title
             color: Appearance.colors.colSubtext
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             font.weight: Font.Medium
         }
@@ -662,7 +662,7 @@ Item {
                 Material.foreground: formatField.validateHex && text.length > 0 && !root.hexTextIsValid(text)
                     ? Appearance.m3colors.m3error
                     : Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 13
                 onAccepted: formatField.accepted(text)
                 onEditingFinished: {

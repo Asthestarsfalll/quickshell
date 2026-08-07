@@ -337,7 +337,7 @@ Item {
                         Text {
                             text: "location_on"
                             color: root.headerInkMuted
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 19
                             Layout.preferredWidth: 20
                             Layout.alignment: Qt.AlignVCenter
@@ -347,7 +347,7 @@ Item {
                         Text {
                             text: root.weatherSource.locationName || qsTr("天气")
                             color: root.headerInk
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 19
                             font.bold: true
                             elide: Text.ElideRight
@@ -374,7 +374,7 @@ Item {
                         contentItem: Text {
                             text: "edit"
                             color: root.headerInk
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 22
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -402,7 +402,7 @@ Item {
                         contentItem: Text {
                             text: "refresh"
                             color: root.headerInk
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 22
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -419,7 +419,7 @@ Item {
                         color: root.weatherSource.status === "stale" || root.weatherSource.status === "error"
                                ? root.headerErrorInk
                                : root.headerInkMuted
-                        font.family: "Material Symbols Outlined"
+                        font.family: Fonts.materialSymbolsOutlined
                         font.pixelSize: 19
                         Layout.preferredWidth: 20
                         Layout.alignment: Qt.AlignVCenter
@@ -431,7 +431,7 @@ Item {
                         color: root.weatherSource.status === "stale" || root.weatherSource.status === "error"
                                ? root.headerErrorInk
                                : root.headerInk
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.mono
                         font.pixelSize: 12
                         elide: Text.ElideRight
                         Layout.fillWidth: true
@@ -479,7 +479,7 @@ Item {
                             width: parent.width
                             text: root.weatherSource.currentWeatherText || qsTr("未知")
                             color: Appearance.colors.colOnImage
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 26
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -498,7 +498,7 @@ Item {
                                 anchors.bottom: parent.bottom
                                 text: fmtTempPlain(root.weatherSource.currentTemperatureC)
                                 color: Appearance.colors.colOnImage
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Fonts.numeric
                                 font.pixelSize: 132
                                 font.bold: true
                                 font.letterSpacing: 0
@@ -521,7 +521,7 @@ Item {
                             width: parent.width
                             text: qsTr("体感温度: ") + fmtTemp(root.weatherSource.currentFeelsLikeC)
                             color: Appearance.colors.colOnImage
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
@@ -532,7 +532,7 @@ Item {
                             text: qsTr("最高 ") + fmtTemp(today().temperatureMaxC)
                                   + qsTr(" · 最低 ") + fmtTemp(today().temperatureMinC)
                             color: Appearance.colors.colOnImage
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
@@ -814,7 +814,7 @@ Item {
             Text {
                 text: card.icon
                 color: Appearance.colors.colOnSurface
-                font.family: "Material Symbols Outlined"
+                font.family: Fonts.materialSymbolsOutlined
                 font.pixelSize: 20
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -822,7 +822,7 @@ Item {
             Text {
                 text: card.title
                 color: Appearance.colors.colOnSurface
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 15
                 anchors.verticalCenter: parent.verticalCenter

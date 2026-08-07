@@ -272,7 +272,7 @@ WidgetPanel {
                             Layout.fillWidth: true
                             text: qsTr("等待时间")
                             color: Appearance.colors.colOnLayer2
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 13
                         }
 
@@ -304,7 +304,7 @@ WidgetPanel {
                         Text {
                             text: qsTr("调暗比例")
                             color: Appearance.colors.colOnLayer2
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 13
                         }
 

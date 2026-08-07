@@ -34,8 +34,8 @@ MaterialRippleButton {
             Layout.fillWidth: true
             text: root.text
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodyMedium
+            font.family: Typography.bodyMedium.family
+            font.pixelSize: Typography.bodyMedium.pixelSize
             font.weight: Font.Medium
             elide: Text.ElideRight
         }

@@ -80,6 +80,7 @@ Item {
             Text {
                 text: qsTr("空气质量")
                 color: root.mutedInk
+                font.family: Fonts.expressive
                 font.pixelSize: 18
                 font.bold: true
             }
@@ -91,6 +92,7 @@ Item {
             anchors.verticalCenterOffset: -12
             text: isNaN(aqiAnimation.currentValue) ? "--" : Math.round(aqiAnimation.currentValue)
             color: root.ink
+            font.family: Fonts.expressive
             font.pixelSize: Math.round(parent.width * 0.29)
             font.weight: Font.Light
             z: 2
@@ -104,6 +106,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             text: root.levelText
             color: root.ink
+            font.family: Fonts.expressive
             font.pixelSize: 18
             font.bold: true
             elide: Text.ElideRight

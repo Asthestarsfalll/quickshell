@@ -159,7 +159,7 @@ MaterialRippleButton {
         Text {
             text: root.menuEntry.text || ""
             color: root.entryForeground
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 13
             verticalAlignment: Text.AlignVCenter
             Layout.fillWidth: true

@@ -229,8 +229,8 @@ Rectangle {
             }
             text: qsTr("电池")
             color: contents.foregroundColor
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeTitleSmall
+            font.family: Fonts.ui
+            font.pixelSize: Typography.titleSmall.pixelSize
             font.weight: Font.DemiBold
         }
 
@@ -259,8 +259,8 @@ Rectangle {
                     text: root.timingText()
                     color: contents.foregroundColor
                     opacity: 0.78
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeLabelSmall
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.labelSmall.pixelSize
                     elide: Text.ElideRight
                 }
             }
@@ -292,8 +292,8 @@ Rectangle {
                         : qsTr("功率未知")
                     color: contents.foregroundColor
                     opacity: 0.78
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeLabelSmall
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.labelSmall.pixelSize
                     elide: Text.ElideRight
                 }
             }
@@ -318,8 +318,8 @@ Rectangle {
                         )
                     color: contents.foregroundColor
                     opacity: 0.78
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeLabelSmall
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.labelSmall.pixelSize
                     elide: Text.ElideRight
                 }
             }
@@ -331,8 +331,8 @@ Rectangle {
             text: qsTr("未检测到\n电池")
             color: contents.foregroundColor
             opacity: 0.76
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeTitleSmall
+            font.family: Fonts.ui
+            font.pixelSize: Typography.titleSmall.pixelSize
             font.weight: Font.DemiBold
             horizontalAlignment: Text.AlignHCenter
         }
@@ -352,8 +352,8 @@ Rectangle {
                     : qsTr("不可用")
                 color: contents.foregroundColor
                 opacity: 0.74
-                font.family: Sizes.fontFamily
-                font.pixelSize: Sizes.typeBodySmall
+                font.family: Fonts.ui
+                font.pixelSize: Typography.bodySmall.pixelSize
             }
 
             RowLayout {
@@ -379,8 +379,8 @@ Rectangle {
                         ? Format.percent(root.battery.chargePercent, 0)
                         : "—"
                     color: contents.foregroundColor
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeHeadlineSmall
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.headlineSmall.pixelSize
                     font.weight: Font.Bold
                 }
             }

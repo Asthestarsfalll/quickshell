@@ -93,7 +93,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: modelData.icon
-                    font.family: "Material Symbols Rounded" 
+                    font.family: Fonts.materialSymbolsRounded
                     font.pixelSize: 22
                     color: Appearance.colors.colOnSurface
                 }

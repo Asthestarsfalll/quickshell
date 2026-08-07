@@ -34,7 +34,7 @@ MaterialRippleButton {
             Text {
                 visible: root.count > 1
                 text: root.count
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: root.fontSize
                 font.weight: Font.Medium
                 color: Appearance.colors.colOnLayer2
@@ -42,7 +42,7 @@ MaterialRippleButton {
 
             Text {
                 text: "keyboard_arrow_down"
-                font.family: "Material Symbols Rounded"
+                font.family: Fonts.materialSymbolsRounded
                 font.pixelSize: 18
                 rotation: root.expanded ? 180 : 0
                 color: Appearance.colors.colOnLayer2

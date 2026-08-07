@@ -225,7 +225,7 @@ WlSessionLockSurface {
             text: "lock"
             rotation: 180
             color: Appearance.colors.colOnSurface
-            font.family: "Material Symbols Rounded"
+            font.family: Fonts.materialSymbolsRounded
             font.pixelSize: root.compactSize * 0.56
             font.bold: true
             horizontalAlignment: Text.AlignHCenter

@@ -121,7 +121,7 @@ TabButton {
             anchors.verticalCenter: parent.verticalCenter
             text: root.buttonText
             color: root.checked ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 13
 
             Behavior on color {

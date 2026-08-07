@@ -99,7 +99,7 @@ Canvas {
         if (root.dualLine) drawLine(ctx, lowValues, root.secondLineColor, 3)
 
         ctx.fillStyle = root.textColor
-        ctx.font = "11px \"JetBrainsMono Nerd Font\""
+        ctx.font = "11px " + Fonts.cssFamily(Fonts.numeric)
         ctx.textAlign = "center"
         for (let n = 0; n < count; ++n) {
             if (n !== 0 && n !== count - 1 && n % 2 !== 0) continue
@@ -148,6 +148,11 @@ Canvas {
         function onDataChanged() { root.requestPaint() }
         function onRowsInserted() { root.requestPaint() }
         function onRowsRemoved() { root.requestPaint() }
+    }
+
+    Connections {
+        target: Fonts
+        function onNumericChanged() { root.requestPaint() }
     }
 
     onSourceModelChanged: requestPaint()

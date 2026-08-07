@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Common
 Text {
     id: root
 
@@ -23,7 +24,7 @@ Text {
 
     renderType: Text.NativeRendering
     font {
-        family: "Material Symbols Rounded"
+        family: Fonts.materialSymbolsRounded
         pixelSize: root.renderedIconSize
         weight: Font.Normal + (Font.DemiBold - Font.Normal) * root.roundedFill
         variableAxes: {

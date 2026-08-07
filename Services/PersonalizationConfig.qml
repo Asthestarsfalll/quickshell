@@ -180,34 +180,25 @@ Singleton {
     property string keystoneStyle: "bangs"
     property string powerMenuStyle: "grid"
 
+    readonly property string uiFontFamily:
+        Fonts.configuredUi || Fonts.defaultUi
+    readonly property string monoFontFamily:
+        Fonts.configuredMono || Fonts.defaultMono
+    readonly property string numericFontFamily:
+        Fonts.configuredNumeric || Fonts.defaultNumeric
+    readonly property string expressiveFontFamily:
+        Fonts.configuredExpressive || Fonts.bundledFamilyName
+
     property real shellBackgroundOpacity: 1.0
     property bool shellBlurEnabled: false
     property bool shellBlurXray: true
 
-    property bool pomodoroSoundEnabled: false
-
     property bool keepSidebarsLoaded: true
-    property real uiScale: 1.0
 
     property bool scrollSmoothEnabled: true
     property int scrollMouseFactor: 50
     property int scrollTouchpadFactor: 100
     property int scrollMouseDeltaThreshold: 120
-
-    // Clavis settings are the source of truth for managed Niri fragments.
-    // The generated KDL files are derived output and are never parsed back as
-    // user preferences.
-    property var niriManagedDomains: ({
-        "colors": true,
-        "effects": true,
-        "cursor": false,
-        "binds": false,
-        "layout": false,
-        "outputs": true
-    })
-    property var niriOutputSettings: ({})
-    property var niriLayoutSettings: ({})
-    property var niriKeybindOverrides: ({})
 
     function optionExists(options, value) {
         for (let i = 0; i < options.length; i += 1) {
@@ -703,6 +694,27 @@ Singleton {
             root.powerMenuStyles, value, "grid"));
     }
 
+    function setFontFamily(role, family) {
+        const allowedRoles = ["ui", "mono", "numeric", "expressive"];
+        if (allowedRoles.indexOf(role) === -1)
+            return false;
+
+        const value = String(family || "").trim();
+        if (value === "")
+            return false;
+        if (!FontService.containsFamily(value))
+            return false;
+        if (!Fonts.setConfiguredFamily(role, value))
+            return false;
+        root.save();
+        return true;
+    }
+
+    function resetFontFamilies() {
+        Fonts.resetConfiguredFamilies();
+        root.save();
+    }
+
     function setShellBackgroundOpacity(value) {
         setValue("shellBackgroundOpacity",
             normalizedBoundedReal(value, 1.0, 0.0, 1.0));
@@ -716,16 +728,8 @@ Singleton {
         setValue("shellBlurXray", !!value);
     }
 
-    function setPomodoroSoundEnabled(value) {
-        setValue("pomodoroSoundEnabled", !!value);
-    }
-
     function setKeepSidebarsLoaded(value) {
         setValue("keepSidebarsLoaded", !!value);
-    }
-
-    function setUiScale(value) {
-        setValue("uiScale", normalizedBoundedReal(value, 1.0, 0.75, 1.5));
     }
 
     function setScrollSmoothEnabled(value) {
@@ -742,28 +746,6 @@ Singleton {
 
     function setScrollMouseDeltaThreshold(value) {
         setValue("scrollMouseDeltaThreshold", normalizedBoundedInt(value, 120, 60, 240));
-    }
-
-    function setNiriManagedDomain(domain, enabled) {
-        const next = cloneMap(root.niriManagedDomains);
-        next[String(domain)] = !!enabled;
-        root.niriManagedDomains = next;
-        root.save();
-    }
-
-    function setNiriOutputSettings(value) {
-        root.niriOutputSettings = cloneMap(value);
-        root.save();
-    }
-
-    function setNiriLayoutSettings(value) {
-        root.niriLayoutSettings = cloneMap(value);
-        root.save();
-    }
-
-    function setNiriKeybindOverrides(value) {
-        root.niriKeybindOverrides = cloneMap(value);
-        root.save();
     }
 
     function toJson() {
@@ -840,7 +822,13 @@ Singleton {
                 "cursorHideWhenTyping": root.cursorHideWhenTyping,
                 "cursorHideAfterInactiveMs": root.cursorHideAfterInactiveMs,
                 "iconTheme": root.iconTheme,
-                "powerMenuStyle": root.powerMenuStyle
+                "powerMenuStyle": root.powerMenuStyle,
+                "fonts": {
+                    "ui": root.uiFontFamily,
+                    "mono": root.monoFontFamily,
+                    "numeric": root.numericFontFamily,
+                    "expressive": root.expressiveFontFamily
+                }
             },
             "effects": {
                 "shellBackgroundOpacity":
@@ -851,12 +839,8 @@ Singleton {
             "keystone": {
                 "style": root.keystoneStyle
             },
-            "sounds": {
-                "pomodoro": root.pomodoroSoundEnabled
-            },
             "sidebar": {
-                "keepLoaded": root.keepSidebarsLoaded,
-                "uiScale": root.uiScale
+                "keepLoaded": root.keepSidebarsLoaded
             },
             "interactions": {
                 "scrolling": {
@@ -865,12 +849,6 @@ Singleton {
                     "touchpadFactor": root.scrollTouchpadFactor,
                     "mouseDeltaThreshold": root.scrollMouseDeltaThreshold
                 }
-            },
-            "niri": {
-                "managedDomains": root.cloneMap(root.niriManagedDomains),
-                "outputs": root.cloneMap(root.niriOutputSettings),
-                "layout": root.cloneMap(root.niriLayoutSettings),
-                "keybindOverrides": root.cloneMap(root.niriKeybindOverrides)
             }
         };
     }
@@ -880,16 +858,15 @@ Singleton {
         const theme = parsed.theme || {};
         const effects = parsed.effects || {};
         const keystone = parsed.keystone || {};
-        const sounds = parsed.sounds || {};
         const sidebar = parsed.sidebar || {};
         const interactions = parsed.interactions || {};
         const scrolling = interactions.scrolling || {};
-        const niri = parsed.niri || {};
         const transition = wallpaper.transition || {};
         const awww = wallpaper.awww || {};
         const overview = wallpaper.overview || {};
         const parallax = wallpaper.parallax || {};
         const autoCycle = wallpaper.autoCycle || {};
+        const fonts = theme.fonts || {};
 
         root.wallpaperFolder = wallpaper.folder || Paths.dataHome + "/wallpapers";
         root.wallpaperPath = wallpaper.path === Paths.currentWallpaper ? "" : (wallpaper.path || "");
@@ -980,6 +957,8 @@ Singleton {
         root.iconTheme = theme.iconTheme || "";
         root.powerMenuStyle = normalizedOption(
             root.powerMenuStyles, theme.powerMenuStyle, "grid");
+        Fonts.setConfiguredFamilies(
+            fonts.ui, fonts.mono, fonts.numeric, fonts.expressive);
         root.shellBackgroundOpacity = normalizedBoundedReal(
             effects.shellBackgroundOpacity, 1.0, 0.0, 1.0);
         root.shellBlurEnabled =
@@ -989,25 +968,12 @@ Singleton {
             typeof effects.shellBlurXray === "boolean"
                 ? effects.shellBlurXray : true;
         root.keystoneStyle = normalizedOption(root.keystoneStyles, keystone.style, "bangs");
-        root.pomodoroSoundEnabled = !!sounds.pomodoro;
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
             ? true : !!sidebar.keepLoaded;
-        root.uiScale = normalizedBoundedReal(sidebar.uiScale, 1.0, 0.75, 1.5);
         root.scrollSmoothEnabled = scrolling.smoothEnabled === undefined ? true : !!scrolling.smoothEnabled;
         root.scrollMouseFactor = normalizedBoundedInt(scrolling.mouseFactor, 50, 10, 240);
         root.scrollTouchpadFactor = normalizedBoundedInt(scrolling.touchpadFactor, 100, 10, 300);
         root.scrollMouseDeltaThreshold = normalizedBoundedInt(scrolling.mouseDeltaThreshold, 120, 60, 240);
-        root.niriManagedDomains = Object.assign({
-            "colors": true,
-            "effects": true,
-            "cursor": false,
-            "binds": false,
-            "layout": false,
-            "outputs": true
-        }, cloneMap(niri.managedDomains));
-        root.niriOutputSettings = cloneMap(niri.outputs);
-        root.niriLayoutSettings = cloneMap(niri.layout);
-        root.niriKeybindOverrides = cloneMap(niri.keybindOverrides);
     }
 
     function needsWallpaperMigration(parsed) {
@@ -1035,7 +1001,8 @@ Singleton {
         return !theme || typeof theme !== "object"
             || Array.isArray(theme)
             || theme.powerMenuStyle === undefined
-            || theme.matugenTemplates === undefined;
+            || theme.matugenTemplates === undefined
+            || theme.fonts === undefined;
     }
 
     function save() {

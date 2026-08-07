@@ -88,7 +88,7 @@ Item {
     TextMetrics {
         id: labelMetrics
 
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 13
         font.weight: Font.Medium
         text: root.labelFor(root.currentValue)
@@ -97,7 +97,7 @@ Item {
     TextMetrics {
         id: menuLabelMetrics
 
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 14
         font.weight: Font.Normal
         text: root.longestLabel()
@@ -211,7 +211,7 @@ Item {
                     Layout.fillWidth: true
                     text: root.labelFor(root.currentValue)
                     color: root.buttonTextColor
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 13
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -389,7 +389,7 @@ Item {
                             Layout.fillWidth: true
                             text: option.modelData.label
                             color: option.selected ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3onSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 14
                             font.weight: option.selected ? Font.Medium : Font.Normal
                             elide: Text.ElideRight

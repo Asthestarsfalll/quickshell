@@ -171,7 +171,7 @@ Item {
                         y: root.topPadding
                         text: modelData.hourText
                         color: parent.hourColor
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.numeric
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -202,7 +202,7 @@ Item {
                         y: parent.barTop - 22
                         text: modelData.speedText
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.numeric
                         font.pixelSize: 12
                     }
                 }
@@ -241,7 +241,7 @@ Item {
         visible: !root.hasData
         text: qsTr("风况数据暂不可用")
         color: Appearance.colors.colOnSurfaceVariant
-        font.family: "LXGW WenKai GB Screen"
+        font.family: Fonts.ui
         font.pixelSize: 16
     }
 }

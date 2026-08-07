@@ -33,6 +33,12 @@ add_test(
 )
 
 add_test(
+    NAME font_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_font_architecture.sh
+)
+
+add_test(
     NAME shader_asset_tests
     COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
 )
@@ -101,11 +107,6 @@ target_link_libraries(clavis_paths_tests PRIVATE
 )
 
 add_test(NAME clavis_paths_tests COMMAND clavis_paths_tests)
-
-add_test(
-    NAME niri_config_manager_tests
-    COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_manage_niri_config.py
-)
 
 add_test(
     NAME clavis_user_service_installer_tests

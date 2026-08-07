@@ -82,7 +82,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.buttonText
                 color: root.colOnBackground
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
                 font.weight: Font.Medium
             }

@@ -86,7 +86,7 @@ Item {
                     Layout.fillWidth: true
                     text: root.title
                     color: Appearance.colors.colOnLayer2
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -97,7 +97,7 @@ Item {
                     visible: root.supportingText.length > 0
                     text: root.supportingText
                     color: Appearance.colors.colOnLayer1
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     elide: Text.ElideRight
                 }

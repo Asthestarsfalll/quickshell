@@ -41,7 +41,7 @@ StyledFlickable {
                 Layout.fillWidth: true
                 text: section.title
                 color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 18
                 font.weight: Font.Medium
             }
@@ -85,7 +85,7 @@ StyledFlickable {
                     width: parent.width
                     text: selectRow.title
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -95,7 +95,7 @@ StyledFlickable {
                     width: parent.width
                     text: selectRow.description
                     color: Appearance.colors.colSubtext
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }

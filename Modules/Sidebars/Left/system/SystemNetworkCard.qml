@@ -63,8 +63,8 @@ Rectangle {
                     Layout.fillWidth: true
                     text: qsTr("网络")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeTitleSmall
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.titleSmall.pixelSize
                     font.weight: Font.DemiBold
                 }
 
@@ -73,8 +73,8 @@ Rectangle {
                     text: root.network.defaultInterface
                         || qsTr("全部接口")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeLabelSmall
+                    font.family: Fonts.mono
+                    font.pixelSize: Typography.labelSmall.pixelSize
                     elide: Text.ElideRight
                 }
             }
@@ -92,7 +92,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: qsTr("下载")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 9
                     horizontalAlignment: Text.AlignLeft
                 }
@@ -103,8 +103,8 @@ Rectangle {
                         root.network.downloadBytesPerSecond
                     )
                     color: Appearance.colors.colTertiary
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeLabelSmall
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.labelSmall.pixelSize
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight
@@ -120,7 +120,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: qsTr("上传")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 9
                     horizontalAlignment: Text.AlignLeft
                 }
@@ -131,8 +131,8 @@ Rectangle {
                         root.network.uploadBytesPerSecond
                     )
                     color: Appearance.colors.colPrimary
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeLabelSmall
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.labelSmall.pixelSize
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight

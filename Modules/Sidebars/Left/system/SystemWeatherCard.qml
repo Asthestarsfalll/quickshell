@@ -125,7 +125,7 @@ Rectangle {
                 Layout.preferredWidth: 20
                 Layout.preferredHeight: 20
                 text: metric.iconName
-                iconSize: Sizes.typeTitleSmall
+                iconSize: Typography.titleSmall.pixelSize
                 fill: 1
                 color: root.metricMutedInk
             }
@@ -135,8 +135,8 @@ Rectangle {
                 Layout.fillHeight: true
                 text: metric.value
                 color: root.metricInk
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: Sizes.typeBodySmall
+                font.family: Fonts.numeric
+                font.pixelSize: Typography.bodySmall.pixelSize
                 font.weight: Font.Bold
                 verticalAlignment: Text.AlignVCenter
             }
@@ -158,7 +158,7 @@ Rectangle {
                 width: 18
                 height: parent.height
                 text: metric.iconName
-                iconSize: Sizes.typeBodySmall
+                iconSize: Typography.bodySmall.pixelSize
                 fill: 1
                 color: Appearance.colors.colOnPrimaryContainer
             }
@@ -168,8 +168,8 @@ Rectangle {
                 height: parent.height
                 text: metric.value
                 color: Appearance.colors.colOnPrimaryContainer
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: Sizes.typeBodySmall
+                font.family: Fonts.numeric
+                font.pixelSize: Typography.bodySmall.pixelSize
                 font.weight: Font.Bold
                 verticalAlignment: Text.AlignVCenter
             }
@@ -203,7 +203,7 @@ Rectangle {
             )
             text: root.temperatureText()
             color: Appearance.colors.colPrimary
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.numeric
             font.pixelSize: Math.min(
                 54,
                 Math.max(34, heroArea.height * 0.76)
@@ -231,8 +231,8 @@ Rectangle {
                         ? qsTr("正在获取天气")
                         : qsTr("天气不可用"))
                 color: root.heroInk
-                font.family: Sizes.fontFamily
-                font.pixelSize: Sizes.typeTitleMedium
+                font.family: Fonts.ui
+                font.pixelSize: Typography.titleMedium.pixelSize
                 font.weight: Font.Bold
                 elide: Text.ElideRight
             }
@@ -251,7 +251,7 @@ Rectangle {
                     width: 18
                     height: 18
                     text: "location_on"
-                    iconSize: Sizes.typeBodySmall
+                    iconSize: Typography.bodySmall.pixelSize
                     fill: 1
                     color: root.supportingInk
                 }
@@ -263,8 +263,8 @@ Rectangle {
                         - parent.spacing
                     text: WeatherPlugin.locationName || qsTr("位置未知")
                     color: root.supportingInk
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeBodySmall
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.bodySmall.pixelSize
                     elide: Text.ElideRight
                 }
             }
@@ -273,8 +273,8 @@ Rectangle {
                 width: parent.width
                 text: root.coordinateText()
                 color: root.supportingInk
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: Sizes.typeLabelSmall
+                font.family: Fonts.numeric
+                font.pixelSize: Typography.labelSmall.pixelSize
                 elide: Text.ElideRight
             }
         }

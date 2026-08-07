@@ -143,7 +143,7 @@ StyledFlickable {
                 Layout.fillWidth: true
                 text: section.title
                 color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 18
                 font.weight: Font.Medium
             }
@@ -456,7 +456,7 @@ StyledFlickable {
                                     root.currentWallpaperPath)
                                 : qsTr("未选择壁纸")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 22
                             font.weight: Font.Medium
                             horizontalAlignment: Text.AlignLeft
@@ -467,7 +467,7 @@ StyledFlickable {
                             Layout.fillWidth: true
                             text: root.currentWallpaperPath
                             color: Appearance.colors.colSubtext
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.mono
                             font.pixelSize: 14
                             horizontalAlignment: Text.AlignLeft
                             elide: Text.ElideMiddle
@@ -564,7 +564,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("转场类型")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -660,7 +660,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("awww FPS")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -712,7 +712,7 @@ StyledFlickable {
                     text: qsTr("过渡步长 · %1").arg(
                         PersonalizationConfig.awwwTransitionStep)
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -762,7 +762,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("过渡时间")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -852,7 +852,7 @@ StyledFlickable {
                             visible: !transitionDurationEditor.editing
                             text: PersonalizationConfig.transitionDurationMs + " ms"
                             color: durationValueMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.numeric
                             font.pixelSize: 14
                             font.weight: Font.Medium
                         }
@@ -873,7 +873,7 @@ StyledFlickable {
                                 bottom: 0
                                 top: 5000
                             }
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.numeric
                             font.pixelSize: 14
                             font.weight: Font.Medium
                             padding: 0
@@ -945,7 +945,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("缓动曲线")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -1077,7 +1077,7 @@ StyledFlickable {
                                 Text {
                                     text: qsTr("编辑贝塞尔")
                                     color: Appearance.colors.colOnPrimaryContainer
-                                    font.family: Sizes.fontFamily
+                                    font.family: Fonts.ui
                                     font.pixelSize: 14
                                     font.weight: Font.Medium
                                 }
@@ -1230,8 +1230,8 @@ StyledFlickable {
                         Layout.fillWidth: true
                         text: qsTr("壁纸缩放")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                         font.weight: Font.Medium
                     }
 
@@ -1259,8 +1259,8 @@ StyledFlickable {
                         Layout.fillWidth: true
                         text: qsTr("横向行程列数")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                         font.weight: Font.Medium
                     }
 
@@ -1445,8 +1445,8 @@ StyledFlickable {
                     Text {
                         text: qsTr("模糊")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
                     MaterialAccessibleSlider {
@@ -1473,8 +1473,8 @@ StyledFlickable {
                     Text {
                         text: qsTr("暗化")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
                     MaterialAccessibleSlider {
@@ -1500,8 +1500,8 @@ StyledFlickable {
                     Text {
                         text: qsTr("饱和度")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
                     MaterialAccessibleSlider {
@@ -1528,8 +1528,8 @@ StyledFlickable {
                     Text {
                         text: qsTr("对比度")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
                     MaterialAccessibleSlider {

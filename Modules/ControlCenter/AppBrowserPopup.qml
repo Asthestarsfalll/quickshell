@@ -187,8 +187,8 @@ FloatingWindow {
                             Layout.fillWidth: true
                             text: qsTr("选择应用")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeTitleMedium
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.titleMedium.pixelSize
                             font.weight: Font.DemiBold
                         }
 
@@ -196,8 +196,8 @@ FloatingWindow {
                             Layout.fillWidth: true
                             text: qsTr("选择一个已安装应用加入用户级开机启动")
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodySmall
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodySmall.pixelSize
                             elide: Text.ElideRight
                         }
                     }
@@ -301,8 +301,8 @@ FloatingWindow {
                                 Layout.fillWidth: true
                                 text: modelData.name || modelData.id
                                 color: Appearance.colors.colOnSurface
-                                font.family: Sizes.fontFamily
-                                font.pixelSize: Sizes.typeBodyMedium
+                                font.family: Fonts.ui
+                                font.pixelSize: Typography.bodyMedium.pixelSize
                                 font.weight: Font.Medium
                                 elide: Text.ElideRight
                             }
@@ -312,8 +312,8 @@ FloatingWindow {
                                 text: modelData.genericName || modelData.comment
                                     || modelData.id
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
-                                font.pixelSize: Sizes.typeBodySmall
+                                font.family: Fonts.ui
+                                font.pixelSize: Typography.bodySmall.pixelSize
                                 elide: Text.ElideRight
                             }
                         }
@@ -351,8 +351,8 @@ FloatingWindow {
                     Text {
                         text: qsTr("没有匹配的应用")
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
                 }
             }

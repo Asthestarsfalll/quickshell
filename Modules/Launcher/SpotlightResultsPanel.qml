@@ -275,7 +275,7 @@ Item {
                             color: appDelegate.index === root.selectedIndex
                                 ? root.style.selectedContentColor
                                 : Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 17
                             font.weight: Font.Medium
                             elide: Text.ElideRight
@@ -287,7 +287,7 @@ Item {
                             color: appDelegate.index === root.selectedIndex
                                 ? root.style.selectedContentColor
                                 : Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 13
                             elide: Text.ElideRight
                         }
@@ -469,7 +469,7 @@ Item {
                             wallpaperDelegate.index === root.selectedIndex
                             ? root.style.selectedContentColor
                             : Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize:
                             root.style.wallpaperLabelFontSize
                         font.weight: Font.Medium
@@ -515,7 +515,7 @@ Item {
                     color: root.providerAvailable && !root.canRestore
                         ? Appearance.colors.colError
                         : Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                     font.weight: Font.DemiBold
                 }
@@ -542,7 +542,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("清空")
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 13
                         }
                     }
@@ -674,7 +674,7 @@ Item {
                                         === root.selectedIndex
                                     ? root.style.selectedContentColor
                                     : Appearance.colors.colOnSurface
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 textFormat: Text.PlainText
                                 font.pixelSize: 16
                                 maximumLineCount: 1
@@ -698,7 +698,7 @@ Item {
                                         === root.selectedIndex
                                     ? root.style.selectedContentColor
                                     : Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 textFormat: Text.PlainText
                                 font.pixelSize: 12
                                 maximumLineCount: 1
@@ -783,7 +783,7 @@ Item {
                                         === "copied"
                                         ? Appearance.colors.colPrimary
                                         : Appearance.colors.colError
-                                    font.family: Sizes.fontFamily
+                                    font.family: Fonts.ui
                                     font.pixelSize: 12
                                 }
                             }
@@ -852,7 +852,7 @@ Item {
                             : qsTr("当前 Provider 不可用"))
                         : qsTr("没有匹配结果"))
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 15
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -873,7 +873,7 @@ Item {
             width: 320
             text: qsTr("此操作会清除 cliphist 中的全部历史记录，无法撤销。")
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 14
             wrapMode: Text.Wrap
         }

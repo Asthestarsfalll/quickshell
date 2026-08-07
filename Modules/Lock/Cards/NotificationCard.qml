@@ -63,7 +63,7 @@ Rectangle {
                 ? qsTr("%1 条通知").arg(root.notificationCount)
                 : qsTr("通知")
             color: Appearance.colors.colOutline
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.numeric
             font.pixelSize: 17
             font.weight: 500
             elide: Text.ElideRight
@@ -126,7 +126,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
             text: qsTr("没有通知")
                     color: Appearance.colors.colOutlineVariant
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 24
                     font.weight: 500
                 }
@@ -184,7 +184,7 @@ Rectangle {
                                 text: "notifications"
                                 visible: !iconImg.visible
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: "Material Symbols Rounded"
+                                font.family: Fonts.materialSymbolsRounded
                                 font.pixelSize: 27
                             }
                         }
@@ -201,7 +201,7 @@ Rectangle {
                                 Text {
                                     text: delegateRoot.modelData ? delegateRoot.modelData.appName : ""
                                     color: Appearance.colors.colPrimary
-                                    font.family: Sizes.fontFamilyMono
+                                    font.family: Fonts.numeric
                                     font.pixelSize: 13
                                     font.bold: true
                                     elide: Text.ElideRight
@@ -212,7 +212,7 @@ Rectangle {
                                     Layout.alignment: Qt.AlignVCenter
                                     text: delegateRoot.modelData ? root.formatTime(delegateRoot.modelData.time) : ""
                                     color: Appearance.colors.colOnSurfaceVariant
-                                    font.family: Sizes.fontFamilyMono
+                                    font.family: Fonts.numeric
                                     font.pixelSize: 13
                                     opacity: 0.7
                                 }
@@ -226,7 +226,7 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: "close"
                                         color: Appearance.colors.colOnSurfaceVariant
-                                        font.family: "Material Symbols Rounded"
+                                        font.family: Fonts.materialSymbolsRounded
                                         font.pixelSize: 14
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
@@ -246,7 +246,7 @@ Rectangle {
                             Text {
                                 text: delegateRoot.modelData ? delegateRoot.modelData.summary : ""
                                 color: Appearance.colors.colOnSurface
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 17
                                 font.bold: true
                                 elide: Text.ElideRight
@@ -256,7 +256,7 @@ Rectangle {
                             Text {
                                 text: delegateRoot.modelData ? delegateRoot.modelData.body : ""
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 16
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true

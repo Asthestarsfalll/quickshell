@@ -14,9 +14,9 @@ qt_add_qml_module(ClavisI18n
 
 qt_add_translations(ClavisI18n
     TS_FILES
-        ${PROJECT_SOURCE_DIR}/../i18n/clavis_en_US.ts
-        ${PROJECT_SOURCE_DIR}/../i18n/clavis_zh_CN.ts
-        ${PROJECT_SOURCE_DIR}/../i18n/clavis_zh_TW.ts
+        ${CLAVIS_SOURCE_ROOT}/i18n/clavis_en_US.ts
+        ${CLAVIS_SOURCE_ROOT}/i18n/clavis_zh_CN.ts
+        ${CLAVIS_SOURCE_ROOT}/i18n/clavis_zh_TW.ts
     RESOURCE_PREFIX "/i18n"
 )
 

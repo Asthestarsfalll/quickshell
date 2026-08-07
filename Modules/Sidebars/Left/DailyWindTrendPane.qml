@@ -195,7 +195,7 @@ Item {
                         y: root.topPadding
                         text: modelData.dayText
                         color: parent.weekColor
-                        font.family: "LXGW WenKai GB Screen"
+                        font.family: Fonts.ui
                         font.pixelSize: 14
                         font.bold: modelData.dayText === qsTr("今天")
                     }
@@ -205,7 +205,7 @@ Item {
                         y: root.topPadding + 22
                         text: modelData.dateText
                         color: parent.dateColor
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.numeric
                         font.pixelSize: 11
                     }
 
@@ -225,7 +225,7 @@ Item {
                         y: root.topBarBaseY - parent.dayBarHeight - 28
                         text: modelData.dayTextValue
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.numeric
                         font.pixelSize: 13
                     }
 
@@ -255,7 +255,7 @@ Item {
                         y: root.bottomBarBaseY + parent.nightBarHeight + 8
                         text: modelData.nightTextValue
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.numeric
                         font.pixelSize: 13
                     }
 
@@ -304,7 +304,7 @@ Item {
         visible: !root.hasData
         text: qsTr("风况数据暂不可用")
         color: Appearance.colors.colOnSurfaceVariant
-        font.family: "LXGW WenKai GB Screen"
+        font.family: Fonts.ui
         font.pixelSize: 16
     }
 }
