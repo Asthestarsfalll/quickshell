@@ -7,17 +7,22 @@ import qs.Widgets.common
 Item {
     id: root
 
-    implicitHeight: 36
-    implicitWidth: buttonRow.implicitWidth + 16
+    property bool vertical: false
+    property string edge: "top"
+
+    implicitHeight: vertical ? buttonRow.implicitHeight + 16 : 36
+    implicitWidth: vertical ? Sizes.verticalBarWidth : buttonRow.implicitWidth + 16
 
     Behavior on implicitWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
     TopBarPillBackground { anchors.fill: parent }
 
-    RowLayout {
+    GridLayout {
         id: buttonRow
         anchors.centerIn: parent
-        spacing: 8
+        rowSpacing: 8
+        columnSpacing: 8
+        columns: root.vertical ? 1 : 3
 
         SidebarPillButton {
             viewName: "info"
@@ -33,6 +38,9 @@ Item {
             activeContentColor: Appearance.colors.colOnTertiary
         }
 
-        SidebarWeatherButton {}
+        SidebarWeatherButton {
+            vertical: root.vertical
+            edge: root.edge
+        }
     }
 }

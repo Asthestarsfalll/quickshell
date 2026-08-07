@@ -9,6 +9,12 @@ add_test(
 )
 
 add_test(
+    NAME edge_position_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_edge_positions.sh
+)
+
+add_test(
     NAME wallpaper_picker_architecture_tests
     COMMAND ${BASH_EXECUTABLE}
         ${CLAVIS_SOURCE_ROOT}/tests/test_wallpaper_picker_architecture.sh

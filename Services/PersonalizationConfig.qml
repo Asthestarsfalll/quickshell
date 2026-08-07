@@ -102,6 +102,12 @@ Singleton {
         ({ "value": "bangs", "label": qsTr("刘海") }),
         ({ "value": "pill", "label": qsTr("药丸") })
     ]
+    readonly property var edgePositions: [
+        ({ "value": "top", "label": qsTr("顶部"), "icon": "arrow_upward" }),
+        ({ "value": "left", "label": qsTr("左侧"), "icon": "arrow_back" }),
+        ({ "value": "bottom", "label": qsTr("底部"), "icon": "arrow_downward" }),
+        ({ "value": "right", "label": qsTr("右侧"), "icon": "arrow_forward" })
+    ]
     readonly property var powerMenuStyles: [
         ({ "value": "grid", "label": qsTr("四宫格") }),
         ({ "value": "row", "label": qsTr("横向六项") })
@@ -178,6 +184,8 @@ Singleton {
     property int cursorHideAfterInactiveMs: 0
     property string iconTheme: ""
     property string keystoneStyle: "bangs"
+    property string barPosition: "top"
+    property string keystonePosition: "top"
     property string powerMenuStyle: "grid"
 
     readonly property string uiFontFamily:
@@ -222,6 +230,10 @@ Singleton {
 
     function normalizedEasingMode(value) {
         return normalizedOption(root.transitionEasingModes, value, "customBezier");
+    }
+
+    function normalizedEdgePosition(value) {
+        return normalizedOption(root.edgePositions, value, "top");
     }
 
     function normalizedIncluded(raw) {
@@ -732,6 +744,14 @@ Singleton {
         setValue("keepSidebarsLoaded", !!value);
     }
 
+    function setBarPosition(value) {
+        setValue("barPosition", normalizedEdgePosition(value));
+    }
+
+    function setKeystonePosition(value) {
+        setValue("keystonePosition", normalizedEdgePosition(value));
+    }
+
     function setScrollSmoothEnabled(value) {
         setValue("scrollSmoothEnabled", !!value);
     }
@@ -837,7 +857,11 @@ Singleton {
                 "shellBlurXray": root.shellBlurXray
             },
             "keystone": {
-                "style": root.keystoneStyle
+                "style": root.keystoneStyle,
+                "position": root.keystonePosition
+            },
+            "bar": {
+                "position": root.barPosition
             },
             "sidebar": {
                 "keepLoaded": root.keepSidebarsLoaded
@@ -858,6 +882,7 @@ Singleton {
         const theme = parsed.theme || {};
         const effects = parsed.effects || {};
         const keystone = parsed.keystone || {};
+        const bar = parsed.bar || {};
         const sidebar = parsed.sidebar || {};
         const interactions = parsed.interactions || {};
         const scrolling = interactions.scrolling || {};
@@ -968,6 +993,8 @@ Singleton {
             typeof effects.shellBlurXray === "boolean"
                 ? effects.shellBlurXray : true;
         root.keystoneStyle = normalizedOption(root.keystoneStyles, keystone.style, "bangs");
+        root.keystonePosition = normalizedEdgePosition(keystone.position);
+        root.barPosition = normalizedEdgePosition(bar.position);
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
             ? true : !!sidebar.keepLoaded;
         root.scrollSmoothEnabled = scrolling.smoothEnabled === undefined ? true : !!scrolling.smoothEnabled;
@@ -1003,6 +1030,17 @@ Singleton {
             || theme.powerMenuStyle === undefined
             || theme.matugenTemplates === undefined
             || theme.fonts === undefined;
+    }
+
+    function needsEdgePositionMigration(parsed) {
+        const bar = parsed && parsed.bar;
+        const keystone = parsed && parsed.keystone;
+        return !bar || typeof bar !== "object" || Array.isArray(bar)
+            || bar.position !== root.normalizedEdgePosition(bar.position)
+            || !keystone || typeof keystone !== "object"
+            || Array.isArray(keystone)
+            || keystone.position
+                !== root.normalizedEdgePosition(keystone.position);
     }
 
     function save() {
@@ -1047,7 +1085,8 @@ Singleton {
                 parsed = JSON.parse(configFile.text().trim() || "{}");
                 shouldRepair = root.needsWallpaperMigration(parsed)
                     || root.needsEffectsMigration(parsed)
-                    || root.needsThemeMigration(parsed);
+                    || root.needsThemeMigration(parsed)
+                    || root.needsEdgePositionMigration(parsed);
                 root.loadFromObject(parsed);
                 shouldRepair = shouldRepair
                     || JSON.stringify(parsed.wallpaper || {})
@@ -1057,7 +1096,11 @@ Singleton {
                         !== JSON.stringify(
                             root.toJson().effects)
                     || JSON.stringify(parsed.theme || {})
-                        !== JSON.stringify(root.toJson().theme);
+                        !== JSON.stringify(root.toJson().theme)
+                    || JSON.stringify(parsed.bar || {})
+                        !== JSON.stringify(root.toJson().bar)
+                    || JSON.stringify(parsed.keystone || {})
+                        !== JSON.stringify(root.toJson().keystone);
             } catch (error) {
                 console.log("PersonalizationConfig failed to load:", error);
                 shouldRepair = true;

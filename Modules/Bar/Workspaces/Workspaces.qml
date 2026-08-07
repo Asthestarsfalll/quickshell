@@ -10,10 +10,11 @@ Item {
     id: root
 
     property string screenName: ""
+    property bool vertical: false
     readonly property bool hasMultipleOutputs: Niri.outputs.count > 1
 
-    implicitHeight: 36
-    implicitWidth: layout.width + 24
+    implicitHeight: vertical ? layout.implicitHeight + 16 : 36
+    implicitWidth: vertical ? Sizes.verticalBarWidth : layout.implicitWidth + 24
 
     function acceptsOutput(outputName) {
         if (root.screenName === "")
@@ -25,10 +26,12 @@ Item {
 
     TopBarPillBackground { anchors.fill: parent }
 
-    RowLayout {
+    GridLayout {
         id: layout
         anchors.centerIn: parent
-        spacing: 8
+        rowSpacing: 8
+        columnSpacing: 8
+        columns: root.vertical ? 1 : Math.max(1, Niri.workspaces.count)
 
         Repeater {
             model: Niri.workspaces
@@ -42,10 +45,15 @@ Item {
                 property bool isHovered: mouseArea.containsMouse
 
                 visible: belongsToScreen
-                implicitWidth: !belongsToScreen ? 0 : ((active || isHovered) ? 32 : 12)
-                implicitHeight: belongsToScreen ? 12 : 0
+                implicitWidth: !belongsToScreen ? 0
+                    : root.vertical ? 12 : ((active || isHovered) ? 32 : 12)
+                implicitHeight: !belongsToScreen ? 0
+                    : root.vertical ? ((active || isHovered) ? 32 : 12) : 12
 
                 Behavior on implicitWidth {
+                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
+                Behavior on implicitHeight {
                     NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
                 }
 

@@ -6,6 +6,9 @@ import "../../../Common/functions/DateFormat.js" as DateFormat
 Item {
     id: root
     property var player 
+    property string edge: "top"
+    readonly property bool vertical: edge === "left" || edge === "right"
+    readonly property real sideRotation: edge === "left" ? -90 : 90
 
     property string dateStr: ""
     
@@ -85,6 +88,7 @@ Item {
     Row {
         anchors.centerIn: parent
         spacing: 10 
+        rotation: root.vertical ? root.sideRotation : 0
         
         // --- 左侧日期部分 ---
         Text {

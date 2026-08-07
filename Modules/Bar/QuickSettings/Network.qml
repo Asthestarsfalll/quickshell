@@ -10,19 +10,26 @@ Rectangle {
     
     property bool isHovered: mouseArea.containsMouse
     property var screen: null
+    property bool vertical: false
+    property string edge: "top"
+    readonly property real sideRotation: edge === "left" ? -90 : 90
     
-    implicitHeight: 28
-    implicitWidth: isHovered ? (layout.width + 20) : 28
-    radius: height / 2 
+    implicitHeight: vertical
+        ? (isHovered ? layout.implicitWidth + 20 : 28) : 28
+    implicitWidth: vertical ? 28
+        : (isHovered ? layout.width + 20 : 28)
+    radius: Math.min(width, height) / 2
     color: Appearance.colors.colPrimaryContainer 
 
     Behavior on implicitWidth { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+    Behavior on implicitHeight { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
 
     RowLayout {
         id: layout
         anchors.centerIn: parent
         spacing: 6
-        width: isHovered ? implicitWidth : iconText.implicitWidth
+        width: root.isHovered ? implicitWidth : iconText.implicitWidth
+        rotation: root.vertical ? root.sideRotation : 0
 
         Text {
             id: iconText
@@ -50,7 +57,7 @@ Rectangle {
             color: Appearance.colors.colOnPrimaryContainer 
             Layout.alignment: Qt.AlignVCenter
             visible: root.isHovered
-            opacity: root.isHovered ? 1.0 : 0.0
+            opacity: visible ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 200 } }
         }
     }

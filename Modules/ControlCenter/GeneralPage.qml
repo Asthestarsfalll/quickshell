@@ -32,6 +32,7 @@ Item {
         visible: root.currentSection !== "overview"
         title: {
             switch (root.currentSection) {
+            case "bar": return qsTr("条栏");
             case "sidebar": return qsTr("侧边栏");
             case "effects": return qsTr("透明与模糊");
             case "scrolling": return qsTr("滚动交互");
@@ -52,6 +53,7 @@ Item {
         anchors.bottom: parent.bottom
         source: {
             switch (root.currentSection) {
+            case "bar": return Qt.resolvedUrl("GeneralBarPage.qml");
             case "sidebar": return Qt.resolvedUrl("GeneralSidebarPage.qml");
             case "effects": return Qt.resolvedUrl("GeneralEffectsPage.qml");
             case "scrolling": return Qt.resolvedUrl("GeneralScrollingPage.qml");

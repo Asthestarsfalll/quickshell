@@ -8,8 +8,12 @@ import qs.Widgets.common
 Item {
     id: root
 
-    implicitHeight: 36
-    implicitWidth: layout.width + 24
+    property bool vertical: false
+    property string edge: "top"
+    readonly property real sideRotation: edge === "left" ? -90 : 90
+
+    implicitHeight: vertical ? Math.min(274, layout.implicitWidth + 24) : 36
+    implicitWidth: vertical ? Sizes.verticalBarWidth : layout.width + 24
 
     Behavior on implicitWidth {
         NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
@@ -24,10 +28,9 @@ Item {
 
     RowLayout {
         id: layout
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 12
+        anchors.centerIn: parent
         spacing: 10
+        rotation: root.vertical ? root.sideRotation : 0
 
         Item {
             Layout.preferredWidth: 18
@@ -69,5 +72,18 @@ Item {
             elide: Text.ElideRight
             Layout.alignment: Qt.AlignVCenter
         }
+    }
+
+    PopupToolTip {
+        extraVisibleCondition: root.vertical && activeHover.containsMouse
+        text: root.activeTitle
+    }
+
+    MouseArea {
+        id: activeHover
+        anchors.fill: parent
+        enabled: root.vertical
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
     }
 }

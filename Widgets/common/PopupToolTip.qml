@@ -14,7 +14,8 @@ Item {
     property real verticalPadding: 5
     property real horizontalMargin: horizontalPadding
     property real verticalMargin: verticalPadding
-    property var anchorEdges: Edges.Bottom
+    readonly property string contextualEdge: findContextEdge(root.parent)
+    property var anchorEdges: edgeToAnchor(contextualEdge)
     property var anchorGravity: anchorEdges
     property bool respectParentHierarchy: false
     property font font
@@ -23,6 +24,25 @@ Item {
         family: Fonts.ui
         pixelSize: 12
         hintingPreference: Font.PreferNoHinting
+    }
+
+    function findContextEdge(item) {
+        let current = item;
+        while (current !== null && current !== undefined) {
+            if (current.popupEdge !== undefined)
+                return current.popupEdge;
+            current = current.parent;
+        }
+        return "top";
+    }
+
+    function edgeToAnchor(edge) {
+        switch (edge) {
+        case "bottom": return Edges.Top;
+        case "left": return Edges.Right;
+        case "right": return Edges.Left;
+        default: return Edges.Bottom;
+        }
     }
 
     function hierarchyAvailable(item) {

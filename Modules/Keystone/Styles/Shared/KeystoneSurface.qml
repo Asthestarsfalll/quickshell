@@ -24,9 +24,9 @@ Variants {
     signal avatarEditRequested(var screen)
 
     property bool detached: false
-    property int topMargin: 0
+    property int edgeMargin: 0
     property int maxPillRadius: 24
-    property bool showTopEdgeCurves: !detached
+    property bool showAttachedEdgeCurves: !detached
 
     function invoke(methodName) {
         if (instances.length === 0)
@@ -65,10 +65,17 @@ Variants {
         required property var modelData
         screen: modelData
 
-        property int topEdgeCurveWidth: styleSurface.showTopEdgeCurves ? 8 : 0
-        property int topEdgeCurveDepth: styleSurface.showTopEdgeCurves ? 14 : 0
-        property real topEdgeCurveSideControlY: 0.58
-        property real topEdgeCurveTopControlX: 0.42
+        readonly property string edge: PersonalizationConfig.keystonePosition
+        readonly property bool horizontalEdge: edge === "top" || edge === "bottom"
+        readonly property bool topEdge: edge === "top"
+        readonly property bool bottomEdge: edge === "bottom"
+        readonly property bool leftEdge: edge === "left"
+        readonly property bool rightEdge: edge === "right"
+
+        property int edgeCurveAlong: styleSurface.showAttachedEdgeCurves ? 8 : 0
+        property int edgeCurveDepth: styleSurface.showAttachedEdgeCurves ? 14 : 0
+        property real edgeCurveSideControl: 0.58
+        property real edgeCurveOuterControl: 0.42
 
         function cancelRecord(): string {
             RecordingService.refresh();
@@ -128,6 +135,7 @@ Variants {
         exclusiveZone: -1
         WlrLayershell.namespace: "clavis-shell-keystone"
         WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
         WlrLayershell.keyboardFocus: root.hasClosablePopup
             ? WlrKeyboardFocus.Exclusive 
@@ -145,6 +153,26 @@ Variants {
                 + (styleSurface.detached
                     ? pillRecordingVisual.interactiveRightExtent
                     : 0)
+
+            state: keystoneWindow.rightEdge ? "right" : "default"
+            states: [
+                State {
+                    name: "default"
+                    AnchorChanges {
+                        target: hitBoxRegion
+                        anchors.left: maskContainer.left
+                        anchors.right: undefined
+                    }
+                },
+                State {
+                    name: "right"
+                    AnchorChanges {
+                        target: hitBoxRegion
+                        anchors.left: undefined
+                        anchors.right: maskContainer.right
+                    }
+                }
+            ]
         }
 
         mask: Region {
@@ -156,50 +184,48 @@ Variants {
         // ============================================================
         Item {
             id: shadowSource
-            anchors.top: maskContainer.top
-            anchors.horizontalCenter: maskContainer.horizontalCenter
-            width: maskContainer.width
-            height: maskContainer.height
+            anchors.fill: maskContainer
             visible: false 
 
-            Canvas {
+            AttachedEdgeCurve {
                 id: shadowLeftTopCurve
-                visible: styleSurface.showTopEdgeCurves
-                anchors.right: rootShadow.left
-                anchors.top: rootShadow.top
-                width: keystoneWindow.topEdgeCurveWidth
-                height: keystoneWindow.topEdgeCurveDepth
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.reset();
-                    ctx.fillStyle = "black";
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(width, 0);
-                    ctx.lineTo(width, height);
-                    ctx.bezierCurveTo(width, height * keystoneWindow.topEdgeCurveSideControlY,
-                                      width * keystoneWindow.topEdgeCurveTopControlX, 0,
-                                      0, 0);
-                    ctx.fill();
+                visible: styleSurface.showAttachedEdgeCurves
+                edge: keystoneWindow.edge
+                after: false
+                along: keystoneWindow.edgeCurveAlong
+                depth: keystoneWindow.edgeCurveDepth
+                sideControl: keystoneWindow.edgeCurveSideControl
+                edgeControl: keystoneWindow.edgeCurveOuterControl
+                fillColor: "black"
+                anchors {
+                    right: keystoneWindow.horizontalEdge ? rootShadow.left
+                        : keystoneWindow.rightEdge ? rootShadow.right : undefined
+                    left: keystoneWindow.leftEdge ? rootShadow.left : undefined
+                    bottom: !keystoneWindow.horizontalEdge ? rootShadow.top
+                        : keystoneWindow.bottomEdge ? rootShadow.bottom : undefined
+                    top: keystoneWindow.topEdge ? rootShadow.top : undefined
                 }
             }
 
             Item {
                 id: rootShadow
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
                 width: root.width
                 height: root.height
+                state: keystoneWindow.edge
+                states: [
+                    State { name: "top"; AnchorChanges { target: rootShadow; anchors.top: shadowSource.top; anchors.bottom: undefined; anchors.left: undefined; anchors.right: undefined; anchors.horizontalCenter: shadowSource.horizontalCenter; anchors.verticalCenter: undefined } },
+                    State { name: "bottom"; AnchorChanges { target: rootShadow; anchors.top: undefined; anchors.bottom: shadowSource.bottom; anchors.left: undefined; anchors.right: undefined; anchors.horizontalCenter: shadowSource.horizontalCenter; anchors.verticalCenter: undefined } },
+                    State { name: "left"; AnchorChanges { target: rootShadow; anchors.top: undefined; anchors.bottom: undefined; anchors.left: shadowSource.left; anchors.right: undefined; anchors.horizontalCenter: undefined; anchors.verticalCenter: shadowSource.verticalCenter } },
+                    State { name: "right"; AnchorChanges { target: rootShadow; anchors.top: undefined; anchors.bottom: undefined; anchors.left: undefined; anchors.right: shadowSource.right; anchors.horizontalCenter: undefined; anchors.verticalCenter: shadowSource.verticalCenter } }
+                ]
                 
                 Rectangle {
                     id: solidShadowBg
                     anchors.fill: parent
-                    topLeftRadius: styleSurface.detached ? root.radius : 0
-                    topRightRadius: styleSurface.detached ? root.radius : 0
-                    bottomLeftRadius: root.radius
-                    bottomRightRadius: root.radius
+                    topLeftRadius: styleSurface.detached || (!keystoneWindow.topEdge && !keystoneWindow.leftEdge) ? root.radius : 0
+                    topRightRadius: styleSurface.detached || (!keystoneWindow.topEdge && !keystoneWindow.rightEdge) ? root.radius : 0
+                    bottomLeftRadius: styleSurface.detached || (!keystoneWindow.bottomEdge && !keystoneWindow.leftEdge) ? root.radius : 0
+                    bottomRightRadius: styleSurface.detached || (!keystoneWindow.bottomEdge && !keystoneWindow.rightEdge) ? root.radius : 0
                     color: "black"
                     visible: false
                 }
@@ -229,27 +255,23 @@ Variants {
                 }
             }
 
-            Canvas {
+            AttachedEdgeCurve {
                 id: shadowRightTopCurve
-                visible: styleSurface.showTopEdgeCurves
-                anchors.left: rootShadow.right
-                anchors.top: rootShadow.top
-                width: keystoneWindow.topEdgeCurveWidth
-                height: keystoneWindow.topEdgeCurveDepth
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.reset();
-                    ctx.fillStyle = "black";
-                    ctx.beginPath();
-                    ctx.moveTo(width, 0);
-                    ctx.lineTo(0, 0);
-                    ctx.lineTo(0, height);
-                    ctx.bezierCurveTo(0, height * keystoneWindow.topEdgeCurveSideControlY,
-                                      width * (1 - keystoneWindow.topEdgeCurveTopControlX), 0,
-                                      width, 0);
-                    ctx.fill();
+                visible: styleSurface.showAttachedEdgeCurves
+                edge: keystoneWindow.edge
+                after: true
+                along: keystoneWindow.edgeCurveAlong
+                depth: keystoneWindow.edgeCurveDepth
+                sideControl: keystoneWindow.edgeCurveSideControl
+                edgeControl: keystoneWindow.edgeCurveOuterControl
+                fillColor: "black"
+                anchors {
+                    left: keystoneWindow.leftEdge ? rootShadow.left
+                        : (keystoneWindow.horizontalEdge ? rootShadow.right : undefined)
+                    right: keystoneWindow.rightEdge ? rootShadow.right : undefined
+                    top: keystoneWindow.topEdge ? rootShadow.top
+                        : (!keystoneWindow.horizontalEdge ? rootShadow.bottom : undefined)
+                    bottom: keystoneWindow.bottomEdge ? rootShadow.bottom : undefined
                 }
             }
         }
@@ -257,8 +279,8 @@ Variants {
         DropShadow {
             anchors.fill: shadowSource
             source: shadowSource
-            horizontalOffset: 0
-            verticalOffset: 6
+            horizontalOffset: keystoneWindow.leftEdge ? 6 : keystoneWindow.rightEdge ? -6 : 0
+            verticalOffset: keystoneWindow.topEdge ? 6 : keystoneWindow.bottomEdge ? -6 : 0
             radius: 20
             samples: 32
             color: "#80000000" 
@@ -273,37 +295,43 @@ Variants {
         // ============================================================
         Item {
             id: maskContainer
-            anchors.top: parent.top
-            anchors.topMargin: styleSurface.topMargin
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: keystoneWindow.topEdge ? styleSurface.edgeMargin : 0
+            anchors.bottomMargin: keystoneWindow.bottomEdge ? styleSurface.edgeMargin : 0
+            anchors.leftMargin: keystoneWindow.leftEdge ? styleSurface.edgeMargin : 0
+            anchors.rightMargin: keystoneWindow.rightEdge ? styleSurface.edgeMargin : 0
             anchors.horizontalCenterOffset: styleSurface.detached
-                && root.recordingPresentationActive
+                && keystoneWindow.horizontalEdge && root.recordingPresentationActive
                 ? -0.15 * Math.max(0, root.width - root.collapsedW)
                 : 0
-            width: root.width + (keystoneWindow.topEdgeCurveWidth * 2)
-            height: root.height
+            width: root.width + (keystoneWindow.horizontalEdge
+                ? keystoneWindow.edgeCurveAlong * 2 : 0)
+            height: root.height + (!keystoneWindow.horizontalEdge
+                ? keystoneWindow.edgeCurveAlong * 2 : 0)
+            state: keystoneWindow.edge
+            states: [
+                State { name: "top"; AnchorChanges { target: maskContainer; anchors.top: keystoneWindow.contentItem.top; anchors.bottom: undefined; anchors.left: undefined; anchors.right: undefined; anchors.horizontalCenter: keystoneWindow.contentItem.horizontalCenter; anchors.verticalCenter: undefined } },
+                State { name: "bottom"; AnchorChanges { target: maskContainer; anchors.top: undefined; anchors.bottom: keystoneWindow.contentItem.bottom; anchors.left: undefined; anchors.right: undefined; anchors.horizontalCenter: keystoneWindow.contentItem.horizontalCenter; anchors.verticalCenter: undefined } },
+                State { name: "left"; AnchorChanges { target: maskContainer; anchors.top: undefined; anchors.bottom: undefined; anchors.left: keystoneWindow.contentItem.left; anchors.right: undefined; anchors.horizontalCenter: undefined; anchors.verticalCenter: keystoneWindow.contentItem.verticalCenter } },
+                State { name: "right"; AnchorChanges { target: maskContainer; anchors.top: undefined; anchors.bottom: undefined; anchors.left: undefined; anchors.right: keystoneWindow.contentItem.right; anchors.horizontalCenter: undefined; anchors.verticalCenter: keystoneWindow.contentItem.verticalCenter } }
+            ]
 
-            Canvas {
+            AttachedEdgeCurve {
                 id: leftTopCurve
-                visible: styleSurface.showTopEdgeCurves
-                anchors.right: root.left
-                anchors.top: root.top
-                width: keystoneWindow.topEdgeCurveWidth
-                height: keystoneWindow.topEdgeCurveDepth
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.reset();
-                    ctx.fillStyle = root.color;
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(width, 0);
-                    ctx.lineTo(width, height);
-                    ctx.bezierCurveTo(width, height * keystoneWindow.topEdgeCurveSideControlY,
-                                      width * keystoneWindow.topEdgeCurveTopControlX, 0,
-                                      0, 0);
-                    ctx.fill();
+                visible: styleSurface.showAttachedEdgeCurves
+                edge: keystoneWindow.edge
+                after: false
+                along: keystoneWindow.edgeCurveAlong
+                depth: keystoneWindow.edgeCurveDepth
+                sideControl: keystoneWindow.edgeCurveSideControl
+                edgeControl: keystoneWindow.edgeCurveOuterControl
+                fillColor: root.color
+                anchors {
+                    right: keystoneWindow.horizontalEdge ? root.left
+                        : keystoneWindow.rightEdge ? root.right : undefined
+                    left: keystoneWindow.leftEdge ? root.left : undefined
+                    bottom: !keystoneWindow.horizontalEdge ? root.top
+                        : keystoneWindow.bottomEdge ? root.bottom : undefined
+                    top: keystoneWindow.topEdge ? root.top : undefined
                 }
                 Connections {
                     target: root
@@ -315,8 +343,13 @@ Variants {
 
             Item {
                 id: root
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
+                state: keystoneWindow.edge
+                states: [
+                    State { name: "top"; AnchorChanges { target: root; anchors.top: maskContainer.top; anchors.bottom: undefined; anchors.left: undefined; anchors.right: undefined; anchors.horizontalCenter: maskContainer.horizontalCenter; anchors.verticalCenter: undefined } },
+                    State { name: "bottom"; AnchorChanges { target: root; anchors.top: undefined; anchors.bottom: maskContainer.bottom; anchors.left: undefined; anchors.right: undefined; anchors.horizontalCenter: maskContainer.horizontalCenter; anchors.verticalCenter: undefined } },
+                    State { name: "left"; AnchorChanges { target: root; anchors.top: undefined; anchors.bottom: undefined; anchors.left: maskContainer.left; anchors.right: undefined; anchors.horizontalCenter: undefined; anchors.verticalCenter: maskContainer.verticalCenter } },
+                    State { name: "right"; AnchorChanges { target: root; anchors.top: undefined; anchors.bottom: undefined; anchors.left: undefined; anchors.right: maskContainer.right; anchors.horizontalCenter: undefined; anchors.verticalCenter: maskContainer.verticalCenter } }
+                ]
 
                 property bool showLyrics: false 
                 property bool expanded: false
@@ -387,11 +420,11 @@ Variants {
                 clip: true
                 z: 100
 
-                property int targetR: styleSurface.detached
-                    ? Math.min(targetH / 2, styleSurface.maxPillRadius)
-                    : 12
+                readonly property bool sideCompactLayout:
+                    !keystoneWindow.horizontalEdge
+                    && (isCollapsedMode || isToolsMode)
 
-                property real targetW: recordingPresentationActive
+                property real logicalTargetW: recordingPresentationActive
                     ? (styleSurface.detached
                         ? pillRecordingVisual.mainLayoutWidth
                         : recordingBangsW) :
@@ -404,7 +437,7 @@ Variants {
                     isNotifMode ? notifW : 
                     (collapsedW + (isCollapsedHovered ? 16 : 0))
 
-                property int targetH: recordingPresentationActive
+                property int logicalTargetH: recordingPresentationActive
                     ? collapsedH :
                         audioGeometryActive ? audioH :
                         isToolsMode ? toolsH : 
@@ -414,6 +447,15 @@ Variants {
                         isVolumeMode ? volH : 
                         isNotifMode ? notifH : 
                         (collapsedH + (isCollapsedHovered ? 6 : 0))
+
+                property real targetW: sideCompactLayout
+                    ? logicalTargetH : logicalTargetW
+                property int targetH: sideCompactLayout
+                    ? logicalTargetW : logicalTargetH
+                property int targetR: styleSurface.detached
+                    ? Math.min(Math.min(targetW, targetH) / 2,
+                        styleSurface.maxPillRadius)
+                    : 12
 
                 property int wDuration: KeystoneMotion.expandingDuration
                 property int hDuration: KeystoneMotion.expandingDuration
@@ -749,8 +791,18 @@ Variants {
 
                     readonly property color surfaceColor: root.color
                     readonly property real outerRadius: root.radius
-                    readonly property bool roundedTop:
-                        styleSurface.detached
+                    readonly property real topLeftRadius:
+                        styleSurface.detached || (!keystoneWindow.topEdge
+                            && !keystoneWindow.leftEdge) ? outerRadius : 0
+                    readonly property real topRightRadius:
+                        styleSurface.detached || (!keystoneWindow.topEdge
+                            && !keystoneWindow.rightEdge) ? outerRadius : 0
+                    readonly property real bottomRightRadius:
+                        styleSurface.detached || (!keystoneWindow.bottomEdge
+                            && !keystoneWindow.rightEdge) ? outerRadius : 0
+                    readonly property real bottomLeftRadius:
+                        styleSurface.detached || (!keystoneWindow.bottomEdge
+                            && !keystoneWindow.leftEdge) ? outerRadius : 0
                     readonly property bool cutoutVisible:
                         root.showDashboardHole
                     readonly property real cutoutX:
@@ -801,12 +853,10 @@ Variants {
                         context.reset();
                         context.clearRect(0, 0, width, height);
 
-                        const topRadius = roundedTop
-                            ? outerRadius : 0;
                         addRoundedRect(
                             context, 0, 0, width, height,
-                            topRadius, topRadius,
-                            outerRadius, outerRadius);
+                            topLeftRadius, topRightRadius,
+                            bottomRightRadius, bottomLeftRadius);
                         context.fillStyle = surfaceColor;
                         context.fill();
 
@@ -830,7 +880,10 @@ Variants {
                     onHeightChanged: requestPaint()
                     onSurfaceColorChanged: requestPaint()
                     onOuterRadiusChanged: requestPaint()
-                    onRoundedTopChanged: requestPaint()
+                    onTopLeftRadiusChanged: requestPaint()
+                    onTopRightRadiusChanged: requestPaint()
+                    onBottomRightRadiusChanged: requestPaint()
+                    onBottomLeftRadiusChanged: requestPaint()
                     onCutoutVisibleChanged: requestPaint()
                     onCutoutXChanged: requestPaint()
                     onCutoutYChanged: requestPaint()
@@ -1174,8 +1227,12 @@ Variants {
                         id: toolsWidget 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.toolsW
-                        height: root.toolsH
+                        width: keystoneWindow.horizontalEdge
+                            ? root.toolsW : root.toolsH
+                        height: keystoneWindow.horizontalEdge
+                            ? root.toolsH : root.toolsW
+                        vertical: !keystoneWindow.horizontalEdge
+                        edge: keystoneWindow.edge
 
                         opacity: root.isToolsMode ? 1 : 0
                         visible: opacity > 0.01
@@ -1247,10 +1304,13 @@ Variants {
 
                 anchors.top: root.top
                 anchors.horizontalCenter: root.horizontalCenter
-                width: root.collapsedW
-                height: root.collapsedH
+                width: keystoneWindow.horizontalEdge
+                    ? root.collapsedW : root.collapsedH
+                height: keystoneWindow.horizontalEdge
+                    ? root.collapsedH : root.collapsedW
 
                 player: root.currentPlayer
+                edge: keystoneWindow.edge
 
                 opacity: root.isCollapsedMode ? 1 : 0
                 scale: 0.96 + 0.04 * opacity
@@ -1278,9 +1338,28 @@ Variants {
             PillRecordingVisual {
                 id: pillRecordingVisual
 
-                anchors.right: root.right
-                anchors.rightMargin: -rightOverflow
+                anchors.rightMargin: keystoneWindow.rightEdge ? 0 : -rightOverflow
+                anchors.leftMargin: keystoneWindow.rightEdge ? -rightOverflow : 0
                 anchors.verticalCenter: root.verticalCenter
+                state: keystoneWindow.rightEdge ? "leftward" : "rightward"
+                states: [
+                    State {
+                        name: "rightward"
+                        AnchorChanges {
+                            target: pillRecordingVisual
+                            anchors.left: undefined
+                            anchors.right: root.right
+                        }
+                    },
+                    State {
+                        name: "leftward"
+                        AnchorChanges {
+                            target: pillRecordingVisual
+                            anchors.left: root.left
+                            anchors.right: undefined
+                        }
+                    }
+                ]
                 active: styleSurface.detached && root.recordingPresentationActive
                 recording: styleSurface.detached && root.isRecording
                 finalizing: styleSurface.detached && root.isFinalizing
@@ -1323,27 +1402,23 @@ Variants {
                 onStopRequested: RecordingService.stop()
             }
 
-            Canvas {
+            AttachedEdgeCurve {
                 id: rightTopCurve
-                visible: styleSurface.showTopEdgeCurves
-                anchors.left: root.right
-                anchors.top: root.top
-                width: keystoneWindow.topEdgeCurveWidth
-                height: keystoneWindow.topEdgeCurveDepth
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.reset();
-                    ctx.fillStyle = root.color;
-                    ctx.beginPath();
-                    ctx.moveTo(width, 0);
-                    ctx.lineTo(0, 0);
-                    ctx.lineTo(0, height);
-                    ctx.bezierCurveTo(0, height * keystoneWindow.topEdgeCurveSideControlY,
-                                      width * (1 - keystoneWindow.topEdgeCurveTopControlX), 0,
-                                      width, 0);
-                    ctx.fill();
+                visible: styleSurface.showAttachedEdgeCurves
+                edge: keystoneWindow.edge
+                after: true
+                along: keystoneWindow.edgeCurveAlong
+                depth: keystoneWindow.edgeCurveDepth
+                sideControl: keystoneWindow.edgeCurveSideControl
+                edgeControl: keystoneWindow.edgeCurveOuterControl
+                fillColor: root.color
+                anchors {
+                    left: keystoneWindow.leftEdge ? root.left
+                        : (keystoneWindow.horizontalEdge ? root.right : undefined)
+                    right: keystoneWindow.rightEdge ? root.right : undefined
+                    top: keystoneWindow.topEdge ? root.top
+                        : (!keystoneWindow.horizontalEdge ? root.bottom : undefined)
+                    bottom: keystoneWindow.bottomEdge ? root.bottom : undefined
                 }
                 Connections {
                     target: root

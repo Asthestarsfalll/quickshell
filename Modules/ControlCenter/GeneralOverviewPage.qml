@@ -45,6 +45,14 @@ StyledFlickable {
 
             SettingsActionRow {
                 Layout.fillWidth: true
+                iconName: "dock_to_bottom"
+                text: qsTr("条栏")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("bar")
+            }
+
+            SettingsActionRow {
+                Layout.fillWidth: true
                 iconName: "side_navigation"
                 text: qsTr("侧边栏")
                 trailingIconName: "chevron_right"

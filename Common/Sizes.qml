@@ -5,6 +5,7 @@ import Quickshell
 Singleton {
     readonly property real cornerRadius: 10
     readonly property real barHeight: 44
+    readonly property real verticalBarWidth: barHeight
     readonly property real topBarShadowPadding: 36
     readonly property real sidebarScrollableListMaxHeight: 224
 

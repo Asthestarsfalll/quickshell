@@ -8,10 +8,12 @@ Item {
     id: root
 
     property var screen: null
+    property bool vertical: false
+    property string edge: "top"
     
     // 维持 36 的高度
-    implicitHeight: 36
-    implicitWidth: layout.width + 16
+    implicitHeight: vertical ? layout.implicitHeight + 16 : 36
+    implicitWidth: vertical ? Sizes.verticalBarWidth : layout.implicitWidth + 16
 
     TopBarPillBackground {
         anchors.fill: parent
@@ -19,14 +21,18 @@ Item {
             Appearance.colors.colLayer0)
     }
 
-    RowLayout {
+    GridLayout {
         id: layout
         anchors.centerIn: parent
-        spacing: 8 
+        rowSpacing: 8
+        columnSpacing: 8
+        columns: root.vertical ? 1 : 6
         
         // 直接调用同目录下的组件，无需 import
         Network {
             screen: root.screen
+            vertical: root.vertical
+            edge: root.edge
         }
         Brightness {
             screen: root.screen

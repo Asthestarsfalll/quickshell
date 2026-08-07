@@ -9,11 +9,16 @@ import qs.Widgets.common
 Item {
     id: root
 
+    property bool vertical: false
+    property string edge: "top"
+    readonly property real sideRotation: edge === "left" ? -90 : 90
     property bool isHovered: mouseArea.containsMouse
     
-    implicitHeight: 36
+    implicitHeight: vertical ? contentLayout.implicitWidth + 24 : 36
     
     implicitWidth: {
+        if (vertical)
+            return Sizes.verticalBarWidth;
         if (isHovered) {
             return contentLayout.implicitWidth + 24;
         }
@@ -29,13 +34,14 @@ Item {
     // （这里原本庞大的 Process 启动子线程和 SplitParser JSON 提取，以及循环调度的 Timer 已被彻底抹去）
 
     // ================= 布局内容 =================
-    RowLayout {
+    GridLayout {
         id: contentLayout
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.rightMargin: 12
-        spacing: 12
+        anchors.centerIn: parent
+        rowSpacing: 12
+        columnSpacing: 12
         layoutDirection: Qt.RightToLeft
+        columns: 4
+        rotation: root.vertical ? root.sideRotation : 0
 
         // --- 1. RAM (常驻) ---
         RowLayout {
@@ -54,6 +60,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
+                visible: true
             }
         }
 
@@ -77,6 +84,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
+                visible: true
             }
         }
 
@@ -100,6 +108,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
+                visible: true
             }
         }
 
@@ -123,6 +132,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
+                visible: true
             }
         }
     }

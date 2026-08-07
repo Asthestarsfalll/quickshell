@@ -136,6 +136,18 @@ StyledFlickable {
                 placeholder: qsTr("选择钥石样式")
                 onAccepted: value => PersonalizationConfig.setKeystoneStyle(value)
             }
+
+            SettingsRow {
+                Layout.fillWidth: true
+                title: qsTr("屏幕边缘")
+                supportingText: qsTr("钥石始终贴合物理屏幕边缘，不占用工作区")
+
+                trailing: EdgePositionSelector {
+                    position: PersonalizationConfig.keystonePosition
+                    onPositionSelected: position =>
+                        PersonalizationConfig.setKeystonePosition(position)
+                }
+            }
         }
 
         Item {

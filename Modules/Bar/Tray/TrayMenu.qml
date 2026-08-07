@@ -13,6 +13,7 @@ PanelWindow {
     property var trayItemMenuHandle: null
     property string trayItemId: ""
     property var anchorItem: null
+    property string edge: "top"
     property real padding: 10
     property real edgeMargin: 10
     property real anchorGap: 4
@@ -119,18 +120,25 @@ PanelWindow {
         const anchorWidth = root.anchorItem.width || 0;
         const anchorHeight = root.anchorItem.height || 0;
 
-        root.menuX = root.clamp(
-            anchorX + anchorWidth / 2 - surfaceWidth / 2,
-            root.edgeMargin,
-            availableWidth - surfaceWidth - root.edgeMargin
-        );
+        const rightX = anchorX + anchorWidth + root.anchorGap;
+        const leftX = anchorX - surfaceWidth - root.anchorGap;
+        const maxX = availableWidth - surfaceWidth - root.edgeMargin;
+        root.menuX = root.edge === "left"
+            ? root.clamp(rightX, root.edgeMargin, maxX)
+            : root.edge === "right"
+                ? root.clamp(leftX, root.edgeMargin, maxX)
+                : root.clamp(anchorX + anchorWidth / 2 - surfaceWidth / 2,
+                    root.edgeMargin, maxX);
 
         const belowY = anchorY + anchorHeight + root.anchorGap;
         const aboveY = anchorY - surfaceHeight - root.anchorGap;
         const maxY = availableHeight - surfaceHeight - root.edgeMargin;
-        root.menuY = belowY <= maxY || aboveY < root.edgeMargin
-            ? root.clamp(belowY, root.edgeMargin, maxY)
-            : root.clamp(aboveY, root.edgeMargin, maxY);
+        root.menuY = root.edge === "left" || root.edge === "right"
+            ? root.clamp(anchorY + anchorHeight / 2 - surfaceHeight / 2,
+                root.edgeMargin, maxY)
+            : root.edge === "bottom"
+                ? root.clamp(aboveY, root.edgeMargin, maxY)
+                : root.clamp(belowY, root.edgeMargin, maxY);
     }
 
     function open() {
@@ -158,6 +166,10 @@ PanelWindow {
                 root.updatePosition();
                 keyScope.forceActiveFocus();
             });
+    }
+    onEdgeChanged: {
+        if (root.visible)
+            Qt.callLater(root.updatePosition);
     }
 
     Item {

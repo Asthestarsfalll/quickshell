@@ -3,5 +3,5 @@ import qs.Modules.Keystone.Styles.Shared
 
 KeystoneSurface {
     detached: false
-    topMargin: 0
+    edgeMargin: 0
 }

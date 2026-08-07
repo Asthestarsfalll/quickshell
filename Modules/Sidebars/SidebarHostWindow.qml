@@ -45,8 +45,6 @@ PanelWindow {
     screen: retainedScreen || fallbackScreen
     visible: retainedScreen !== null || fallbackScreen !== null
     color: "transparent"
-    implicitWidth: screen ? screen.width : 1920
-    implicitHeight: screen ? screen.height : 1080
     exclusiveZone: 0
 
     anchors {
@@ -58,7 +56,7 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "clavis-shell-sidebars"
-    WlrLayershell.exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.exclusionMode: ExclusionMode.Normal
     WlrLayershell.keyboardFocus: root.anySidebarOpen
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 

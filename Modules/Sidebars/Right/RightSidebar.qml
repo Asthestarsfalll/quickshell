@@ -10,7 +10,8 @@ Item {
     property int gap: 24
     readonly property alias blurBackgroundItem: panelSurface
     property int qsTargetHeight: 640
-    readonly property int sidebarY: Sizes.barHeight + gap
+    // The host window already starts inside layer-shell's usable geometry.
+    readonly property int sidebarY: gap
     readonly property real closedSlideOffset: sidebarWidth + gap
     readonly property int enterDuration: Animations.durations.large
     readonly property int exitDuration: Animations.durations.large

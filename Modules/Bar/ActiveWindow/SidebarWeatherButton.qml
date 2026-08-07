@@ -7,18 +7,22 @@ import qs.Widgets.common
 Item {
     id: root
 
+    property bool vertical: false
+    property string edge: "top"
+    readonly property real sideRotation: edge === "left" ? -90 : 90
     readonly property string temperatureText: WeatherPlugin.hasValidData ? Math.round(WeatherPlugin.currentTemperatureC) + "°" : "--°"
     readonly property int iconSize: 20
     readonly property int temperatureSize: 12
     readonly property int contentSpacing: 6
     readonly property int iconSlotWidth: 24
     readonly property real temperatureSlotWidth: Math.ceil(temperatureMetrics.width)
-    readonly property real contentWidth: iconSlotWidth + contentSpacing + temperatureSlotWidth
+    readonly property real contentWidth: iconSlotWidth + contentSpacing
+        + temperatureSlotWidth
     readonly property real buttonWidth: contentWidth + 20
     readonly property int buttonHeight: 28
 
-    implicitHeight: buttonHeight
-    implicitWidth: buttonWidth
+    implicitHeight: vertical ? buttonWidth : buttonHeight
+    implicitWidth: vertical ? buttonHeight : buttonWidth
     clip: true
 
     TextMetrics {
@@ -34,6 +38,7 @@ Item {
         anchors.centerIn: parent
         width: root.buttonWidth
         height: root.buttonHeight
+        rotation: root.vertical ? root.sideRotation : 0
         radius: height / 2
         color: Appearance.colors.colTertiaryContainer
         clip: true
@@ -103,6 +108,7 @@ Item {
         width: root.contentWidth
         height: root.buttonHeight
         spacing: root.contentSpacing
+        rotation: root.vertical ? root.sideRotation : 0
 
         Item {
             Layout.preferredWidth: root.iconSlotWidth
@@ -125,6 +131,7 @@ Item {
             Layout.preferredWidth: root.temperatureSlotWidth
             Layout.preferredHeight: root.buttonHeight
             Layout.alignment: Qt.AlignVCenter
+            visible: true
 
             Text {
                 anchors.centerIn: parent
