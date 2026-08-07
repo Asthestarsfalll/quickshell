@@ -10,15 +10,13 @@ Item {
     id: root
 
     property bool vertical: false
-    property string edge: "top"
-    readonly property real sideRotation: edge === "left" ? -90 : 90
     property bool isHovered: mouseArea.containsMouse
     
-    implicitHeight: vertical ? contentLayout.implicitWidth + 24 : 36
+    implicitHeight: vertical ? contentLayout.implicitHeight + 16 : 36
     
     implicitWidth: {
         if (vertical)
-            return Sizes.verticalBarWidth;
+            return Sizes.barVisualThickness;
         if (isHovered) {
             return contentLayout.implicitWidth + 24;
         }
@@ -40,8 +38,7 @@ Item {
         rowSpacing: 12
         columnSpacing: 12
         layoutDirection: Qt.RightToLeft
-        columns: 4
-        rotation: root.vertical ? root.sideRotation : 0
+        columns: root.vertical ? 1 : 4
 
         // --- 1. RAM (常驻) ---
         RowLayout {
@@ -60,7 +57,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
-                visible: true
+                visible: !root.vertical
             }
         }
 
@@ -84,7 +81,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
-                visible: true
+                visible: !root.vertical
             }
         }
 
@@ -108,7 +105,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
-                visible: true
+                visible: !root.vertical
             }
         }
 
@@ -132,7 +129,7 @@ Item {
                 font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 13
-                visible: true
+                visible: !root.vertical
             }
         }
     }
@@ -147,6 +144,15 @@ Item {
         onClicked: {
             Quickshell.execDetached(["gnome-system-monitor"]);
         }
+    }
+
+    PopupToolTip {
+        extraVisibleCondition: root.vertical && mouseArea.containsMouse
+        text: qsTr("内存 %1G\n磁盘 %2%\n温度 %3°C\nCPU %4%")
+            .arg(root.ramUsedGB.toFixed(1))
+            .arg(Math.round(root.diskUsage))
+            .arg(Math.round(root.coreTemp))
+            .arg(Math.round(root.cpuUsage))
     }
 
     readonly property real ramUsedGB:

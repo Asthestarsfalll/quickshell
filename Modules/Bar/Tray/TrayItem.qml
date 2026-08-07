@@ -11,6 +11,7 @@ MouseArea {
     required property var modelData
     property var screen: null
     property string edge: "top"
+    property var barVisualItem: null
 
     signal menuOpened(var qsWindow)
     signal menuClosed()
@@ -74,6 +75,7 @@ MouseArea {
             anchorItem: root
             screen: root.screen
             edge: root.edge
+            barVisualItem: root.barVisualItem
 
             onMenuOpened: window => root.menuOpened(window)
             onMenuClosed: {

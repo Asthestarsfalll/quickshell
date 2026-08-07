@@ -8,10 +8,9 @@ Item {
     id: root
 
     property bool vertical: false
-    property string edge: "top"
 
     implicitHeight: vertical ? buttonRow.implicitHeight + 16 : 36
-    implicitWidth: vertical ? Sizes.verticalBarWidth : buttonRow.implicitWidth + 16
+    implicitWidth: vertical ? Sizes.barVisualThickness : buttonRow.implicitWidth + 16
 
     Behavior on implicitWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
@@ -40,7 +39,6 @@ Item {
 
         SidebarWeatherButton {
             vertical: root.vertical
-            edge: root.edge
         }
     }
 }

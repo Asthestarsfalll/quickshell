@@ -13,12 +13,14 @@ Item {
     property bool trayOverflowOpen: false
     property bool vertical: false
     property string edge: "top"
+    property var barVisualItem: null
     property var activeMenu: null
     property var screen: null
     property real overflowX: 10
     property real overflowY: 10
-    property real overflowEdgeMargin: 10
-    property real overflowAnchorGap: 4
+    property real overflowEdgeMargin: Sizes.barPopupScreenMargin
+    property real overflowPopupGap: Sizes.barPopupGap
+    property real overflowSurfacePadding: 10
     property real overflowAnchorX: 10
     property real overflowAnchorY: 10
     property real overflowAnchorWidth: 0
@@ -28,7 +30,7 @@ Item {
     readonly property var unpinnedItems: TrayService.unpinnedItems
 
     implicitHeight: vertical ? content.implicitHeight + 16 : 36
-    implicitWidth: vertical ? Sizes.verticalBarWidth : content.implicitWidth + 24
+    implicitWidth: vertical ? Sizes.barVisualThickness : content.implicitWidth + 24
 
     onUnpinnedItemsChanged: {
         if (root.unpinnedItems.length === 0) {
@@ -60,6 +62,21 @@ Item {
         root.overflowAnchorReady = true;
     }
 
+    function barVisualBounds() {
+        if (!root.barVisualItem)
+            return null;
+
+        const globalPos = root.barVisualItem.mapToGlobal(0, 0);
+        const screenX = root.screen ? (root.screen.x || 0) : 0;
+        const screenY = root.screen ? (root.screen.y || 0) : 0;
+        return {
+            "x": globalPos.x - screenX,
+            "y": globalPos.y - screenY,
+            "width": root.barVisualItem.width || 0,
+            "height": root.barVisualItem.height || 0
+        };
+    }
+
     function updateOverflowPosition() {
         const surfaceWidth = Math.max(1, overflowSurface.implicitWidth);
         const surfaceHeight = Math.max(1, overflowSurface.implicitHeight);
@@ -71,9 +88,16 @@ Item {
         const anchorY = root.overflowAnchorReady ? root.overflowAnchorY : root.overflowEdgeMargin;
         const anchorWidth = root.overflowAnchorReady ? root.overflowAnchorWidth : 0;
         const anchorHeight = root.overflowAnchorReady ? root.overflowAnchorHeight : 0;
+        const barBounds = root.barVisualBounds();
 
-        const rightX = anchorX + anchorWidth + root.overflowAnchorGap;
-        const leftX = anchorX - surfaceWidth - root.overflowAnchorGap;
+        const rightX = barBounds
+            ? barBounds.x + barBounds.width + root.overflowPopupGap
+                - root.overflowSurfacePadding
+            : anchorX + anchorWidth + root.overflowPopupGap;
+        const leftX = barBounds
+            ? barBounds.x - surfaceWidth - root.overflowPopupGap
+                + root.overflowSurfacePadding
+            : anchorX - surfaceWidth - root.overflowPopupGap;
         const maxX = availableWidth - surfaceWidth - root.overflowEdgeMargin;
         root.overflowX = root.edge === "left"
             ? root.clamp(rightX, root.overflowEdgeMargin, maxX)
@@ -82,8 +106,14 @@ Item {
                 : root.clamp(anchorX + anchorWidth / 2 - surfaceWidth / 2,
                     root.overflowEdgeMargin, maxX);
 
-        const belowY = anchorY + anchorHeight + root.overflowAnchorGap;
-        const aboveY = anchorY - surfaceHeight - root.overflowAnchorGap;
+        const belowY = barBounds
+            ? barBounds.y + barBounds.height + root.overflowPopupGap
+                - root.overflowSurfacePadding
+            : anchorY + anchorHeight + root.overflowPopupGap;
+        const aboveY = barBounds
+            ? barBounds.y - surfaceHeight - root.overflowPopupGap
+                + root.overflowSurfacePadding
+            : anchorY - surfaceHeight - root.overflowPopupGap;
         const maxY = availableHeight - surfaceHeight - root.overflowEdgeMargin;
         root.overflowY = root.vertical
             ? root.clamp(anchorY + anchorHeight / 2 - surfaceHeight / 2,
@@ -192,6 +222,7 @@ Item {
             delegate: TrayItem {
                 screen: root.screen
                 edge: root.edge
+                barVisualItem: root.barVisualItem
                 Layout.alignment: Qt.AlignVCenter
                 onMenuOpened: window => root.setActiveMenu(window)
                 onMenuClosed: root.releaseActiveMenu(null)
@@ -269,8 +300,10 @@ Item {
 
                 x: root.overflowX
                 y: root.overflowY
-                implicitWidth: popupBackground.implicitWidth + 20
-                implicitHeight: popupBackground.implicitHeight + 20
+                implicitWidth: popupBackground.implicitWidth
+                    + root.overflowSurfacePadding * 2
+                implicitHeight: popupBackground.implicitHeight
+                    + root.overflowSurfacePadding * 2
                 width: implicitWidth
                 height: implicitHeight
 
@@ -287,8 +320,8 @@ Item {
 
                     readonly property real popupPadding: 4
 
-                    x: 10
-                    y: 10
+                    x: root.overflowSurfacePadding
+                    y: root.overflowSurfacePadding
                     implicitWidth: overflowLayout.implicitWidth + popupPadding * 2
                     implicitHeight: overflowLayout.implicitHeight + popupPadding * 2
                     color: BlurService.backgroundColor(

@@ -14,7 +14,7 @@ Item {
     readonly property bool hasMultipleOutputs: Niri.outputs.count > 1
 
     implicitHeight: vertical ? layout.implicitHeight + 16 : 36
-    implicitWidth: vertical ? Sizes.verticalBarWidth : layout.implicitWidth + 24
+    implicitWidth: vertical ? Sizes.barVisualThickness : layout.implicitWidth + 24
 
     function acceptsOutput(outputName) {
         if (root.screenName === "")

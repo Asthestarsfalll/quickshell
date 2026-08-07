@@ -448,10 +448,19 @@ Variants {
                         isNotifMode ? notifH : 
                         (collapsedH + (isCollapsedHovered ? 6 : 0))
 
-                property real targetW: sideCompactLayout
-                    ? logicalTargetH : logicalTargetW
-                property int targetH: sideCompactLayout
-                    ? logicalTargetW : logicalTargetH
+                // A side collapsed surface swaps its base dimensions, but its
+                // dominant hover delta belongs to the cross axis: width grows
+                // inward from the anchored left/right edge. The smaller delta
+                // remains on the vertical primary axis. Other modes retain
+                // their existing geometry.
+                property real targetW: !keystoneWindow.horizontalEdge
+                        && isCollapsedMode
+                    ? collapsedH + (isCollapsedHovered ? 16 : 0)
+                    : sideCompactLayout ? logicalTargetH : logicalTargetW
+                property int targetH: !keystoneWindow.horizontalEdge
+                        && isCollapsedMode
+                    ? collapsedW + (isCollapsedHovered ? 6 : 0)
+                    : sideCompactLayout ? logicalTargetW : logicalTargetH
                 property int targetR: styleSurface.detached
                     ? Math.min(Math.min(targetW, targetH) / 2,
                         styleSurface.maxPillRadius)

@@ -9,11 +9,9 @@ Item {
     id: root
 
     property bool vertical: false
-    property string edge: "top"
-    readonly property real sideRotation: edge === "left" ? -90 : 90
 
-    implicitHeight: vertical ? Math.min(274, layout.implicitWidth + 24) : 36
-    implicitWidth: vertical ? Sizes.verticalBarWidth : layout.width + 24
+    implicitHeight: 36
+    implicitWidth: vertical ? Sizes.barVisualThickness : layout.width + 24
 
     Behavior on implicitWidth {
         NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
@@ -30,13 +28,13 @@ Item {
         id: layout
         anchors.centerIn: parent
         spacing: 10
-        rotation: root.vertical ? root.sideRotation : 0
 
         Item {
             Layout.preferredWidth: 18
             Layout.preferredHeight: 18
             Layout.alignment: Qt.AlignVCenter
-            visible: root.activeIcon !== "" || root.activeAppName !== ""
+            visible: root.vertical || root.activeIcon !== ""
+                || root.activeAppName !== ""
 
             Image {
                 id: appIcon
@@ -63,6 +61,7 @@ Item {
         Text {
             id: windowTitle
             text: root.activeTitle
+            visible: !root.vertical
 
             font.family: Fonts.ui
             font.pointSize: 11

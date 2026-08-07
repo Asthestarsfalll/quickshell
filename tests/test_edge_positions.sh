@@ -29,15 +29,65 @@ require_text "$config" 'function setKeystonePosition(value)'
 require_text "$config" '"position": root.barPosition'
 require_text "$config" '"position": root.keystonePosition'
 
-require_text Modules/Bar/Bar.qml \
-    'readonly property string edge: PersonalizationConfig.barPosition'
-require_text Modules/Bar/Bar.qml \
-    'exclusiveZone: barWindow.isHorizontal'
-require_text Modules/Bar/Bar.qml 'columns: barWindow.isHorizontal ? 3 : 1'
+# Orientation changes select a different layer-surface implementation instead
+# of mutating the topology of one mapped PanelWindow.
+require_text Modules/Bar/Bar.qml 'HorizontalBarWindow {'
+require_text Modules/Bar/Bar.qml 'VerticalBarWindow {'
+require_text Modules/Bar/Bar.qml 'root.horizontal ? Quickshell.screens : []'
+require_text Modules/Bar/Bar.qml 'root.horizontal ? [] : Quickshell.screens'
+
+require_text Modules/Bar/HorizontalBarWindow.qml 'left: true'
+require_text Modules/Bar/HorizontalBarWindow.qml 'right: true'
+require_text Modules/Bar/HorizontalBarWindow.qml 'top: axis.isTop'
+require_text Modules/Bar/HorizontalBarWindow.qml 'bottom: axis.isBottom'
+require_text Modules/Bar/HorizontalBarWindow.qml 'exclusiveZone: exclusiveThickness'
+require_text Modules/Bar/HorizontalBarContent.qml 'RowLayout {'
+
+require_text Modules/Bar/VerticalBarWindow.qml 'top: true'
+require_text Modules/Bar/VerticalBarWindow.qml 'bottom: true'
+require_text Modules/Bar/VerticalBarWindow.qml 'left: axis.isLeft'
+require_text Modules/Bar/VerticalBarWindow.qml 'right: axis.isRight'
+require_text Modules/Bar/VerticalBarWindow.qml 'exclusiveZone: exclusiveThickness'
+require_text Modules/Bar/VerticalBarContent.qml 'ColumnLayout {'
+require_text Modules/Bar/VerticalBarWindow.qml 'item: content.inputRegionItem'
+
+require_text Common/Sizes.qml 'barVisualThickness:'
+require_text Common/Sizes.qml 'barOuterEdgeMargin:'
+require_text Common/Sizes.qml 'barShadowBuffer:'
+require_text Common/Sizes.qml 'barPopupGap:'
+require_text Modules/Bar/HorizontalBarWindow.qml \
+    'outerEdgeMargin + visualThickness + shadowBuffer'
+require_text Modules/Bar/HorizontalBarWindow.qml \
+    'outerEdgeMargin + visualThickness'
+require_text Modules/Bar/VerticalBarWindow.qml \
+    'outerEdgeMargin + visualThickness + shadowBuffer'
+require_text Modules/Bar/VerticalBarWindow.qml \
+    'outerEdgeMargin + visualThickness'
+
+# Vertical presentation is real layout. Directional affordances such as the
+# tray expansion chevron may rotate, but text-bearing widgets may not.
+for file in \
+    Modules/Bar/ActiveWindow/ActiveWindow.qml \
+    Modules/Bar/ActiveWindow/SidebarButton.qml \
+    Modules/Bar/ActiveWindow/SidebarWeatherButton.qml \
+    Modules/Bar/QuickSettings/Network.qml \
+    Modules/Bar/QuickSettings/QuickSettings.qml \
+    Modules/Bar/SysMonitor/SysMonitor.qml \
+    Modules/Bar/Workspaces/Workspaces.qml
+do
+    reject_text "$file" 'sideRotation'
+    reject_text "$file" 'rotation:'
+done
+
 require_text Widgets/common/PopupToolTip.qml 'function edgeToAnchor(edge)'
+require_text Widgets/common/PopupToolTip.qml 'case "left"'
+require_text Widgets/common/PopupToolTip.qml 'case "right"'
+require_text Modules/Bar/Tray/TrayMenu.qml 'property var barVisualItem:'
+require_text Modules/Bar/Tray/TrayMenu.qml 'property real popupGap: Sizes.barPopupGap'
 require_text Modules/Bar/Tray/TrayMenu.qml 'root.edge === "left"'
 require_text Modules/Bar/Tray/TrayMenu.qml 'root.edge === "right"'
-reject_text Modules/Bar/Bar.qml 'rotation: 90'
+require_text Modules/Bar/Tray/TrayMenu.qml 'root.edge === "bottom"'
+require_text Modules/Bar/Tray/Tray.qml 'function barVisualBounds()'
 
 require_text Modules/Sidebars/SidebarHostWindow.qml \
     'WlrLayershell.exclusionMode: ExclusionMode.Normal'
@@ -48,21 +98,14 @@ reject_text Modules/Sidebars/Right/RightSidebar.qml 'Sizes.barHeight'
 
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'readonly property string edge: PersonalizationConfig.keystonePosition'
-require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
-    'exclusiveZone: -1'
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml 'exclusiveZone: -1'
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'WlrLayershell.exclusionMode: ExclusionMode.Ignore'
 reject_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'PersonalizationConfig.barPosition'
 reject_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml 'rotation: 90'
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
-    'readonly property bool sideCompactLayout:'
-require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
-    'vertical: !keystoneWindow.horizontalEdge'
-require_text Modules/Keystone/ClockContent/ClockContent.qml \
-    'rotation: root.vertical ? root.sideRotation : 0'
-require_text Modules/Keystone/Tools/ToolsContent.qml \
-    'columns: toolsRoot.vertical ? 1 : toolsRoot.toolsModel.length'
+    'collapsedH + (isCollapsedHovered ? 16 : 0)'
 
 require_text Modules/ControlCenter/GeneralOverviewPage.qml \
     'root.sectionRequested("bar")'
@@ -70,10 +113,8 @@ require_text Modules/ControlCenter/GeneralPage.qml \
     'Qt.resolvedUrl("GeneralBarPage.qml")'
 require_text Modules/ControlCenter/GeneralBarPage.qml \
     'PersonalizationConfig.setBarPosition(position)'
-reject_text Modules/ControlCenter/GeneralBarPage.qml 'iconName:'
 require_text Modules/ControlCenter/KeystonePage.qml \
     'PersonalizationConfig.setKeystonePosition(position)'
-reject_text Modules/ControlCenter/ControlCenterWindow.qml \
-    '"id": "bar"'
+reject_text Modules/ControlCenter/ControlCenterWindow.qml '"id": "bar"'
 
 echo "edge position architecture tests passed"

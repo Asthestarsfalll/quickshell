@@ -8,8 +8,6 @@ Item {
     id: root
 
     property bool vertical: false
-    property string edge: "top"
-    readonly property real sideRotation: edge === "left" ? -90 : 90
     readonly property string temperatureText: WeatherPlugin.hasValidData ? Math.round(WeatherPlugin.currentTemperatureC) + "°" : "--°"
     readonly property int iconSize: 20
     readonly property int temperatureSize: 12
@@ -21,7 +19,7 @@ Item {
     readonly property real buttonWidth: contentWidth + 20
     readonly property int buttonHeight: 28
 
-    implicitHeight: vertical ? buttonWidth : buttonHeight
+    implicitHeight: vertical ? 48 : buttonHeight
     implicitWidth: vertical ? buttonHeight : buttonWidth
     clip: true
 
@@ -36,9 +34,8 @@ Item {
     Rectangle {
         id: background
         anchors.centerIn: parent
-        width: root.buttonWidth
-        height: root.buttonHeight
-        rotation: root.vertical ? root.sideRotation : 0
+        width: root.width
+        height: root.height
         radius: height / 2
         color: Appearance.colors.colTertiaryContainer
         clip: true
@@ -102,17 +99,18 @@ Item {
         WidgetState.leftSidebarOpen = true;
     }
 
-    RowLayout {
+    GridLayout {
         id: contentRow
         anchors.centerIn: parent
-        width: root.contentWidth
-        height: root.buttonHeight
-        spacing: root.contentSpacing
-        rotation: root.vertical ? root.sideRotation : 0
+        width: root.vertical ? root.buttonHeight : root.contentWidth
+        height: root.vertical ? root.height : root.buttonHeight
+        rowSpacing: root.vertical ? 0 : root.contentSpacing
+        columnSpacing: root.contentSpacing
+        columns: root.vertical ? 1 : 2
 
         Item {
             Layout.preferredWidth: root.iconSlotWidth
-            Layout.preferredHeight: root.buttonHeight
+            Layout.preferredHeight: root.vertical ? 22 : root.buttonHeight
             Layout.alignment: Qt.AlignVCenter
 
             Text {
@@ -129,7 +127,7 @@ Item {
 
         Item {
             Layout.preferredWidth: root.temperatureSlotWidth
-            Layout.preferredHeight: root.buttonHeight
+            Layout.preferredHeight: root.vertical ? 16 : root.buttonHeight
             Layout.alignment: Qt.AlignVCenter
             visible: true
 

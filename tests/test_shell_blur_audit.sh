@@ -21,7 +21,8 @@ reject_text() {
 }
 
 for file in \
-    Modules/Bar/Bar.qml \
+    Modules/Bar/HorizontalBarWindow.qml \
+    Modules/Bar/VerticalBarWindow.qml \
     Modules/Bar/Tray/Tray.qml \
     Modules/Bar/Tray/TrayMenu.qml \
     Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
@@ -53,8 +54,13 @@ do
     reject_text "$file" 'clavis-shell-'
 done
 
-require_text Modules/Bar/Bar.qml 'additionalBackgroundItems: ['
-reject_text Modules/Bar/Bar.qml 'backgroundItem: barContent'
+for file in \
+    Modules/Bar/HorizontalBarWindow.qml \
+    Modules/Bar/VerticalBarWindow.qml
+do
+    require_text "$file" 'additionalBackgroundItems: ['
+    reject_text "$file" 'backgroundItem: barContent'
+done
 require_text Modules/Sidebars/SidebarHostWindow.qml \
     'additionalBackgroundItems: ['
 require_text Modules/ControlCenter/ControlCenterWindow.qml \

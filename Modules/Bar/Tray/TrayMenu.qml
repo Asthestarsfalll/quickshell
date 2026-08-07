@@ -13,10 +13,11 @@ PanelWindow {
     property var trayItemMenuHandle: null
     property string trayItemId: ""
     property var anchorItem: null
+    property var barVisualItem: null
     property string edge: "top"
     property real padding: 10
-    property real edgeMargin: 10
-    property real anchorGap: 4
+    property real edgeMargin: Sizes.barPopupScreenMargin
+    property real popupGap: Sizes.barPopupGap
     property real menuX: edgeMargin
     property real menuY: edgeMargin
     property var submenuStack: []
@@ -100,6 +101,21 @@ PanelWindow {
         root.submenuStack = [];
     }
 
+    function barVisualBounds() {
+        if (!root.barVisualItem)
+            return null;
+
+        const globalPos = root.barVisualItem.mapToGlobal(0, 0);
+        const screenX = root.screen ? (root.screen.x || 0) : 0;
+        const screenY = root.screen ? (root.screen.y || 0) : 0;
+        return {
+            "x": globalPos.x - screenX,
+            "y": globalPos.y - screenY,
+            "width": root.barVisualItem.width || 0,
+            "height": root.barVisualItem.height || 0
+        };
+    }
+
     function updatePosition() {
         const surfaceWidth = Math.max(1, menuSurface.implicitWidth);
         const surfaceHeight = Math.max(1, menuSurface.implicitHeight);
@@ -119,9 +135,14 @@ PanelWindow {
         const anchorY = globalPos.y - screenY;
         const anchorWidth = root.anchorItem.width || 0;
         const anchorHeight = root.anchorItem.height || 0;
+        const barBounds = root.barVisualBounds();
 
-        const rightX = anchorX + anchorWidth + root.anchorGap;
-        const leftX = anchorX - surfaceWidth - root.anchorGap;
+        const rightX = barBounds
+            ? barBounds.x + barBounds.width + root.popupGap - root.padding
+            : anchorX + anchorWidth + root.popupGap;
+        const leftX = barBounds
+            ? barBounds.x - surfaceWidth - root.popupGap + root.padding
+            : anchorX - surfaceWidth - root.popupGap;
         const maxX = availableWidth - surfaceWidth - root.edgeMargin;
         root.menuX = root.edge === "left"
             ? root.clamp(rightX, root.edgeMargin, maxX)
@@ -130,8 +151,12 @@ PanelWindow {
                 : root.clamp(anchorX + anchorWidth / 2 - surfaceWidth / 2,
                     root.edgeMargin, maxX);
 
-        const belowY = anchorY + anchorHeight + root.anchorGap;
-        const aboveY = anchorY - surfaceHeight - root.anchorGap;
+        const belowY = barBounds
+            ? barBounds.y + barBounds.height + root.popupGap - root.padding
+            : anchorY + anchorHeight + root.popupGap;
+        const aboveY = barBounds
+            ? barBounds.y - surfaceHeight - root.popupGap + root.padding
+            : anchorY - surfaceHeight - root.popupGap;
         const maxY = availableHeight - surfaceHeight - root.edgeMargin;
         root.menuY = root.edge === "left" || root.edge === "right"
             ? root.clamp(anchorY + anchorHeight / 2 - surfaceHeight / 2,
