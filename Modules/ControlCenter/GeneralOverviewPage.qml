@@ -74,6 +74,15 @@ StyledFlickable {
                 trailingIconName: "chevron_right"
                 onClicked: root.sectionRequested("autostart")
             }
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "apps"
+                text: qsTr("默认应用")
+                description: qsTr("浏览器、文件管理器和媒体播放器等")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("default-apps")
+            }
         }
     }
 }

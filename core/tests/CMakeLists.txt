@@ -39,6 +39,12 @@ add_test(
 )
 
 add_test(
+    NAME default_apps_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_default_apps_architecture.sh
+)
+
+add_test(
     NAME shader_asset_tests
     COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
 )

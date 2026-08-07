@@ -36,6 +36,7 @@ Item {
             case "effects": return qsTr("透明与模糊");
             case "scrolling": return qsTr("滚动交互");
             case "autostart": return qsTr("开机启动");
+            case "default-apps": return qsTr("默认应用");
             default: return qsTr("通用");
             }
         }
@@ -55,6 +56,7 @@ Item {
             case "effects": return Qt.resolvedUrl("GeneralEffectsPage.qml");
             case "scrolling": return Qt.resolvedUrl("GeneralScrollingPage.qml");
             case "autostart": return Qt.resolvedUrl("AutostartPage.qml");
+            case "default-apps": return Qt.resolvedUrl("DefaultAppsPage.qml");
             default: return Qt.resolvedUrl("GeneralOverviewPage.qml");
             }
         }
