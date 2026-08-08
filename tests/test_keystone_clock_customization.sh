@@ -17,9 +17,13 @@ require_text() {
 config=Services/PersonalizationConfig.qml
 clock=Modules/Keystone/ClockContent/ClockContent.qml
 page=Modules/ControlCenter/KeystonePage.qml
+style_page=Modules/ControlCenter/HorizontalClockPage.qml
+preview=Modules/ControlCenter/HorizontalClockPreview.qml
+slider=Modules/ControlCenter/ClockSliderSetting.qml
+section=Modules/ControlCenter/KeystoneSection.qml
 fonts=Common/Fonts.qml
 
-for file in "$config" "$clock" "$page" "$fonts"; do
+for file in "$config" "$clock" "$page" "$style_page" "$preview" "$slider" "$section" "$fonts"; do
     test -f "$file" || fail "missing clock customization file: $file"
 done
 
@@ -43,6 +47,9 @@ require_text "$config" 'if (!isFinite(numberValue))'
 require_text "$config" 'root.horizontalClockDigits = digits;'
 require_text "$config" 'setHorizontalClockDigitValue(id, field, value, persist)'
 require_text "$config" 'setHorizontalClockDigitColor(id, role, customColor, persist)'
+require_text "$config" 'function resetHorizontalClock(persist)'
+require_text "$config" 'root.keystoneHideDate = false;'
+require_text "$config" 'root.horizontalClockFontSize = 22;'
 for axis in wght wdth opsz GRAD ROND slnt; do
     require_text "$config" "\"$axis\":"
 done
@@ -84,21 +91,41 @@ if printf '%s\n' "$rolling_digit" | grep -Fq 'font.weight: Font.Black'; then
     fail "horizontal RollingDigit still fixes Font.Black"
 fi
 
-# The preview is the real ClockContent component, and sliders distinguish live
-# movement from persistence on release.
-require_text "$page" 'import qs.Modules.Keystone.ClockContent'
-require_text "$page" 'ClockContent {'
-require_text "$page" 'edge: "top"'
-require_text "$page" 'component ClockSliderSetting:'
-require_text "$page" 'onMoved: clockSliderSetting.moved(value)'
-require_text "$page" 'onCommitted: clockSliderSetting.committed(value)'
-require_text "$page" 'setHorizontalClockFontSize(value, false)'
-require_text "$page" 'setHorizontalClockFontSize(value, true)'
-require_text "$page" 'setHorizontalClockDigitValue('
-require_text "$page" 'setHorizontalClockDigitColor('
-require_text "$page" 'property string selectedDigit: "h0"'
-require_text "$page" '"value": "h0"'
-require_text "$page" '"value": "m1"'
+# The preview is the real ClockContent component, and the child page keeps
+# sliders' live movement separate from persistence on release.
+require_text "$preview" 'import qs.Modules.Keystone.ClockContent'
+require_text "$preview" 'ClockContent {'
+require_text "$preview" 'edge: root.edge'
+require_text "$preview" 'readonly property real referenceWidth: 220'
+require_text "$preview" 'readonly property real referenceHeight: 42'
+require_text "$preview" 'scale: root.previewScale'
+require_text "$slider" 'onMoved: root.moved(value)'
+require_text "$slider" 'onCommitted: root.committed(value)'
+require_text "$style_page" 'setHorizontalClockFontSize(value, false)'
+require_text "$style_page" 'setHorizontalClockFontSize(value, true)'
+require_text "$style_page" 'setHorizontalClockDigitValue('
+require_text "$style_page" 'setHorizontalClockDigitColor('
+require_text "$style_page" 'property string selectedDigit: "h0"'
+require_text "$style_page" 'readonly property int currentHourTens: clockPreview.h0'
+require_text "$style_page" 'id: currentDigitGroup'
+require_text "$style_page" '"value": "h0"'
+require_text "$style_page" '"value": "m1"'
+require_text "$page" 'SettingsActionRow {'
+require_text "$page" 'component SearchSelectSettingRow: Item {'
+require_text "$page" 'onClicked: root.openSection("horizontal-clock")'
+require_text "$page" 'GeneralSubpageHeader {'
+require_text "$style_page" 'resetHorizontalClock(true)'
+require_text "$style_page" 'title: qsTr("隐藏日期")'
+require_text "$style_page" 'onToggled: PersonalizationConfig.setKeystoneHideDate(checked)'
+require_text "$page" 'Layout.preferredHeight: Math.max('
+require_text "$style_page" 'Layout.preferredHeight: Math.max('
+
+# The horizontal date separator is vertical; the side layout keeps its
+# existing horizontal divider.
+require_text "$clock" 'width: 2'
+require_text "$clock" 'height: 14'
+require_text "$clock" 'width: 12'
+require_text "$clock" 'height: 2'
 
 require_text "$fonts" 'readonly property string systemClock:'
 if [ "$(rg -n 'FontLoader[[:space:]]*\{' "$clock" | wc -l)" -ne 0 ]; then

@@ -8,6 +8,7 @@ Item {
     id: root
 
     property string title: ""
+    property string backAccessibleName: qsTr("返回通用设置")
     signal backRequested()
 
     implicitHeight: 56
@@ -25,7 +26,7 @@ Item {
             colBackground: "transparent"
             colBackgroundHover: Appearance.colors.colLayer2Hover
             colRipple: Appearance.colors.colLayer2Active
-            Accessible.name: qsTr("返回通用设置")
+            Accessible.name: root.backAccessibleName
             releaseAction: () => root.backRequested()
 
             contentItem: MaterialSymbol {

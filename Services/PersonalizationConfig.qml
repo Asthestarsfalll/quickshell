@@ -894,6 +894,17 @@ Singleton {
         setValue("keystoneHideDate", !!value);
     }
 
+    function resetHorizontalClock(persist) {
+        root.keystoneHideDate = false;
+        root.horizontalClockFontSize = 22;
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(
+            root.horizontalClockAxisDefaults);
+        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(
+            root.horizontalClockDigitDefaults);
+        if (persist !== false)
+            root.save();
+    }
+
     function setHorizontalClockFontSize(value, persist) {
         const next = root.normalizedBoundedInt(value, 22, 16, 28);
         if (root.horizontalClockFontSize === next) {

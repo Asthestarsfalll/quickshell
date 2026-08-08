@@ -214,14 +214,19 @@ Item {
             font.bold: true
             anchors.verticalCenter: parent.verticalCenter
         }
-        Text {
-            text: "—"
+        Item {
             visible: !root.hideDate
-            width: root.hideDate ? 0 : implicitWidth
-            color: Appearance.colors.colOutlineVariant
-            font.family: Fonts.ui
-            font.pixelSize: 13
+            width: root.hideDate ? 0 : 8
+            height: root.horizontalFontSize + 2
             anchors.verticalCenter: parent.verticalCenter
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 2
+                height: 14
+                radius: width / 2
+                color: Appearance.colors.colOutlineVariant
+            }
         }
 
         // --- 右侧 Standby 滚动时钟 ---
