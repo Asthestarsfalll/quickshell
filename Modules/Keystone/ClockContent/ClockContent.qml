@@ -8,23 +8,77 @@ Item {
     property var player 
     property string edge: "top"
     readonly property bool vertical: edge === "left" || edge === "right"
+    readonly property bool hideDate: PersonalizationConfig.keystoneHideDate
 
     property string dateStr: ""
     property var verticalDateParts: []
     readonly property string clockFamily: Fonts.systemClock
-    readonly property var clockAxes:
+    readonly property var horizontalClockAxes:
+        root.safeHorizontalClockAxes(PersonalizationConfig.horizontalClockAxes)
+    readonly property var verticalClockAxes:
         Fonts.familyAvailable(Fonts.systemClock)
             ? ({
                 "ROND": 25,
                 "wdth": 85
             })
             : ({})
+    readonly property real horizontalFontSize:
+        root.boundedNumber(
+            PersonalizationConfig.horizontalClockFontSize,
+            22, 16, 28)
     
     // 【核心变化1】把时间拆分成 4 个独立的整数型变量，绑定动画目标值
     property int h0: 0
     property int h1: 0
     property int m0: 0
     property int m1: 0
+
+    function boundedNumber(value, fallback, minimum, maximum) {
+        const numberValue = Number(value);
+        if (!isFinite(numberValue))
+            return fallback;
+        return Math.max(minimum, Math.min(maximum, numberValue));
+    }
+
+    function safeHorizontalClockAxes(source) {
+        const defaults = PersonalizationConfig.horizontalClockAxisDefaults;
+        const minimums = PersonalizationConfig.horizontalClockAxisMinimums;
+        const maximums = PersonalizationConfig.horizontalClockAxisMaximums;
+        const result = {};
+        const names = ["wght", "wdth", "opsz", "GRAD", "ROND", "slnt"];
+        const values = source && typeof source === "object" ? source : {};
+        for (let i = 0; i < names.length; i += 1) {
+            const name = names[i];
+            result[name] = root.boundedNumber(
+                values[name], defaults[name], minimums[name], maximums[name]);
+        }
+        return result;
+    }
+
+    function horizontalDigitValue(id, field) {
+        const defaults = PersonalizationConfig.horizontalClockDigitDefaults;
+        const configured = PersonalizationConfig.horizontalClockDigits;
+        const fallback = defaults[id] || {};
+        const candidate = configured && configured[id] ? configured[id] : {};
+        const limits = field === "x"
+            ? [-8, 8] : field === "y" ? [-6, 6] : [-12, 12];
+        return root.boundedNumber(
+            candidate[field], fallback[field] || 0, limits[0], limits[1]);
+    }
+
+    function horizontalDigitColor(id) {
+        const defaults = PersonalizationConfig.horizontalClockDigitDefaults;
+        const configured = PersonalizationConfig.horizontalClockDigits;
+        const fallback = defaults[id] || {};
+        const candidate = configured && configured[id] ? configured[id] : fallback;
+        if (candidate.colorRole === "custom"
+                && /^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(
+                    String(candidate.customColor || "")))
+            return candidate.customColor;
+        return candidate.colorRole === "inversePrimary"
+            ? Appearance.colors.colInversePrimary
+            : Appearance.colors.colPrimary;
+    }
 
     function formatDate(date) {
         if (DateFormat.isChinese(I18nService.language)) {
@@ -90,19 +144,34 @@ Item {
     // ============================================================
     component RollingDigit : Item {
         id: digitContainer
+        property string digitId: "h0"
         property int targetDigit: 0
         property color digitColor: "white"
-        property real digitRotation: 0
-        property real digitOffset: 0
-        property bool stacked: false
-        
+        readonly property real digitXOffset:
+            root.horizontalDigitValue(digitId, "x")
+        readonly property real digitYOffset:
+            root.horizontalDigitValue(digitId, "y")
+        readonly property real digitRotation:
+            root.horizontalDigitValue(digitId, "rotation")
+        readonly property real lineHeight:
+            Math.max(18, root.horizontalFontSize + 2)
+
         width: digitText.implicitWidth
-        height: stacked ? 20 : 24  // 严格限制高度，形成视口
-        clip: true  // 开启裁切，隐藏不在视口内的数字
-        
-        rotation: stacked ? 0 : digitRotation
-        anchors.verticalCenter: stacked ? undefined : parent.verticalCenter
-        anchors.verticalCenterOffset: stacked ? 0 : digitOffset
+        height: lineHeight
+        clip: true
+        anchors.verticalCenter: parent.verticalCenter
+
+        transform: [
+            Translate {
+                x: digitContainer.digitXOffset
+                y: digitContainer.digitYOffset
+            },
+            Rotation {
+                angle: digitContainer.digitRotation
+                origin.x: digitContainer.width / 2
+                origin.y: digitContainer.height / 2
+            }
+        ]
 
         Text {
             id: digitText
@@ -110,14 +179,13 @@ Item {
             text: "0\n1\n2\n3\n4\n5\n6\n7\n8\n9"
             color: digitContainer.digitColor
             font.family: root.clockFamily
-            font.variableAxes: root.clockAxes
-            font.pixelSize: digitContainer.stacked ? 20 : 22
-            font.weight: Font.Black
-            lineHeight: digitContainer.stacked ? 20 : 24 // 必须与视口 height 相同
+            font.variableAxes: root.horizontalClockAxes
+            font.pixelSize: root.horizontalFontSize
+            lineHeight: digitContainer.lineHeight
             lineHeightMode: Text.FixedHeight
             
             // 计算 y 轴偏移量
-            y: -digitContainer.targetDigit * (digitContainer.stacked ? 20 : 24)
+            y: -digitContainer.targetDigit * digitContainer.lineHeight
 
             // 弹性动画，带来带有惯性回弹的机械翻页感
             Behavior on y {
@@ -132,12 +200,14 @@ Item {
 
     Row {
         anchors.centerIn: parent
-        spacing: 10 
+        spacing: root.hideDate ? 0 : 10
         visible: !root.vertical
         
         // --- 左侧日期部分 ---
         Text {
             text: root.dateStr
+            visible: !root.hideDate
+            width: root.hideDate ? 0 : implicitWidth
             color: Appearance.colors.colPrimary 
             font.family: Fonts.ui
             font.pixelSize: 13 
@@ -146,6 +216,8 @@ Item {
         }
         Text {
             text: "—"
+            visible: !root.hideDate
+            width: root.hideDate ? 0 : implicitWidth
             color: Appearance.colors.colOutlineVariant
             font.family: Fonts.ui
             font.pixelSize: 13
@@ -162,16 +234,14 @@ Item {
                 spacing: -1 
                 
                 RollingDigit {
+                    digitId: "h0"
                     targetDigit: root.h0
-                    digitColor: Appearance.colors.colInversePrimary 
-                    digitRotation: -3 // 各自独立的倾斜角度
-                    digitOffset: -2    // 各自独立的高低落差
+                    digitColor: root.horizontalDigitColor("h0")
                 }
                 RollingDigit {
+                    digitId: "h1"
                     targetDigit: root.h1
-                    digitColor: Appearance.colors.colPrimary // 不透明的主题亮色
-                    digitRotation: 3  
-                    digitOffset: 1   
+                    digitColor: root.horizontalDigitColor("h1")
                 }
             }
 
@@ -190,16 +260,14 @@ Item {
                 spacing: 1 
                 
                 RollingDigit {
+                    digitId: "m0"
                     targetDigit: root.m0
-                    digitColor: Appearance.colors.colInversePrimary
-                    digitRotation: -2 
-                    digitOffset: -1
+                    digitColor: root.horizontalDigitColor("m0")
                 }
                 RollingDigit {
+                    digitId: "m1"
                     targetDigit: root.m1
-                    digitColor: Appearance.colors.colPrimary
-                    digitRotation: 2
-                    digitOffset: 1 
+                    digitColor: root.horizontalDigitColor("m1")
                 }
             }
         }
@@ -215,6 +283,7 @@ Item {
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 0
+            visible: !root.hideDate
 
             Repeater {
                 model: root.verticalDateParts
@@ -239,6 +308,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             width: 28
             height: 10
+            visible: !root.hideDate
 
             Rectangle {
                 anchors.centerIn: parent
@@ -261,7 +331,7 @@ Item {
                 font.family: root.clockFamily
                 font.pixelSize: 20
                 font.weight: Font.Black
-                font.variableAxes: root.clockAxes
+                font.variableAxes: root.verticalClockAxes
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
@@ -297,7 +367,7 @@ Item {
                 font.family: root.clockFamily
                 font.pixelSize: 20
                 font.weight: Font.Black
-                font.variableAxes: root.clockAxes
+                font.variableAxes: root.verticalClockAxes
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }

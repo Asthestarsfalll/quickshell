@@ -14,6 +14,12 @@ add_test(
 )
 
 add_test(
+    NAME keystone_clock_customization_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_keystone_clock_customization.sh
+)
+
+add_test(
     NAME wallpaper_picker_architecture_tests
     COMMAND ${BASH_EXECUTABLE}
         ${CLAVIS_SOURCE_ROOT}/tests/test_wallpaper_picker_architecture.sh

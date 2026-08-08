@@ -186,6 +186,76 @@ Singleton {
     property string keystoneStyle: "bangs"
     property string barPosition: "top"
     property string keystonePosition: "top"
+    property bool keystoneHideDate: false
+    readonly property var horizontalClockAxisDefaults: ({
+        "wght": 900,
+        "wdth": 85,
+        "opsz": 18,
+        "GRAD": 0,
+        "ROND": 25,
+        "slnt": 0
+    })
+    readonly property var horizontalClockAxisMinimums: ({
+        "wght": 1,
+        "wdth": 25,
+        "opsz": 6,
+        "GRAD": 0,
+        "ROND": 0,
+        "slnt": -10
+    })
+    readonly property var horizontalClockAxisMaximums: ({
+        "wght": 1000,
+        "wdth": 151,
+        "opsz": 144,
+        "GRAD": 100,
+        "ROND": 100,
+        "slnt": 0
+    })
+    readonly property var horizontalClockDigitDefaults: ({
+        "h0": ({
+            "x": 0, "y": -2, "rotation": -3,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "h1": ({
+            "x": 0, "y": 1, "rotation": 3,
+            "colorRole": "primary", "customColor": ""
+        }),
+        "m0": ({
+            "x": 0, "y": -1, "rotation": -2,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "m1": ({
+            "x": 0, "y": 1, "rotation": 2,
+            "colorRole": "primary", "customColor": ""
+        })
+    })
+    property int horizontalClockFontSize: 22
+    property var horizontalClockAxes: ({
+        "wght": 900,
+        "wdth": 85,
+        "opsz": 18,
+        "GRAD": 0,
+        "ROND": 25,
+        "slnt": 0
+    })
+    property var horizontalClockDigits: ({
+        "h0": ({
+            "x": 0, "y": -2, "rotation": -3,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "h1": ({
+            "x": 0, "y": 1, "rotation": 3,
+            "colorRole": "primary", "customColor": ""
+        }),
+        "m0": ({
+            "x": 0, "y": -1, "rotation": -2,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "m1": ({
+            "x": 0, "y": 1, "rotation": 2,
+            "colorRole": "primary", "customColor": ""
+        })
+    })
     property string powerMenuStyle: "grid"
 
     readonly property string uiFontFamily:
@@ -460,7 +530,7 @@ Singleton {
         if (value === null || value === undefined || value === "")
             return fallback;
         const numberValue = Number(value);
-        if (isNaN(numberValue))
+        if (!isFinite(numberValue))
             return fallback;
         return Math.max(minValue, Math.min(maxValue, Math.round(numberValue)));
     }
@@ -489,6 +559,74 @@ Singleton {
         if (!isFinite(numberValue))
             return fallback;
         return Math.max(minValue, Math.min(maxValue, numberValue));
+    }
+
+    function normalizedHorizontalClockAxes(raw) {
+        const source = raw && typeof raw === "object"
+            && !Array.isArray(raw) ? raw : {};
+        const result = {};
+        const names = ["wght", "wdth", "opsz", "GRAD", "ROND", "slnt"];
+        for (let i = 0; i < names.length; i += 1) {
+            const name = names[i];
+            result[name] = root.normalizedBoundedReal(
+                source[name],
+                root.horizontalClockAxisDefaults[name],
+                root.horizontalClockAxisMinimums[name],
+                root.horizontalClockAxisMaximums[name]);
+        }
+        return result;
+    }
+
+    function normalizedHorizontalClockDigits(raw) {
+        const source = raw && typeof raw === "object"
+            && !Array.isArray(raw) ? raw : {};
+        const result = {};
+        const ids = ["h0", "h1", "m0", "m1"];
+        const colorRoles = ["primary", "inversePrimary", "custom"];
+
+        for (let i = 0; i < ids.length; i += 1) {
+            const id = ids[i];
+            const fallback = root.horizontalClockDigitDefaults[id];
+            const candidate = source[id] && typeof source[id] === "object"
+                && !Array.isArray(source[id]) ? source[id] : {};
+            const candidateColor = String(candidate.customColor || "")
+                .trim().toLowerCase();
+            const hasCustomColor = /^#([0-9a-f]{6}|[0-9a-f]{8})$/
+                .test(candidateColor);
+            let colorRole = colorRoles.indexOf(candidate.colorRole) !== -1
+                ? candidate.colorRole : fallback.colorRole;
+            if (colorRole === "custom" && !hasCustomColor)
+                colorRole = fallback.colorRole;
+
+            result[id] = {
+                "x": root.normalizedBoundedInt(candidate.x,
+                    fallback.x, -8, 8),
+                "y": root.normalizedBoundedInt(candidate.y,
+                    fallback.y, -6, 6),
+                "rotation": root.normalizedBoundedInt(candidate.rotation,
+                    fallback.rotation, -12, 12),
+                "colorRole": colorRole,
+                "customColor": hasCustomColor ? candidateColor : ""
+            };
+        }
+        return result;
+    }
+
+    function horizontalClockDigit(id) {
+        const defaults = root.horizontalClockDigitDefaults[id];
+        const configured = root.horizontalClockDigits[id];
+        return configured || defaults;
+    }
+
+    function horizontalClockDigitColor(id) {
+        const digit = root.horizontalClockDigit(id);
+        if (digit.colorRole === "custom"
+                && /^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(
+                    String(digit.customColor || "")))
+            return digit.customColor;
+        return digit.colorRole === "inversePrimary"
+            ? Appearance.colors.colInversePrimary
+            : Appearance.colors.colPrimary;
     }
 
     function normalizedAwwwPosition(value) {
@@ -752,6 +890,91 @@ Singleton {
         setValue("keystonePosition", normalizedEdgePosition(value));
     }
 
+    function setKeystoneHideDate(value) {
+        setValue("keystoneHideDate", !!value);
+    }
+
+    function setHorizontalClockFontSize(value, persist) {
+        const next = root.normalizedBoundedInt(value, 22, 16, 28);
+        if (root.horizontalClockFontSize === next) {
+            if (persist !== false)
+                root.save();
+            return;
+        }
+        root.horizontalClockFontSize = next;
+        if (persist !== false)
+            root.save();
+    }
+
+    function setHorizontalClockAxis(axis, value, persist) {
+        const name = String(axis || "");
+        if (root.horizontalClockAxisDefaults[name] === undefined)
+            return;
+        const next = root.normalizedBoundedReal(
+            value,
+            root.horizontalClockAxisDefaults[name],
+            root.horizontalClockAxisMinimums[name],
+            root.horizontalClockAxisMaximums[name]);
+        const current = root.horizontalClockAxes[name];
+        if (current === next) {
+            if (persist !== false)
+                root.save();
+            return;
+        }
+        const axes = root.cloneMap(root.horizontalClockAxes);
+        axes[name] = next;
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(axes);
+        if (persist !== false)
+            root.save();
+    }
+
+    function setHorizontalClockDigitValue(id, field, value, persist) {
+        const name = String(id || "");
+        const propertyName = String(field || "");
+        const fallback = root.horizontalClockDigitDefaults[name];
+        if (!fallback || ["x", "y", "rotation"].indexOf(propertyName) === -1)
+            return;
+        const limits = propertyName === "x"
+            ? [-8, 8] : propertyName === "y" ? [-6, 6] : [-12, 12];
+        const current = root.horizontalClockDigit(name);
+        const next = root.normalizedBoundedInt(
+            value, fallback[propertyName], limits[0], limits[1]);
+        if (current[propertyName] === next) {
+            if (persist !== false)
+                root.save();
+            return;
+        }
+        const digits = root.normalizedHorizontalClockDigits(
+            root.horizontalClockDigits);
+        digits[name][propertyName] = next;
+        root.horizontalClockDigits = digits;
+        if (persist !== false)
+            root.save();
+    }
+
+    function setHorizontalClockDigitColor(id, role, customColor, persist) {
+        const name = String(id || "");
+        const fallback = root.horizontalClockDigitDefaults[name];
+        if (!fallback)
+            return;
+        const candidateRole = String(role || "");
+        const normalizedColor = String(customColor || "")
+            .trim().toLowerCase();
+        const customValid = /^#([0-9a-f]{6}|[0-9a-f]{8})$/
+            .test(normalizedColor);
+        const validRole = ["primary", "inversePrimary"]
+            .indexOf(candidateRole) !== -1;
+        const nextRole = validRole || (candidateRole === "custom" && customValid)
+            ? candidateRole : fallback.colorRole;
+        const digits = root.normalizedHorizontalClockDigits(
+            root.horizontalClockDigits);
+        digits[name].colorRole = nextRole;
+        digits[name].customColor = customValid ? normalizedColor : "";
+        root.horizontalClockDigits = digits;
+        if (persist !== false)
+            root.save();
+    }
+
     function setScrollSmoothEnabled(value) {
         setValue("scrollSmoothEnabled", !!value);
     }
@@ -858,7 +1081,13 @@ Singleton {
             },
             "keystone": {
                 "style": root.keystoneStyle,
-                "position": root.keystonePosition
+                "position": root.keystonePosition,
+                "hideDate": root.keystoneHideDate,
+                "horizontalClock": {
+                    "fontSize": root.horizontalClockFontSize,
+                    "axes": root.cloneMap(root.horizontalClockAxes),
+                    "digits": root.horizontalClockDigits
+                }
             },
             "bar": {
                 "position": root.barPosition
@@ -892,6 +1121,7 @@ Singleton {
         const parallax = wallpaper.parallax || {};
         const autoCycle = wallpaper.autoCycle || {};
         const fonts = theme.fonts || {};
+        const horizontalClock = keystone.horizontalClock || {};
 
         root.wallpaperFolder = wallpaper.folder || Paths.dataHome + "/wallpapers";
         root.wallpaperPath = wallpaper.path === Paths.currentWallpaper ? "" : (wallpaper.path || "");
@@ -994,6 +1224,14 @@ Singleton {
                 ? effects.shellBlurXray : true;
         root.keystoneStyle = normalizedOption(root.keystoneStyles, keystone.style, "bangs");
         root.keystonePosition = normalizedEdgePosition(keystone.position);
+        root.keystoneHideDate = typeof keystone.hideDate === "boolean"
+            ? keystone.hideDate : false;
+        root.horizontalClockFontSize = root.normalizedBoundedInt(
+            horizontalClock.fontSize, 22, 16, 28);
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(
+            horizontalClock.axes);
+        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(
+            horizontalClock.digits);
         root.barPosition = normalizedEdgePosition(bar.position);
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
             ? true : !!sidebar.keepLoaded;
