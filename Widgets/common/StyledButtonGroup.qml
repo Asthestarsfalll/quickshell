@@ -38,8 +38,9 @@ RowLayout {
 
     signal valueSelected(var value, var modelData)
 
-    // The refreshed connected appearance removes the parent-surface seam.
-    // Pages that intentionally retain the former appearance can opt in.
+    // The former appearance intentionally keeps a small separation between
+    // segments.  Each segment is still rendered independently so the gap and
+    // the inner corner remain part of the control's visual language.
     spacing: root.originalAppearance ? 2 : 0
 
     readonly property int effectiveInnerRadius:
@@ -181,11 +182,14 @@ RowLayout {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Math.max(segment.leftRadius, segment.rightRadius)
+                topLeftRadius: segment.leftRadius
+                topRightRadius: segment.rightRadius
+                bottomLeftRadius: segment.leftRadius
+                bottomRightRadius: segment.rightRadius
                 color: segment.segmentColor
                 antialiasing: true
 
-                Behavior on radius {
+                Behavior on topLeftRadius {
                     NumberAnimation {
                         duration: Appearance.animation.elementResize.duration
                         easing.type: Appearance.animation.elementResize.type
@@ -200,20 +204,8 @@ RowLayout {
                         easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                     }
                 }
-            }
 
-            Rectangle {
-                anchors.left: segment.leftRadius < segment.rightRadius ? parent.left : undefined
-                anchors.right: segment.rightRadius < segment.leftRadius ? parent.right : undefined
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: parent.width / 2 + 5
-                visible: segment.leftRadius !== segment.rightRadius
-                radius: Math.min(segment.leftRadius, segment.rightRadius)
-                color: segment.segmentColor
-                antialiasing: true
-
-                Behavior on radius {
+                Behavior on topRightRadius {
                     NumberAnimation {
                         duration: Appearance.animation.elementResize.duration
                         easing.type: Appearance.animation.elementResize.type
@@ -221,11 +213,19 @@ RowLayout {
                     }
                 }
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Appearance.animation.expressiveEffects.duration
-                        easing.type: Appearance.animation.expressiveEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                Behavior on bottomLeftRadius {
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                    }
+                }
+
+                Behavior on bottomRightRadius {
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
                     }
                 }
             }

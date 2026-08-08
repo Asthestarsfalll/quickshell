@@ -148,6 +148,12 @@ require_text Widgets/common/StyledButtonGroup.qml 'property int innerRadius: 0'
 require_text Widgets/common/StyledButtonGroup.qml 'property int pressedExpansion: 0'
 require_text Widgets/common/StyledButtonGroup.qml \
     'Appearance.colors.colSecondaryContainer'
+require_text Widgets/common/StyledButtonGroup.qml \
+    'topLeftRadius: segment.leftRadius'
+require_text Widgets/common/StyledButtonGroup.qml \
+    'topRightRadius: segment.rightRadius'
+reject_text Widgets/common/StyledButtonGroup.qml \
+    'width: parent.width / 2 + 5'
 require_text Widgets/common/MaterialSlider.qml \
     'track.trackEndX - root.trackHeight / 2 - width / 2'
 reject_text Widgets/common/MaterialSlider.qml 'indicatorCone'
