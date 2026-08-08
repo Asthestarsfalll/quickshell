@@ -137,8 +137,12 @@ require_text Common/Sizes.qml 'barControlCircleSize: 28'
 require_text Common/Sizes.qml 'barWeatherVerticalPillHeight: 56'
 
 require_text Modules/Keystone/ClockContent/ClockContent.qml \
-    'function verticalCharacters(value)'
+    'function sideDateParts(date)'
 reject_text Modules/Keystone/ClockContent/ClockContent.qml 'sideRotation'
+reject_text Modules/Keystone/ClockContent/ClockContent.qml \
+    'text: root.verticalCharacters(root.dateStr)'
+require_text Modules/Keystone/ClockContent/ClockContent.qml \
+    'property var verticalDateParts: []'
 require_text Modules/Keystone/ClockContent/ClockContent.qml \
     'visible: !root.vertical'
 require_text Modules/Keystone/ClockContent/ClockContent.qml \
