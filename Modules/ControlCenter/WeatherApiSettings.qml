@@ -136,14 +136,6 @@ StyledFlickable {
                     textFormat: Text.PlainText
                 }
 
-                Text {
-                    Layout.fillWidth: true
-                    text: qsTr("配置 Keystone 天气地图服务")
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Fonts.ui
-                    font.pixelSize: 13
-                    textFormat: Text.PlainText
-                }
             }
         }
 
@@ -193,14 +185,6 @@ StyledFlickable {
                             textFormat: Text.PlainText
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: qsTr("用于天气数据覆盖层")
-                            color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Fonts.ui
-                            font.pixelSize: 12
-                            textFormat: Text.PlainText
-                        }
                     }
 
                     Rectangle {

@@ -60,7 +60,9 @@ for style in displaySmall headlineMedium headlineSmall titleLarge titleMedium \
     assert_contains "$typography" "readonly property int pixelSize:"
 done
 assert_contains Widgets/common/SettingsActionRow.qml \
-    'font.family: Typography.bodyMedium.family'
+    'Typography.bodyMedium.family'
+assert_contains Widgets/common/SettingsActionRow.qml \
+    'Typography.bodyLarge.family'
 assert_contains Widgets/common/MaterialCard.qml \
     'font.family: Typography.titleMedium.family'
 

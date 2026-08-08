@@ -121,6 +121,7 @@ StyledFlickable {
 
         property string title: ""
         property string iconName: "settings"
+        property alias headerTrailing: headerTrailingSlot.data
         default property alias content: body.data
 
         Layout.fillWidth: true
@@ -146,6 +147,13 @@ StyledFlickable {
                 font.family: Fonts.ui
                 font.pixelSize: 18
                 font.weight: Font.Medium
+            }
+
+            RowLayout {
+                id: headerTrailingSlot
+
+                Layout.alignment: Qt.AlignVCenter
+                spacing: Metrics.spacingS
             }
         }
 
@@ -329,7 +337,11 @@ StyledFlickable {
         }
     }
 
-    component EasingActionGroup: StyledButtonGroup {
+    component OriginalButtonGroup: StyledButtonGroup {
+        originalAppearance: true
+    }
+
+    component EasingActionGroup: OriginalButtonGroup {
         id: group
 
         property bool playing: false
@@ -373,16 +385,10 @@ StyledFlickable {
                 title: qsTr("桌面壁纸管理器")
                 iconName: "display_settings"
 
-                FlatSettingsSection {
-                Layout.fillWidth: true
-
-                MaterialRadioGroup {
-                    Layout.fillWidth: true
-                    horizontal: true
-                    accessibleName: qsTr("桌面壁纸管理器")
-                    currentValue:
-                        PersonalizationConfig.desktopWallpaperBackend
-                    model: [
+                headerTrailing: SearchSelectMenuField {
+                    Layout.preferredWidth: 168
+                    Layout.preferredHeight: Metrics.controlHeightM
+                    options: [
                         ({
                             "value": "quickshell",
                             "label": "Quickshell",
@@ -399,12 +405,10 @@ StyledFlickable {
                                     : qsTr("正在检测 awww…")
                         })
                     ]
-                    onValueSelected: value => {
-                        if (value !== "awww"
-                                || AwwwWallpaperService.available)
-                            WallpaperService
-                                .setDesktopWallpaperBackend(value);
-                    }
+                    value: PersonalizationConfig.desktopWallpaperBackend
+                    Accessible.name: qsTr("桌面壁纸管理器")
+                    onAccepted: value => WallpaperService
+                        .setDesktopWallpaperBackend(value)
                 }
 
                 InlineStatusBanner {
@@ -415,7 +419,6 @@ StyledFlickable {
                     message: AwwwWallpaperService.lastError !== ""
                         ? AwwwWallpaperService.lastError
                         : WallpaperService.lastDesktopError
-                }
                 }
             }
         }
@@ -474,7 +477,7 @@ StyledFlickable {
                             visible: root.currentWallpaperPath !== ""
                         }
 
-                        StyledButtonGroup {
+                        OriginalButtonGroup {
                             Layout.alignment: Qt.AlignLeft
                             model: [
                                 ({ "value": "previous",
@@ -497,7 +500,7 @@ StyledFlickable {
                     }
                 }
 
-                StyledButtonGroup {
+                OriginalButtonGroup {
                     id: fillModeButtonGroup
 
                     Layout.alignment: Qt.AlignHCenter
@@ -580,7 +583,7 @@ StyledFlickable {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 4
 
-                        StyledButtonGroup {
+                        OriginalButtonGroup {
                             Layout.alignment: Qt.AlignHCenter
                             model: root.desktopUsesAwww
                                 ? PersonalizationConfig
@@ -603,7 +606,7 @@ StyledFlickable {
                             }
                         }
 
-                        StyledButtonGroup {
+                        OriginalButtonGroup {
                             Layout.alignment: Qt.AlignHCenter
                             model: root.desktopUsesAwww
                                 ? PersonalizationConfig
@@ -626,7 +629,7 @@ StyledFlickable {
                             }
                         }
 
-                        StyledButtonGroup {
+                        OriginalButtonGroup {
                             Layout.alignment: Qt.AlignHCenter
                             visible: root.desktopUsesAwww
                             model: PersonalizationConfig
@@ -665,7 +668,7 @@ StyledFlickable {
                     font.weight: Font.Medium
                 }
 
-                MaterialAccessibleSlider {
+                MaterialSlider {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: Math.min(
                         520, root.pageContentWidth - 60)
@@ -717,7 +720,7 @@ StyledFlickable {
                     font.weight: Font.Medium
                 }
 
-                MaterialAccessibleSlider {
+                MaterialSlider {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: Math.min(
                         520, root.pageContentWidth - 60)
@@ -774,7 +777,7 @@ StyledFlickable {
                     spacing: 12
                     enabled: root.sharedTransitionParametersEnabled
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         id: transitionDurationSlider
 
                         Layout.preferredWidth: Math.min(460, Math.max(330, root.pageContentWidth - 140))
@@ -1235,7 +1238,7 @@ StyledFlickable {
                         font.weight: Font.Medium
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled: root.preferredScaleControlEnabled
                         from: 1
@@ -1264,7 +1267,7 @@ StyledFlickable {
                         font.weight: Font.Medium
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled: !root.desktopUsesAwww
                         from: 2
@@ -1334,7 +1337,7 @@ StyledFlickable {
                             root.selectedOverviewOutput)
                 }
 
-                StyledButtonGroup {
+                OriginalButtonGroup {
                     Layout.alignment: Qt.AlignHCenter
                     model: PersonalizationConfig.fillModes
                     currentValue:
@@ -1409,7 +1412,7 @@ StyledFlickable {
                 Layout.fillWidth: true
                 title: qsTr("转场类型")
 
-                StyledButtonGroup {
+                OriginalButtonGroup {
                     Layout.alignment: Qt.AlignHCenter
                     model:
                         PersonalizationConfig.transitionTypes.slice(0, 5)
@@ -1420,7 +1423,7 @@ StyledFlickable {
                             .setOverviewTransitionType(value)
                 }
 
-                StyledButtonGroup {
+                OriginalButtonGroup {
                     Layout.alignment: Qt.AlignHCenter
                     model:
                         PersonalizationConfig.transitionTypes.slice(5, 9)
@@ -1449,7 +1452,7 @@ StyledFlickable {
                         font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled
@@ -1477,7 +1480,7 @@ StyledFlickable {
                         font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled
@@ -1504,7 +1507,7 @@ StyledFlickable {
                         font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled
@@ -1532,7 +1535,7 @@ StyledFlickable {
                         font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled

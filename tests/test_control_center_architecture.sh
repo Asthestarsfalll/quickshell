@@ -71,10 +71,88 @@ require_text Modules/ControlCenter/GeneralPage.qml \
     'case "autostart": return Qt.resolvedUrl("AutostartPage.qml")'
 require_text Modules/ControlCenter/GeneralOverviewPage.qml \
     'trailingIconName: "chevron_right"'
+for section in '界面' '交互' '应用'; do
+    require_text Modules/ControlCenter/GeneralOverviewPage.qml "$section"
+done
+reject_text Modules/ControlCenter/GeneralOverviewPage.qml \
+    '调整 Shell 的常用行为与用户级启动应用。'
+reject_text Modules/ControlCenter/GeneralOverviewPage.qml 'title: qsTr("设置")'
 for section in sidebar effects scrolling autostart; do
     require_text Modules/ControlCenter/GeneralOverviewPage.qml \
         "root.sectionRequested(\"$section\")"
 done
+reject_text Modules/ControlCenter/ThemePage.qml 'Niri 光标配置'
+reject_text Modules/ControlCenter/AutostartPage.qml \
+    'supportingText: AutostartService.autostartDir'
+reject_text Modules/ControlCenter/AutostartPage.qml \
+    '只显示用户目录中的 .desktop 条目'
+reject_text Modules/ControlCenter/AutostartPage.qml \
+    '从已安装应用中选择一个加入用户级开机启动。'
+reject_text Modules/ControlCenter/DefaultAppsPage.qml \
+    'required property string description'
+reject_text Modules/ControlCenter/DefaultAppsPage.qml \
+    'description: qsTr('
+reject_text Modules/ControlCenter/DefaultAppsPage.qml \
+    '选择用于打开常见文件和链接的系统默认应用'
+reject_text Modules/ControlCenter/WallpaperPage.qml 'MaterialRadioGroup'
+require_text Modules/ControlCenter/WallpaperPage.qml \
+    'headerTrailing: SearchSelectMenuField'
+require_text Modules/ControlCenter/WallpaperPage.qml \
+    'component OriginalButtonGroup: StyledButtonGroup'
+require_text Modules/ControlCenter/ThemePage.qml \
+    'component OriginalButtonGroup: StyledButtonGroup'
+require_text Modules/ControlCenter/GeneralOverviewPage.qml \
+    'iconName: "dashboard"'
+require_text Modules/ControlCenter/GeneralOverviewPage.qml \
+    'iconName: "touch_app"'
+require_text Modules/ControlCenter/GeneralOverviewPage.qml \
+    'iconName: "apps"'
+require_text Modules/Keystone/WeatherContent/WeatherMapLayerSelector.qml \
+    'pressedExpansion: 4'
+require_text Widgets/common/SearchSelectMenuField.qml \
+    'property string enabledRole: "enabled"'
+require_text Widgets/common/SearchSelectMenuField.qml \
+    'property string tooltipRole: "tooltip"'
+for file in \
+    Modules/ControlCenter/GeneralSliderSetting.qml \
+    Modules/ControlCenter/ThemePage.qml \
+    Modules/ControlCenter/WallpaperPage.qml \
+    Modules/ControlCenter/ClockSliderSetting.qml
+do
+    require_text "$file" 'MaterialSlider {'
+    reject_text "$file" 'MaterialAccessibleSlider'
+done
+if [ -e Widgets/common/MaterialAccessibleSlider.qml ] \
+        || [ -e Modules/ControlCenter/MaterialSlider.qml ]; then
+    fail "duplicate Control Center slider implementation remains"
+fi
+require_text Widgets/common/MaterialSlider.qml 'signal moved(real value)'
+require_text Widgets/common/MaterialSlider.qml 'signal committed(real value)'
+require_text Widgets/common/MaterialSlider.qml 'property bool live: true'
+require_text Widgets/common/MaterialSlider.qml 'property string valueSuffix: ""'
+require_text Widgets/common/MaterialSlider.qml 'property var valueFormatter:'
+require_text Widgets/common/MaterialSlider.qml 'property bool showValueIndicator: true'
+require_text Widgets/common/MaterialTextField.qml 'verticalAlignment: TextInput.AlignVCenter'
+require_text Widgets/common/MaterialTextField.qml \
+    'readonly property bool fieldHovered:'
+reject_text Widgets/common/MaterialTextField.qml \
+    'readonly property bool hovered:'
+require_text Widgets/common/SettingsSection.qml 'property string iconName: ""'
+require_text Widgets/common/SettingsSection.qml \
+    'Appearance.colors.colSecondaryContainer'
+require_text Widgets/common/SettingsActionRow.qml 'leftPadding: Metrics.spacingL'
+require_text Widgets/common/SettingsActionRow.qml 'rightPadding: Metrics.spacingL'
+require_text Widgets/common/StyledButtonGroup.qml \
+    'spacing: root.originalAppearance ? 2 : 0'
+require_text Widgets/common/StyledButtonGroup.qml 'property int innerRadius: 0'
+require_text Widgets/common/StyledButtonGroup.qml 'property int pressedExpansion: 0'
+require_text Widgets/common/StyledButtonGroup.qml \
+    'Appearance.colors.colSecondaryContainer'
+require_text Widgets/common/MaterialSlider.qml \
+    'track.trackEndX - root.trackHeight / 2 - width / 2'
+reject_text Widgets/common/MaterialSlider.qml 'indicatorCone'
+reject_text Widgets/common/MaterialSlider.qml '"#000000"'
+reject_text Widgets/common/MaterialSlider.qml '"#ffffff"'
 reject_text AppShell.qml 'property: "uiScale"'
 reject_text Modules/ControlCenter/ControlCenterWindow.qml \
     'property: "uiScale"'

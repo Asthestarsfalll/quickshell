@@ -15,9 +15,12 @@ RowLayout {
     property var currentValue: ""
     property int buttonHeight: 36
     property int horizontalPadding: 24
-    property int innerRadius: 6
+    // Connected segments use square inner edges so adjacent backgrounds do
+    // not expose a dark antialiased seam. Outer edges remain rounded.
+    property int innerRadius: 0
     property real edgeRadius: buttonHeight / 2
-    property int pressedExpansion: 10
+    property bool originalAppearance: false
+    property int pressedExpansion: 0
     property int buttonMinWidth: 0
     property int style: StyledButtonGroup.Style.Primary
     property bool iconOnly: false
@@ -35,7 +38,16 @@ RowLayout {
 
     signal valueSelected(var value, var modelData)
 
-    spacing: 2
+    // The refreshed connected appearance removes the parent-surface seam.
+    // Pages that intentionally retain the former appearance can opt in.
+    spacing: root.originalAppearance ? 2 : 0
+
+    readonly property int effectiveInnerRadius:
+        root.originalAppearance && root.innerRadius === 0
+            ? 6 : root.innerRadius
+    readonly property int effectivePressedExpansion:
+        root.originalAppearance && root.pressedExpansion === 0
+            ? 10 : root.pressedExpansion
 
     function roleValue(item, role, fallback) {
         if (item === undefined || item === null)
@@ -86,9 +98,13 @@ RowLayout {
                 return pressed ? Appearance.colors.colPrimaryContainerActive
                                : hovered ? Appearance.colors.colPrimaryContainerHover
                                          : Appearance.colors.colPrimaryContainer;
-            return pressed ? Appearance.colors.colLayer4Active
-                           : hovered ? Appearance.colors.colLayer4
-                                     : Appearance.colors.colLayer2;
+            if (root.originalAppearance)
+                return pressed ? Appearance.colors.colLayer4Active
+                               : hovered ? Appearance.colors.colLayer4
+                                         : Appearance.colors.colLayer2;
+            return pressed ? Appearance.colors.colSecondaryContainerActive
+                           : hovered ? Appearance.colors.colSecondaryContainerHover
+                                     : Appearance.colors.colSecondaryContainer;
         }
 
         if (active)
@@ -102,7 +118,10 @@ RowLayout {
 
     function contentColor(active) {
         if (style === StyledButtonGroup.Style.Tonal)
-            return active ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurfaceVariant;
+            return active ? Appearance.colors.colOnPrimaryContainer
+                          : root.originalAppearance
+                            ? Appearance.colors.colOnSurfaceVariant
+                            : Appearance.colors.colOnSecondaryContainer;
         return active ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer;
     }
 
@@ -122,19 +141,26 @@ RowLayout {
             readonly property bool last: index === root.model.length - 1
             readonly property bool pressed: segmentMouse.pressed && segmentEnabled
             readonly property bool hovered: segmentMouse.containsMouse && segmentEnabled
-            readonly property real leftRadius: (active || (root.roundOuterSegments && first) || pressed) ? root.edgeRadius : root.innerRadius
-            readonly property real rightRadius: (active || (root.roundOuterSegments && last) || pressed) ? root.edgeRadius : root.innerRadius
+            readonly property real leftRadius: (active
+                || (root.roundOuterSegments && first)
+                || (pressed && root.effectivePressedExpansion > 0))
+                    ? root.edgeRadius : root.effectiveInnerRadius
+            readonly property real rightRadius: (active
+                || (root.roundOuterSegments && last)
+                || (pressed && root.effectivePressedExpansion > 0))
+                    ? root.edgeRadius : root.effectiveInnerRadius
             readonly property color segmentColor: root.fillColor(active, hovered, pressed)
             readonly property color inkColor: root.contentColor(active)
             readonly property string labelText: root.textFor(modelData)
             readonly property string iconText: root.iconFor(modelData)
             readonly property string tooltipText: root.tooltipFor(modelData)
 
-            Layout.preferredWidth: root.segmentWidth(modelData, label.implicitWidth, root.iconSize)
-                                   + (pressed ? root.pressedExpansion : 0)
+            Layout.preferredWidth: root.segmentWidth(modelData,
+                label.implicitWidth, root.iconSize)
+                + (pressed ? root.effectivePressedExpansion : 0)
             Layout.preferredHeight: root.buttonHeight
             opacity: segmentEnabled ? 1 : 0.45
-            scale: pressed ? 0.97 : 1
+            scale: pressed && root.effectivePressedExpansion > 0 ? 0.97 : 1
             z: pressed ? 3 : active ? 2 : hovered ? 1 : 0
 
             Behavior on Layout.preferredWidth {
@@ -157,6 +183,7 @@ RowLayout {
                 anchors.fill: parent
                 radius: Math.max(segment.leftRadius, segment.rightRadius)
                 color: segment.segmentColor
+                antialiasing: true
 
                 Behavior on radius {
                     NumberAnimation {
@@ -184,6 +211,7 @@ RowLayout {
                 visible: segment.leftRadius !== segment.rightRadius
                 radius: Math.min(segment.leftRadius, segment.rightRadius)
                 color: segment.segmentColor
+                antialiasing: true
 
                 Behavior on radius {
                     NumberAnimation {

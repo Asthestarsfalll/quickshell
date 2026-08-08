@@ -20,28 +20,10 @@ StyledFlickable {
         y: Metrics.pageMargin
         spacing: Metrics.spacingL
 
-        Text {
+        SettingsSection {
             Layout.fillWidth: true
-            text: qsTr("通用")
-            color: Appearance.colors.colOnSurface
-            font.family: Fonts.ui
-            font.pixelSize: Typography.headlineSmall.pixelSize
-            font.weight: Font.DemiBold
-        }
-
-        Text {
-            Layout.fillWidth: true
-            text: qsTr("调整 Shell 的常用行为与用户级启动应用。")
-            color: Appearance.colors.colOnSurfaceVariant
-            font.family: Fonts.ui
-            font.pixelSize: Typography.bodyMedium.pixelSize
-            wrapMode: Text.Wrap
-        }
-
-        MaterialCard {
-            Layout.fillWidth: true
-            title: qsTr("设置")
-            iconName: "settings"
+            title: qsTr("界面")
+            iconName: "dashboard"
 
             SettingsActionRow {
                 Layout.fillWidth: true
@@ -66,6 +48,12 @@ StyledFlickable {
                 trailingIconName: "chevron_right"
                 onClicked: root.sectionRequested("effects")
             }
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("交互")
+            iconName: "touch_app"
 
             SettingsActionRow {
                 Layout.fillWidth: true
@@ -74,6 +62,12 @@ StyledFlickable {
                 trailingIconName: "chevron_right"
                 onClicked: root.sectionRequested("scrolling")
             }
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("应用")
+            iconName: "apps"
 
             SettingsActionRow {
                 Layout.fillWidth: true
@@ -87,7 +81,6 @@ StyledFlickable {
                 Layout.fillWidth: true
                 iconName: "apps"
                 text: qsTr("默认应用")
-                description: qsTr("浏览器、文件管理器和媒体播放器等")
                 trailingIconName: "chevron_right"
                 onClicked: root.sectionRequested("default-apps")
             }

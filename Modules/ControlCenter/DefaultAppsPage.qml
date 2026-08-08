@@ -19,7 +19,6 @@ StyledFlickable {
 
         required property string roleId
         required property string title
-        required property string description
         required property string iconName
 
         readonly property var roleState:
@@ -31,7 +30,7 @@ StyledFlickable {
         }
 
         Layout.fillWidth: true
-        Layout.preferredHeight: Math.max(62, rowColumn.implicitHeight + 12)
+        Layout.preferredHeight: Metrics.controlHeightL
 
         RowLayout {
             id: rowColumn
@@ -39,42 +38,30 @@ StyledFlickable {
             anchors.fill: parent
             spacing: Metrics.spacingS
 
-            Rectangle {
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: Metrics.controlHeightM
-                Layout.preferredHeight: Metrics.controlHeightM
-                radius: Appearance.rounding.normal
-                color: Appearance.colors.colSecondaryContainer
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.preferredWidth: Metrics.iconM
+                Layout.preferredHeight: Metrics.iconM
+                text: settingRow.iconName
+                iconSize: Metrics.iconM
+                color: Appearance.colors.colOnSurfaceVariant
 
-                MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: settingRow.iconName
-                    iconSize: Metrics.iconM
-                    color: Appearance.colors.colOnSecondaryContainer
-                }
+                // Keep the row icon as a glyph; only group headers use a
+                // tonal icon container.
             }
 
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
-                spacing: Metrics.spacingXXS
+                spacing: 0
 
                 Text {
                     Layout.fillWidth: true
                     text: settingRow.title
                     color: Appearance.colors.colOnSurface
-                    font.family: Typography.bodyMedium.family
-                    font.pixelSize: Typography.bodyMedium.pixelSize
-                    font.weight: Font.Medium
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: settingRow.description
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Typography.bodySmall.family
-                    font.pixelSize: Typography.bodySmall.pixelSize
+                    font.family: Typography.bodyLarge.family
+                    font.pixelSize: Typography.bodyLarge.pixelSize
+                    font.weight: Typography.bodyLarge.weight
                     elide: Text.ElideRight
                 }
             }
@@ -169,15 +156,6 @@ StyledFlickable {
             message: DefaultApplicationsService.lastMessage
         }
 
-        Text {
-            Layout.fillWidth: true
-            text: qsTr("选择用于打开常见文件和链接的系统默认应用")
-            color: Appearance.colors.colOnSurfaceVariant
-            font.family: Typography.bodyMedium.family
-            font.pixelSize: Typography.bodyMedium.pixelSize
-            wrapMode: Text.Wrap
-        }
-
         InlineStatusBanner {
             Layout.fillWidth: true
             visible: DefaultApplicationsService.loading
@@ -193,14 +171,12 @@ StyledFlickable {
             DefaultAppSettingRow {
                 roleId: "browser"
                 title: qsTr("网络浏览器")
-                description: qsTr("打开网页和 HTTP 链接")
                 iconName: "language"
             }
 
             DefaultAppSettingRow {
                 roleId: "mail"
                 title: qsTr("邮件")
-                description: qsTr("处理邮件链接")
                 iconName: "mail"
             }
         }
@@ -213,14 +189,12 @@ StyledFlickable {
             DefaultAppSettingRow {
                 roleId: "file-manager"
                 title: qsTr("文件管理器")
-                description: qsTr("打开文件夹和目录")
                 iconName: "folder"
             }
 
             DefaultAppSettingRow {
                 roleId: "terminal"
                 title: qsTr("终端")
-                description: qsTr("系统默认终端模拟器")
                 iconName: "terminal"
             }
         }
@@ -233,14 +207,12 @@ StyledFlickable {
             DefaultAppSettingRow {
                 roleId: "text-editor"
                 title: qsTr("文本编辑器")
-                description: qsTr("打开普通文本文件")
                 iconName: "edit_note"
             }
 
             DefaultAppSettingRow {
                 roleId: "pdf-reader"
                 title: qsTr("PDF 阅读器")
-                description: qsTr("打开 PDF 文档")
                 iconName: "picture_as_pdf"
             }
         }
@@ -253,21 +225,18 @@ StyledFlickable {
             DefaultAppSettingRow {
                 roleId: "image-viewer"
                 title: qsTr("图像查看器")
-                description: qsTr("打开常见图片文件")
                 iconName: "image"
             }
 
             DefaultAppSettingRow {
                 roleId: "video-player"
                 title: qsTr("视频播放器")
-                description: qsTr("播放视频文件")
                 iconName: "smart_display"
             }
 
             DefaultAppSettingRow {
                 roleId: "music-player"
                 title: qsTr("音乐播放器")
-                description: qsTr("播放音频文件")
                 iconName: "music_note"
             }
         }

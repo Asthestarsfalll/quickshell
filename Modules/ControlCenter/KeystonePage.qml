@@ -128,7 +128,6 @@ Item {
                 SettingsRow {
                     Layout.fillWidth: true
                     title: qsTr("屏幕边缘")
-                    supportingText: qsTr("钥石始终贴合物理屏幕边缘，不占用工作区")
 
                     trailing: EdgePositionSelector {
                         position: PersonalizationConfig.keystonePosition
@@ -162,7 +161,6 @@ Item {
                 SettingsRow {
                     Layout.fillWidth: true
                     title: qsTr("隐藏日期")
-                    supportingText: qsTr("同时隐藏横向和竖向钥石中的日期")
 
                     trailing: StyledSwitch {
                         checked: PersonalizationConfig.keystoneHideDate

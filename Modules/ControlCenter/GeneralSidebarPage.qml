@@ -21,7 +21,6 @@ StyledFlickable {
         SettingsSection {
             Layout.fillWidth: true
             title: qsTr("侧边栏")
-            supportingText: qsTr("控制侧边栏关闭后的资源保留策略。")
 
             SettingsRow {
                 Layout.fillWidth: true

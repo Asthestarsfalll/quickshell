@@ -646,7 +646,7 @@ Item {
             Layout.fillWidth: true
             spacing: 6
 
-            TextField {
+            MaterialTextField {
                 id: input
 
                 Layout.fillWidth: true
@@ -657,10 +657,13 @@ Item {
                 }
                 readOnly: !formatField.editable
                 selectByMouse: true
-                Material.accent: Appearance.colors.colPrimary
-                Material.background: Appearance.colors.colLayer2
-                Material.foreground: formatField.validateHex && text.length > 0 && !root.hexTextIsValid(text)
-                    ? Appearance.m3colors.m3error
+                leftPadding: 10
+                rightPadding: 10
+                error: formatField.validateHex && text.length > 0
+                    && !root.hexTextIsValid(text)
+                color: formatField.validateHex && text.length > 0
+                    && !root.hexTextIsValid(text)
+                    ? Appearance.colors.colError
                     : Appearance.colors.colOnSurface
                 font.family: Fonts.numeric
                 font.pixelSize: 13

@@ -148,7 +148,6 @@ StyledFlickable {
                 Layout.fillWidth: true
                 iconName: "rocket_launch"
                 title: qsTr("添加应用到开机启动")
-                supportingText: qsTr("选择已安装应用，创建用户级 Desktop Entry。")
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -223,18 +222,6 @@ StyledFlickable {
                         }
                     }
 
-                    Text {
-                        Layout.fillWidth: true
-                        visible: root.selectedApplication !== null
-                        text: root.selectedApplication
-                            ? qsTr("Desktop Entry ID：%1").arg(
-                                root.selectedApplication.id) : ""
-                        color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Fonts.mono
-                        font.pixelSize: Typography.bodySmall.pixelSize
-                        elide: Text.ElideMiddle
-                    }
-
                     DialogActionButton {
                         Layout.alignment: Qt.AlignRight
                         text: qsTr("添加到自启")
@@ -251,20 +238,10 @@ StyledFlickable {
                 Layout.fillWidth: true
                 iconName: "list_alt"
                 title: qsTr("用户自启应用")
-                supportingText: AutostartService.autostartDir
 
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Metrics.spacingS
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: AutostartService.entries.length > 0
-                            ? qsTr("只显示用户目录中的 .desktop 条目") : ""
-                        color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Fonts.ui
-                        font.pixelSize: Typography.bodySmall.pixelSize
-                    }
 
                     DialogActionButton {
                         text: qsTr("刷新")
@@ -378,21 +355,6 @@ StyledFlickable {
                             font.weight: Font.Medium
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: qsTr("从已安装应用中选择一个加入用户级开机启动。")
-                            horizontalAlignment: Text.AlignHCenter
-                            color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Fonts.ui
-                            font.pixelSize: Typography.bodySmall.pixelSize
-                        }
-
-                        DialogActionButton {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: qsTr("浏览应用")
-                            enabled: !AutostartService.busy
-                            onClicked: root.openApplicationBrowser()
-                        }
                     }
                 }
             }
@@ -428,7 +390,7 @@ StyledFlickable {
 
         contentItem: Text {
             text: root.pendingRemoveEntry
-                ? qsTr("将删除“%1”在用户 autostart 目录中的条目。")
+                ? qsTr("将删除“%1”自启条目。")
                     .arg(root.pendingRemoveEntry.name) : ""
             color: Appearance.colors.colOnSurfaceVariant
             font.family: Fonts.ui

@@ -17,6 +17,8 @@ FocusScope {
     property string noResultText: qsTr("无匹配结果")
     property string textRole: "label"
     property string valueRole: "value"
+    property string enabledRole: "enabled"
+    property string tooltipRole: "tooltip"
     property bool closeOnAccept: false
     property bool showCheckmark: true
     property bool showActiveIndicator: true
@@ -92,6 +94,16 @@ FocusScope {
             return optionText(option);
         }
         return option === undefined || option === null ? "" : String(option);
+    }
+
+    function optionEnabled(option) {
+        if (!hasRole(option, enabledRole))
+            return true;
+        return option[enabledRole] !== false;
+    }
+
+    function optionTooltip(option) {
+        return roleText(option, tooltipRole);
     }
 
     function labelFor(currentValue) {
@@ -174,9 +186,24 @@ FocusScope {
             return;
         }
 
-        const nextIndex = highlightedIndex < 0 ? 0 : (highlightedIndex + delta + filteredOptions.length) % filteredOptions.length;
-        highlightedIndex = nextIndex;
-        menuList.positionViewAtIndex(highlightedIndex, ListView.Contain);
+        let nextIndex = highlightedIndex < 0
+            ? (delta >= 0 ? 0 : filteredOptions.length - 1)
+            : (highlightedIndex + delta + filteredOptions.length)
+                % filteredOptions.length;
+
+        for (let attempts = 0; attempts < filteredOptions.length;
+                attempts += 1) {
+            if (optionEnabled(filteredOptions[nextIndex])) {
+                highlightedIndex = nextIndex;
+                menuList.positionViewAtIndex(highlightedIndex,
+                    ListView.Contain);
+                return;
+            }
+            nextIndex = (nextIndex + (delta >= 0 ? 1 : -1)
+                + filteredOptions.length) % filteredOptions.length;
+        }
+
+        highlightedIndex = -1;
     }
 
     function acceptHighlighted() {
@@ -186,6 +213,8 @@ FocusScope {
     }
 
     function acceptOption(option) {
+        if (!optionEnabled(option))
+            return;
         const acceptedValue = optionValue(option);
         hasPendingAccepted = true;
         pendingAcceptedValue = acceptedValue;
@@ -513,8 +542,10 @@ FocusScope {
 
                             readonly property string itemText: root.optionText(modelData)
                             readonly property string itemValue: root.optionValue(modelData)
+                            readonly property bool itemEnabled: root.optionEnabled(modelData)
                             readonly property bool selected: itemValue === root.visualSelectedValue
                             readonly property bool highlighted: index === root.highlightedIndex
+                            readonly property string tooltipText: root.optionTooltip(modelData)
 
                             width: ListView.view.width
                             height: root.itemHeight
@@ -522,11 +553,12 @@ FocusScope {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: Appearance.rounding.small
-                                color: optionItem.selected
+                                color: optionItem.selected && optionItem.itemEnabled
                                        ? Appearance.colors.colPrimaryContainer
                                        : optionItem.highlighted
                                          ? root.menuHoverColor
                                          : root.menuSurfaceColor
+                                opacity: optionItem.itemEnabled ? 1 : 0.5
 
                                 Behavior on color {
                                     ColorAnimation {
@@ -547,7 +579,8 @@ FocusScope {
 
                                     width: 22
                                     height: parent.height
-                                    scale: optionItem.selected && root.showCheckmark ? 1 : 0
+                                    scale: optionItem.selected && optionItem.itemEnabled
+                                        && root.showCheckmark ? 1 : 0
                                     transformOrigin: Item.Left
 
                                     Behavior on scale {
@@ -565,8 +598,10 @@ FocusScope {
                                         fill: 1
                                         color: Appearance.colors.colOnPrimaryContainer
                                         visible: root.showCheckmark
-                                        opacity: optionItem.selected ? 1 : 0
-                                        scale: optionItem.selected ? 1 : 0.6
+                                        opacity: optionItem.selected
+                                            && optionItem.itemEnabled ? 1 : 0
+                                        scale: optionItem.selected
+                                            && optionItem.itemEnabled ? 1 : 0.6
 
                                         Behavior on opacity {
                                             NumberAnimation {
@@ -591,7 +626,10 @@ FocusScope {
                                     width: parent.width - x
                                     height: parent.height
                                     text: optionItem.itemText
-                                    color: optionItem.selected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer3
+                                    color: optionItem.selected
+                                        && optionItem.itemEnabled
+                                        ? Appearance.colors.colOnPrimaryContainer
+                                        : Appearance.colors.colOnLayer3
                                     font.family: Fonts.ui
                                     font.pixelSize: 14
                                     font.weight: optionItem.selected ? Font.Medium : Font.Normal
@@ -619,9 +657,22 @@ FocusScope {
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
+                                enabled: optionItem.itemEnabled
+                                cursorShape: enabled
+                                    ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onEntered: root.highlightedIndex = optionItem.index
                                 onClicked: root.acceptOption(optionItem.modelData)
+                            }
+
+                            HoverHandler {
+                                id: optionHover
+                                enabled: optionItem.tooltipText !== ""
+                            }
+
+                            StyledToolTip {
+                                extraVisibleCondition: optionHover.hovered
+                                    && optionItem.tooltipText !== ""
+                                text: optionItem.tooltipText
                             }
                         }
                     }

@@ -79,7 +79,6 @@ StyledFlickable {
             SettingsRow {
                 Layout.fillWidth: true
                 title: qsTr("隐藏日期")
-                supportingText: qsTr("同时隐藏横向和竖向钥石中的日期")
 
                 trailing: StyledSwitch {
                     checked: PersonalizationConfig.keystoneHideDate

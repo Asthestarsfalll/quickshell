@@ -26,7 +26,6 @@ StyledFlickable {
             SettingsRow {
                 Layout.fillWidth: true
                 title: qsTr("屏幕边缘")
-                supportingText: qsTr("条栏占用所选屏幕边缘的工作区")
 
                 trailing: EdgePositionSelector {
                     position: PersonalizationConfig.barPosition

@@ -10,9 +10,9 @@ MaterialRippleButton {
     property string trailingIconName: "open_in_new"
     property string description: ""
 
-    implicitHeight: description === "" ? 56 : 68
-    leftPadding: Appearance.spacing.small
-    rightPadding: 0
+    implicitHeight: description === "" ? Metrics.controlHeightXL : 68
+    leftPadding: Metrics.spacingL
+    rightPadding: Metrics.spacingL
     topPadding: 0
     bottomPadding: 0
     buttonRadius: Appearance.rounding.full
@@ -22,7 +22,7 @@ MaterialRippleButton {
     colRipple: Appearance.colors.colLayer2Active
 
     contentItem: RowLayout {
-        spacing: Appearance.spacing.medium
+        spacing: Metrics.spacingS
 
         MaterialSymbol {
             visible: root.iconName !== ""
@@ -39,9 +39,12 @@ MaterialRippleButton {
                 Layout.fillWidth: true
                 text: root.text
                 color: Appearance.colors.colOnSurface
-                font.family: Typography.bodyMedium.family
-                font.pixelSize: Typography.bodyMedium.pixelSize
-                font.weight: Font.Medium
+                font.family: root.description === ""
+                    ? Typography.bodyLarge.family : Typography.bodyMedium.family
+                font.pixelSize: root.description === ""
+                    ? Typography.bodyLarge.pixelSize : Typography.bodyMedium.pixelSize
+                font.weight: root.description === ""
+                    ? Font.Medium : Typography.bodyMedium.weight
                 elide: Text.ElideRight
             }
 
@@ -57,7 +60,7 @@ MaterialRippleButton {
         }
 
         Item {
-            Layout.preferredWidth: 48
+            Layout.preferredWidth: Metrics.controlHeightM
             Layout.fillHeight: true
             visible: root.trailingIconName !== ""
 

@@ -58,6 +58,10 @@ StyledFlickable {
         }
     }
 
+    component OriginalButtonGroup: StyledButtonGroup {
+        originalAppearance: true
+    }
+
     component PreviewSegmentGroup: Item {
         id: previewGroup
 
@@ -558,7 +562,7 @@ StyledFlickable {
             visible: text !== ""
         }
 
-        MaterialAccessibleSlider {
+        MaterialSlider {
             id: settingSlider
 
             Layout.fillWidth: true
@@ -569,6 +573,7 @@ StyledFlickable {
             value: sliderRow.value
             accessibleName: sliderRow.title
             valueFormatter: sliderValue => Math.round(sliderValue).toString()
+                + sliderRow.suffix
             onMoved: sliderRow.moved(Math.round(settingSlider.value))
         }
     }
@@ -607,7 +612,7 @@ StyledFlickable {
                 Layout.alignment: Qt.AlignLeft
                 spacing: 4
 
-                StyledButtonGroup {
+                OriginalButtonGroup {
                     Layout.alignment: Qt.AlignLeft
                     model: PersonalizationConfig.matugenSchemes.slice(0, 5)
                     currentValue: PersonalizationConfig.matugenScheme
@@ -615,7 +620,7 @@ StyledFlickable {
                     onValueSelected: value => ThemeService.setMatugenScheme(value)
                 }
 
-                StyledButtonGroup {
+                OriginalButtonGroup {
                     Layout.alignment: Qt.AlignLeft
                     model: PersonalizationConfig.matugenSchemes.slice(5, 9)
                     currentValue: PersonalizationConfig.matugenScheme
@@ -633,21 +638,6 @@ StyledFlickable {
                 cursorThemes: ThemeService.availableCursorThemes
                 currentCursorTheme: PersonalizationConfig.cursorTheme
                 onAccepted: value => ThemeService.setCursorTheme(value)
-            }
-
-            SettingsRow {
-                Layout.fillWidth: true
-                iconName: ThemeService.cursorSyncBusy ? "sync" : "mouse"
-                title: qsTr("Niri 光标配置")
-                supportingText: {
-                    if (!ThemeService.isNiriSession)
-                        return qsTr("当前会话不是 Niri")
-                    if (ThemeService.cursorSyncBusy)
-                        return qsTr("正在同步到 Niri…")
-                    if (ThemeService.cursorIntegrationReady)
-                        return qsTr("已包含 clavis/cursor.kdl")
-                    return qsTr("将自动配置 clavis/cursor.kdl")
-                }
             }
 
             InlineStatusBanner {

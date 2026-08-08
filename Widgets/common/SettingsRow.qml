@@ -81,10 +81,14 @@ Rectangle {
             Text {
                 Layout.fillWidth: true
                 text: root.title
-                color: Appearance.colors.colOnLayer2
+                color: Appearance.colors.colOnSurface
                 font.family: Fonts.ui
-                font.pixelSize: 14
-                font.weight: Font.Medium
+                font.pixelSize: root.supportingText.length > 0
+                    ? Typography.bodyMedium.pixelSize
+                    : Typography.bodyLarge.pixelSize
+                font.weight: root.supportingText.length > 0
+                    ? Typography.bodyMedium.weight
+                    : Font.Medium
                 elide: Text.ElideRight
             }
 

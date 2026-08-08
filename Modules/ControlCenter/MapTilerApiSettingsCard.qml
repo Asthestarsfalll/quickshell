@@ -114,14 +114,6 @@ Rectangle {
                     textFormat: Text.PlainText
                 }
 
-                Text {
-                    Layout.fillWidth: true
-                    text: qsTr("用于 Dataviz 天气地图底图")
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Fonts.ui
-                    font.pixelSize: 12
-                    textFormat: Text.PlainText
-                }
             }
 
             Rectangle {

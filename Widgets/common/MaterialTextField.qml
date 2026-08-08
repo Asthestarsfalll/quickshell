@@ -6,30 +6,65 @@ import qs.Common
 TextField {
     id: root
 
-    Material.theme: Material.System
-    Material.accent: Appearance.m3colors.m3primary
-    Material.primary: Appearance.m3colors.m3primary
-    Material.background: Appearance.m3colors.m3surface
-    Material.foreground: Appearance.m3colors.m3onSurface
-    Material.containerStyle: Material.Outlined
+    property bool error: false
+    readonly property bool fieldHovered: fieldHover.containsMouse
 
-    implicitHeight: 56
+    implicitHeight: Metrics.controlHeightXL
     property bool blinkOn: true
     renderType: Text.QtRendering
-    selectedTextColor: Appearance.m3colors.m3onSecondaryContainer
-    selectionColor: Appearance.colors.colSecondaryContainer
-    placeholderTextColor: Appearance.m3colors.m3outline
+    selectedTextColor: Appearance.colors.colOnPrimaryContainer
+    selectionColor: Appearance.colors.colPrimaryContainer
+    placeholderTextColor: Appearance.colors.colOnSurfaceVariant
     clip: true
     selectByMouse: true
-    wrapMode: TextEdit.Wrap
+    wrapMode: TextInput.NoWrap
+    verticalAlignment: TextInput.AlignVCenter
+    leftPadding: Metrics.spacingL
+    rightPadding: Metrics.spacingL
+    topPadding: 0
+    bottomPadding: 0
+    activeFocusOnTab: true
 
     font {
-        pixelSize: 15
+        family: Typography.bodyLarge.family
+        pixelSize: Typography.bodyLarge.pixelSize
+        weight: Typography.bodyLarge.weight
         hintingPreference: Font.PreferFullHinting
+    }
+
+    background: Rectangle {
+        radius: Appearance.rounding.small
+        color: Appearance.colors.colLayer1
+        border.width: root.error || root.activeFocus ? 2 : 1
+        border.color: root.error
+            ? Appearance.colors.colError
+            : root.activeFocus
+                ? Appearance.colors.colPrimary
+                : root.fieldHovered
+                    ? Appearance.colors.colOutline
+                    : Appearance.colors.colOutlineVariant
+        antialiasing: true
+
+        Behavior on border.color {
+            ColorAnimation {
+                duration: Appearance.animation.expressiveFastEffects.duration
+                easing.type: Appearance.animation.expressiveFastEffects.type
+                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+            }
+        }
+
+        Behavior on border.width {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveFastEffects.duration
+                easing.type: Appearance.animation.expressiveFastEffects.type
+                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+            }
+        }
     }
 
     cursorDelegate: Rectangle {
         width: 2
+        height: Math.max(18, root.font.pixelSize * 1.25)
         radius: 1
         color: Appearance.colors.colPrimary
         visible: root.activeFocus && root.blinkOn
@@ -52,6 +87,8 @@ TextField {
     }
 
     MouseArea {
+        id: fieldHover
+
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         hoverEnabled: true

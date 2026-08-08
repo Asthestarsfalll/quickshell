@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.Common
 import qs.Services
 import qs.Widgets.common
 
@@ -13,7 +14,7 @@ StyledButtonGroup {
     currentValue: root.position
     style: StyledButtonGroup.Style.Tonal
     buttonMinWidth: 64
-    horizontalPadding: 12
+    horizontalPadding: Metrics.spacingL
     Layout.preferredWidth: implicitWidth
     onValueSelected: value => root.positionSelected(String(value))
 }

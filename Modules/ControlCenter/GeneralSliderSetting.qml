@@ -158,7 +158,7 @@ ColumnLayout {
         }
     }
 
-    MaterialAccessibleSlider {
+    MaterialSlider {
         Layout.fillWidth: true
         Layout.preferredHeight: 64
         from: root.from
@@ -168,6 +168,7 @@ ColumnLayout {
         enabled: root.enabled
         accessibleName: root.title
         valueFormatter: sliderValue => Math.round(sliderValue).toString()
+            + root.suffix
         onMoved: root.moved(Math.round(value))
     }
 }

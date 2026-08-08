@@ -76,7 +76,6 @@ StyledFlickable {
         SettingsSection {
             Layout.fillWidth: true
             title: qsTr("Matugen 模板生成")
-            supportingText: qsTr("壁纸或主题变化时，仅为已启用的程序生成模板。Quickshell 配色始终生成。关闭开关不会删除已有配色文件。")
 
             Repeater {
                 model: root.templatePrograms
@@ -89,13 +88,8 @@ StyledFlickable {
                     Layout.fillWidth: true
                     iconName: modelData.icon
                     title: modelData.title
-                    supportingText:
-                        !providerAvailable
-                        ? qsTr("未安装或配置模板不可用")
-                        : PersonalizationConfig
-                            .isMatugenTemplateEnabled(modelData.id)
-                        ? qsTr("生成并更新 Matugen 配色")
-                        : qsTr("已停止后续生成；现有配色文件会保留")
+                    supportingText: !providerAvailable
+                        ? qsTr("未安装或配置模板不可用") : ""
 
                     trailing: StyledSwitch {
                         enabled: !ThemeService.generating && providerAvailable
