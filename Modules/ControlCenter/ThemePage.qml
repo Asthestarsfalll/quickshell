@@ -635,6 +635,28 @@ StyledFlickable {
                 onAccepted: value => ThemeService.setCursorTheme(value)
             }
 
+            SettingsRow {
+                Layout.fillWidth: true
+                iconName: ThemeService.cursorSyncBusy ? "sync" : "mouse"
+                title: qsTr("Niri 光标配置")
+                supportingText: {
+                    if (!ThemeService.isNiriSession)
+                        return qsTr("当前会话不是 Niri")
+                    if (ThemeService.cursorSyncBusy)
+                        return qsTr("正在同步到 Niri…")
+                    if (ThemeService.cursorIntegrationReady)
+                        return qsTr("已包含 clavis/cursor.kdl")
+                    return qsTr("将自动配置 clavis/cursor.kdl")
+                }
+            }
+
+            InlineStatusBanner {
+                Layout.fillWidth: true
+                visible: ThemeService.cursorLastError !== ""
+                tone: "error"
+                message: ThemeService.cursorLastError
+            }
+
             SliderSettingRow {
                 title: qsTr("光标尺寸")
                 from: 12

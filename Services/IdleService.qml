@@ -35,7 +35,7 @@ Singleton {
     property bool policyStoreReady: false
     property bool policyLoading: true
 
-    property alias inhibited: persistentState.inhibited
+    property bool inhibited: false
     property bool dimmed: false
     property bool displaysOff: false
     readonly property bool busy: lockPending || displayPowerProcess.running || suspendProcess.running
@@ -82,13 +82,6 @@ Singleton {
     signal operationFailed(string operation, string message)
     signal lockRequested()
 
-    PersistentProperties {
-        id: persistentState
-        reloadableId: "clavis-idle-state"
-
-        property bool inhibited: false
-    }
-
     function setInhibited(value) {
         const requested = !!value;
         if (root.inhibited === requested)
@@ -97,6 +90,7 @@ Singleton {
         root.lastError = "";
         root.operationStarted("set-inhibited");
         root.inhibited = requested;
+        root.savePolicy();
         root.operationSucceeded("set-inhibited");
     }
 
@@ -150,6 +144,7 @@ Singleton {
 
     function _policyDefaults() {
         return {
+            "inhibited": false,
             "policyEnabled": true,
             "dimEnabled": false,
             "dimTimeout": 300,
@@ -178,10 +173,17 @@ Singleton {
         return Math.max(minimum, Math.min(maximum, value));
     }
 
+    function needsPolicyMigration(data) {
+        return !data || typeof data !== "object" || Array.isArray(data)
+            || typeof data.inhibited !== "boolean";
+    }
+
     function loadPolicy(data) {
         const values = data && typeof data === "object" ? data : {};
         const defaults = root._policyDefaults();
         root.policyLoading = true;
+        root.inhibited = root._policyBool(
+            values, "inhibited", defaults.inhibited);
         root.policyEnabled = root._policyBool(values, "policyEnabled", defaults.policyEnabled);
         root.dimEnabled = root._policyBool(values, "dimEnabled", defaults.dimEnabled);
         root.dimTimeout = root._policyNumber(values, "dimTimeout", defaults.dimTimeout, 0, 86400);
@@ -201,6 +203,7 @@ Singleton {
 
     function policyJson() {
         return {
+            "inhibited": root.inhibited,
             "policyEnabled": root.policyEnabled,
             "dimEnabled": root.dimEnabled,
             "dimTimeout": root.dimTimeout,
@@ -390,7 +393,9 @@ Singleton {
         onLoaded: {
             let repair = false;
             try {
-                root.loadPolicy(JSON.parse(policyFile.text().trim() || "{}"));
+                const parsed = JSON.parse(policyFile.text().trim() || "{}");
+                repair = root.needsPolicyMigration(parsed);
+                root.loadPolicy(parsed);
             } catch (error) {
                 console.log("IdleService failed to load policy:", error);
                 root.loadPolicy({});

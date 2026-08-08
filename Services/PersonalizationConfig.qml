@@ -115,6 +115,10 @@ Singleton {
 
     property bool storeReady: false
     property bool loading: false
+    property bool loaded: false
+    readonly property bool ready: root.storeReady && root.loaded && !root.loading
+
+    signal settingsLoaded()
 
     property string wallpaperFolder: Paths.dataHome + "/wallpapers"
     property string wallpaperPath: ""
@@ -351,6 +355,16 @@ Singleton {
 
         for (let key in raw)
             result[String(key)] = String(raw[key] || "");
+        return result;
+    }
+
+    function normalizedCursorTheme(value) {
+        if (typeof value !== "string")
+            return "";
+
+        const result = value.trim();
+        if (result.length > 256 || /[\u0000-\u001f\u007f]/.test(result))
+            return "";
         return result;
     }
 
@@ -814,21 +828,20 @@ Singleton {
     }
 
     function setCursorTheme(value) {
-        setValue("cursorTheme", value || "");
+        setValue("cursorTheme", root.normalizedCursorTheme(value));
     }
 
     function setCursorSize(value) {
-        const numberValue = Math.round(Number(value) || 24);
-        setValue("cursorSize", Math.max(12, Math.min(128, numberValue)));
+        setValue("cursorSize", root.normalizedBoundedInt(value, 24, 12, 128));
     }
 
     function setCursorHideWhenTyping(value) {
-        setValue("cursorHideWhenTyping", !!value);
+        setValue("cursorHideWhenTyping", typeof value === "boolean" ? value : false);
     }
 
     function setCursorHideAfterInactiveMs(value) {
-        const numberValue = Math.round(Number(value) || 0);
-        setValue("cursorHideAfterInactiveMs", Math.max(0, Math.min(5000, numberValue)));
+        setValue("cursorHideAfterInactiveMs",
+            root.normalizedBoundedInt(value, 0, 0, 5000));
     }
 
     function setIconTheme(value) {
@@ -1216,10 +1229,13 @@ Singleton {
         root.matugenTemplates =
             normalizedMatugenTemplates(theme.matugenTemplates);
         root.themeMode = theme.mode === "light" ? "light" : "dark";
-        root.cursorTheme = theme.cursorTheme || "";
-        root.cursorSize = Math.max(12, Math.min(128, Math.round(Number(theme.cursorSize) || 24)));
-        root.cursorHideWhenTyping = !!theme.cursorHideWhenTyping;
-        root.cursorHideAfterInactiveMs = Math.max(0, Math.min(5000, Math.round(Number(theme.cursorHideAfterInactiveMs) || 0)));
+        root.cursorTheme = root.normalizedCursorTheme(theme.cursorTheme);
+        root.cursorSize = root.normalizedBoundedInt(theme.cursorSize, 24, 12, 128);
+        root.cursorHideWhenTyping =
+            typeof theme.cursorHideWhenTyping === "boolean"
+                ? theme.cursorHideWhenTyping : false;
+        root.cursorHideAfterInactiveMs = root.normalizedBoundedInt(
+            theme.cursorHideAfterInactiveMs, 0, 0, 5000);
         root.iconTheme = theme.iconTheme || "";
         root.powerMenuStyle = normalizedOption(
             root.powerMenuStyles, theme.powerMenuStyle, "grid");
@@ -1357,10 +1373,19 @@ Singleton {
                 root.loading = false;
             }
 
+            root.loaded = true;
+            root.settingsLoaded();
             if (shouldRepair)
                 root.save();
         }
 
-        onLoadFailed: root.save()
+        onLoadFailed: {
+            root.loading = true;
+            root.loadFromObject({});
+            root.loading = false;
+            root.loaded = true;
+            root.settingsLoaded();
+            root.save();
+        }
     }
 }

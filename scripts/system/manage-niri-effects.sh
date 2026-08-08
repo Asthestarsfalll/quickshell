@@ -8,6 +8,7 @@ snippet_path=${3:-}
 xray_value=${4:-true}
 niri_command=${5:-niri}
 blur_enabled=${6:-false}
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 if [ "$mode" != "write" ] && [ "$mode" != "configure" ]; then
     echo "usage: manage-niri-effects.sh <write|configure> <main-config> <snippet> <xray> [niri] [blur]" >&2
@@ -83,39 +84,5 @@ if [ "$mode" = "write" ]; then
     exit 0
 fi
 
-if [ ! -f "$main_config" ]; then
-    echo "niri config not found: $main_config" >&2
-    exit 3
-fi
-
-main_dir=$(dirname -- "$main_config")
-snippet_include=$(realpath --relative-to="$main_dir" "$snippet_path")
-escaped_include=$(printf '%s' "$snippet_include" | sed 's/\\/\\\\/g; s/"/\\"/g')
-
-if grep -Fq "include optional=true \"$escaped_include\"" "$main_config" \
-    || grep -Fq "include \"$escaped_include\"" "$main_config"; then
-    trap - EXIT HUP INT TERM
-    echo "configured"
-    exit 0
-fi
-
-main_tmp=$(mktemp "$main_dir/.config.kdl.clavis.XXXXXX")
-cp -p -- "$main_config" "$main_tmp"
-{
-    echo
-    echo "// BEGIN CLAVIS EFFECTS"
-    echo "include optional=true \"$escaped_include\""
-    echo "// END CLAVIS EFFECTS"
-} >> "$main_tmp"
-
-"$niri_command" validate -c "$main_tmp" >/dev/null
-
-backup_path="$main_config.clavis-backup"
-if [ ! -e "$backup_path" ]; then
-    cp -p -- "$main_config" "$backup_path"
-fi
-
-mv -f -- "$main_tmp" "$main_config"
-main_tmp=
-trap - EXIT HUP INT TERM
-echo "configured"
+exec "$script_dir/manage-niri-fragment.sh" \
+    configure "$main_config" "$snippet_path" "$niri_command" "EFFECTS"

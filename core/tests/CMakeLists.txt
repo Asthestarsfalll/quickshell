@@ -32,6 +32,18 @@ add_test(
 )
 
 add_test(
+    NAME niri_cursor_config_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_niri_cursor_config.sh
+)
+
+add_test(
+    NAME idle_policy_persistence_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_idle_policy_persistence.sh
+)
+
+add_test(
     NAME power_menu_tests
     COMMAND ${BASH_EXECUTABLE}
         ${CLAVIS_SOURCE_ROOT}/tests/test_power_menu.sh

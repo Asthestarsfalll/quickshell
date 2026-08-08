@@ -9,6 +9,7 @@ Clavis 设置数据库位于 `$XDG_CONFIG_HOME/clavis/config.json`，它只保�
 | 用户自己的其他 `.kdl` | 用户 | Niri 输出、布局、快捷键与其他配置 |
 | `$XDG_CONFIG_HOME/niri/clavis/colors.kdl` | Clavis | Matugen 生成的 Niri 配色 |
 | `$XDG_CONFIG_HOME/niri/clavis/effects.kdl` | Clavis | Shell 背景模糊集成 |
+| `$XDG_CONFIG_HOME/niri/clavis/cursor.kdl` | Clavis | 根据 Cursor 设置生成的 Niri 鼠标指针 fragment |
 | `$XDG_CONFIG_HOME/clavis/config.json` | Clavis | 设置中心持久化 |
 | 两个 `clavis-*.service` | systemd user | 与 `niri.service` 同生命周期的进程 |
 | `$XDG_CONFIG_HOME/autostart/*.desktop` | 用户/XDG | 普通桌面应用启动 |
@@ -22,4 +23,8 @@ enable，不使用 `--now`。Fcitx5、nm-applet、blueman-applet 由 XDG Autosta
 Polkit 代理仍由用户 `startup.kdl` 启动。
 
 Matugen 颜色写入 `niri/clavis/colors.kdl`，背景效果写入
-`niri/clavis/effects.kdl`。外部应用仍读取自己的配置。
+`niri/clavis/effects.kdl`，鼠标指针设置写入 `niri/clavis/cursor.kdl`。
+`config.json` 是用户在 Clavis 设置中心选择的持久化 source of truth；
+`cursor.kdl` 只是自动生成、供 Niri 的
+`include optional=true "clavis/cursor.kdl"` 消费的 fragment，不应手工编辑。
+外部应用仍读取自己的配置。
