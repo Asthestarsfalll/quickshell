@@ -39,11 +39,7 @@ Rectangle {
         : 0
 
     function defaultDiskIndex() {
-        for (let index = 0; index < root.disks.length; index += 1) {
-            if (root.disks[index].mountPoint === "/")
-                return index;
-        }
-        return 0;
+        return Format.rootDiskIndex(root.disks);
     }
 
     onDisksChanged: {

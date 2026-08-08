@@ -422,7 +422,7 @@ Variants {
 
                 readonly property bool sideCompactLayout:
                     !keystoneWindow.horizontalEdge
-                    && (isCollapsedMode || isToolsMode)
+                    && (isCollapsedMode || isToolsMode || isVolumeMode)
 
                 property real logicalTargetW: recordingPresentationActive
                     ? (styleSurface.detached
@@ -1121,8 +1121,9 @@ Variants {
                         id: volumeWidget
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.volW
-                        height: root.volH
+                        width: keystoneWindow.horizontalEdge ? root.volW : root.volH
+                        height: keystoneWindow.horizontalEdge ? root.volH : root.volW
+                        vertical: !keystoneWindow.horizontalEdge
 
                         mode: root.sliderMode
                         audioNode: root.sliderMode === "volume" ? root.audioNode : root.sliderMode === "mic" ? root.sourceAudioNode : null

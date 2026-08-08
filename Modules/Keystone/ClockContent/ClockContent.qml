@@ -8,7 +8,6 @@ Item {
     property var player 
     property string edge: "top"
     readonly property bool vertical: edge === "left" || edge === "right"
-    readonly property real sideRotation: edge === "left" ? -90 : 90
 
     property string dateStr: ""
     
@@ -21,6 +20,15 @@ Item {
     function formatDate(date) {
         return DateFormat.compactDate(
             date, I18nService.language, Qt.locale(), "ddd dd MMM");
+    }
+
+    // Side Keystone keeps every glyph upright. Splitting the compact date
+    // into lines gives the narrow surface a real top-to-bottom reading order
+    // instead of rotating the entire clock by 90 degrees.
+    function verticalCharacters(value) {
+        return Array.from(String(value || ""))
+            .filter(character => character !== " ")
+            .join("\n");
     }
 
     Timer {
@@ -51,14 +59,15 @@ Item {
         property color digitColor: "white"
         property real digitRotation: 0
         property real digitOffset: 0
+        property bool stacked: false
         
         width: digitText.implicitWidth
-        height: 24  // 严格限制高度，形成视口
+        height: stacked ? 20 : 24  // 严格限制高度，形成视口
         clip: true  // 开启裁切，隐藏不在视口内的数字
         
-        rotation: digitRotation
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: digitOffset
+        rotation: stacked ? 0 : digitRotation
+        anchors.verticalCenter: stacked ? undefined : parent.verticalCenter
+        anchors.verticalCenterOffset: stacked ? 0 : digitOffset
 
         Text {
             id: digitText
@@ -66,13 +75,13 @@ Item {
             text: "0\n1\n2\n3\n4\n5\n6\n7\n8\n9"
             color: digitContainer.digitColor
             font.family: Fonts.ui
-            font.pixelSize: 22
+            font.pixelSize: digitContainer.stacked ? 20 : 22
             font.weight: Font.Black
-            lineHeight: 24 // 必须与视口 height 相同
+            lineHeight: digitContainer.stacked ? 20 : 24 // 必须与视口 height 相同
             lineHeightMode: Text.FixedHeight
             
             // 计算 y 轴偏移量
-            y: -digitContainer.targetDigit * 24
+            y: -digitContainer.targetDigit * (digitContainer.stacked ? 20 : 24)
 
             // 弹性动画，带来带有惯性回弹的机械翻页感
             Behavior on y {
@@ -88,7 +97,7 @@ Item {
     Row {
         anchors.centerIn: parent
         spacing: 10 
-        rotation: root.vertical ? root.sideRotation : 0
+        visible: !root.vertical
         
         // --- 左侧日期部分 ---
         Text {
@@ -156,6 +165,63 @@ Item {
                     digitRotation: 2
                     digitOffset: 1 
                 }
+            }
+        }
+    }
+
+    Column {
+        id: verticalClockLayout
+
+        anchors.centerIn: parent
+        spacing: 6
+        visible: root.vertical
+
+        Text {
+            text: root.verticalCharacters(root.dateStr)
+            color: Appearance.colors.colPrimary
+            font.family: Fonts.ui
+            font.pixelSize: 12
+            font.bold: true
+            lineHeight: 12
+            lineHeightMode: Text.FixedHeight
+            horizontalAlignment: Text.AlignHCenter
+            width: Math.max(implicitWidth, 20)
+        }
+
+        Column {
+            spacing: -1
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            RollingDigit {
+                stacked: true
+                targetDigit: root.h0
+                digitColor: Appearance.colors.colInversePrimary
+            }
+            RollingDigit {
+                stacked: true
+                targetDigit: root.h1
+                digitColor: Appearance.colors.colPrimary
+            }
+            Text {
+                text: ":"
+                width: 20
+                height: 20
+                color: Appearance.colors.colOutlineVariant
+                font.family: Fonts.numeric
+                font.pixelSize: 20
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            RollingDigit {
+                stacked: true
+                targetDigit: root.m0
+                digitColor: Appearance.colors.colInversePrimary
+            }
+            RollingDigit {
+                stacked: true
+                targetDigit: root.m1
+                digitColor: Appearance.colors.colPrimary
             }
         }
     }

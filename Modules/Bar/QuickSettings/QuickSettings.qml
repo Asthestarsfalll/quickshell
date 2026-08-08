@@ -10,9 +10,9 @@ Item {
     property var screen: null
     property bool vertical: false
     
-    // 维持 36 的高度
-    implicitHeight: vertical ? layout.implicitHeight + 16 : 36
-    implicitWidth: vertical ? Sizes.barVisualThickness : layout.implicitWidth + 16
+    implicitHeight: vertical ? layout.implicitHeight + 16 : Sizes.barPillThickness
+    implicitWidth: vertical ? Sizes.barVisualThickness
+        : layout.implicitWidth + 2 * Sizes.barPillHorizontalPadding
 
     TopBarPillBackground {
         anchors.fill: parent

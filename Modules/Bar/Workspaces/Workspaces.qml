@@ -13,7 +13,7 @@ Item {
     property bool vertical: false
     readonly property bool hasMultipleOutputs: Niri.outputs.count > 1
 
-    implicitHeight: vertical ? layout.implicitHeight + 16 : 36
+    implicitHeight: vertical ? layout.implicitHeight + 16 : Sizes.barPillThickness
     implicitWidth: vertical ? Sizes.barVisualThickness : layout.implicitWidth + 24
 
     function acceptsOutput(outputName) {

@@ -11,7 +11,7 @@ Item {
     property color activeContentColor: Appearance.colors.colOnSecondaryContainer
     readonly property bool isHovered: mouseArea.containsMouse
     readonly property bool isActive: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === viewName
-    readonly property int buttonSize: 28
+    readonly property int buttonSize: Sizes.barControlCircleSize
     readonly property int hoverButtonSize: 34
 
     implicitHeight: buttonSize

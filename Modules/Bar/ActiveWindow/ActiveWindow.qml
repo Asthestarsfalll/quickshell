@@ -10,10 +10,14 @@ Item {
 
     property bool vertical: false
 
-    implicitHeight: 36
-    implicitWidth: vertical ? Sizes.barVisualThickness : layout.width + 24
+    implicitHeight: vertical ? layout.implicitHeight + 16 : Sizes.barPillThickness
+    implicitWidth: vertical ? Sizes.barVisualThickness
+        : layout.implicitWidth + 24
 
     Behavior on implicitWidth {
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+    }
+    Behavior on implicitHeight {
         NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
     }
 
@@ -21,18 +25,33 @@ Item {
     readonly property string activeTitle: activeWindow.title || qsTr("桌面")
     readonly property string activeIcon: activeWindow.iconPath || ""
     readonly property string activeAppName: activeWindow.appName || activeWindow.appId || ""
+    readonly property string verticalAppName: activeAppName || qsTr("桌面")
+    readonly property string detailedTooltipText:
+        activeAppName && activeAppName !== activeTitle
+            ? activeAppName + "\n" + activeTitle
+            : activeTitle
+
+    function verticalTitle(value) {
+        const characters = Array.from(String(value || ""));
+        const limit = 14;
+        if (characters.length > limit)
+            return characters.slice(0, limit - 1).concat(["…"]).join("\n");
+        return characters.join("\n");
+    }
 
     TopBarPillBackground { anchors.fill: parent }
 
-    RowLayout {
+    GridLayout {
         id: layout
         anchors.centerIn: parent
-        spacing: 10
+        columns: root.vertical ? 1 : 2
+        rowSpacing: root.vertical ? 6 : 0
+        columnSpacing: root.vertical ? 0 : 10
 
         Item {
             Layout.preferredWidth: 18
             Layout.preferredHeight: 18
-            Layout.alignment: Qt.AlignVCenter
+            Layout.alignment: Qt.AlignCenter
             visible: root.vertical || root.activeIcon !== ""
                 || root.activeAppName !== ""
 
@@ -60,22 +79,19 @@ Item {
 
         Text {
             id: windowTitle
-            text: root.activeTitle
-            visible: !root.vertical
+            text: root.vertical
+                ? root.verticalTitle(root.verticalAppName) : root.activeTitle
 
             font.family: Fonts.ui
             font.pointSize: 11
             color: Appearance.colors.colOnSurface
+            horizontalAlignment: Text.AlignHCenter
+            lineHeight: root.vertical ? 0.9 : 1.0
 
             Layout.maximumWidth: 250
-            elide: Text.ElideRight
-            Layout.alignment: Qt.AlignVCenter
+            elide: root.vertical ? Text.ElideNone : Text.ElideRight
+            Layout.alignment: Qt.AlignCenter
         }
-    }
-
-    PopupToolTip {
-        extraVisibleCondition: root.vertical && activeHover.containsMouse
-        text: root.activeTitle
     }
 
     MouseArea {
@@ -84,5 +100,10 @@ Item {
         enabled: root.vertical
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
+    }
+
+    PopupToolTip {
+        extraVisibleCondition: root.vertical && activeHover.containsMouse
+        text: root.detailedTooltipText
     }
 }

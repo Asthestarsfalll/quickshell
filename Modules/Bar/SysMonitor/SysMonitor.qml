@@ -1,170 +1,172 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
-import qs.Common 
+import qs.Common
 import qs.Services
 import qs.Widgets.common
+import "../../../Common/functions/SystemFormat.js" as Format
 
 Item {
     id: root
 
     property bool vertical: false
-    property bool isHovered: mouseArea.containsMouse
-    
-    implicitHeight: vertical ? contentLayout.implicitHeight + 16 : 36
-    
-    implicitWidth: {
-        if (vertical)
-            return Sizes.barVisualThickness;
-        if (isHovered) {
-            return contentLayout.implicitWidth + 24;
-        }
-        return ramGroup.implicitWidth + 24;
+    readonly property bool isHovered: mouseArea.containsMouse
+    readonly property var memory: SystemMonitorService.memory || ({})
+    readonly property var cpu: SystemMonitorService.cpu || ({})
+    readonly property var disk:
+        Format.rootDisk(SystemMonitorService.disks)
+    readonly property real memoryUsage:
+        root.normalizedPercent(root.memory.usagePercent)
+    readonly property real diskUsage:
+        root.normalizedPercent(root.disk.usagePercent)
+    readonly property real temperatureValue:
+        Format.isNumber(root.cpu.packageTemperatureCelsius)
+            ? root.cpu.packageTemperatureCelsius
+            : root.cpu.temperatureCelsius
+    readonly property real temperatureUsage:
+        root.normalizedTemperature(root.temperatureValue)
+    readonly property real cpuUsage:
+        root.normalizedPercent(root.cpu.usagePercent)
+    readonly property string memoryPercentage:
+        Format.percent(root.memory.usagePercent, 0)
+    readonly property string diskPercentage:
+        Format.percent(root.disk.usagePercent, 0)
+    readonly property string temperaturePercentage:
+        Format.isNumber(root.temperatureValue)
+            ? Format.percent(root.temperatureUsage * 100, 0)
+            : Format.unavailable()
+    readonly property string cpuPercentage:
+        Format.percent(root.cpu.usagePercent, 0)
+    // Match the ordinary circular controls in QuickSettings. Vertical bars
+    // use the same circle geometry while intentionally hiding percentages.
+    readonly property real horizontalIndicatorSize: Sizes.barControlCircleSize
+    readonly property real verticalIndicatorSize: Sizes.barControlCircleSize
+    readonly property real indicatorSize: root.vertical
+        ? root.verticalIndicatorSize : root.horizontalIndicatorSize
+    readonly property real indicatorIconSize: 15
+    readonly property real indicatorSpacing: root.vertical
+        ? Appearance.spacing.small : Appearance.spacing.xSmall
+
+    implicitWidth: root.vertical
+        ? Sizes.barVisualThickness
+        : resourceLayout.implicitWidth
+            + 2 * Sizes.barPillHorizontalPadding
+    implicitHeight: root.vertical
+        ? resourceLayout.implicitHeight
+            + 2 * Sizes.barPillHorizontalPadding
+        : Sizes.barPillThickness
+
+    function clamp(value) {
+        const numeric = Number(value);
+        if (!isFinite(numeric))
+            return 0;
+        return Math.max(0, Math.min(1, numeric));
     }
 
-    Behavior on implicitWidth { 
-        NumberAnimation { duration: 300; easing.type: Easing.OutQuart } 
+    function normalizedPercent(value) {
+        return Format.isNumber(value) ? root.clamp(value / 100) : 0;
     }
 
-    TopBarPillBackground { anchors.fill: parent }
+    // CPU temperature uses the same 90 °C visual ceiling already used by the
+    // lock-screen SystemGrid. The displayed value remains the real Celsius.
+    function normalizedTemperature(value) {
+        return Format.isNumber(value) ? root.clamp(value / 90) : 0;
+    }
 
-    // （这里原本庞大的 Process 启动子线程和 SplitParser JSON 提取，以及循环调度的 Timer 已被彻底抹去）
+    function bytesPair(item) {
+        const used = Format.bytes(item && item.usedBytes);
+        const total = Format.bytes(item && item.totalBytes);
+        return used === Format.unavailable()
+            || total === Format.unavailable()
+            ? Format.unavailable()
+            : used + " / " + total;
+    }
 
-    // ================= 布局内容 =================
+    readonly property string tooltipText: [
+        qsTr("内存") + "    " + root.bytesPair(root.memory),
+        qsTr("磁盘") + "    " + root.bytesPair(root.disk),
+        qsTr("温度") + "    " + Format.temperature(root.temperatureValue),
+        qsTr("CPU") + "    " + Format.percent(root.cpu.usagePercent)
+    ].join("\n")
+
+    TopBarPillBackground {
+        anchors.fill: parent
+    }
+
     GridLayout {
-        id: contentLayout
+        id: resourceLayout
+
         anchors.centerIn: parent
-        rowSpacing: 12
-        columnSpacing: 12
-        layoutDirection: Qt.RightToLeft
+        rowSpacing: root.indicatorSpacing
+        columnSpacing: root.indicatorSpacing
         columns: root.vertical ? 1 : 4
 
-        // --- 1. RAM (常驻) ---
-        RowLayout {
-            id: ramGroup
-            spacing: 4
-            Text { 
-                text: "" 
-                color: Appearance.colors.colSecondary
-                font.family: Fonts.nerdFont
-                font.pixelSize: 16
-            }
-            Text { 
-                // 同时保全了原始流的传递。并在这里调取新的 ramUsedGB。toFixed(1) 可保留如 14.2G 格式：
-                text: root.ramUsedGB.toFixed(1) + "G"
-                color: Appearance.colors.colOnSurface
-                font.family: Fonts.ui
-                font.bold: true
-                font.pixelSize: 13
-                visible: !root.vertical
-            }
+        ResourcePie {
+            Layout.alignment: Qt.AlignCenter
+            indicatorSize: root.indicatorSize
+            iconSize: root.indicatorIconSize
+            value: root.memoryUsage
+            showPercentage: !root.vertical
+            percentageText: root.memoryPercentage
+            icon: "memory_alt"
+            fillColor: Appearance.colors.colPrimary
+            trackColor: Appearance.colors.colPrimaryContainer
+            iconColor: Appearance.colors.colOnPrimary
         }
 
-        // --- 2. Disk (展开) ---
-        RowLayout {
-            id: diskGroup
-            spacing: 4
-            visible: opacity > 0
-            opacity: root.isHovered ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
-            
-            Text { 
-                text: "" 
-                color: Appearance.colors.colPrimary
-                font.family: Fonts.nerdFont
-                font.pixelSize: 16
-            }
-            Text { 
-                text: Math.round(root.diskUsage) + "%"
-                color: Appearance.colors.colOnSurface
-                font.family: Fonts.ui
-                font.bold: true
-                font.pixelSize: 13
-                visible: !root.vertical
-            }
+        ResourcePie {
+            Layout.alignment: Qt.AlignCenter
+            indicatorSize: root.indicatorSize
+            iconSize: root.indicatorIconSize
+            value: root.diskUsage
+            showPercentage: !root.vertical
+            percentageText: root.diskPercentage
+            icon: "hard_drive"
+            fillColor: Appearance.colors.colSecondary
+            trackColor: Appearance.colors.colSecondaryContainer
+            iconColor: Appearance.colors.colOnSecondary
         }
 
-        // --- 3. Temp (展开) ---
-        RowLayout {
-            id: tempGroup
-            spacing: 4
-            visible: opacity > 0
-            opacity: root.isHovered ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
-            
-            Text { 
-                text: "" 
-                color: Appearance.colors.colTertiary
-                font.family: Fonts.nerdFont
-                font.pixelSize: 16
-            }
-            Text { 
-                text: Math.round(root.coreTemp) + "°C"
-                color: Appearance.colors.colOnSurface
-                font.family: Fonts.ui
-                font.bold: true
-                font.pixelSize: 13
-                visible: !root.vertical
-            }
+        ResourcePie {
+            Layout.alignment: Qt.AlignCenter
+            indicatorSize: root.indicatorSize
+            iconSize: root.indicatorIconSize
+            value: root.temperatureUsage
+            showPercentage: !root.vertical
+            percentageText: root.temperaturePercentage
+            icon: "thermostat"
+            fillColor: Appearance.colors.colTertiary
+            trackColor: Appearance.colors.colTertiaryContainer
+            iconColor: Appearance.colors.colOnTertiary
         }
 
-        // --- 4. CPU (展开) ---
-        RowLayout {
-            id: cpuGroup
-            spacing: 4
-            visible: opacity > 0
-            opacity: root.isHovered ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
-            
-            Text { 
-                text: "" 
-                color: Appearance.colors.colOnSurfaceVariant
-                font.family: Fonts.nerdFont
-                font.pixelSize: 16
-            }
-            Text { 
-                text: Math.round(root.cpuUsage) + "%"
-                color: Appearance.colors.colOnSurface
-                font.family: Fonts.ui
-                font.bold: true
-                font.pixelSize: 13
-                visible: !root.vertical
-            }
+        ResourcePie {
+            Layout.alignment: Qt.AlignCenter
+            indicatorSize: root.indicatorSize
+            iconSize: root.indicatorIconSize
+            value: root.cpuUsage
+            showPercentage: !root.vertical
+            percentageText: root.cpuPercentage
+            icon: "developer_board"
+            fillColor: Appearance.colors.colTertiary
+            trackColor: Appearance.colors.colTertiaryContainer
+            iconColor: Appearance.colors.colOnTertiary
         }
     }
 
-    // ================= 交互区域 =================
     MouseArea {
         id: mouseArea
         anchors.fill: parent
-        hoverEnabled: true 
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        
-        onClicked: {
-            Quickshell.execDetached(["gnome-system-monitor"]);
-        }
+
+        onClicked: Quickshell.execDetached(["gnome-system-monitor"])
     }
 
     PopupToolTip {
-        extraVisibleCondition: root.vertical && mouseArea.containsMouse
-        text: qsTr("内存 %1G\n磁盘 %2%\n温度 %3°C\nCPU %4%")
-            .arg(root.ramUsedGB.toFixed(1))
-            .arg(Math.round(root.diskUsage))
-            .arg(Math.round(root.coreTemp))
-            .arg(Math.round(root.cpuUsage))
+        extraVisibleCondition: root.isHovered
+        text: root.tooltipText
     }
-
-    readonly property real ramUsedGB:
-        Number(SystemMonitorService.memory.usedBytes) / 1073741824
-    readonly property real diskUsage:
-        SystemMonitorService.disks.length > 0
-            ? Number(SystemMonitorService.disks[0].usagePercent) : NaN
-    readonly property real coreTemp:
-        Number(SystemMonitorService.cpu.packageTemperatureCelsius)
-            || Number(SystemMonitorService.cpu.temperatureCelsius)
-    readonly property real cpuUsage:
-        Number(SystemMonitorService.cpu.usagePercent)
 
     Component.onCompleted: SystemMonitorService.acquire()
     Component.onDestruction: SystemMonitorService.release()

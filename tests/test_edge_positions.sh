@@ -49,7 +49,16 @@ require_text Modules/Bar/VerticalBarWindow.qml 'left: axis.isLeft'
 require_text Modules/Bar/VerticalBarWindow.qml 'right: axis.isRight'
 require_text Modules/Bar/VerticalBarWindow.qml 'exclusiveZone: exclusiveThickness'
 require_text Modules/Bar/VerticalBarContent.qml 'ColumnLayout {'
-require_text Modules/Bar/VerticalBarWindow.qml 'item: content.inputRegionItem'
+require_text Modules/Bar/HorizontalBarWindow.qml \
+    'item: content.leadingInputRegionItem'
+require_text Modules/Bar/HorizontalBarWindow.qml \
+    'item: content.trailingInputRegionItem'
+require_text Modules/Bar/VerticalBarWindow.qml \
+    'item: content.leadingInputRegionItem'
+require_text Modules/Bar/VerticalBarWindow.qml \
+    'item: content.trailingInputRegionItem'
+reject_text Modules/Bar/HorizontalBarContent.qml 'id: inputBand'
+reject_text Modules/Bar/VerticalBarContent.qml 'id: inputBand'
 
 require_text Common/Sizes.qml 'barVisualThickness:'
 require_text Common/Sizes.qml 'barOuterEdgeMargin:'
@@ -78,6 +87,72 @@ do
     reject_text "$file" 'sideRotation'
     reject_text "$file" 'rotation:'
 done
+
+require_text Modules/Bar/ActiveWindow/ActiveWindow.qml \
+    'function verticalTitle(value)'
+require_text Modules/Bar/ActiveWindow/ActiveWindow.qml \
+    'verticalAppName: activeAppName || qsTr("桌面")'
+require_text Modules/Bar/ActiveWindow/ActiveWindow.qml 'PopupToolTip {'
+require_text Modules/Bar/QuickSettings/Network.qml \
+    '34 / Sizes.barControlCircleSize'
+
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'columns: root.vertical ? 1 : 4'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'SystemMonitorService.acquire()'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'Format.rootDisk(SystemMonitorService.disks)'
+require_text Common/functions/SystemFormat.js 'function rootDisk(disks)'
+require_text Modules/Sidebars/Left/system/SystemStorageCard.qml \
+    'Format.rootDiskIndex(root.disks)'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'function normalizedTemperature(value)'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml 'Format.bytes'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml 'PopupToolTip {'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'TopBarPillBackground {'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'horizontalIndicatorSize: Sizes.barControlCircleSize'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'Sizes.barPillThickness'
+require_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    '2 * Sizes.barPillHorizontalPadding'
+reject_text Modules/Bar/SysMonitor/SysMonitor.qml 'colError'
+reject_text Modules/Bar/SysMonitor/SysMonitor.qml 'colLayer4'
+require_text Modules/Bar/SysMonitor/ResourcePie.qml \
+    'property bool showPercentage: false'
+reject_text Modules/Bar/SysMonitor/SysMonitor.qml \
+    'Behavior on implicitWidth'
+reject_text Modules/Bar/SysMonitor/SysMonitor.qml 'opacity:'
+reject_text Modules/Bar/SysMonitor/SysMonitor.qml 'Fonts.nerdFont'
+require_text Modules/Bar/SysMonitor/ResourcePie.qml 'PathAngleArc {'
+require_text Modules/Bar/SysMonitor/ResourcePie.qml 'startAngle: -90'
+require_text Modules/Bar/SysMonitor/ResourcePie.qml 'PathLine {'
+require_text Modules/Bar/SysMonitor/ResourcePie.qml \
+    'readonly property real normalizedValue:'
+require_text Modules/Bar/SysMonitor/ResourcePie.qml \
+    'Typography.labelLarge.pixelSize'
+require_text Common/Sizes.qml 'barPillThickness: 36'
+require_text Common/Sizes.qml 'barControlCircleSize: 28'
+require_text Common/Sizes.qml 'barWeatherVerticalPillHeight: 56'
+
+require_text Modules/Keystone/ClockContent/ClockContent.qml \
+    'function verticalCharacters(value)'
+reject_text Modules/Keystone/ClockContent/ClockContent.qml 'sideRotation'
+require_text Modules/Keystone/ClockContent/ClockContent.qml \
+    'visible: !root.vertical'
+require_text Modules/Keystone/ClockContent/ClockContent.qml \
+    'visible: root.vertical'
+require_text Modules/Keystone/VolumeContent/VolumeContent.qml \
+    'property bool vertical: false'
+require_text Modules/Keystone/VolumeContent/VolumeContent.qml \
+    'readonly property real splitY:'
+require_text Modules/Keystone/VolumeContent/VolumeContent.qml \
+    '1 - position / height'
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'isCollapsedMode || isToolsMode || isVolumeMode'
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'vertical: !keystoneWindow.horizontalEdge'
 
 require_text Widgets/common/PopupToolTip.qml 'function edgeToAnchor(edge)'
 require_text Widgets/common/PopupToolTip.qml 'case "left"'

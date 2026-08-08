@@ -12,13 +12,18 @@ Rectangle {
     property var screen: null
     property bool vertical: false
     
-    implicitHeight: 28
-    implicitWidth: vertical ? 28
-        : (isHovered ? layout.width + 20 : 28)
+    implicitHeight: Sizes.barControlCircleSize
+    implicitWidth: vertical ? Sizes.barControlCircleSize
+        : (isHovered ? layout.width + 20 : Sizes.barControlCircleSize)
     radius: Math.min(width, height) / 2
     color: Appearance.colors.colPrimaryContainer 
+    scale: root.vertical && root.isHovered
+        ? 34 / Sizes.barControlCircleSize : 1
 
     Behavior on implicitWidth { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+    Behavior on scale {
+        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    }
 
     RowLayout {
         id: layout

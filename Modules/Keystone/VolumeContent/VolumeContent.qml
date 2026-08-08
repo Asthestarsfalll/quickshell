@@ -12,6 +12,7 @@ Item {
     property real externalValue: 0
     property bool externalMuted: false
     property string iconName: ""
+    property bool vertical: false
     signal moved(real value)
     signal iconActivated()
 
@@ -38,11 +39,18 @@ Item {
         acceptedButtons: Qt.NoButton 
     }
 
-    RowLayout {
+    GridLayout {
+        id: volumeLayout
+
         anchors.fill: parent
-        anchors.leftMargin: 24
-        anchors.rightMargin: 24
-        spacing: 16
+        anchors.leftMargin: root.vertical ? 16 : 24
+        anchors.rightMargin: root.vertical ? 16 : 24
+        anchors.topMargin: root.vertical ? 16 : 0
+        anchors.bottomMargin: root.vertical ? 16 : 0
+        rows: root.vertical ? 3 : 1
+        columns: root.vertical ? 1 : 3
+        rowSpacing: root.vertical ? 12 : 0
+        columnSpacing: root.vertical ? 0 : 16
 
         MaterialSymbol {
             id: sliderIcon
@@ -51,7 +59,9 @@ Item {
             iconSize: 24
             fill: root.isMuted ? 1 : 0
             color: Appearance.colors.colOnLayer0
-            Layout.alignment: Qt.AlignVCenter
+            Layout.row: root.vertical ? 0 : 0
+            Layout.column: root.vertical ? 0 : 0
+            Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
 
             MouseArea {
                 anchors.fill: parent
@@ -69,9 +79,15 @@ Item {
         Item {
             id: track
 
-            Layout.fillWidth: true
-            Layout.preferredHeight: 6 
-            Layout.alignment: Qt.AlignVCenter
+            Layout.row: root.vertical ? 1 : 0
+            Layout.column: root.vertical ? 0 : 1
+            Layout.fillWidth: !root.vertical
+            Layout.fillHeight: root.vertical
+            Layout.preferredWidth: root.vertical ? 6 : -1
+            Layout.preferredHeight: root.vertical ? -1 : 6
+            Layout.minimumWidth: root.vertical ? 6 : 0
+            Layout.minimumHeight: root.vertical ? 100 : 6
+            Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
 
             readonly property real progress: Math.max(0, Math.min(1, root.displayVolume))
             readonly property real gapWidth: 10
@@ -79,13 +95,18 @@ Item {
             readonly property real leftWidth: Math.max(0, splitX - gapWidth / 2)
             readonly property real rightX: Math.min(width, splitX + gapWidth / 2)
             readonly property real rightWidth: Math.max(0, width - rightX)
+            readonly property real splitY: (1 - progress) * height
+            readonly property real topHeight: Math.max(0, splitY - gapWidth / 2)
+            readonly property real bottomY: Math.min(height, splitY + gapWidth / 2)
+            readonly property real bottomHeight: Math.max(0, height - bottomY)
 
             Rectangle {
                 id: fillRect
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: track.leftWidth
-                height: parent.height
+                x: 0
+                y: root.vertical ? parent.height - height
+                    : (parent.height - height) / 2
+                width: root.vertical ? parent.width : track.leftWidth
+                height: root.vertical ? track.bottomHeight : parent.height
                 radius: 3
                 color: Appearance.colors.colOnLayer0
                 
@@ -97,10 +118,10 @@ Item {
 
             Rectangle {
                 id: restRect
-                x: track.rightX
-                anchors.verticalCenter: parent.verticalCenter
-                width: track.rightWidth
-                height: parent.height
+                x: root.vertical ? 0 : track.rightX
+                y: root.vertical ? 0 : (parent.height - height) / 2
+                width: root.vertical ? parent.width : track.rightWidth
+                height: root.vertical ? track.topHeight : parent.height
                 radius: 3
                 color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.22)
 
@@ -113,6 +134,11 @@ Item {
                     enabled: !dragArea.pressed
                     NumberAnimation { duration: 150; easing.type: Easing.OutQuint }
                 }
+
+                Behavior on height {
+                    enabled: !dragArea.pressed
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuint }
+                }
             }
 
             MouseArea {
@@ -122,8 +148,8 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 preventStealing: true
 
-                function setVol(mouseX) {
-                    let p = mouseX / width
+                function setVol(position) {
+                    let p = root.vertical ? 1 - position / height : position / width
                     if (p < 0) p = 0
                     if (p > 1) p = 1
 
@@ -136,20 +162,22 @@ Item {
                     }
                 }
 
-                onPressed: (mouse) => setVol(mouse.x)
-                onPositionChanged: (mouse) => setVol(mouse.x)
+                onPressed: (mouse) => setVol(root.vertical ? mouse.y : mouse.x)
+                onPositionChanged: (mouse) => setVol(root.vertical ? mouse.y : mouse.x)
             }
         }
 
         Text {
+            Layout.row: root.vertical ? 2 : 0
+            Layout.column: root.vertical ? 0 : 2
             text: Math.round(root.displayVolume * 100)
             color: Appearance.colors.colOnLayer0
             font.pixelSize: 15
             font.bold: true
             font.family: Fonts.numeric
-            Layout.alignment: Qt.AlignVCenter
-            Layout.minimumWidth: 32 
-            horizontalAlignment: Text.AlignRight
+            Layout.alignment: root.vertical ? Qt.AlignHCenter : Qt.AlignVCenter
+            Layout.minimumWidth: root.vertical ? 0 : 32
+            horizontalAlignment: root.vertical ? Text.AlignHCenter : Text.AlignRight
         }
     }
 }

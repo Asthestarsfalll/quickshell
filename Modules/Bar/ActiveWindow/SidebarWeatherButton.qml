@@ -19,7 +19,7 @@ Item {
     readonly property real buttonWidth: contentWidth + 20
     readonly property int buttonHeight: 28
 
-    implicitHeight: vertical ? 48 : buttonHeight
+    implicitHeight: vertical ? Sizes.barWeatherVerticalPillHeight : buttonHeight
     implicitWidth: vertical ? buttonHeight : buttonWidth
     clip: true
 
@@ -104,14 +104,15 @@ Item {
         anchors.centerIn: parent
         width: root.vertical ? root.buttonHeight : root.contentWidth
         height: root.vertical ? root.height : root.buttonHeight
-        rowSpacing: root.vertical ? 0 : root.contentSpacing
-        columnSpacing: root.contentSpacing
+        rowSpacing: root.vertical ? 2 : 0
+        columnSpacing: root.vertical ? 0 : root.contentSpacing
         columns: root.vertical ? 1 : 2
 
         Item {
-            Layout.preferredWidth: root.iconSlotWidth
-            Layout.preferredHeight: root.vertical ? 22 : root.buttonHeight
-            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: root.vertical
+                ? root.buttonHeight : root.iconSlotWidth
+            Layout.preferredHeight: root.vertical ? 20 : root.buttonHeight
+            Layout.alignment: Qt.AlignCenter
 
             Text {
                 anchors.centerIn: parent
@@ -126,9 +127,10 @@ Item {
         }
 
         Item {
-            Layout.preferredWidth: root.temperatureSlotWidth
+            Layout.preferredWidth: root.vertical
+                ? root.buttonHeight : root.temperatureSlotWidth
             Layout.preferredHeight: root.vertical ? 16 : root.buttonHeight
-            Layout.alignment: Qt.AlignVCenter
+            Layout.alignment: Qt.AlignCenter
             visible: true
 
             Text {

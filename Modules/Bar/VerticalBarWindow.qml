@@ -51,7 +51,8 @@ PanelWindow {
     }
 
     mask: Region {
-        item: content.inputRegionItem
+        Region { item: content.leadingInputRegionItem }
+        Region { item: content.trailingInputRegionItem }
     }
 
     CompositorBlurRegion {

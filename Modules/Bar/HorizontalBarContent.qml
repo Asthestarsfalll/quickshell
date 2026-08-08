@@ -14,18 +14,14 @@ Item {
     required property var axis
     property string popupEdge: axis.edge
 
-    readonly property alias inputRegionItem: inputBand
+    readonly property alias leadingInputRegionItem: leftSection
+    readonly property alias trailingInputRegionItem: rightSection
     readonly property alias workspacesItem: workspaces
     readonly property alias sidebarButtonItem: sidebarButton
     readonly property alias activeWindowItem: activeWindow
     readonly property alias trayItem: tray
     readonly property alias sysMonitorItem: sysMonitor
     readonly property alias quickSettingsItem: quickSettings
-
-    Item {
-        id: inputBand
-        anchors.fill: parent
-    }
 
     RowLayout {
         id: leftSection

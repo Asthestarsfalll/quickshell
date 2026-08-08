@@ -13,20 +13,14 @@ Item {
     required property var axis
     property string popupEdge: axis.edge
 
-    readonly property alias inputRegionItem: inputBand
+    readonly property alias leadingInputRegionItem: topSection
+    readonly property alias trailingInputRegionItem: bottomSection
     readonly property alias workspacesItem: workspaces
     readonly property alias sidebarButtonItem: sidebarButton
     readonly property alias activeWindowItem: activeWindow
     readonly property alias trayItem: tray
     readonly property alias sysMonitorItem: sysMonitor
     readonly property alias quickSettingsItem: quickSettings
-
-    // One stable window-coordinate band covers every visible control. It does
-    // not depend on rotated bounds or dynamically measured section geometry.
-    Item {
-        id: inputBand
-        anchors.fill: parent
-    }
 
     ColumnLayout {
         id: topSection

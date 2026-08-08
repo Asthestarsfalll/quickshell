@@ -29,7 +29,7 @@ Item {
     readonly property var pinnedItems: TrayService.pinnedItems
     readonly property var unpinnedItems: TrayService.unpinnedItems
 
-    implicitHeight: vertical ? content.implicitHeight + 16 : 36
+    implicitHeight: vertical ? content.implicitHeight + 16 : Sizes.barPillThickness
     implicitWidth: vertical ? Sizes.barVisualThickness : content.implicitWidth + 24
 
     onUnpinnedItemsChanged: {

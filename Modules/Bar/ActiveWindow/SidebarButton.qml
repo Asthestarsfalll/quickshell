@@ -9,7 +9,7 @@ Item {
 
     property bool vertical: false
 
-    implicitHeight: vertical ? buttonRow.implicitHeight + 16 : 36
+    implicitHeight: vertical ? buttonRow.implicitHeight + 16 : Sizes.barPillThickness
     implicitWidth: vertical ? Sizes.barVisualThickness : buttonRow.implicitWidth + 16
 
     Behavior on implicitWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }

@@ -10,7 +10,7 @@ Item {
     property var screen: null
     property bool isHovered: mouseArea.containsMouse
     readonly property bool active: WidgetState.qsOpen && WidgetState.qsView === "settings"
-    readonly property int buttonSize: 28
+    readonly property int buttonSize: Sizes.barControlCircleSize
     readonly property int hoverButtonSize: 34
 
     implicitHeight: buttonSize
