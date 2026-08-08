@@ -1,5 +1,4 @@
 find_package(Qt6 REQUIRED COMPONENTS Test)
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_program(BASH_EXECUTABLE bash REQUIRED)
 
 add_test(
@@ -53,6 +52,11 @@ add_test(
 add_test(
     NAME shader_asset_tests
     COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
+)
+
+add_test(
+    NAME systemd_architecture_tests
+    COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_systemd_architecture.sh
 )
 
 add_test(
@@ -119,11 +123,6 @@ target_link_libraries(clavis_paths_tests PRIVATE
 )
 
 add_test(NAME clavis_paths_tests COMMAND clavis_paths_tests)
-
-add_test(
-    NAME clavis_user_service_installer_tests
-    COMMAND ${Python3_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_install_clavis_user_services.py
-)
 
 qt_add_executable(m3shapes_tests
     m3shapes_test.cpp

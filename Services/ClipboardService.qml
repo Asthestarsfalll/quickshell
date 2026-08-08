@@ -9,10 +9,7 @@ import qs.Services
 Singleton {
     id: root
 
-    property string commandName: {
-        const configured = String(Quickshell.env("CLAVIS_KEY") || "").trim()
-        return configured !== "" ? configured : Paths.stableKey
-    }
+    readonly property string commandName: Paths.stableKey
     property bool loading: false
     property bool actionRunning: false
     property bool inspecting: false
@@ -20,7 +17,8 @@ Singleton {
     property bool canList: false
     property bool canRestore: false
     property bool watcherRunning: false
-    property var dependencies: ({ cliphist: false, wlCopy: false })
+    property var dependencies: ({ cliphist: false, wlCopy: false,
+        wlPaste: false })
     property var capabilities: ({ inspect: false, preview: false,
         mimeRestore: false, mimeAwareStore: false })
     property var entries: []
@@ -112,12 +110,21 @@ Singleton {
         }
     }
 
-    function responseIsCurrent(response) {
+    function responseHasCurrentCapabilities(response) {
+        const capabilities = response && response.capabilities;
+        return capabilities
+            && capabilities.inspect === true
+            && capabilities.preview === true
+            && capabilities.mimeRestore === true
+            && capabilities.mimeAwareStore === true;
+    }
+
+    function responseIsCurrent(response, command) {
         return response
-            && response.capabilities
-            && response.capabilities.inspect === true
-            && response.capabilities.mimeRestore === true
-            && response.capabilities.mimeAwareStore === true;
+            && !Array.isArray(response)
+            && response.schemaVersion === 1
+            && response.command === command
+            && root.responseHasCurrentCapabilities(response);
     }
 
     function applyListResponse(text) {
@@ -134,13 +141,31 @@ Singleton {
             root.revision += 1;
             return;
         }
-        if (!root.responseIsCurrent(response)) {
+        if (!response || Array.isArray(response)
+                || response.schemaVersion !== 1
+                || response.command !== "clipboard.list") {
+            root.available = false;
+            root.canList = false;
+            root.canRestore = false;
+            root.watcherRunning = false;
+            root.entries = [];
+            root.error = root.normalizedError(
+                null, "invalid_clipboard_response",
+                qsTr("剪贴板服务返回了无效数据"));
+            root.revision += 1;
+            return;
+        }
+        if (!root.responseIsCurrent(response, "clipboard.list")) {
             root.available = false;
             root.canList = false;
             root.canRestore = false;
             root.watcherRunning = response.watcherRunning === true;
             root.dependencies = response.dependencies || {
-                cliphist: false, wlCopy: false
+                cliphist: false, wlCopy: false, wlPaste: false
+            };
+            root.capabilities = response.capabilities || {
+                inspect: false, preview: false,
+                mimeRestore: false, mimeAwareStore: false
             };
             root.entries = [];
             root.error = root.normalizedError(
@@ -155,7 +180,7 @@ Singleton {
         root.canRestore = response.canRestore === true;
         root.watcherRunning = response.watcherRunning === true;
         root.dependencies = response.dependencies || {
-            cliphist: false, wlCopy: false
+            cliphist: false, wlCopy: false, wlPaste: false
         };
         root.capabilities = response.capabilities;
         root.entries = Array.isArray(response.entries)
@@ -246,7 +271,10 @@ Singleton {
             String(root._actionErrorOutput || "").slice(0, 512);
         const response = root.parseResponse(root._actionOutput);
         if (root._actionExitCode !== 0
-                || !response || response.ok !== true) {
+                || !response || Array.isArray(response)
+                || response.schemaVersion !== 1
+                || response.command !== "clipboard." + root._actionName
+                || response.ok !== true) {
             const failure = root.normalizedError(
                 response ? response.error : null,
                 response ? "clipboard_action_failed"
@@ -333,6 +361,9 @@ Singleton {
         const id = root._inspectId;
         const response = root.parseResponse(root._inspectOutput);
         if (root._inspectExitCode === 0 && response
+                && !Array.isArray(response)
+                && response.schemaVersion === 1
+                && response.command === "clipboard.inspect"
                 && response.ok === true) {
             const nextDetails = Object.assign({}, root.detailsById);
             nextDetails[id] = response;

@@ -3,12 +3,13 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.Common
 
 Singleton {
     id: root
 
     readonly property int schemaVersion: 1
-    property string commandName: "key"
+    readonly property string commandName: Paths.stableKey
 
     property string backendState: "idle"
     property string transientState: ""

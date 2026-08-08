@@ -23,7 +23,8 @@ PipeWire/libcava。
 | `qs` | Shell 生命周期与 IPC |
 | `gpu-screen-recorder` | 屏幕录制 |
 | `slurp` | 区域录制选择 |
-| `ffmpeg` / `ffprobe` | 音频文件录制与验证 |
+| `ffmpeg` | GIF 后处理、音频文件录制 |
+| `ffprobe` | 音频文件验证 |
 | `pactl` | 麦克风、默认输出和 monitor source 解析 |
 | `cliphist` | 剪贴板历史 |
 | `wl-copy` / `wl-paste` | MIME 恢复和监听 |

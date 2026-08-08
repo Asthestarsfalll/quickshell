@@ -126,6 +126,6 @@ install(
 )
 
 install(
-    DIRECTORY "${CLAVIS_SOURCE_ROOT}/packaging/systemd/user/"
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/clavis/systemd/user"
+    FILES "${CLAVIS_SOURCE_ROOT}/packaging/systemd/user/clavis-shell.service"
+    DESTINATION "${CLAVIS_SYSTEMD_USER_INSTALL_DIR}"
 )
