@@ -58,6 +58,20 @@ Singleton {
         return path.substring(0, path.lastIndexOf("/"));
     }
 
+    function normalizedPath(value) {
+        const path = String(value || "").trim();
+        if (!path.startsWith("file://"))
+            return path;
+        let localPath = path.substring("file://".length);
+        if (localPath.startsWith("localhost/"))
+            localPath = localPath.substring("localhost".length);
+        try {
+            return decodeURIComponent(localPath);
+        } catch (error) {
+            return localPath;
+        }
+    }
+
     function isColorSource(value) {
         return /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(String(value || ""));
     }

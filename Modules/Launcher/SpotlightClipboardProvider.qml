@@ -23,14 +23,18 @@ Item {
     }
 
     function rebuild() {
-        // Establish a dependency on the details revision even though detail()
-        // reads from a JS object by key.
-        const ignoredRevision = ClipboardService.detailsRevision;
         const needle = String(root.query || "").trim().toLocaleLowerCase();
+        // In the normal browsing view, inspection only enriches an existing
+        // entry.  Keep the result collection stable so ListView can retain
+        // its viewport and delegates.  Search is different: inspected text
+        // can change whether an entry matches the query, so it is rebuilt
+        // when details arrive.
+        const useInspectedDetails = needle !== "";
         const source = ClipboardService.entries || [];
         const next = [];
         for (let index = 0; index < source.length; index += 1) {
-            const entry = root.mergedEntry(source[index]);
+            const entry = useInspectedDetails
+                ? root.mergedEntry(source[index]) : source[index];
             const rawPreview = String(entry.preview || "");
             const searchText = String(entry.searchText || rawPreview);
             const title = String(entry.title || rawPreview
@@ -144,7 +148,8 @@ Item {
         }
 
         function onDetailsRevisionChanged() {
-            root.rebuild();
+            if (String(root.query || "").trim() !== "")
+                root.rebuild();
         }
 
         function onRestored(id) {

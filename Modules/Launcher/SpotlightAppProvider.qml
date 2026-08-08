@@ -119,7 +119,7 @@ Item {
     Component.onCompleted: rebuild()
 
     Connections {
-        target: DesktopEntries
+        target: ApplicationService
 
         function onApplicationsChanged() {
             root.rebuild();

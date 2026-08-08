@@ -10,8 +10,6 @@ Item {
 
     function rebuild() {
         const needle = String(root.query || "").trim().toLocaleLowerCase();
-        const current = WallpaperService.currentWallpaper
-            || WallpaperService.wallpaperForScreen("");
         const source = WallpaperService.wallpapers || [];
         const next = [];
         for (let index = 0; index < source.length; index += 1) {
@@ -32,7 +30,6 @@ Item {
                 score: needle === "" ? 0
                     : (title.toLocaleLowerCase().startsWith(needle) ? 2 : 1),
                 actions: ["apply"],
-                current: path === current,
                 path: path
             });
         }
@@ -63,14 +60,6 @@ Item {
         target: WallpaperService
 
         function onWallpapersChanged() {
-            root.rebuild();
-        }
-
-        function onCurrentWallpaperChanged() {
-            root.rebuild();
-        }
-
-        function onRevisionChanged() {
             root.rebuild();
         }
     }

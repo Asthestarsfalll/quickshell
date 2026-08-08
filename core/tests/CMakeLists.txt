@@ -38,6 +38,12 @@ add_test(
 )
 
 add_test(
+    NAME spotlight_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_spotlight_architecture.sh
+)
+
+add_test(
     NAME font_architecture_tests
     COMMAND ${BASH_EXECUTABLE}
         ${CLAVIS_SOURCE_ROOT}/tests/test_font_architecture.sh

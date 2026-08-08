@@ -7,6 +7,7 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import qs.Common
 import qs.Components
+import qs.Services
 
 Item {
     id: root
@@ -333,6 +334,12 @@ Item {
 
                 required property int index
                 required property var modelData
+                readonly property bool isCurrentWallpaper:
+                    WallpaperService.normalizedPath(
+                        wallpaperDelegate.modelData.path)
+                    === WallpaperService.normalizedPath(
+                        WallpaperService.currentWallpaper
+                        || WallpaperService.wallpaperForScreen(""))
                 width: wallpaperGrid.cellWidth
                 height: wallpaperGrid.cellHeight
 
@@ -441,7 +448,7 @@ Item {
                             color:
                                 Appearance.colors.colPrimaryContainer
                             visible:
-                                wallpaperDelegate.modelData.current === true
+                                wallpaperDelegate.isCurrentWallpaper
 
                             MaterialSymbol {
                                 anchors.centerIn: parent
@@ -565,6 +572,22 @@ Item {
 
                     required property int index
                     required property var modelData
+                    readonly property int detailsRevision:
+                        ClipboardService.detailsRevision
+                    readonly property var displayData: {
+                        // ClipboardService stores inspection results in a
+                        // keyed object.  The revision is an explicit
+                        // dependency because dynamic object keys do not
+                        // produce QML notifications.
+                        const ignoredRevision =
+                            clipboardDelegate.detailsRevision;
+                        const detail = ClipboardService.detail(
+                            String(clipboardDelegate.modelData.id || ""));
+                        if (!detail)
+                            return clipboardDelegate.modelData;
+                        return Object.assign(
+                            {}, clipboardDelegate.modelData, detail);
+                    }
                     readonly property bool actionForThis:
                         String(modelData.id)
                             === root.clipboardActionEntryId
@@ -614,7 +637,7 @@ Item {
                                 anchors.fill: parent
                                 visible:
                                     String(clipboardDelegate
-                                        .modelData.previewUrl || "") !== ""
+                                        .displayData.previewUrl || "") !== ""
                                 layer.enabled: visible
                                 layer.effect: OpacityMask {
                                     maskSource: Rectangle {
@@ -632,7 +655,7 @@ Item {
                                 Image {
                                     anchors.fill: parent
                                     source: clipboardDelegate
-                                        .modelData.previewUrl || ""
+                                        .displayData.previewUrl || ""
                                     sourceSize.width: 96
                                     sourceSize.height: 96
                                     asynchronous: true
@@ -645,7 +668,7 @@ Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 visible: !clipboardPreviewFrame.visible
-                                text: clipboardDelegate.modelData.icon
+                                text: clipboardDelegate.displayData.icon
                                 iconSize: 24
                                 color:
                                     clipboardDelegate.index
@@ -668,7 +691,7 @@ Item {
 
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
-                                text: clipboardDelegate.modelData.title
+                                text: clipboardDelegate.displayData.title
                                 color:
                                     clipboardDelegate.index
                                         === root.selectedIndex
@@ -692,7 +715,7 @@ Item {
                                     && root.clipboardActionState === "error"
                                     && root.clipboardActionError !== ""
                                     ? root.clipboardActionError
-                                    : clipboardDelegate.modelData.subtitle
+                                    : clipboardDelegate.displayData.subtitle
                                 color:
                                     clipboardDelegate.index
                                         === root.selectedIndex
@@ -798,7 +821,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton
-                        Accessible.name: clipboardDelegate.modelData.title
+                        Accessible.name: clipboardDelegate.displayData.title
                         Accessible.role: Accessible.ListItem
                         onClicked: mouse => {
                             root.selectionRequested(
