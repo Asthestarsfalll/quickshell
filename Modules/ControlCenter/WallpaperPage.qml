@@ -785,7 +785,8 @@ StyledFlickable {
                         enabled: root.sharedTransitionParametersEnabled
                         accessibleName: qsTr("壁纸过渡时间")
                         valueFormatter: sliderValue => Math.round(sliderValue).toString()
-                        onMoved: WallpaperService.setTransitionDurationMs(Math.round(transitionDurationSlider.value))
+                        onMoved: value => WallpaperService
+                            .setTransitionDurationMs(Math.round(value))
                     }
 
                     Item {

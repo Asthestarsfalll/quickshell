@@ -134,6 +134,13 @@ require_text Widgets/common/MaterialSlider.qml 'property bool live: true'
 require_text Widgets/common/MaterialSlider.qml 'property string valueSuffix: ""'
 require_text Widgets/common/MaterialSlider.qml 'property var valueFormatter:'
 require_text Widgets/common/MaterialSlider.qml 'property bool showValueIndicator: true'
+require_text Widgets/common/MaterialSlider.qml \
+    'control.pressed || control.hovered || control.visualFocus'
+require_text Widgets/common/MaterialSlider.qml \
+    'onMoved: root.moved(control.value)'
+reject_text Modules/ControlCenter/ThemePage.qml 'settingSlider.value'
+reject_text Modules/ControlCenter/WallpaperPage.qml \
+    'transitionDurationSlider.value'
 require_text Widgets/common/MaterialTextField.qml 'verticalAlignment: TextInput.AlignVCenter'
 require_text Widgets/common/MaterialTextField.qml \
     'readonly property bool fieldHovered:'

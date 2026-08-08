@@ -31,7 +31,7 @@ Item {
         Math.max(30, root.height - 12))
     readonly property bool valueIndicatorVisible: root.showValueIndicator
         && root.enabled
-        && (control.pressed || control.visualFocus)
+        && (control.pressed || control.hovered || control.visualFocus)
 
     signal moved(real value)
     signal committed(real value)
@@ -68,12 +68,18 @@ Item {
             when: !control.pressed
         }
 
+        property bool gestureStarted: false
+
         onPressedChanged: {
-            if (!pressed)
+            if (pressed) {
+                gestureStarted = true;
+            } else if (gestureStarted) {
+                gestureStarted = false;
                 root.committed(control.value);
+            }
         }
 
-        onMoved: root.moved(value)
+        onMoved: root.moved(control.value)
 
         background: Item {
             id: track

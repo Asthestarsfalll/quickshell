@@ -570,7 +570,7 @@ StyledFlickable {
             accessibleName: sliderRow.title
             valueFormatter: sliderValue => Math.round(sliderValue).toString()
                 + sliderRow.suffix
-            onMoved: sliderRow.moved(Math.round(settingSlider.value))
+            onMoved: value => sliderRow.moved(Math.round(value))
         }
     }
 
