@@ -12,7 +12,6 @@ StyledButtonGroup {
 
     model: PersonalizationConfig.edgePositions
     currentValue: root.position
-    style: StyledButtonGroup.Style.Tonal
     buttonMinWidth: 64
     horizontalPadding: Metrics.spacingL
     Layout.preferredWidth: implicitWidth

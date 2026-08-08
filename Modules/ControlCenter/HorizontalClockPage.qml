@@ -200,7 +200,6 @@ StyledFlickable {
                     ({ "value": "m1", "label": String(root.currentMinuteOnes) })
                 ]
                 currentValue: root.selectedDigit
-                style: StyledButtonGroup.Style.Tonal
                 buttonMinWidth: 52
                 onValueSelected: value => {
                     root.selectedDigit = String(value);
@@ -220,7 +219,6 @@ StyledFlickable {
                         ({ "value": "custom", "label": qsTr("自定义") })
                     ]
                     currentValue: root.selectedDigitData().colorRole
-                    style: StyledButtonGroup.Style.Tonal
                     buttonMinWidth: 64
                     onValueSelected: value => {
                         const role = String(value);

@@ -58,10 +58,6 @@ StyledFlickable {
         }
     }
 
-    component OriginalButtonGroup: StyledButtonGroup {
-        originalAppearance: true
-    }
-
     component PreviewSegmentGroup: Item {
         id: previewGroup
 
@@ -612,7 +608,7 @@ StyledFlickable {
                 Layout.alignment: Qt.AlignLeft
                 spacing: 4
 
-                OriginalButtonGroup {
+                StyledButtonGroup {
                     Layout.alignment: Qt.AlignLeft
                     model: PersonalizationConfig.matugenSchemes.slice(0, 5)
                     currentValue: PersonalizationConfig.matugenScheme
@@ -620,7 +616,7 @@ StyledFlickable {
                     onValueSelected: value => ThemeService.setMatugenScheme(value)
                 }
 
-                OriginalButtonGroup {
+                StyledButtonGroup {
                     Layout.alignment: Qt.AlignLeft
                     model: PersonalizationConfig.matugenSchemes.slice(5, 9)
                     currentValue: PersonalizationConfig.matugenScheme

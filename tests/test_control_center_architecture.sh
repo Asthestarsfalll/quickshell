@@ -97,18 +97,20 @@ reject_text Modules/ControlCenter/DefaultAppsPage.qml \
 reject_text Modules/ControlCenter/WallpaperPage.qml 'MaterialRadioGroup'
 require_text Modules/ControlCenter/WallpaperPage.qml \
     'headerTrailing: SearchSelectMenuField'
-require_text Modules/ControlCenter/WallpaperPage.qml \
+reject_text Modules/ControlCenter/WallpaperPage.qml \
     'component OriginalButtonGroup: StyledButtonGroup'
-require_text Modules/ControlCenter/ThemePage.qml \
+reject_text Modules/ControlCenter/ThemePage.qml \
     'component OriginalButtonGroup: StyledButtonGroup'
+reject_text Modules/ControlCenter/WallpaperPage.qml 'OriginalButtonGroup {'
+reject_text Modules/ControlCenter/ThemePage.qml 'OriginalButtonGroup {'
 require_text Modules/ControlCenter/GeneralOverviewPage.qml \
     'iconName: "dashboard"'
 require_text Modules/ControlCenter/GeneralOverviewPage.qml \
     'iconName: "touch_app"'
 require_text Modules/ControlCenter/GeneralOverviewPage.qml \
     'iconName: "apps"'
-require_text Modules/Keystone/WeatherContent/WeatherMapLayerSelector.qml \
-    'pressedExpansion: 4'
+reject_text Modules/Keystone/WeatherContent/WeatherMapLayerSelector.qml \
+    'pressedExpansion:'
 require_text Widgets/common/SearchSelectMenuField.qml \
     'property string enabledRole: "enabled"'
 require_text Widgets/common/SearchSelectMenuField.qml \
@@ -142,10 +144,25 @@ require_text Widgets/common/SettingsSection.qml \
     'Appearance.colors.colSecondaryContainer'
 require_text Widgets/common/SettingsActionRow.qml 'leftPadding: Metrics.spacingL'
 require_text Widgets/common/SettingsActionRow.qml 'rightPadding: Metrics.spacingL'
+require_text Widgets/common/StyledButtonGroup.qml 'spacing: 2'
 require_text Widgets/common/StyledButtonGroup.qml \
-    'spacing: root.originalAppearance ? 2 : 0'
-require_text Widgets/common/StyledButtonGroup.qml 'property int innerRadius: 0'
-require_text Widgets/common/StyledButtonGroup.qml 'property int pressedExpansion: 0'
+    'readonly property int innerRadius: 6'
+require_text Widgets/common/StyledButtonGroup.qml \
+    'readonly property int pressedExpansion: 10'
+reject_text Widgets/common/StyledButtonGroup.qml 'originalAppearance'
+reject_text Widgets/common/StyledButtonGroup.qml 'StyledButtonGroup.Style'
+for file in \
+    Modules/ControlCenter/EdgePositionSelector.qml \
+    Modules/ControlCenter/HorizontalClockPage.qml \
+    Modules/ControlCenter/ThemePage.qml \
+    Modules/ControlCenter/WallpaperPage.qml \
+    Modules/Keystone/WeatherContent/WeatherMapLayerSelector.qml \
+    Modules/Sidebars/Left/HourlyForecastTrendCard.qml \
+    Modules/Sidebars/Left/DailyForecastTrendCard.qml
+do
+    reject_text "$file" 'StyledButtonGroup.Style'
+    reject_text "$file" 'OriginalButtonGroup'
+done
 require_text Widgets/common/StyledButtonGroup.qml \
     'Appearance.colors.colSecondaryContainer'
 require_text Widgets/common/StyledButtonGroup.qml \

@@ -337,11 +337,7 @@ StyledFlickable {
         }
     }
 
-    component OriginalButtonGroup: StyledButtonGroup {
-        originalAppearance: true
-    }
-
-    component EasingActionGroup: OriginalButtonGroup {
+    component EasingActionGroup: StyledButtonGroup {
         id: group
 
         property bool playing: false
@@ -477,7 +473,7 @@ StyledFlickable {
                             visible: root.currentWallpaperPath !== ""
                         }
 
-                        OriginalButtonGroup {
+                        StyledButtonGroup {
                             Layout.alignment: Qt.AlignLeft
                             model: [
                                 ({ "value": "previous",
@@ -500,7 +496,7 @@ StyledFlickable {
                     }
                 }
 
-                OriginalButtonGroup {
+                StyledButtonGroup {
                     id: fillModeButtonGroup
 
                     Layout.alignment: Qt.AlignHCenter
@@ -583,7 +579,7 @@ StyledFlickable {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 4
 
-                        OriginalButtonGroup {
+                        StyledButtonGroup {
                             Layout.alignment: Qt.AlignHCenter
                             model: root.desktopUsesAwww
                                 ? PersonalizationConfig
@@ -606,7 +602,7 @@ StyledFlickable {
                             }
                         }
 
-                        OriginalButtonGroup {
+                        StyledButtonGroup {
                             Layout.alignment: Qt.AlignHCenter
                             model: root.desktopUsesAwww
                                 ? PersonalizationConfig
@@ -629,7 +625,7 @@ StyledFlickable {
                             }
                         }
 
-                        OriginalButtonGroup {
+                        StyledButtonGroup {
                             Layout.alignment: Qt.AlignHCenter
                             visible: root.desktopUsesAwww
                             model: PersonalizationConfig
@@ -1337,7 +1333,7 @@ StyledFlickable {
                             root.selectedOverviewOutput)
                 }
 
-                OriginalButtonGroup {
+                StyledButtonGroup {
                     Layout.alignment: Qt.AlignHCenter
                     model: PersonalizationConfig.fillModes
                     currentValue:
@@ -1412,7 +1408,7 @@ StyledFlickable {
                 Layout.fillWidth: true
                 title: qsTr("转场类型")
 
-                OriginalButtonGroup {
+                StyledButtonGroup {
                     Layout.alignment: Qt.AlignHCenter
                     model:
                         PersonalizationConfig.transitionTypes.slice(0, 5)
@@ -1423,7 +1419,7 @@ StyledFlickable {
                             .setOverviewTransitionType(value)
                 }
 
-                OriginalButtonGroup {
+                StyledButtonGroup {
                     Layout.alignment: Qt.AlignHCenter
                     model:
                         PersonalizationConfig.transitionTypes.slice(5, 9)
