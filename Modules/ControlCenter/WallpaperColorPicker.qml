@@ -651,6 +651,7 @@ Item {
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
+                compact: true
                 text: {
                     root.formatFieldResetRevision;
                     return formatField.value;

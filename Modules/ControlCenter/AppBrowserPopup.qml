@@ -223,28 +223,19 @@ FloatingWindow {
 
                 Layout.fillWidth: true
                 placeholderText: qsTr("搜索应用名称、ID 或描述")
-                leftPadding: Metrics.spacingL + Metrics.iconM
-
-                onTextChanged: {
-                    if (root.searchQuery !== text)
-                        root.searchQuery = text;
-                    root.updateFilteredApps();
-                }
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.leftMargin: Metrics.spacingS
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Metrics.iconM
-                    height: Metrics.iconM
-                    color: "transparent"
-
+                leadingContent: Component {
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "search"
                         iconSize: Metrics.iconM - Metrics.spacingXXS
                         color: Appearance.colors.colOnSurfaceVariant
                     }
+                }
+
+                onTextChanged: {
+                    if (root.searchQuery !== text)
+                        root.searchQuery = text;
+                    root.updateFilteredApps();
                 }
             }
 

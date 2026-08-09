@@ -146,6 +146,48 @@ require_text Widgets/common/MaterialTextField.qml \
     'readonly property bool fieldHovered:'
 reject_text Widgets/common/MaterialTextField.qml \
     'readonly property bool hovered:'
+require_text Widgets/common/MaterialTextField.qml 'property string labelText: ""'
+require_text Widgets/common/MaterialTextField.qml \
+    'property Component leadingContent'
+require_text Widgets/common/MaterialTextField.qml \
+    'property Component trailingContent'
+require_text Widgets/common/MaterialTextField.qml 'property bool compact: false'
+require_text Widgets/common/MaterialTextField.qml \
+    'readonly property bool labelFloating:'
+require_text Widgets/common/MaterialTextField.qml \
+    '(root.activeFocus || String(root.text || "").length > 0)'
+require_text Widgets/common/MaterialTextField.qml \
+    'readonly property real notchWidth:'
+require_text Widgets/common/MaterialTextField.qml \
+    'readonly property real notchLeft:'
+require_text Widgets/common/MaterialTextField.qml \
+    'readonly property real notchRight:'
+require_text Widgets/common/MaterialTextField.qml \
+    'ShapePath {'
+reject_text Widgets/common/MaterialTextField.qml 'id: notchMask'
+require_text Widgets/common/MaterialTextField.qml \
+    'color: root.effectiveContainerColor'
+require_text Widgets/common/MaterialTextField.qml \
+    'implicitHeight: root.compact'
+require_text Widgets/common/MaterialTextField.qml \
+    'readonly property real cornerRadius: Metrics.cornerXS'
+require_text Widgets/common/MaterialTextField.qml 'clip: false'
+reject_text Widgets/common/MaterialTextField.qml 'Material.containerStyle'
+reject_text Modules/ControlCenter/WeatherApiSettings.qml \
+    'Material.containerStyle: Material.Outlined'
+reject_text Modules/ControlCenter/MapTilerApiSettingsCard.qml \
+    'Material.containerStyle: Material.Outlined'
+reject_text Modules/ControlCenter/WeatherApiSettings.qml \
+    'placeholderTextColor:'
+reject_text Modules/ControlCenter/MapTilerApiSettingsCard.qml \
+    'placeholderTextColor:'
+require_text Modules/ControlCenter/WeatherApiSettings.qml \
+    'trailingContent: Component'
+require_text Modules/ControlCenter/MapTilerApiSettingsCard.qml \
+    'trailingContent: Component'
+require_text Modules/ControlCenter/AppBrowserPopup.qml \
+    'leadingContent: Component'
+require_text Modules/ControlCenter/WallpaperColorPicker.qml 'compact: true'
 require_text Widgets/common/SettingsSection.qml 'property string iconName: ""'
 require_text Widgets/common/SettingsSection.qml \
     'Appearance.colors.colSecondaryContainer'

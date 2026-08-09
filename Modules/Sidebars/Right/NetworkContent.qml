@@ -584,32 +584,44 @@ WidgetPanel {
                 }
                 spacing: Appearance.spacing.small
 
-                RowLayout {
+                MaterialTextField {
+                    id: passwordField
+
                     Layout.fillWidth: true
-                    spacing: Appearance.spacing.xSmall
+                    placeholderText: qsTr("网络密码")
+                    echoMode: itemRoot.showPassword
+                        ? TextInput.Normal : TextInput.Password
+                    inputMethodHints: Qt.ImhSensitiveData
+                    enabled: !NetworkService.busy
+                    trailingContent: Component {
+                        ToolButton {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            enabled: !NetworkService.busy
+                            Accessible.name: itemRoot.showPassword
+                                ? qsTr("隐藏密码") : qsTr("显示密码")
+                            onClicked: itemRoot.showPassword =
+                                !itemRoot.showPassword
 
-                    MaterialTextField {
-                        id: passwordField
-                        Layout.fillWidth: true
-                        placeholderText: qsTr("网络密码")
-                        echoMode: itemRoot.showPassword ? TextInput.Normal : TextInput.Password
-                        inputMethodHints: Qt.ImhSensitiveData
-                        enabled: !NetworkService.busy
-                        onAccepted: itemRoot.submitPassword()
-                    }
+                            background: Rectangle {
+                                radius: Appearance.rounding.full
+                                color: pressed
+                                    ? Appearance.colors.colLayer1Active
+                                    : hovered || activeFocus
+                                        ? Appearance.colors.colLayer1Hover
+                                        : "transparent"
+                            }
 
-                    ToolButton {
-                        Layout.preferredWidth: 40
-                        Layout.preferredHeight: 40
-                        Accessible.name: itemRoot.showPassword ? qsTr("隐藏密码") : qsTr("显示密码")
-                        onClicked: itemRoot.showPassword = !itemRoot.showPassword
-
-                        contentItem: MaterialSymbol {
-                            text: itemRoot.showPassword ? "visibility_off" : "visibility"
-                            iconSize: 20
-                            color: Appearance.colors.colOnLayer1
+                            contentItem: MaterialSymbol {
+                                text: itemRoot.showPassword
+                                    ? "visibility_off" : "visibility"
+                                iconSize: 20
+                                color: Appearance.colors.colOnLayer1
+                            }
                         }
                     }
+                    onAccepted: itemRoot.submitPassword()
                 }
 
                 RowLayout {

@@ -210,16 +210,45 @@ Rectangle {
                     | Qt.ImhNoPredictiveText
                     | Qt.ImhNoAutoUppercase
                 maximumLength: 128
-                rightPadding: 52
                 enabled: WeatherMapPlugin.credentialsReady
                     && !WeatherMapPlugin.credentialBusy
-                color: Appearance.colors.colOnSurface
-                placeholderTextColor: Appearance.colors.colOnSurfaceVariant
-                Material.theme: PersonalizationConfig.themeMode === "light"
-                    ? Material.Light
-                    : Material.Dark
-                Material.containerStyle: Material.Outlined
-                Material.foreground: Appearance.colors.colOnSurface
+                trailingContent: Component {
+                    ToolButton {
+                        id: visibilityButton
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        focusPolicy: Qt.StrongFocus
+                        Accessible.name: root.revealApiKey
+                            ? qsTr("隐藏 API key")
+                            : qsTr("显示 API key")
+                        onClicked: root.revealApiKey = !root.revealApiKey
+
+                        background: Rectangle {
+                            radius: Appearance.rounding.full
+                            color: visibilityButton.down
+                                ? Appearance.colors.colLayer3Active
+                                : visibilityButton.hovered
+                                    || visibilityButton.activeFocus
+                                    ? Appearance.colors.colLayer3Hover
+                                    : "transparent"
+                        }
+
+                        contentItem: MaterialSymbol {
+                            text: root.revealApiKey
+                                ? "visibility_off" : "visibility"
+                            iconSize: 20
+                            color: Appearance.colors.colOnSurfaceVariant
+                        }
+
+                        StyledToolTip {
+                            extraVisibleCondition: visibilityButton.hovered
+                            text: root.revealApiKey
+                                ? qsTr("隐藏 API key")
+                                : qsTr("显示 API key")
+                        }
+                    }
+                }
                 Accessible.name: "MapTiler API key"
                 Accessible.description: qsTr("安全保存到系统密钥环")
                 onTextChanged: {
@@ -229,47 +258,6 @@ Rectangle {
                     }
                 }
                 onAccepted: root.applyApiKey()
-            }
-
-            ToolButton {
-                id: visibilityButton
-
-                anchors.right: parent.right
-                anchors.rightMargin: 6
-                anchors.verticalCenter: parent.verticalCenter
-                width: 44
-                height: 44
-                hoverEnabled: true
-                focusPolicy: Qt.StrongFocus
-                Accessible.name: root.revealApiKey
-                    ? qsTr("隐藏 API key")
-                    : qsTr("显示 API key")
-                onClicked: root.revealApiKey = !root.revealApiKey
-
-                background: Rectangle {
-                    radius: Appearance.rounding.full
-                    color: visibilityButton.down
-                        ? Appearance.colors.colLayer3Active
-                        : visibilityButton.hovered
-                            || visibilityButton.activeFocus
-                            ? Appearance.colors.colLayer3Hover
-                            : "transparent"
-                }
-
-                contentItem: MaterialSymbol {
-                    text: root.revealApiKey
-                        ? "visibility_off"
-                        : "visibility"
-                    iconSize: 20
-                    color: Appearance.colors.colOnSurfaceVariant
-                }
-
-                StyledToolTip {
-                    extraVisibleCondition: visibilityButton.hovered
-                    text: root.revealApiKey
-                        ? qsTr("隐藏 API key")
-                        : qsTr("显示 API key")
-                }
             }
         }
 
