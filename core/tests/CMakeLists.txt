@@ -8,6 +8,12 @@ add_test(
 )
 
 add_test(
+    NAME dialog_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_dialog_architecture.sh
+)
+
+add_test(
     NAME edge_position_architecture_tests
     COMMAND ${BASH_EXECUTABLE}
         ${CLAVIS_SOURCE_ROOT}/tests/test_edge_positions.sh

@@ -8,6 +8,7 @@ import Quickshell
 import qs.Common
 import qs.Components
 import qs.Services
+import qs.Widgets.common
 
 Item {
     id: root
@@ -886,122 +887,40 @@ Item {
         }
     }
 
-    Dialog {
+    MaterialDialog {
         id: clearDialog
 
         anchors.centerIn: Overlay.overlay
         width: 380
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape
-        title: qsTr("清空剪贴板历史？")
+        dialogTitle: qsTr("清空剪贴板历史？")
+        messageText: qsTr("此操作会清除 cliphist 中的全部历史记录，无法撤销。")
 
-        background: Rectangle {
-            radius: Appearance.rounding.extraLarge
-            color: Appearance.colors.colSurfaceContainerHigh
-            border.width: 1
-            border.color: Appearance.colors.colOutlineVariant
-        }
+        actionsComponent: Component {
+            RowLayout {
+                spacing: Metrics.spacingS
 
-        contentItem: ColumnLayout {
-            spacing: 10
-
-            Text {
-                Layout.fillWidth: true
-                text: clearDialog.title
-                color: Appearance.colors.colOnSurface
-                font.family: Fonts.ui
-                font.pixelSize: 22
-                font.weight: Font.Medium
-                wrapMode: Text.Wrap
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: qsTr("此操作会清除 cliphist 中的全部历史记录，无法撤销。")
-                color: Appearance.colors.colOnSurfaceVariant
-                font.family: Fonts.ui
-                font.pixelSize: 14
-                wrapMode: Text.Wrap
-            }
-        }
-
-        footer: RowLayout {
-            spacing: 8
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Button {
-                id: cancelButton
-
-                Layout.preferredWidth: 76
-                Layout.preferredHeight: 40
-                focusPolicy: Qt.StrongFocus
-                text: qsTr("取消")
-                Accessible.name: text
-                onClicked: clearDialog.close()
-
-                background: Rectangle {
-                    radius: Appearance.rounding.full
-                    color: cancelButton.down
-                        ? Appearance.colors.colSurfaceContainerHighestActive
-                        : cancelButton.hovered
-                        ? Appearance.colors.colSurfaceContainerHighestHover
-                        : "transparent"
-                    border.width: cancelButton.activeFocus ? 2 : 0
-                    border.color: Appearance.colors.colPrimary
+                Item {
+                    Layout.fillWidth: true
                 }
 
-                contentItem: Text {
-                    text: cancelButton.text
-                    color: Appearance.colors.colPrimary
-                    font.family: Fonts.ui
-                    font.pixelSize: 14
-                    font.weight: Font.Medium
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
+                DialogActionButton {
+                    id: cancelButton
 
-            Button {
-                id: confirmButton
-
-                Layout.preferredWidth: 76
-                Layout.preferredHeight: 40
-                focusPolicy: Qt.StrongFocus
-                text: qsTr("清空")
-                Accessible.name: text
-                onClicked: {
-                    root.clearRequested();
-                    clearDialog.close();
+                    text: qsTr("取消")
+                    Component.onCompleted:
+                        clearDialog.initialFocusItem = cancelButton
+                    onClicked: clearDialog.close()
                 }
 
-                background: Rectangle {
-                    radius: Appearance.rounding.full
-                    color: confirmButton.down
-                        ? Appearance.colors.colErrorContainerActive
-                        : confirmButton.hovered
-                        ? Appearance.colors.colErrorContainerHover
-                        : Appearance.colors.colErrorContainer
-                    border.width: confirmButton.activeFocus ? 2 : 0
-                    border.color: Appearance.colors.colOnErrorContainer
-                }
-
-                contentItem: Text {
-                    text: confirmButton.text
-                    color: Appearance.colors.colOnErrorContainer
-                    font.family: Fonts.ui
-                    font.pixelSize: 14
-                    font.weight: Font.Medium
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                DialogActionButton {
+                    text: qsTr("清空")
+                    onClicked: {
+                        root.clearRequested();
+                        clearDialog.close();
+                    }
                 }
             }
         }
-
-        onOpened: cancelButton.forceActiveFocus()
         onClosed: root.modalClosed()
     }
 }

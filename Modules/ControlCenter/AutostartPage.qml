@@ -361,57 +361,33 @@ StyledFlickable {
         }
     }
 
-    Dialog {
+    MaterialDialog {
         id: removeDialog
 
         anchors.centerIn: Overlay.overlay
-        modal: true
         width: Math.min(420, root.width - Metrics.spacingL * 2)
-        padding: Metrics.spacingL
-        Material.theme: PersonalizationConfig.themeMode === "light"
-            ? Material.Light : Material.Dark
-        Material.accent: Appearance.colors.colPrimary
+        dialogTitle: qsTr("删除自启条目？")
+        messageText: root.pendingRemoveEntry
+            ? qsTr("将删除“%1”自启条目。")
+                .arg(root.pendingRemoveEntry.name) : ""
 
-        background: Rectangle {
-            radius: Appearance.rounding.large
-            color: Appearance.colors.colSurfaceContainerHigh
-        }
+        actionsComponent: Component {
+            RowLayout {
+                spacing: Metrics.spacingS
 
-        header: Text {
-            text: qsTr("删除自启条目？")
-            color: Appearance.colors.colOnSurface
-            font.family: Fonts.ui
-            font.pixelSize: Typography.titleMedium.pixelSize
-            font.weight: Font.DemiBold
-            leftPadding: Metrics.spacingM
-            rightPadding: Metrics.spacingM
-            topPadding: Metrics.spacingM
-        }
+                Item {
+                    Layout.fillWidth: true
+                }
 
-        contentItem: Text {
-            text: root.pendingRemoveEntry
-                ? qsTr("将删除“%1”自启条目。")
-                    .arg(root.pendingRemoveEntry.name) : ""
-            color: Appearance.colors.colOnSurfaceVariant
-            font.family: Fonts.ui
-            font.pixelSize: Typography.bodyMedium.pixelSize
-            wrapMode: Text.Wrap
-        }
+                DialogActionButton {
+                    text: qsTr("取消")
+                    onClicked: removeDialog.close()
+                }
 
-        footer: RowLayout {
-            spacing: Metrics.spacingS
-
-            Item { Layout.fillWidth: true }
-
-            DialogActionButton {
-                text: qsTr("取消")
-                onClicked: removeDialog.close()
-            }
-
-            DialogActionButton {
-                text: qsTr("删除")
-                filled: true
-                onClicked: root.removePendingEntry()
+                DialogActionButton {
+                    text: qsTr("删除")
+                    onClicked: root.removePendingEntry()
+                }
             }
         }
     }

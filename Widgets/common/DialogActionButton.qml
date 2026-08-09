@@ -1,37 +1,54 @@
 import QtQuick
+import QtQuick.Controls
 import qs.Common
 
-Rectangle {
+MaterialRippleButton {
     id: root
 
-    property alias text: label.text
     property bool filled: false
-    signal clicked()
 
-    implicitWidth: label.implicitWidth + 28
-    implicitHeight: 34
-    radius: height / 2
-    color: filled
-        ? (buttonMouse.pressed ? Appearance.colors.colLayer4Active : buttonMouse.containsMouse ? Appearance.colors.colLayer4Hover : Appearance.colors.colLayer4)
-        : (buttonMouse.pressed ? Appearance.colors.colLayer3Active : buttonMouse.containsMouse ? Appearance.colors.colLayer3Hover : "transparent")
+    implicitWidth: Math.max(64,
+        label.implicitWidth + Metrics.spacingL)
+    implicitHeight: Metrics.controlHeightM
+    buttonRadius: Appearance.rounding.full
+    buttonRadiusPressed: Appearance.rounding.full
+    leftPadding: Metrics.spacingM
+    rightPadding: Metrics.spacingM
+    colBackground: filled
+        ? Appearance.colors.colPrimary : "transparent"
+    colBackgroundHover: filled
+        ? Appearance.colors.colPrimaryHover
+        : Appearance.applyAlpha(Appearance.colors.colPrimary, 0.08)
+    colRipple: filled
+        ? Appearance.applyAlpha(Appearance.colors.colOnPrimary, 0.12)
+        : Appearance.applyAlpha(Appearance.colors.colPrimary, 0.12)
+    colBackgroundToggled: colBackground
+    colBackgroundToggledHover: colBackgroundHover
+    colRippleToggled: colRipple
+    focusPolicy: Qt.StrongFocus
+    Accessible.name: root.text
 
-    Behavior on color { ColorAnimation { duration: 140 } }
-
-    Text {
-        id: label
-        anchors.centerIn: parent
-        font.pixelSize: 12
-        font.bold: true
-        color: Appearance.colors.colPrimary
-
-        Behavior on color { ColorAnimation { duration: 140 } }
+    backgroundContent: Rectangle {
+        anchors.fill: parent
+        radius: root.buttonEffectiveRadius
+        color: "transparent"
+        border.width: root.activeFocus ? 2 : 0
+        border.color: Appearance.colors.colPrimary
+        antialiasing: true
     }
 
-    MouseArea {
-        id: buttonMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+    contentItem: Text {
+        id: label
+
+        text: root.text
+        anchors.centerIn: parent
+        color: root.filled
+            ? Appearance.colors.colOnPrimary
+            : Appearance.colors.colPrimary
+        font.family: Typography.labelLarge.family
+        font.pixelSize: Typography.labelLarge.pixelSize
+        font.weight: Typography.labelLarge.weight
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
     }
 }

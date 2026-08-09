@@ -370,63 +370,42 @@ WidgetPanel {
         }
     }
 
-    Dialog {
+    MaterialDialog {
         id: forgetDialog
 
-        modal: true
         width: Math.min(320, root.width - 48)
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
-        padding: Appearance.spacing.medium
-        Material.theme: Material.System
-        Material.accent: Appearance.colors.colPrimary
+        dialogTitle: qsTr("遗忘网络")
+        messageText: root.pendingForgetNetwork
+            ? qsTr("将删除“") + root.pendingForgetNetwork.ssid
+                + qsTr("”的已保存连接。") : ""
 
-        background: Rectangle {
-            radius: Appearance.rounding.veryLarge
-            color: Appearance.colors.colSurfaceContainerHigh
-        }
+        actionsComponent: Component {
+            RowLayout {
+                spacing: Metrics.spacingS
 
-        header: Text {
-            text: qsTr("遗忘网络")
-            color: Appearance.colors.colOnLayer2
-            font.family: Fonts.ui
-            font.pixelSize: 18
-            font.weight: Font.DemiBold
-            leftPadding: Appearance.spacing.medium
-            rightPadding: Appearance.spacing.medium
-            topPadding: Appearance.spacing.medium
-        }
-
-        contentItem: Text {
-            text: root.pendingForgetNetwork
-                ? qsTr("将删除“") + root.pendingForgetNetwork.ssid + qsTr("”的已保存连接。")
-                : ""
-            color: Appearance.colors.colOnLayer1
-            font.family: Fonts.ui
-            font.pixelSize: 13
-            wrapMode: Text.Wrap
-        }
-
-        footer: RowLayout {
-            spacing: Appearance.spacing.small
-
-            Item { Layout.fillWidth: true }
-            DialogActionButton {
-                text: qsTr("取消")
-                onClicked: {
-                    forgetDialog.close();
-                    root.pendingForgetNetwork = null;
+                Item {
+                    Layout.fillWidth: true
                 }
-            }
-            DialogActionButton {
-                text: qsTr("遗忘")
-                filled: true
-                onClicked: {
-                    const target = root.pendingForgetNetwork;
-                    forgetDialog.close();
-                    root.pendingForgetNetwork = null;
-                    if (target)
-                        NetworkService.forgetNetwork(target);
+
+                DialogActionButton {
+                    text: qsTr("取消")
+                    onClicked: {
+                        forgetDialog.close();
+                        root.pendingForgetNetwork = null;
+                    }
+                }
+
+                DialogActionButton {
+                    text: qsTr("遗忘")
+                    onClicked: {
+                        const target = root.pendingForgetNetwork;
+                        forgetDialog.close();
+                        root.pendingForgetNetwork = null;
+                        if (target)
+                            NetworkService.forgetNetwork(target);
+                    }
                 }
             }
         }

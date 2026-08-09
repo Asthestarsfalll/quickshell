@@ -412,63 +412,42 @@ WidgetPanel {
         }
     }
 
-    Dialog {
+    MaterialDialog {
         id: forgetDialog
 
-        modal: true
         width: Math.min(320, root.width - 48)
         x: Math.round((root.width - width) / 2)
         y: Math.round((root.height - height) / 2)
-        padding: Appearance.spacing.medium
-        Material.theme: Material.System
-        Material.accent: Appearance.colors.colPrimary
+        dialogTitle: qsTr("遗忘蓝牙设备")
+        messageText: root.pendingForgetDevice
+            ? qsTr("将删除“") + root.pendingForgetDevice.name
+                + qsTr("”的配对信息。") : ""
 
-        background: Rectangle {
-            radius: Appearance.rounding.veryLarge
-            color: Appearance.colors.colSurfaceContainerHigh
-        }
+        actionsComponent: Component {
+            RowLayout {
+                spacing: Metrics.spacingS
 
-        header: Text {
-            text: qsTr("遗忘蓝牙设备")
-            color: Appearance.colors.colOnLayer2
-            font.family: Fonts.ui
-            font.pixelSize: 18
-            font.weight: Font.DemiBold
-            leftPadding: Appearance.spacing.medium
-            rightPadding: Appearance.spacing.medium
-            topPadding: Appearance.spacing.medium
-        }
-
-        contentItem: Text {
-            text: root.pendingForgetDevice
-                ? qsTr("将删除“") + root.pendingForgetDevice.name + qsTr("”的配对信息。")
-                : ""
-            color: Appearance.colors.colOnLayer1
-            font.family: Fonts.ui
-            font.pixelSize: 13
-            wrapMode: Text.Wrap
-        }
-
-        footer: RowLayout {
-            spacing: Appearance.spacing.small
-
-            Item { Layout.fillWidth: true }
-            DialogActionButton {
-                text: qsTr("取消")
-                onClicked: {
-                    forgetDialog.close();
-                    root.pendingForgetDevice = null;
+                Item {
+                    Layout.fillWidth: true
                 }
-            }
-            DialogActionButton {
-                text: qsTr("遗忘")
-                filled: true
-                onClicked: {
-                    const target = root.pendingForgetDevice;
-                    forgetDialog.close();
-                    root.pendingForgetDevice = null;
-                    if (target)
-                        BluetoothService.forgetDevice(target);
+
+                DialogActionButton {
+                    text: qsTr("取消")
+                    onClicked: {
+                        forgetDialog.close();
+                        root.pendingForgetDevice = null;
+                    }
+                }
+
+                DialogActionButton {
+                    text: qsTr("遗忘")
+                    onClicked: {
+                        const target = root.pendingForgetDevice;
+                        forgetDialog.close();
+                        root.pendingForgetDevice = null;
+                        if (target)
+                            BluetoothService.forgetDevice(target);
+                    }
                 }
             }
         }
