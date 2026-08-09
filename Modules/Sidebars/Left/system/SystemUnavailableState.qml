@@ -16,12 +16,10 @@ Rectangle {
     implicitHeight: unavailableLayout.implicitHeight
         + Appearance.spacing.large * 2
     radius: Appearance.rounding.small
-    color: reconnecting
-        ? Appearance.colors.colTertiaryContainer
-        : Appearance.colors.colErrorContainer
+    color: Appearance.colors.colSurfaceContainer
     readonly property color foregroundColor: reconnecting
-        ? Appearance.colors.colOnTertiaryContainer
-        : Appearance.colors.colOnErrorContainer
+        ? Appearance.colors.colOnSurface
+        : Appearance.colors.colOnSurface
 
     ColumnLayout {
         id: unavailableLayout
@@ -43,8 +41,8 @@ Rectangle {
             Layout.fillWidth: true
             text: root.title
             color: root.foregroundColor
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeTitleMedium
+            font.family: Fonts.ui
+            font.pixelSize: Typography.titleMedium.pixelSize
             font.weight: Font.DemiBold
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -54,8 +52,8 @@ Rectangle {
             Layout.fillWidth: true
             text: root.message
             color: root.foregroundColor
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodyMedium
+            font.family: Fonts.ui
+            font.pixelSize: Typography.bodyMedium.pixelSize
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
         }
@@ -74,8 +72,7 @@ Rectangle {
             visible: !root.reconnecting
             text: qsTr("重试")
             highlighted: true
-            Material.accent: Appearance.colors.colOnErrorContainer
-            Material.foreground: Appearance.colors.colErrorContainer
+            Material.accent: Appearance.colors.colPrimary
             Accessible.name: qsTr("重试系统监测连接")
             onClicked: root.retryRequested()
         }

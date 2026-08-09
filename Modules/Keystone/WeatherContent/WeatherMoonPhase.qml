@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 import qs.Components
 
@@ -88,7 +88,7 @@ Item {
                     Layout.fillWidth: true
                     text: root.moonPhaseName
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 24
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -97,7 +97,7 @@ Item {
                 Text {
                     text: root.illumination + "% " + qsTr("照亮")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 16
                 }
             }

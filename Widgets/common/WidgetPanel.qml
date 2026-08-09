@@ -68,7 +68,7 @@ Rectangle {
 
             Text {
                 text: root.title
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 18
                 color: Appearance.colors.colOnLayer2

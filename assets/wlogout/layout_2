@@ -1,6 +1,6 @@
 {
     "label": "lock",
-    "action": "qs ipc call lock open",
+    "action": "qs -c clavis ipc call lock open",
     "text": "锁定",
     "keybind": "l"
 }

@@ -26,16 +26,16 @@ Item {
         Text {
             text: root.message
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodyLarge
+            font.family: Fonts.ui
+            font.pixelSize: Typography.bodyLarge.pixelSize
             horizontalAlignment: Text.AlignHCenter
         }
 
         Text {
             text: qsTr("首个有效快照到达后显示实时指标")
             color: Appearance.colors.colOnSurfaceVariant
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodySmall
+            font.family: Fonts.ui
+            font.pixelSize: Typography.bodySmall.pixelSize
             horizontalAlignment: Text.AlignHCenter
         }
     }

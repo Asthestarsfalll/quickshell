@@ -1,0 +1,89 @@
+import QtQuick
+import QtQuick.Layouts
+import qs.Common
+import qs.Widgets.common
+
+StyledFlickable {
+    id: root
+
+    signal sectionRequested(string section)
+
+    clip: true
+    contentWidth: width
+    contentHeight: contentColumn.implicitHeight + Metrics.pageMargin * 2
+
+    ColumnLayout {
+        id: contentColumn
+
+        width: Math.min(640, Math.max(0, root.width - Metrics.pageMargin * 2))
+        x: Math.max(Metrics.pageMargin, (root.width - width) / 2)
+        y: Metrics.pageMargin
+        spacing: Metrics.spacingL
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("界面")
+            iconName: "dashboard"
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "dock_to_bottom"
+                text: qsTr("条栏")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("bar")
+            }
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "side_navigation"
+                text: qsTr("侧边栏")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("sidebar")
+            }
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "blur_on"
+                text: qsTr("透明与模糊")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("effects")
+            }
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("交互")
+            iconName: "touch_app"
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "swipe"
+                text: qsTr("滚动交互")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("scrolling")
+            }
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("应用")
+            iconName: "apps"
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "rocket_launch"
+                text: qsTr("开机启动")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("autostart")
+            }
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "apps"
+                text: qsTr("默认应用")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("default-apps")
+            }
+        }
+    }
+}

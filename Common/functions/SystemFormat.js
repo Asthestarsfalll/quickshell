@@ -49,6 +49,28 @@ function bytesPerSecond(value) {
     return formatted === unavailable() ? formatted : formatted + "/s";
 }
 
+function rootDisk(disks) {
+    if (!Array.isArray(disks) || disks.length === 0)
+        return ({});
+
+    for (let index = 0; index < disks.length; index += 1) {
+        if (String(disks[index].mountPoint || "") === "/")
+            return disks[index];
+    }
+    return disks[0] || ({});
+}
+
+function rootDiskIndex(disks) {
+    if (!Array.isArray(disks) || disks.length === 0)
+        return 0;
+
+    for (let index = 0; index < disks.length; index += 1) {
+        if (String(disks[index].mountPoint || "") === "/")
+            return index;
+    }
+    return 0;
+}
+
 function frequencyMHz(value) {
     if (!isNumber(value) || value < 0)
         return unavailable();

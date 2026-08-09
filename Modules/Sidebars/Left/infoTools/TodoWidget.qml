@@ -200,7 +200,7 @@ Item {
                     Layout.rightMargin: 16
                     text: qsTr("添加任务")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 16
                     font.weight: Font.Medium
                 }
@@ -214,7 +214,7 @@ Item {
                     implicitHeight: 56
                     focus: root.showAddDialog
                     placeholderText: qsTr("任务描述")
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                     wrapMode: TextEdit.NoWrap
                     onAccepted: root.addTask()

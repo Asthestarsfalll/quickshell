@@ -6,29 +6,21 @@ import Quickshell
 Singleton {
     id: root
 
-    // Clavis 自己的会话始终优先于外部 niri Cast；屏幕捕获语义保持独立。
+    // The coordinator only describes Clavis-owned recording sessions.
     readonly property bool ownScreenSessionPresent: RecordingService.isActive
     readonly property bool ownAudioSessionPresent: AudioRecordingService.isActive
     readonly property bool ownSessionPresent: ownScreenSessionPresent
         || ownAudioSessionPresent
     readonly property bool ownRecordingActive: RecordingService.isRecording
         || AudioRecordingService.isRecording
-    readonly property bool externalCapturePresent: ScreencastService.anyCastPresent
-    readonly property bool externalCaptureActive: ScreencastService.anyCastActive
-    readonly property bool capturePresent: ownScreenSessionPresent
-        || externalCapturePresent
-    readonly property bool captureActive: RecordingService.isRecording
-        || externalCaptureActive
+    readonly property bool capturePresent: ownSessionPresent
+    readonly property bool captureActive: ownRecordingActive
     readonly property string source: ownScreenSessionPresent
         ? "clavis-screen"
-        : (ownAudioSessionPresent
-            ? "clavis-audio"
-            : (externalCapturePresent ? "external" : "none"))
+        : (ownAudioSessionPresent ? "clavis-audio" : "none")
     readonly property string state: ownScreenSessionPresent
         ? RecordingService.state
-        : (ownAudioSessionPresent
-            ? AudioRecordingService.state
-            : (externalCaptureActive ? "capturing" : "idle"))
+        : (ownAudioSessionPresent ? AudioRecordingService.state : "idle")
     readonly property var ownScreenStatusTexts: ({
         "selecting": qsTr("正在选择录制区域"),
         "starting": qsTr("正在启动录制"),
@@ -45,7 +37,7 @@ Singleton {
         ? (ownScreenStatusTexts[RecordingService.state] || "")
         : (ownAudioSessionPresent
             ? (ownAudioStatusTexts[AudioRecordingService.state] || "")
-            : ScreencastService.statusText)
+            : "")
     readonly property bool canStop: RecordingService.isRecording
         || RecordingService.isFinalizing
         || AudioRecordingService.isRecording

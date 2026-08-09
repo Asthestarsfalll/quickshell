@@ -3,6 +3,22 @@
 <context>
     <name>AdvancedPage</name>
     <message>
+        <source>Fcitx5</source>
+        <translation>Fcitx5</translation>
+    </message>
+    <message>
+        <source>Zsh Prompt</source>
+        <translation>Zsh Prompt</translation>
+    </message>
+    <message>
+        <source>Keytop</source>
+        <translation>Keytop</translation>
+    </message>
+    <message>
+        <source>未安装或配置模板不可用</source>
+        <translation>未安裝或設定模板不可用</translation>
+    </message>
+    <message>
         <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="65" />
         <source>正在为已启用的程序生成 Matugen 配色…</source>
         <translation>正在為已啟用的程式產生 Matugen 配色…</translation>
@@ -1408,21 +1424,6 @@
 </context>
 <context>
     <name>GeneralPage</name>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="315" />
-        <source>提示音</source>
-        <translation>提示音</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="319" />
-        <source>番茄钟</source>
-        <translation>番茄鍾</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="320" />
-        <source>专注与休息阶段切换时播放系统提示音</source>
-        <translation>專注與休息階段切換時播放系統提示音</translation>
-    </message>
     <message>
         <location filename="../Modules/ControlCenter/GeneralPage.qml" line="327" />
         <source>侧边栏</source>
@@ -3237,14 +3238,6 @@
     </message>
 </context>
 <context>
-    <name>ScreencastService</name>
-    <message>
-        <location filename="../Services/ScreencastService.qml" line="14" />
-        <source>屏幕正在被捕获</source>
-        <translation>螢幕正在被捕獲</translation>
-    </message>
-</context>
-<context>
     <name>SearchSelectMenuField</name>
     <message>
         <location filename="../Widgets/common/SearchSelectMenuField.qml" line="16" />
@@ -3902,8 +3895,8 @@
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="388" />
-        <source>无法解析 key 系统监测数据</source>
-        <translation>無法解析 key 系統監測資料</translation>
+        <source>无法解析 keytop 系统监测数据</source>
+        <translation>無法解析 keytop 系統監測資料</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="400" />
@@ -3912,33 +3905,23 @@
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="401" />
-        <source>需要重新构建 key 后端（需要 schema v</source>
-        <translation>需要重新構建 key 後端（需要 schema v</translation>
+        <source>需要重新构建 keytop（需要 schema v</source>
+        <translation>需要重新構建 keytop（需要 schema v</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="412" />
-        <source>key 返回的系统监测数据不完整</source>
-        <translation>key 返回的系統監測資料不完整</translation>
-    </message>
-    <message>
-        <location filename="../Services/SystemMonitorService.qml" line="447" />
-        <source>key 版本过旧</source>
-        <translation>key 版本過舊</translation>
-    </message>
-    <message>
-        <location filename="../Services/SystemMonitorService.qml" line="449" />
-        <source>当前 key 不支持 sysmon，请重新构建并安装 key 后端。</source>
-        <translation>當前 key 不支援 sysmon，請重新構建並安裝 key 後端。</translation>
+        <source>keytop 返回的系统监测数据不完整</source>
+        <translation>keytop 返回的系統監測資料不完整</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="512" />
-        <source>key top 不可用，请重新构建并安装 key 后端</source>
-        <translation>key top 不可用，請重新構建並安裝 key 後端</translation>
+        <source>keytop 不可用，请安装独立 keytop</source>
+        <translation>keytop 不可用，請安裝獨立 keytop</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="525" />
-        <source>未找到可用终端，无法打开 key top</source>
-        <translation>未找到可用終端，無法開啟 key top</translation>
+        <source>未找到可用终端，无法打开 keytop</source>
+        <translation>未找到可用終端，無法開啟 keytop</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="581" />
@@ -3947,13 +3930,13 @@
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="622" />
-        <source>正在重新启动 key 数据流。</source>
-        <translation>正在重新啟動 key 資料流。</translation>
+        <source>正在重新启动 keytop 数据流。</source>
+        <translation>正在重新啟動 keytop 資料流。</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="643" />
-        <source>正在重新连接 key 数据流。</source>
-        <translation>正在重新連線 key 資料流。</translation>
+        <source>正在重新连接 keytop 数据流。</source>
+        <translation>正在重新連線 keytop 資料流。</translation>
     </message>
 </context>
 <context>

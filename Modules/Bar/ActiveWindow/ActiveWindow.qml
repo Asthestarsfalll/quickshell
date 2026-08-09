@@ -1,17 +1,23 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
-import Clavis.Niri 1.0
+import Clavis.Niri
 import qs.Common
 import qs.Services
+import qs.Widgets.common
 
 Item {
     id: root
 
-    implicitHeight: 36
-    implicitWidth: layout.width + 24
+    property bool vertical: false
+
+    implicitHeight: vertical ? layout.implicitHeight + 16 : Sizes.barPillThickness
+    implicitWidth: vertical ? Sizes.barVisualThickness
+        : layout.implicitWidth + 24
 
     Behavior on implicitWidth {
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+    }
+    Behavior on implicitHeight {
         NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
     }
 
@@ -19,38 +25,35 @@ Item {
     readonly property string activeTitle: activeWindow.title || qsTr("桌面")
     readonly property string activeIcon: activeWindow.iconPath || ""
     readonly property string activeAppName: activeWindow.appName || activeWindow.appId || ""
+    readonly property string verticalAppName: activeAppName || qsTr("桌面")
+    readonly property string detailedTooltipText:
+        activeAppName && activeAppName !== activeTitle
+            ? activeAppName + "\n" + activeTitle
+            : activeTitle
 
-    Rectangle {
-        id: bgRect
-        anchors.fill: parent
-        color: BlurService.backgroundColor(
-            Appearance.colors.colLayer0)
-        radius: height / 2
-        visible: false
+    function verticalTitle(value) {
+        const characters = Array.from(String(value || ""));
+        const limit = 14;
+        if (characters.length > limit)
+            return characters.slice(0, limit - 1).concat(["…"]).join("\n");
+        return characters.join("\n");
     }
 
-    MultiEffect {
-        source: bgRect
-        anchors.fill: bgRect
-        shadowEnabled: true
-        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
-        shadowBlur: 0.8
-        shadowVerticalOffset: 3
-        shadowHorizontalOffset: 0
-    }
+    TopBarPillBackground { anchors.fill: parent }
 
-    RowLayout {
+    GridLayout {
         id: layout
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 12
-        spacing: 10
+        anchors.centerIn: parent
+        columns: root.vertical ? 1 : 2
+        rowSpacing: root.vertical ? 6 : 0
+        columnSpacing: root.vertical ? 0 : 10
 
         Item {
             Layout.preferredWidth: 18
             Layout.preferredHeight: 18
-            Layout.alignment: Qt.AlignVCenter
-            visible: root.activeIcon !== "" || root.activeAppName !== ""
+            Layout.alignment: Qt.AlignCenter
+            visible: root.vertical || root.activeIcon !== ""
+                || root.activeAppName !== ""
 
             Image {
                 id: appIcon
@@ -76,15 +79,31 @@ Item {
 
         Text {
             id: windowTitle
-            text: root.activeTitle
+            text: root.vertical
+                ? root.verticalTitle(root.verticalAppName) : root.activeTitle
 
-            font.family: "LXGW WenKai GB Screen"
+            font.family: Fonts.ui
             font.pointSize: 11
             color: Appearance.colors.colOnSurface
+            horizontalAlignment: Text.AlignHCenter
+            lineHeight: root.vertical ? 0.9 : 1.0
 
             Layout.maximumWidth: 250
-            elide: Text.ElideRight
-            Layout.alignment: Qt.AlignVCenter
+            elide: root.vertical ? Text.ElideNone : Text.ElideRight
+            Layout.alignment: Qt.AlignCenter
         }
+    }
+
+    MouseArea {
+        id: activeHover
+        anchors.fill: parent
+        enabled: root.vertical
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+    }
+
+    PopupToolTip {
+        extraVisibleCondition: root.vertical && activeHover.containsMouse
+        text: root.detailedTooltipText
     }
 }

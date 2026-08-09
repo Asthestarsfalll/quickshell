@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 import qs.Common
@@ -16,15 +17,27 @@ FocusScope {
     property string noResultText: qsTr("无匹配结果")
     property string textRole: "label"
     property string valueRole: "value"
+    property string enabledRole: "enabled"
+    property string tooltipRole: "tooltip"
     property bool closeOnAccept: false
     property bool showCheckmark: true
     property bool showActiveIndicator: true
+    property bool searchable: false
+    property string searchText: ""
+    property string searchPlaceholder: qsTr("搜索")
     property real fieldHeight: 40
     property real itemHeight: 40
     property Item popupBoundsItem: null
 
     property int highlightedIndex: -1
-    readonly property var filteredOptions: options
+    readonly property var filteredOptions: {
+        const query = root.searchText.trim().toLowerCase();
+        if (!root.searchable || query === "")
+            return root.options;
+
+        return root.options.filter(option =>
+            root.optionText(option).toLowerCase().indexOf(query) !== -1);
+    }
     readonly property string visualSelectedValue: hasPendingAccepted ? pendingAcceptedValue : value
     readonly property string currentText: labelFor(visualSelectedValue)
     readonly property string displayText: currentText !== "" ? currentText : placeholder
@@ -83,6 +96,16 @@ FocusScope {
         return option === undefined || option === null ? "" : String(option);
     }
 
+    function optionEnabled(option) {
+        if (!hasRole(option, enabledRole))
+            return true;
+        return option[enabledRole] !== false;
+    }
+
+    function optionTooltip(option) {
+        return roleText(option, tooltipRole);
+    }
+
     function labelFor(currentValue) {
         for (let i = 0; i < options.length; i += 1) {
             if (optionValue(options[i]) === currentValue)
@@ -115,10 +138,12 @@ FocusScope {
         if (availableWidth <= 0 || availableHeight <= menuPadding * 2)
             return false;
 
-        const naturalHeight = menuPadding * 2 + listTargetHeight;
+        const searchHeight = root.searchable ? 48 : 0;
+        const naturalHeight = menuPadding * 2 + searchHeight + listTargetHeight;
         optionsPopup.width = Math.min(width, availableWidth);
         optionsPopup.height = Math.min(naturalHeight, availableHeight);
-        optionsPopup.effectiveListHeight = Math.max(0, optionsPopup.height - menuPadding * 2);
+        optionsPopup.effectiveListHeight = Math.max(
+            0, optionsPopup.height - menuPadding * 2 - searchHeight);
 
         const belowOrigin = fieldFrame.mapToItem(popupParentItem, 0, height + menuGap);
         const aboveOrigin = fieldFrame.mapToItem(popupParentItem, 0, -optionsPopup.height - menuGap);
@@ -161,9 +186,24 @@ FocusScope {
             return;
         }
 
-        const nextIndex = highlightedIndex < 0 ? 0 : (highlightedIndex + delta + filteredOptions.length) % filteredOptions.length;
-        highlightedIndex = nextIndex;
-        menuList.positionViewAtIndex(highlightedIndex, ListView.Contain);
+        let nextIndex = highlightedIndex < 0
+            ? (delta >= 0 ? 0 : filteredOptions.length - 1)
+            : (highlightedIndex + delta + filteredOptions.length)
+                % filteredOptions.length;
+
+        for (let attempts = 0; attempts < filteredOptions.length;
+                attempts += 1) {
+            if (optionEnabled(filteredOptions[nextIndex])) {
+                highlightedIndex = nextIndex;
+                menuList.positionViewAtIndex(highlightedIndex,
+                    ListView.Contain);
+                return;
+            }
+            nextIndex = (nextIndex + (delta >= 0 ? 1 : -1)
+                + filteredOptions.length) % filteredOptions.length;
+        }
+
+        highlightedIndex = -1;
     }
 
     function acceptHighlighted() {
@@ -173,6 +213,8 @@ FocusScope {
     }
 
     function acceptOption(option) {
+        if (!optionEnabled(option))
+            return;
         const acceptedValue = optionValue(option);
         hasPendingAccepted = true;
         pendingAcceptedValue = acceptedValue;
@@ -183,12 +225,17 @@ FocusScope {
     }
 
     onExpandedChanged: {
+        root.searchText = "";
+        searchField.text = "";
         if (expanded) {
             updatePopupGeometry();
             optionsPopup.open();
             Qt.callLater(() => {
                 updatePopupGeometry();
-                root.forceActiveFocus();
+                if (root.searchable)
+                    searchField.forceActiveFocus();
+                else
+                    root.forceActiveFocus();
             });
         } else {
             closeDelay.stop();
@@ -197,6 +244,15 @@ FocusScope {
                 optionsPopup.close();
             root.forceActiveFocus();
         }
+    }
+
+    onSearchTextChanged: {
+        if (root.searchable && searchField.text !== root.searchText)
+            searchField.text = root.searchText;
+        if (!root.expanded)
+            return;
+        root.highlightedIndex = root.selectedIndexInFiltered();
+        root.updatePopupGeometry();
     }
 
     Keys.onPressed: event => {
@@ -242,7 +298,7 @@ FocusScope {
             visible: true
             text: root.displayText
             color: root.showingPlaceholder ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer2
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 14
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
@@ -393,7 +449,10 @@ FocusScope {
                 id: maskedSurface
 
                 width: parent.width
-                height: root.menuPadding * 2 + optionsPopup.effectiveListHeight * optionsPopup.revealProgress
+                height: root.menuPadding * 2
+                    + (root.searchable ? 48 : 0)
+                    + optionsPopup.effectiveListHeight
+                        * optionsPopup.revealProgress
                 visible: height > 0
                 layer.enabled: true
                 layer.effect: OpacityMask {
@@ -410,11 +469,54 @@ FocusScope {
                     color: root.menuSurfaceColor
                 }
 
+                TextField {
+                    id: searchField
+
+                    x: root.menuPadding
+                    y: root.menuPadding
+                    width: parent.width - root.menuPadding * 2
+                    height: 40
+                    visible: root.searchable
+                    placeholderText: root.searchPlaceholder
+                    color: Appearance.colors.colOnSurface
+                    placeholderTextColor: Appearance.colors.colSubtext
+                    font.family: Fonts.ui
+                    font.pixelSize: 13
+                    leftPadding: 12
+                    rightPadding: 12
+                    topPadding: 0
+                    bottomPadding: 0
+                    selectByMouse: true
+                    Material.accent: Appearance.colors.colPrimary
+                    background: Rectangle {
+                        radius: Appearance.rounding.small
+                        color: Appearance.colors.colLayer2
+                    }
+
+                    onTextChanged: root.searchText = text
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Down) {
+                            root.moveHighlight(1);
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up) {
+                            root.moveHighlight(-1);
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Return
+                                   || event.key === Qt.Key_Enter) {
+                            root.acceptHighlighted();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Escape) {
+                            root.closeMenu();
+                            event.accepted = true;
+                        }
+                    }
+                }
+
                 Item {
                     id: revealClip
 
                     x: root.menuPadding
-                    y: root.menuPadding
+                    y: root.menuPadding + (root.searchable ? 48 : 0)
                     width: parent.width - root.menuPadding * 2
                     height: optionsPopup.effectiveListHeight * optionsPopup.revealProgress
                     clip: true
@@ -440,8 +542,10 @@ FocusScope {
 
                             readonly property string itemText: root.optionText(modelData)
                             readonly property string itemValue: root.optionValue(modelData)
+                            readonly property bool itemEnabled: root.optionEnabled(modelData)
                             readonly property bool selected: itemValue === root.visualSelectedValue
                             readonly property bool highlighted: index === root.highlightedIndex
+                            readonly property string tooltipText: root.optionTooltip(modelData)
 
                             width: ListView.view.width
                             height: root.itemHeight
@@ -449,11 +553,12 @@ FocusScope {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: Appearance.rounding.small
-                                color: optionItem.selected
+                                color: optionItem.selected && optionItem.itemEnabled
                                        ? Appearance.colors.colPrimaryContainer
                                        : optionItem.highlighted
                                          ? root.menuHoverColor
                                          : root.menuSurfaceColor
+                                opacity: optionItem.itemEnabled ? 1 : 0.5
 
                                 Behavior on color {
                                     ColorAnimation {
@@ -474,7 +579,8 @@ FocusScope {
 
                                     width: 22
                                     height: parent.height
-                                    scale: optionItem.selected && root.showCheckmark ? 1 : 0
+                                    scale: optionItem.selected && optionItem.itemEnabled
+                                        && root.showCheckmark ? 1 : 0
                                     transformOrigin: Item.Left
 
                                     Behavior on scale {
@@ -492,8 +598,10 @@ FocusScope {
                                         fill: 1
                                         color: Appearance.colors.colOnPrimaryContainer
                                         visible: root.showCheckmark
-                                        opacity: optionItem.selected ? 1 : 0
-                                        scale: optionItem.selected ? 1 : 0.6
+                                        opacity: optionItem.selected
+                                            && optionItem.itemEnabled ? 1 : 0
+                                        scale: optionItem.selected
+                                            && optionItem.itemEnabled ? 1 : 0.6
 
                                         Behavior on opacity {
                                             NumberAnimation {
@@ -518,8 +626,11 @@ FocusScope {
                                     width: parent.width - x
                                     height: parent.height
                                     text: optionItem.itemText
-                                    color: optionItem.selected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer3
-                                    font.family: Sizes.fontFamily
+                                    color: optionItem.selected
+                                        && optionItem.itemEnabled
+                                        ? Appearance.colors.colOnPrimaryContainer
+                                        : Appearance.colors.colOnLayer3
+                                    font.family: Fonts.ui
                                     font.pixelSize: 14
                                     font.weight: optionItem.selected ? Font.Medium : Font.Normal
                                     elide: Text.ElideRight
@@ -546,9 +657,22 @@ FocusScope {
                             MouseArea {
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
+                                enabled: optionItem.itemEnabled
+                                cursorShape: enabled
+                                    ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onEntered: root.highlightedIndex = optionItem.index
                                 onClicked: root.acceptOption(optionItem.modelData)
+                            }
+
+                            HoverHandler {
+                                id: optionHover
+                                enabled: optionItem.tooltipText !== ""
+                            }
+
+                            StyledToolTip {
+                                extraVisibleCondition: optionHover.hovered
+                                    && optionItem.tooltipText !== ""
+                                text: optionItem.tooltipText
                             }
                         }
                     }
@@ -563,7 +687,7 @@ FocusScope {
                         visible: root.filteredOptions.length === 0
                         text: root.noResultText
                         color: Appearance.colors.colSubtext
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: 14
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignLeft

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Clavis.Niri 1.0
+import Clavis.Niri
 import qs.Common
 import qs.Services
 import "../../Common/functions/WallpaperMath.js" as WallpaperMath

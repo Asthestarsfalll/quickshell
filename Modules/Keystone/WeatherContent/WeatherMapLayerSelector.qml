@@ -8,11 +8,9 @@ StyledButtonGroup {
     signal modeSelected(string mode)
 
     currentValue: currentMode
-    style: StyledButtonGroup.Style.Primary
     buttonHeight: 34
     horizontalPadding: 11
     buttonMinWidth: 42
-    pressedExpansion: 4
     textPixelSize: 11
     model: [
         ({

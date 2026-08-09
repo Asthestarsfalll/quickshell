@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 import qs.Components
 
@@ -90,7 +90,7 @@ Item {
                     Layout.preferredWidth: 40
                     text: index === 0 ? qsTr("今天") : week[modelData.dayIndex]
                     color: index === 0 ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 16
                     font.weight: index === 0 ? Font.Medium : Font.Normal
                 }
@@ -106,7 +106,7 @@ Item {
                     Layout.preferredWidth: 32
                     text: modelData.minTemp + "°"
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 16
                     horizontalAlignment: Text.AlignRight
                 }
@@ -141,7 +141,7 @@ Item {
                     Layout.preferredWidth: 32
                     text: modelData.maxTemp + "°"
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 16
                 }
             }

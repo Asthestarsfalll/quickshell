@@ -4,19 +4,18 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Quickshell
-import Quickshell.Wayland
 import qs.Common
 import qs.Components
 import qs.Services
 import qs.Widgets.common
 
-Item {
+FloatingWindow {
     id: root
 
+    property var parentModal: null
     property var sourceCurve: [0.43, 1.19, 1.0, 0.4, 1, 1]
     property var workingCurve: [0.43, 1.19, 1.0, 0.4, 1, 1]
     property var animationTargetCurve: [0.43, 1.19, 1.0, 0.4, 1, 1]
-    property bool shouldBeVisible: false
     property bool fabExpanded: false
     property bool manualInputVisible: false
     property bool manualInputInvalid: false
@@ -36,11 +35,22 @@ Item {
     property real renderX2: 1.0
     property real renderY2: 0.4
 
-    readonly property real modalScreenWidth: modalWindow.screen ? modalWindow.screen.width : 1920
-    readonly property real modalScreenHeight: modalWindow.screen ? modalWindow.screen.height : 1080
-    readonly property real dialogWidth: Math.max(560, Math.min(980, modalScreenWidth - 64))
-    readonly property real dialogHeight: Math.max(460, Math.min(720, modalScreenHeight - 64))
     readonly property real headerInfoWidth: 168
+
+    visible: false
+    parentWindow: root.parentModal
+    title: qsTr("编辑贝塞尔曲线")
+    implicitWidth: 980
+    implicitHeight: 720
+    minimumSize: Qt.size(560, 460)
+    color: "transparent"
+
+    onClosed: root.dismiss()
+
+    onVisibleChanged: {
+        if (visible)
+            Qt.callLater(() => modalContent.forceActiveFocus());
+    }
 
     signal curveEdited(var nextCurve)
 
@@ -320,10 +330,14 @@ Item {
         }
 
         root.curveEdited(next);
-        root.close();
+        root.dismiss();
     }
 
     function openWithCurve(curve) {
+        if (!root.parentModal) {
+            console.warn("BezierCurveLayerEditor cannot open without parentModal");
+            return;
+        }
         sourceCurve = safeCurve(curve);
         workingCurve = sourceCurve.slice();
         setRenderCurve(workingCurve);
@@ -332,15 +346,15 @@ Item {
         fabExpanded = false;
         manualInputVisible = false;
         manualInputInvalid = false;
-        shouldBeVisible = true;
+        root.visible = true;
         Qt.callLater(() => {
             resetView();
             modalContent.forceActiveFocus();
         });
     }
 
-    function close() {
-        shouldBeVisible = false;
+    function dismiss() {
+        root.visible = false;
         activePoint = -1;
         panning = false;
         playing = false;
@@ -465,43 +479,11 @@ Item {
         onStopped: root.workingCurve = root.animationTargetCurve
     }
 
-    PanelWindow {
-        id: modalWindow
-
-        visible: root.shouldBeVisible
-        color: "transparent"
-
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "clavis-shell-bezier-curve-editor"
-        WlrLayershell.keyboardFocus: modalWindow.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        exclusiveZone: 0
-
-        onVisibleChanged: {
-            if (visible)
-                Qt.callLater(() => modalContent.forceActiveFocus());
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            enabled: root.shouldBeVisible
-            onClicked: root.close()
-        }
-
         FocusScope {
             id: modalContent
 
-            anchors.centerIn: parent
-            width: root.dialogWidth
-            height: root.dialogHeight
-            focus: root.shouldBeVisible
+            anchors.fill: parent
+            focus: root.visible
             clip: true
 
             Rectangle {
@@ -511,13 +493,11 @@ Item {
                 radius: Appearance.rounding.normal
                 color: BlurService.backgroundColor(
                     Appearance.m3colors.m3surfaceContainerLow)
-                border.width: 1
-                border.color: Appearance.m3colors.m3outlineVariant
                 antialiasing: true
             }
 
             CompositorBlurRegion {
-                targetWindow: modalWindow
+                targetWindow: root
                 backgroundItem: dialogBackground
             }
 
@@ -530,7 +510,7 @@ Item {
             }
 
             Keys.onEscapePressed: event => {
-                root.close();
+                root.dismiss();
                 event.accepted = true;
             }
 
@@ -538,8 +518,6 @@ Item {
                 id: editorCanvas
 
                 anchors.fill: parent
-                anchors.margins: 1
-
                 onPaint: {
                     const ctx = getContext("2d");
                     const w = width;
@@ -658,12 +636,9 @@ Item {
 
                     const playPoint = root.curvePoint(root.playhead);
                     ctx.fillStyle = Appearance.colors.colTertiary;
-                    ctx.strokeStyle = Appearance.m3colors.m3surfaceContainerLowest;
-                    ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.arc(root.screenX(playPoint[0]), root.screenY(playPoint[1]), 9, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.stroke();
 
                     function drawEndpoint(x, y) {
                         ctx.fillStyle = Appearance.colors.colPrimary;
@@ -770,7 +745,7 @@ Item {
                         Layout.fillWidth: true
                         text: "P1 " + root.formatNumber(root.renderX1) + ", " + root.formatNumber(root.renderY1)
                         color: Appearance.colors.colSubtext
-                        font.family: Sizes.fontFamilyMono
+                        font.family: Fonts.mono
                         font.pixelSize: 12
                         fontSizeMode: Text.HorizontalFit
                         minimumPixelSize: 9
@@ -782,7 +757,7 @@ Item {
                         Layout.fillWidth: true
                         text: "P2 " + root.formatNumber(root.renderX2) + ", " + root.formatNumber(root.renderY2)
                         color: Appearance.colors.colSubtext
-                        font.family: Sizes.fontFamilyMono
+                        font.family: Fonts.mono
                         font.pixelSize: 12
                         fontSizeMode: Text.HorizontalFit
                         minimumPixelSize: 9
@@ -820,7 +795,7 @@ Item {
                 IconButton {
                     iconName: "close"
                     tooltipText: qsTr("关闭")
-                    onClicked: root.close()
+                    onClicked: root.dismiss()
                 }
             }
 
@@ -856,16 +831,19 @@ Item {
             Item {
                 id: fabMenu
 
-                readonly property real mainSize: 56
-                readonly property real miniSize: 44
-                readonly property real buttonGap: 10
+                readonly property real collapsedMainSize: 72
+                readonly property real expandedMainSize: 50
+                readonly property real actionSize: 50
+                readonly property real actionGap: 4
+                readonly property real mainGap: 8
+                readonly property int actionCount: 4
 
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: 18
                 anchors.bottomMargin: 18
-                width: Math.max(mainSize, playMiniFab.implicitWidth, reverseMiniFab.implicitWidth, flipMiniFab.implicitWidth, manualMiniFab.implicitWidth)
-                height: mainSize + 4 * (miniSize + buttonGap)
+                width: Math.max(collapsedMainSize, playMiniFab.implicitWidth, reverseMiniFab.implicitWidth, flipMiniFab.implicitWidth, manualMiniFab.implicitWidth)
+                height: expandedMainSize + mainGap + actionCount * actionSize + (actionCount - 1) * actionGap
 
                 Item {
                     id: menuColumn
@@ -879,9 +857,9 @@ Item {
                         labelText: root.playing ? qsTr("暂停") : qsTr("播放")
                         expanded: root.fabExpanded
                         order: 4
-                        expandedY: fabMenu.height - fabMenu.mainSize - order * (fabMenu.miniSize + fabMenu.buttonGap)
-                        collapsedY: fabMenu.height - fabMenu.mainSize + (fabMenu.mainSize - fabMenu.miniSize) / 2
-                        mainSize: fabMenu.mainSize
+                        itemCount: fabMenu.actionCount
+                        actionSize: fabMenu.actionSize
+                        expandedY: fabMenu.height - fabMenu.expandedMainSize - fabMenu.mainGap - order * fabMenu.actionSize - (order - 1) * fabMenu.actionGap
                         onClicked: root.togglePlayback()
                     }
 
@@ -892,9 +870,9 @@ Item {
                         labelText: qsTr("倒放")
                         expanded: root.fabExpanded
                         order: 3
-                        expandedY: fabMenu.height - fabMenu.mainSize - order * (fabMenu.miniSize + fabMenu.buttonGap)
-                        collapsedY: fabMenu.height - fabMenu.mainSize + (fabMenu.mainSize - fabMenu.miniSize) / 2
-                        mainSize: fabMenu.mainSize
+                        itemCount: fabMenu.actionCount
+                        actionSize: fabMenu.actionSize
+                        expandedY: fabMenu.height - fabMenu.expandedMainSize - fabMenu.mainGap - order * fabMenu.actionSize - (order - 1) * fabMenu.actionGap
                         onClicked: root.reversePlayback()
                     }
 
@@ -905,9 +883,9 @@ Item {
                         labelText: qsTr("翻转")
                         expanded: root.fabExpanded
                         order: 2
-                        expandedY: fabMenu.height - fabMenu.mainSize - order * (fabMenu.miniSize + fabMenu.buttonGap)
-                        collapsedY: fabMenu.height - fabMenu.mainSize + (fabMenu.mainSize - fabMenu.miniSize) / 2
-                        mainSize: fabMenu.mainSize
+                        itemCount: fabMenu.actionCount
+                        actionSize: fabMenu.actionSize
+                        expandedY: fabMenu.height - fabMenu.expandedMainSize - fabMenu.mainGap - order * fabMenu.actionSize - (order - 1) * fabMenu.actionGap
                         onClicked: root.flipCurve()
                     }
 
@@ -918,9 +896,9 @@ Item {
                         labelText: qsTr("手动输入")
                         expanded: root.fabExpanded
                         order: 1
-                        expandedY: fabMenu.height - fabMenu.mainSize - order * (fabMenu.miniSize + fabMenu.buttonGap)
-                        collapsedY: fabMenu.height - fabMenu.mainSize + (fabMenu.mainSize - fabMenu.miniSize) / 2
-                        mainSize: fabMenu.mainSize
+                        itemCount: fabMenu.actionCount
+                        actionSize: fabMenu.actionSize
+                        expandedY: fabMenu.height - fabMenu.expandedMainSize - fabMenu.mainGap - order * fabMenu.actionSize - (order - 1) * fabMenu.actionGap
                         onClicked: root.toggleManualInput()
                     }
 
@@ -928,22 +906,14 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         expanded: root.fabExpanded
+                        collapsedSize: fabMenu.collapsedMainSize
+                        expandedSize: fabMenu.expandedMainSize
                         onClicked: root.fabExpanded = !root.fabExpanded
                     }
                 }
             }
 
-            Rectangle {
-                anchors.fill: parent
-                z: 20
-                radius: Appearance.rounding.normal
-                color: "transparent"
-                border.width: 1
-                border.color: Appearance.m3colors.m3outlineVariant
-                antialiasing: true
-            }
         }
-    }
 
     component IconButton: Item {
         id: iconButton
@@ -960,8 +930,6 @@ Item {
             anchors.fill: parent
             radius: Appearance.rounding.full
             color: iconMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
-            border.width: 1
-            border.color: Appearance.applyAlpha(Appearance.colors.colOnSurfaceVariant, 0.14)
         }
 
         MaterialSymbol {
@@ -991,20 +959,37 @@ Item {
         id: fab
 
         property bool expanded: false
-        property int rippleDuration: 900
+        property real collapsedSize: 72
+        property real expandedSize: 50
+        property real collapsedRadius: 18
+        property real morphProgress: expanded ? 1 : 0
+        property int rippleDuration: 400
+        readonly property QtObject spatialMotion: Appearance.animation.elementMoveFast
+        readonly property real currentSize: collapsedSize
+            + (expandedSize - collapsedSize) * morphProgress
+        readonly property real currentRadius: collapsedRadius
+            + (expandedSize / 2 - collapsedRadius) * morphProgress
 
         signal clicked
 
-        implicitWidth: 56
-        implicitHeight: 56
-        width: implicitWidth
-        height: implicitHeight
+        implicitWidth: collapsedSize
+        implicitHeight: collapsedSize
+        width: currentSize
+        height: currentSize
+
+        Behavior on morphProgress {
+            NumberAnimation {
+                duration: fab.spatialMotion.duration
+                easing.type: fab.spatialMotion.type
+                easing.bezierCurve: fab.spatialMotion.bezierCurve
+            }
+        }
 
         Rectangle {
             id: mainFabBackground
 
             anchors.fill: parent
-            radius: fab.expanded ? width / 2 : 16
+            radius: Math.min(width / 2, fab.currentRadius)
             color: fabMouse.pressed
                    ? Appearance.colors.colPrimaryActive
                    : fabMouse.containsMouse
@@ -1023,14 +1008,6 @@ Item {
                 ));
                 mainFabRippleFade.complete();
                 mainFabRippleAnimation.restart();
-            }
-
-            Behavior on radius {
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
             }
 
             Behavior on color {
@@ -1131,18 +1108,10 @@ Item {
 
         MaterialSymbol {
             anchors.centerIn: parent
-            text: fab.expanded ? "menu_open" : "menu"
-            iconSize: 24
+            text: "add"
+            iconSize: 28 - 5 * fab.morphProgress
             color: Appearance.colors.colOnPrimary
-            rotation: fab.expanded ? 0 : -180
-
-            Behavior on rotation {
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
-            }
+            rotation: 45 * fab.morphProgress
         }
 
         MouseArea {
@@ -1168,46 +1137,41 @@ Item {
         property string labelText: ""
         property bool expanded: false
         property int order: 0
+        property int itemCount: 1
+        property real actionSize: 50
         property real expandedY: 0
-        property real collapsedY: 0
-        property real collapsedWidth: 44
-        property real mainSize: 56
-        property int rippleDuration: 900
-        readonly property real horizontalPadding: 14
+        property real collapsedWidth: actionSize
+        property real revealProgress: expanded ? 1 : 0
+        property int rippleDuration: 400
+        readonly property real horizontalPadding: 16
+        readonly property int motionDelay: expanded
+            ? (order - 1) * 18
+            : (itemCount - order) * 12
+        readonly property QtObject spatialMotion: Appearance.animation.elementMoveFast
+        readonly property real visibleProgress: Math.max(0, Math.min(1, revealProgress))
 
         signal clicked
 
         implicitWidth: Math.max(collapsedWidth, contentRow.implicitWidth + horizontalPadding * 2)
-        width: expanded ? implicitWidth : collapsedWidth
-        height: 44
-        opacity: expanded ? 1 : 0
-        scale: expanded ? 1 : 0.72
+        width: collapsedWidth + (implicitWidth - collapsedWidth) * revealProgress
+        height: actionSize
+        opacity: Math.max(0, Math.min(1, visibleProgress * 1.5))
+        scale: 0.72 + 0.28 * revealProgress
         transformOrigin: Item.Right
-        enabled: expanded
+        enabled: expanded && revealProgress > 0.8
         x: parent ? parent.width - width : 0
-        y: expanded ? expandedY : collapsedY
+        y: expandedY
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Appearance.animation.expressiveEffects.duration
-                easing.type: Appearance.animation.expressiveEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-            }
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
-        }
-
-        Behavior on y {
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+        Behavior on revealProgress {
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: miniFab.motionDelay
+                }
+                NumberAnimation {
+                    duration: miniFab.spatialMotion.duration
+                    easing.type: miniFab.spatialMotion.type
+                    easing.bezierCurve: miniFab.spatialMotion.bezierCurve
+                }
             }
         }
 
@@ -1215,14 +1179,12 @@ Item {
             id: miniBackground
 
             anchors.fill: parent
-            radius: 14
+            radius: height / 2
             color: miniMouse.pressed
-                   ? Appearance.colors.colSecondaryContainerActive
+                   ? Appearance.colors.colPrimaryContainerActive
                    : miniMouse.containsMouse
-                     ? Appearance.colors.colSecondaryContainerHover
-                     : Appearance.colors.colSecondaryContainer
-            border.width: 1
-            border.color: Appearance.applyAlpha(Appearance.colors.colOnSurfaceVariant, 0.14)
+                     ? Appearance.colors.colPrimaryContainerHover
+                     : Appearance.colors.colPrimaryContainer
 
             function startRipple(x, y) {
                 const dist = (ox, oy) => ox * ox + oy * oy;
@@ -1262,15 +1224,15 @@ Item {
                     gradient: Gradient {
                         GradientStop {
                             position: 0.0
-                            color: Appearance.colors.colSecondaryContainerActive
+                            color: Appearance.colors.colPrimaryContainerActive
                         }
                         GradientStop {
                             position: 0.32
-                            color: Appearance.colors.colSecondaryContainerActive
+                            color: Appearance.colors.colPrimaryContainerActive
                         }
                         GradientStop {
                             position: 0.58
-                            color: Appearance.applyAlpha(Appearance.colors.colSecondaryContainerActive, 0)
+                            color: Appearance.applyAlpha(Appearance.colors.colPrimaryContainerActive, 0)
                         }
                     }
                 }
@@ -1336,15 +1298,15 @@ Item {
                 Layout.preferredWidth: 21
                 Layout.preferredHeight: 21
                 text: miniFab.iconName
-                iconSize: 21
-                color: Appearance.colors.colOnSecondaryContainer
+                iconSize: 20
+                color: Appearance.colors.colOnPrimaryContainer
                 fill: miniMouse.containsMouse ? 1 : 0
             }
 
             Text {
                 text: miniFab.labelText
-                color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
+                color: Appearance.colors.colOnPrimaryContainer
+                font.family: Fonts.ui
                 font.pixelSize: 13
                 font.weight: Font.Medium
             }
@@ -1421,7 +1383,7 @@ Item {
                     y: 0
                     text: "x1, y1, x2, y2"
                     color: root.manualInputInvalid ? Appearance.colors.colError : manualInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                 }
 
@@ -1434,7 +1396,7 @@ Item {
                     selectedTextColor: Appearance.colors.colOnPrimary
                     selectionColor: Appearance.colors.colPrimary
                     selectByMouse: true
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.mono
                     font.pixelSize: 13
                     leftPadding: 16
                     rightPadding: 12

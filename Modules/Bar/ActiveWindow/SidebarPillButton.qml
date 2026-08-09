@@ -11,7 +11,7 @@ Item {
     property color activeContentColor: Appearance.colors.colOnSecondaryContainer
     readonly property bool isHovered: mouseArea.containsMouse
     readonly property bool isActive: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === viewName
-    readonly property int buttonSize: 28
+    readonly property int buttonSize: Sizes.barControlCircleSize
     readonly property int hoverButtonSize: 34
 
     implicitHeight: buttonSize
@@ -30,7 +30,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: root.iconName
-            font.family: "Material Symbols Rounded"
+            font.family: Fonts.materialSymbolsRounded
             font.pixelSize: root.isHovered ? 18 : 16
             color: root.activeContentColor
             horizontalAlignment: Text.AlignHCenter

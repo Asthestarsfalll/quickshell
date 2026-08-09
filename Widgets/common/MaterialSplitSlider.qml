@@ -234,7 +234,7 @@ Slider {
         StyledToolTip {
             extraVisibleCondition: root.showTooltipOnHover ? root.hovered : root.pressed
             text: root.tooltipContent
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.numeric
         }
     }
 }

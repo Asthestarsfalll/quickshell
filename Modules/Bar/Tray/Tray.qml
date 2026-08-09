@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.Common
@@ -12,12 +11,16 @@ Item {
     id: root
 
     property bool trayOverflowOpen: false
+    property bool vertical: false
+    property string edge: "top"
+    property var barVisualItem: null
     property var activeMenu: null
     property var screen: null
     property real overflowX: 10
     property real overflowY: 10
-    property real overflowEdgeMargin: 10
-    property real overflowAnchorGap: 4
+    property real overflowEdgeMargin: Sizes.barPopupScreenMargin
+    property real overflowPopupGap: Sizes.barPopupGap
+    property real overflowSurfacePadding: 10
     property real overflowAnchorX: 10
     property real overflowAnchorY: 10
     property real overflowAnchorWidth: 0
@@ -26,8 +29,8 @@ Item {
     readonly property var pinnedItems: TrayService.pinnedItems
     readonly property var unpinnedItems: TrayService.unpinnedItems
 
-    implicitHeight: 36
-    implicitWidth: content.implicitWidth + 24
+    implicitHeight: vertical ? content.implicitHeight + 16 : Sizes.barPillThickness
+    implicitWidth: vertical ? Sizes.barVisualThickness : content.implicitWidth + 24
 
     onUnpinnedItemsChanged: {
         if (root.unpinnedItems.length === 0) {
@@ -59,6 +62,21 @@ Item {
         root.overflowAnchorReady = true;
     }
 
+    function barVisualBounds() {
+        if (!root.barVisualItem)
+            return null;
+
+        const globalPos = root.barVisualItem.mapToGlobal(0, 0);
+        const screenX = root.screen ? (root.screen.x || 0) : 0;
+        const screenY = root.screen ? (root.screen.y || 0) : 0;
+        return {
+            "x": globalPos.x - screenX,
+            "y": globalPos.y - screenY,
+            "width": root.barVisualItem.width || 0,
+            "height": root.barVisualItem.height || 0
+        };
+    }
+
     function updateOverflowPosition() {
         const surfaceWidth = Math.max(1, overflowSurface.implicitWidth);
         const surfaceHeight = Math.max(1, overflowSurface.implicitHeight);
@@ -70,19 +88,39 @@ Item {
         const anchorY = root.overflowAnchorReady ? root.overflowAnchorY : root.overflowEdgeMargin;
         const anchorWidth = root.overflowAnchorReady ? root.overflowAnchorWidth : 0;
         const anchorHeight = root.overflowAnchorReady ? root.overflowAnchorHeight : 0;
+        const barBounds = root.barVisualBounds();
 
-        root.overflowX = root.clamp(
-            anchorX + anchorWidth / 2 - surfaceWidth / 2,
-            root.overflowEdgeMargin,
-            availableWidth - surfaceWidth - root.overflowEdgeMargin
-        );
+        const rightX = barBounds
+            ? barBounds.x + barBounds.width + root.overflowPopupGap
+                - root.overflowSurfacePadding
+            : anchorX + anchorWidth + root.overflowPopupGap;
+        const leftX = barBounds
+            ? barBounds.x - surfaceWidth - root.overflowPopupGap
+                + root.overflowSurfacePadding
+            : anchorX - surfaceWidth - root.overflowPopupGap;
+        const maxX = availableWidth - surfaceWidth - root.overflowEdgeMargin;
+        root.overflowX = root.edge === "left"
+            ? root.clamp(rightX, root.overflowEdgeMargin, maxX)
+            : root.edge === "right"
+                ? root.clamp(leftX, root.overflowEdgeMargin, maxX)
+                : root.clamp(anchorX + anchorWidth / 2 - surfaceWidth / 2,
+                    root.overflowEdgeMargin, maxX);
 
-        const belowY = anchorY + anchorHeight + root.overflowAnchorGap;
-        const aboveY = anchorY - surfaceHeight - root.overflowAnchorGap;
+        const belowY = barBounds
+            ? barBounds.y + barBounds.height + root.overflowPopupGap
+                - root.overflowSurfacePadding
+            : anchorY + anchorHeight + root.overflowPopupGap;
+        const aboveY = barBounds
+            ? barBounds.y - surfaceHeight - root.overflowPopupGap
+                + root.overflowSurfacePadding
+            : anchorY - surfaceHeight - root.overflowPopupGap;
         const maxY = availableHeight - surfaceHeight - root.overflowEdgeMargin;
-        root.overflowY = belowY <= maxY || aboveY < root.overflowEdgeMargin
-            ? root.clamp(belowY, root.overflowEdgeMargin, maxY)
-            : root.clamp(aboveY, root.overflowEdgeMargin, maxY);
+        root.overflowY = root.vertical
+            ? root.clamp(anchorY + anchorHeight / 2 - surfaceHeight / 2,
+                root.overflowEdgeMargin, maxY)
+            : root.edge === "bottom"
+                ? root.clamp(aboveY, root.overflowEdgeMargin, maxY)
+                : root.clamp(belowY, root.overflowEdgeMargin, maxY);
     }
 
     function setActiveMenu(window) {
@@ -106,32 +144,20 @@ Item {
         if (!root.trayOverflowOpen)
             root.overflowAnchorReady = false;
     }
-
-    Rectangle {
-        id: bgRect
-
-        anchors.fill: parent
-        color: BlurService.backgroundColor(
-            Appearance.colors.colLayer0)
-        radius: height / 2
-        visible: false
+    onEdgeChanged: {
+        if (root.trayOverflowOpen)
+            Qt.callLater(root.updateOverflowPosition);
     }
 
-    MultiEffect {
-        source: bgRect
-        anchors.fill: bgRect
-        shadowEnabled: true
-        shadowColor: Appearance.applyAlpha(Appearance.colors.colShadow, 0.4)
-        shadowBlur: 0.8
-        shadowVerticalOffset: 3
-        shadowHorizontalOffset: 0
-    }
+    TopBarPillBackground { anchors.fill: parent }
 
-    RowLayout {
+    GridLayout {
         id: content
 
         anchors.centerIn: parent
-        spacing: 15
+        rowSpacing: 15
+        columnSpacing: 15
+        columns: root.vertical ? 1 : Math.max(1, root.pinnedItems.length + 1)
 
         MaterialRippleButton {
             id: trayOverflowButton
@@ -169,7 +195,9 @@ Item {
                 color: root.trayOverflowOpen || trayOverflowButton.pointerHovered
                     ? Appearance.colors.colOnSecondaryContainer
                     : Appearance.colors.colOnLayer0
-                rotation: root.trayOverflowOpen ? 180 : 0
+                rotation: (root.edge === "left" ? -90
+                    : root.edge === "right" ? 90 : 0)
+                    + (root.trayOverflowOpen ? 180 : 0)
 
                 Behavior on rotation {
                     NumberAnimation {
@@ -193,6 +221,8 @@ Item {
 
             delegate: TrayItem {
                 screen: root.screen
+                edge: root.edge
+                barVisualItem: root.barVisualItem
                 Layout.alignment: Qt.AlignVCenter
                 onMenuOpened: window => root.setActiveMenu(window)
                 onMenuClosed: root.releaseActiveMenu(null)
@@ -270,8 +300,10 @@ Item {
 
                 x: root.overflowX
                 y: root.overflowY
-                implicitWidth: popupBackground.implicitWidth + 20
-                implicitHeight: popupBackground.implicitHeight + 20
+                implicitWidth: popupBackground.implicitWidth
+                    + root.overflowSurfacePadding * 2
+                implicitHeight: popupBackground.implicitHeight
+                    + root.overflowSurfacePadding * 2
                 width: implicitWidth
                 height: implicitHeight
 
@@ -288,8 +320,8 @@ Item {
 
                     readonly property real popupPadding: 4
 
-                    x: 10
-                    y: 10
+                    x: root.overflowSurfacePadding
+                    y: root.overflowSurfacePadding
                     implicitWidth: overflowLayout.implicitWidth + popupPadding * 2
                     implicitHeight: overflowLayout.implicitHeight + popupPadding * 2
                     color: BlurService.backgroundColor(
@@ -338,6 +370,7 @@ Item {
 
                             delegate: TrayItem {
                                 screen: root.screen
+                                edge: root.edge
                                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                                 onMenuOpened: window => root.setActiveMenu(window)
                                 onMenuClosed: root.releaseActiveMenu(null)

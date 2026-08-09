@@ -37,7 +37,7 @@ MaterialRippleButton {
             Text {
                 visible: root.iconName !== ""
                 text: root.iconName
-                font.family: "Material Symbols Rounded"
+                font.family: Fonts.materialSymbolsRounded
                 font.pixelSize: 20
                 color: root.critical
                     ? Appearance.colors.colOnSecondaryContainer
@@ -47,7 +47,7 @@ MaterialRippleButton {
             Text {
                 visible: root.buttonText !== ""
                 text: root.buttonText
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 12
                 font.weight: Font.Medium
                 color: root.critical

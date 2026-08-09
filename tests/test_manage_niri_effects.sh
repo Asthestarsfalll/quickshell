@@ -28,7 +28,7 @@ assert_not_contains() {
 }
 
 main_config="$test_dir/config.kdl"
-snippet="$test_dir/clavis-effects.kdl"
+snippet="$test_dir/clavis/effects.kdl"
 printf '%s\n' 'input {}' > "$main_config"
 
 "$manager" write "$main_config" "$snippet" true "$mock_niri" >/dev/null
@@ -71,23 +71,23 @@ fi
 assert_contains "$snippet" 'known-good'
 
 "$manager" configure "$main_config" "$snippet" true "$mock_niri" >/dev/null
-assert_contains "$main_config" 'include optional=true "clavis-effects.kdl"'
+assert_contains "$main_config" 'include optional=true "clavis/effects.kdl"'
 [ -f "$main_config.clavis-backup" ] || fail "main config backup was not created"
-[ "$(grep -Fc 'include optional=true "clavis-effects.kdl"' "$main_config")" -eq 1 ] \
+[ "$(grep -Fc 'include optional=true "clavis/effects.kdl"' "$main_config")" -eq 1 ] \
     || fail "include was not added exactly once"
 
 "$manager" configure "$main_config" "$snippet" false "$mock_niri" >/dev/null
-[ "$(grep -Fc 'include optional=true "clavis-effects.kdl"' "$main_config")" -eq 1 ] \
+[ "$(grep -Fc 'include optional=true "clavis/effects.kdl"' "$main_config")" -eq 1 ] \
     || fail "include was duplicated"
 assert_contains "$snippet" 'xray false'
 
 commented_main="$test_dir/commented-config.kdl"
 printf '%s\n' \
     'input {}' \
-    'include optional=true "clavis-effects.kdl" // Clavis' \
+    'include optional=true "clavis/effects.kdl" // Clavis' \
     > "$commented_main"
 "$manager" configure "$commented_main" "$snippet" true "$mock_niri" >/dev/null
-[ "$(grep -Fc 'clavis-effects.kdl' "$commented_main")" -eq 1 ] \
+[ "$(grep -Fc 'clavis/effects.kdl' "$commented_main")" -eq 1 ] \
     || fail "include with a trailing comment was duplicated"
 
 invalid_main="$test_dir/invalid-config.kdl"

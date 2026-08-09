@@ -99,7 +99,7 @@ Item {
             Text {
                 text: qsTr("气压")
                 color: root.mutedInk
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.expressive
                 font.pixelSize: 18
                 font.bold: true
             }
@@ -111,7 +111,7 @@ Item {
             anchors.verticalCenterOffset: -4
             text: root.formattedPressureText()
             color: root.ink
-            font.family: "sans-serif"
+            font.family: Fonts.expressive
             font.pixelSize: Math.round(parent.width * 0.21)
             font.weight: Font.Light
             z: 2
@@ -123,7 +123,7 @@ Item {
             anchors.topMargin: 20
             text: root.unitText
             color: root.ink
-            font.family: "LXGW WenKai GB Screen"
+            font.family: Fonts.expressive
             font.pixelSize: 18
             font.bold: true
             z: 2

@@ -321,7 +321,7 @@ Item {
             chartActive: root.isForeground
             updateInterval: root.chartUpdateInterval
             decorationSize: 50
-            valueSize: Sizes.typeHeadlineMedium
+            valueSize: Typography.headlineMedium.pixelSize
             containerColor:
                 Appearance.colors.colPrimaryContainer
             foregroundColor:
@@ -359,7 +359,7 @@ Item {
             updateInterval: root.chartUpdateInterval
             shapeOverride: MaterialShape.Gem
             decorationSize: 50
-            valueSize: Sizes.typeHeadlineMedium
+            valueSize: Typography.headlineMedium.pixelSize
             containerColor:
                 Appearance.colors.colSecondaryContainer
             foregroundColor:
@@ -493,11 +493,11 @@ Item {
 
         SystemLoadingState {
             anchors.fill: parent
-            active: root.isForeground
+            active: root.isForeground && !SystemMonitorService.error
             visible: !SystemMonitorService.hasData
                 && !SystemMonitorService.error
                 && !SystemMonitorService.reconnecting
-            message: qsTr("正在连接系统监测服务")
+            message: qsTr("正在连接 keytop")
         }
 
         SystemUnavailableState {
@@ -511,11 +511,10 @@ Item {
                     || SystemMonitorService.reconnecting)
             title: SystemMonitorService.reconnecting
                 ? qsTr("正在重新连接")
-                : (SystemMonitorService.errorMessage
-                    || qsTr("系统监测服务不可用"))
+                : qsTr("系统监测暂不可用")
             message: SystemMonitorService.error
-                ? qsTr("请确认 key 已重新构建并可从当前环境运行。")
-                : qsTr("连接中断后会使用有限指数退避自动恢复。")
+                ? qsTr("数据暂时缺失，页面将在后台退避重试。")
+                : qsTr("连接中断后会自动恢复；已有数据不会被伪装成正常值。")
             reconnecting: SystemMonitorService.reconnecting
             onRetryRequested: SystemMonitorService.retry()
         }

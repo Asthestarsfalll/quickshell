@@ -1,8 +1,10 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Clavis.WeatherMap 1.0
+import Clavis.WeatherMap
+import qs.Common
 import qs.Modules.Bar
+import qs.Modules.ControlCenter
 import qs.Modules.Keystone
 import qs.Modules.Launcher
 import qs.Modules.Lock
@@ -16,11 +18,30 @@ Item {
 
     Component.onCompleted: {
         I18nService.initialize();
-        WallpaperService.primaryInstance = true;
-        AwwwWallpaperService.primaryInstance = true;
     }
 
     WallpaperBackground {}
+
+    LazyLoader {
+        id: controlCenterLoader
+
+        active: false
+
+        Component.onCompleted:
+            ControlCenterService.registerLoader(controlCenterLoader)
+
+        onItemChanged: {
+            if (item)
+                ControlCenterService.registerWindow(item);
+        }
+
+        ControlCenterWindow {
+            id: controlCenterWindow
+
+            onPopoutClosed:
+                ControlCenterService.windowClosed(controlCenterWindow)
+        }
+    }
 
     Bar {}
 
@@ -96,41 +117,59 @@ Item {
         target: "wallpaper"
 
         function set(path: string): string {
-            return WallpaperService.setWallpaper(path || "", "", true)
+            return WallpaperService.setWallpaper(path || "", "")
                 ? "OK" : "INVALID";
         }
 
         function setForScreen(path: string, screenName: string): string {
             return WallpaperService.setWallpaper(
-                path || "", screenName || "", true)
+                path || "", screenName || "")
                 ? "OK" : "INVALID";
         }
 
         function clear(): string {
-            return WallpaperService.clearWallpaper("", true)
+            return WallpaperService.clearWallpaper("")
                 ? "OK" : "INVALID";
         }
 
         function clearForScreen(screenName: string): string {
-            return WallpaperService.clearWallpaper(screenName || "", true)
+            return WallpaperService.clearWallpaper(screenName || "")
                 ? "OK" : "INVALID";
         }
 
         function previous(): string {
-            return WallpaperService.cyclePrevious(true) ? "OK" : "PENDING";
+            return WallpaperService.cyclePrevious() ? "OK" : "PENDING";
         }
 
         function next(): string {
-            return WallpaperService.cycleNext(true) ? "OK" : "PENDING";
+            return WallpaperService.cycleNext() ? "OK" : "PENDING";
         }
 
         function random(): string {
-            return WallpaperService.cycleRandom(true) ? "OK" : "PENDING";
+            return WallpaperService.cycleRandom() ? "OK" : "PENDING";
         }
 
         function setFolder(path: string): string {
-            return WallpaperService.setWallpaperFolder(path || "", true)
+            return WallpaperService.setWallpaperFolder(path || "")
                 ? "OK" : "INVALID";
+        }
+    }
+
+    IpcHandler {
+        target: "control-center"
+
+        function open(pageId: string): string {
+            return ControlCenterService.open(pageId || "")
+                ? "OK" : "UNAVAILABLE";
+        }
+
+        function close(): string {
+            return ControlCenterService.close() ? "OK" : "CLOSED";
+        }
+
+        function toggle(pageId: string): string {
+            return ControlCenterService.toggle(pageId || "")
+                ? "OPENING" : "CLOSING";
         }
     }
 

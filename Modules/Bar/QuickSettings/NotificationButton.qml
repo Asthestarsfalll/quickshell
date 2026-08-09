@@ -30,7 +30,7 @@ Rectangle {
         id: icon
         anchors.centerIn: parent
         text: "\uf0f3"
-        font.family: "Font Awesome 6 Free Solid"
+        font.family: Fonts.fontAwesome
         font.pixelSize: root.isHovered ? 14 : 12
         color: Appearance.colors.colOnSecondaryContainer 
         Behavior on font.pixelSize { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }

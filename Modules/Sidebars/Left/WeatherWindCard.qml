@@ -148,6 +148,7 @@ WeatherInsightCard {
         Text {
             text: qsTr("风况")
             color: root.mutedInk
+            font.family: Fonts.expressive
             font.pixelSize: 18
             font.bold: true
         }
@@ -205,6 +206,7 @@ WeatherInsightCard {
                 anchors.bottom: parent.bottom
                 text: root.animatedSpeedText()
                 color: root.ink
+                font.family: Fonts.expressive
                 font.pixelSize: root.speedNumberSize
                 font.weight: Font.Light
             }
@@ -218,6 +220,7 @@ WeatherInsightCard {
                 visible: root.displayUnit.length > 0
                 text: root.displayUnit
                 color: root.ink
+                font.family: Fonts.expressive
                 font.pixelSize: root.speedUnitSize
                 font.weight: Font.Normal
             }
@@ -232,6 +235,7 @@ WeatherInsightCard {
         horizontalAlignment: Text.AlignHCenter
         text: root.animatedDetailText()
         color: root.ink
+        font.family: Fonts.expressive
         font.pixelSize: 14
         font.bold: true
         elide: Text.ElideRight

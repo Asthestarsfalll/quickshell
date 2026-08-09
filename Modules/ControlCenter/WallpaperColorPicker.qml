@@ -4,7 +4,6 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import qs.Common
 import qs.Components
 import qs.Services
@@ -13,6 +12,7 @@ import qs.Widgets.common
 Item {
     id: root
 
+    property var parentModal: null
     property string pickerTitle: qsTr("选择壁纸颜色")
     property color currentColor: Appearance.colors.colPrimary
     property real hue: 0
@@ -26,8 +26,8 @@ Item {
     property int formatFieldResetRevision: 0
 
     readonly property real dialogMargin: 14
-    readonly property real dialogWidth: Math.max(560, Math.min(680, modalWindow.width - 64))
-    readonly property real dialogHeight: Math.max(620, Math.min(704, modalWindow.height - 64))
+    readonly property real dialogWidth: Math.max(560, Math.min(680, modalWindow.width || 680))
+    readonly property real dialogHeight: Math.max(620, Math.min(704, modalWindow.height || 704))
     readonly property real paletteHeight: dialogHeight < 660 ? 220 : 250
     readonly property real colorCellStride: Math.floor((dialogWidth - dialogMargin * 2) / 17)
     readonly property real colorCellSize: Math.max(28, Math.min(36, colorCellStride - 2))
@@ -58,6 +58,10 @@ Item {
     }
 
     function open() {
+        if (!root.parentModal) {
+            console.warn("WallpaperColorPicker cannot open without parentModal");
+            return;
+        }
         shouldBeVisible = true;
         Qt.callLater(() => modalContent.forceActiveFocus());
     }
@@ -140,24 +144,18 @@ Item {
         pickColorProcess.running = true;
     }
 
-    PanelWindow {
+    FloatingWindow {
         id: modalWindow
 
+        parentWindow: root.parentModal
         visible: root.shouldBeVisible
+        title: root.pickerTitle
+        implicitWidth: 680
+        implicitHeight: 704
+        minimumSize: Qt.size(560, 620)
         color: "transparent"
 
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "clavis-shell-wallpaper-color-picker"
-        WlrLayershell.keyboardFocus: modalWindow.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        exclusiveZone: 0
+        onClosed: root.close()
 
         onVisibleChanged: {
             if (visible)
@@ -228,7 +226,7 @@ Item {
                             Text {
                                 text: root.pickerTitle
                                 color: Appearance.colors.colOnSurface
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 18
                                 font.weight: Font.Medium
                             }
@@ -237,7 +235,7 @@ Item {
                                 Layout.fillWidth: true
                                 text: qsTr("从调色板中选择颜色，或使用自定义滑块")
                                 color: Appearance.colors.colSubtext
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 13
                                 elide: Text.ElideRight
                             }
@@ -495,7 +493,7 @@ Item {
                                     Layout.preferredWidth: 44
                                     text: Math.round(root.alpha * 100) + "%"
                                     color: Appearance.colors.colOnSurface
-                                    font.family: Sizes.fontFamily
+                                    font.family: Fonts.ui
                                     font.pixelSize: 13
                                     horizontalAlignment: Text.AlignRight
                                 }
@@ -577,7 +575,7 @@ Item {
 
     component SectionLabel: Text {
         color: Appearance.colors.colOnSurface
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 15
         font.weight: Font.Medium
     }
@@ -639,7 +637,7 @@ Item {
         Text {
             text: formatField.title
             color: Appearance.colors.colSubtext
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             font.weight: Font.Medium
         }
@@ -648,23 +646,27 @@ Item {
             Layout.fillWidth: true
             spacing: 6
 
-            TextField {
+            MaterialTextField {
                 id: input
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
+                compact: true
                 text: {
                     root.formatFieldResetRevision;
                     return formatField.value;
                 }
                 readOnly: !formatField.editable
                 selectByMouse: true
-                Material.accent: Appearance.colors.colPrimary
-                Material.background: Appearance.colors.colLayer2
-                Material.foreground: formatField.validateHex && text.length > 0 && !root.hexTextIsValid(text)
-                    ? Appearance.m3colors.m3error
+                leftPadding: 10
+                rightPadding: 10
+                error: formatField.validateHex && text.length > 0
+                    && !root.hexTextIsValid(text)
+                color: formatField.validateHex && text.length > 0
+                    && !root.hexTextIsValid(text)
+                    ? Appearance.colors.colError
                     : Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 13
                 onAccepted: formatField.accepted(text)
                 onEditingFinished: {

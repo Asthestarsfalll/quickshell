@@ -10,23 +10,31 @@ Rectangle {
     
     property bool isHovered: mouseArea.containsMouse
     property var screen: null
+    property bool vertical: false
     
-    implicitHeight: 28
-    implicitWidth: isHovered ? (layout.width + 20) : 28
-    radius: height / 2 
+    implicitHeight: Sizes.barControlCircleSize
+    implicitWidth: vertical ? Sizes.barControlCircleSize
+        : (isHovered ? layout.width + 20 : Sizes.barControlCircleSize)
+    radius: Math.min(width, height) / 2
     color: Appearance.colors.colPrimaryContainer 
+    scale: root.vertical && root.isHovered
+        ? 34 / Sizes.barControlCircleSize : 1
 
     Behavior on implicitWidth { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+    Behavior on scale {
+        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    }
 
     RowLayout {
         id: layout
         anchors.centerIn: parent
         spacing: 6
-        width: isHovered ? implicitWidth : iconText.implicitWidth
+        width: root.isHovered && !root.vertical
+            ? implicitWidth : iconText.implicitWidth
 
         Text {
             id: iconText
-            font.family: "JetBrainsMono Nerd Font" 
+            font.family: Fonts.nerdFont
             font.pixelSize: 14 
             Layout.alignment: Qt.AlignVCenter
             color: Appearance.colors.colOnPrimaryContainer 
@@ -49,8 +57,8 @@ Rectangle {
             font.pixelSize: 12 
             color: Appearance.colors.colOnPrimaryContainer 
             Layout.alignment: Qt.AlignVCenter
-            visible: root.isHovered
-            opacity: root.isHovered ? 1.0 : 0.0
+            visible: root.isHovered && !root.vertical
+            opacity: visible ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 200 } }
         }
     }

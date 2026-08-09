@@ -87,22 +87,6 @@ Singleton {
         InfoDrawerState.flushSave();
     }
 
-    function playSystemSound(soundName) {
-        const soundRoot = "/usr/share/sounds/freedesktop/stereo/";
-        Quickshell.execDetached([
-            "ffplay",
-            "-nodisp",
-            "-autoexit",
-            soundRoot + soundName + ".oga"
-        ]);
-        Quickshell.execDetached([
-            "ffplay",
-            "-nodisp",
-            "-autoexit",
-            soundRoot + soundName + ".ogg"
-        ]);
-    }
-
     function notifyPomodoroStage() {
         let message = "";
         if (root.pomodoroLongBreak)
@@ -116,8 +100,6 @@ Singleton {
                 .arg(Math.floor(root.focusTime / 60));
 
         Quickshell.execDetached(["notify-send", qsTr("番茄钟"), message, "-a", "Clavis"]);
-        if (PersonalizationConfig.pomodoroSoundEnabled)
-            root.playSystemSound("alarm-clock-elapsed");
     }
 
     function refreshPomodoro() {

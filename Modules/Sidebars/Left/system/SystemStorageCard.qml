@@ -39,11 +39,7 @@ Rectangle {
         : 0
 
     function defaultDiskIndex() {
-        for (let index = 0; index < root.disks.length; index += 1) {
-            if (root.disks[index].mountPoint === "/")
-                return index;
-        }
-        return 0;
+        return Format.rootDiskIndex(root.disks);
     }
 
     onDisksChanged: {
@@ -92,7 +88,7 @@ Rectangle {
                     Appearance.colors.colSecondaryContainer
                 handleColor: Appearance.colors.colSecondary
                 iconColor: Appearance.colors.colSecondary
-                iconFont: Sizes.fontMaterialSymbols
+                iconFont: Fonts.materialSymbolsRounded
                 iconSize: 1
                 arcRadius: (width - lineWidth) / 2 - 1
                 lineWidth: 11
@@ -111,7 +107,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "hard_drive"
                     color: Appearance.colors.colSecondary
-                    iconSize: Sizes.typeTitleMedium
+                    iconSize: Typography.titleMedium.pixelSize
                     fill: 1
                 }
 
@@ -122,8 +118,8 @@ Rectangle {
                         0
                     )
                     color: Appearance.colors.colSecondary
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeHeadlineSmall
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.headlineSmall.pixelSize
                     font.weight: Font.Bold
                 }
 
@@ -131,8 +127,8 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("已使用")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeLabelMedium
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.labelMedium.pixelSize
                 }
             }
         }
@@ -150,8 +146,8 @@ Rectangle {
                 Layout.fillWidth: true
                     text: qsTr("存储")
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamily
-                font.pixelSize: Sizes.typeTitleLarge
+                font.family: Fonts.ui
+                font.pixelSize: Typography.titleLarge.pixelSize
                 font.weight: Font.Bold
                 elide: Text.ElideRight
             }
@@ -164,8 +160,8 @@ Rectangle {
                         + Format.bytes(root.disk.totalBytes)
                     : qsTr("未检测到存储盘")
                 color: Appearance.colors.colSecondary
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: Sizes.typeBodyLarge
+                font.family: Fonts.numeric
+                font.pixelSize: Typography.bodyLarge.pixelSize
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }

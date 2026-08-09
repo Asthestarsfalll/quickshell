@@ -1,114 +1,81 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import os
+import sys
+from pathlib import Path
 
-# 配置路径
-OBSIDIAN_MD = "/home/archirithm/Documents/Obsidian Vault/kebiao.md"
-CACHE_DIR = os.path.expanduser("~/.cache/quickshell")
-CACHE_FILE = os.path.join(CACHE_DIR, "schedule.json")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from clavis_paths import ClavisPaths
 
 
-def parse_markdown():
-    if not os.path.exists(OBSIDIAN_MD):
-        print(f"找不到 Obsidian 课表文件: {OBSIDIAN_MD}")
-        return None
-
-    with open(OBSIDIAN_MD, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-
+def parse_markdown(source: Path):
+    if not source.is_file():
+        raise FileNotFoundError(f"schedule Markdown file not found: {source}")
+    lines = source.read_text(encoding="utf-8").splitlines()
     grid = []
     for line in lines:
         line = line.strip()
         if not line.startswith("|"):
             continue
-        if line.startswith("|"):
-            line = line[1:]
-        if line.endswith("|"):
-            line = line[:-1]
-        cols = [col.strip().replace("**", "") for col in line.split("|")]
+        cols = [column.strip().replace("**", "") for column in line.strip("|").split("|")]
         grid.append(cols)
-
     if len(grid) < 3:
-        return None
+        raise ValueError("schedule Markdown table has fewer than three rows")
 
     body = grid[2:]
     rows = len(body)
-    cols = len(body[0]) if rows > 0 else 0
-
-    time_headers = []
+    columns = len(body[0]) if rows else 0
+    time_headers = [row[0] if row else "" for row in body]
     parsed_items = []
-
-    # ==========================================
-    # 核心：全局课程 ID 发号器
-    # ==========================================
-    course_color_map = {}
-    next_color_id = 0
-
-    skip = [[False] * cols for _ in range(rows)]
-
-    # 提取左侧时间段
-    for r in range(rows):
-        if len(body[r]) > 0:
-            time_headers.append(body[r][0])
-
-    # 遍历核心网格
-    for c in range(1, cols):
-        for r in range(rows):
-            if skip[r][c]:
+    course_colors = {}
+    skipped = [[False] * columns for _ in range(rows)]
+    for column in range(1, columns):
+        for row in range(rows):
+            if skipped[row][column]:
                 continue
-
-            text = body[r][c] if c < len(body[r]) else ""
+            text = body[row][column] if column < len(body[row]) else ""
             row_span = 1
             color_id = 0
-
-            if text != "":
-                # 纵向合并逻辑
+            if text:
                 while (
-                    r + row_span < rows
-                    and c < len(body[r + row_span])
-                    and body[r + row_span][c] == text
+                    row + row_span < rows
+                    and column < len(body[row + row_span])
+                    and body[row + row_span][column] == text
                 ):
-                    skip[r + row_span][c] = True
+                    skipped[row + row_span][column] = True
                     row_span += 1
-
-                # +++ 核心魔法：提取“纯课名”作为发号凭证 +++
-                # 以半角 "(" 或全角 "（" 为界，砍掉后面的内容，并去掉两边空格
                 base_name = text.split("(")[0].split("（")[0].strip()
-
-                # 给“纯课名”发号，而不是给包含教室的全名发号
-                if base_name not in course_color_map:
-                    course_color_map[base_name] = next_color_id
-                    next_color_id += 1
-
-                # 获取这门课分配到的统一 ID
-                color_id = course_color_map[base_name]
-
+                if base_name not in course_colors:
+                    course_colors[base_name] = len(course_colors)
+                color_id = course_colors[base_name]
             parsed_items.append(
                 {
-                    "row": r,
-                    "col": c - 1,
+                    "row": row,
+                    "col": column - 1,
                     "rowSpan": row_span,
-                    "text": text,  # UI 上依然显示完整的名字和教室
-                    "isEmpty": (text == ""),
-                    "colorId": color_id,  # 但底层绑定的颜色 ID 已经统一了！
+                    "text": text,
+                    "isEmpty": not bool(text),
+                    "colorId": color_id,
                 }
             )
-
     return {"timeHeaders": time_headers, "scheduleItems": parsed_items}
 
 
-def main():
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    data = parse_markdown()
-
-    if data:
-        # 去掉 indent=2，生成紧凑的单行 JSON，绝对不会触发 QML 的 Parse Error
-        with open(CACHE_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False)
-        print(f"✅ 课表解析成功！JSON 已保存至: {CACHE_FILE}")
-    else:
-        print("❌ 解析失败，请检查 Markdown 格式。")
+def main() -> int:
+    paths = ClavisPaths.from_environment()
+    parser = argparse.ArgumentParser(description="Generate the Clavis schedule cache")
+    parser.add_argument("--input", type=Path, default=paths.config_home / "schedule.md")
+    parser.add_argument("--output", type=Path, default=paths.cache_home / "schedule.json")
+    arguments = parser.parse_args()
+    data = parse_markdown(arguments.input)
+    arguments.output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = arguments.output.with_name(f".{arguments.output.name}.{os.getpid()}.tmp")
+    temporary.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    os.replace(temporary, arguments.output)
+    print(f"Schedule cache written to {arguments.output}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
-set -u
+set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 shell_dir=$(cd -- "$script_dir/../.." && pwd)
+# shellcheck source=scripts/lib/clavis-paths.sh
+source "$shell_dir/scripts/lib/clavis-paths.sh"
+clavis_paths_init
 asset_dir="$shell_dir/assets/wlogout"
-color_file="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell-dev-colorscheme/colors.json"
-personalization_file="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/personalization.json"
+color_file="$CLAVIS_GENERATED_HOME/clavis/colors.json"
+personalization_file="$CLAVIS_CONFIG_HOME/config.json"
 style=${1:-grid}
 
 if ! command -v wlogout >/dev/null 2>&1; then
@@ -100,8 +103,8 @@ case "$(read_color background '#0e1513')" in
         ;;
 esac
 
-runtime_dir=${XDG_RUNTIME_DIR:-/tmp}
-generated_css=$(mktemp "$runtime_dir/clavis-wlogout.XXXXXX.css")
+mkdir -p "$CLAVIS_RUNTIME_HOME/temporary"
+generated_css=$(mktemp "$CLAVIS_RUNTIME_HOME/temporary/wlogout.XXXXXX.css")
 trap 'rm -f -- "$generated_css"' EXIT
 
 envsubst < "$template" > "$generated_css"

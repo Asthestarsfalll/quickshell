@@ -16,8 +16,9 @@ Rectangle {
 
     signal clicked()
 
-    implicitHeight: Math.max(56, rowLayout.implicitHeight + Appearance.spacing.small * 2)
-    radius: Appearance.rounding.normal
+    implicitHeight: Math.max(Metrics.controlHeightXL,
+        rowLayout.implicitHeight + Metrics.spacingS * 2)
+    radius: Metrics.cornerM
     color: {
         if (root.highlighted)
             return Appearance.colors.colLayer3;
@@ -45,17 +46,17 @@ Rectangle {
 
         anchors {
             fill: parent
-            leftMargin: Appearance.spacing.small
-            rightMargin: Appearance.spacing.small
-            topMargin: Appearance.spacing.small
-            bottomMargin: Appearance.spacing.small
+            leftMargin: Metrics.spacingS
+            rightMargin: Metrics.spacingS
+            topMargin: Metrics.spacingS
+            bottomMargin: Metrics.spacingS
         }
-        spacing: Appearance.spacing.small
+        spacing: Metrics.spacingS
 
         Rectangle {
             visible: root.iconName.length > 0
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
+            Layout.preferredWidth: Metrics.controlHeightM
+            Layout.preferredHeight: Metrics.controlHeightM
             radius: Appearance.rounding.full
             color: root.highlighted
                 ? Appearance.colors.colPrimaryContainer
@@ -64,7 +65,7 @@ Rectangle {
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: root.iconName
-                iconSize: 21
+                iconSize: Metrics.iconM - Metrics.spacingXXS
                 fill: root.iconFill
                 color: root.highlighted
                     ? Appearance.colors.colOnPrimaryContainer
@@ -75,15 +76,19 @@ Rectangle {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            spacing: 1
+            spacing: Metrics.dividerWidth
 
             Text {
                 Layout.fillWidth: true
                 text: root.title
-                color: Appearance.colors.colOnLayer2
-                font.family: Sizes.fontFamily
-                font.pixelSize: 14
-                font.weight: Font.Medium
+                color: Appearance.colors.colOnSurface
+                font.family: Fonts.ui
+                font.pixelSize: root.supportingText.length > 0
+                    ? Typography.bodyMedium.pixelSize
+                    : Typography.bodyLarge.pixelSize
+                font.weight: root.supportingText.length > 0
+                    ? Typography.bodyMedium.weight
+                    : Font.Medium
                 elide: Text.ElideRight
             }
 
@@ -92,7 +97,7 @@ Rectangle {
                 visible: root.supportingText.length > 0
                 text: root.supportingText
                 color: Appearance.colors.colOnLayer1
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 12
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
@@ -104,7 +109,7 @@ Rectangle {
             id: trailingSlot
 
             Layout.alignment: Qt.AlignVCenter
-            spacing: Appearance.spacing.xSmall
+            spacing: Metrics.spacingXS
         }
     }
 

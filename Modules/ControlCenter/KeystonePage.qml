@@ -5,55 +5,10 @@ import qs.Services
 import qs.Components
 import qs.Widgets.common
 
-StyledFlickable {
+Item {
     id: root
 
-    clip: true
-    contentWidth: width
-    contentHeight: contentColumn.y + contentColumn.implicitHeight + 24
-
-    readonly property real pageContentWidth: 600
-
-    component Section: ColumnLayout {
-        id: section
-
-        property string title: ""
-        property string iconName: "toggle_off"
-        default property alias content: body.data
-
-        Layout.fillWidth: true
-        spacing: 12
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            MaterialSymbol {
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-                text: section.iconName
-                iconSize: 26
-                fill: 1
-                color: Appearance.colors.colOnSecondaryContainer
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: section.title
-                color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
-                font.pixelSize: 18
-                font.weight: Font.Medium
-            }
-        }
-
-        ColumnLayout {
-            id: body
-
-            Layout.fillWidth: true
-            spacing: 10
-        }
-    }
+    property string currentSection: "overview"
 
     component SearchSelectSettingRow: Item {
         id: selectRow
@@ -85,7 +40,7 @@ StyledFlickable {
                     width: parent.width
                     text: selectRow.title
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -95,7 +50,7 @@ StyledFlickable {
                     width: parent.width
                     text: selectRow.description
                     color: Appearance.colors.colSubtext
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }
@@ -117,30 +72,129 @@ StyledFlickable {
         }
     }
 
-    ColumnLayout {
-        id: contentColumn
+    function openSection(section) {
+        root.currentSection = String(section || "overview");
+    }
 
-        width: root.pageContentWidth
-        x: Math.max(24, (root.width - width) / 2)
-        y: 28
-        spacing: 30
+    function showOverview() {
+        root.currentSection = "overview";
+    }
 
-        Section {
-            title: qsTr("钥石样式")
-            iconName: "toggle_off"
+    function closeChildWindows() {
+        root.showOverview();
+    }
 
-            SearchSelectSettingRow {
-                title: qsTr("样式")
-                options: PersonalizationConfig.keystoneStyles
-                value: PersonalizationConfig.keystoneStyle
-                placeholder: qsTr("选择钥石样式")
-                onAccepted: value => PersonalizationConfig.setKeystoneStyle(value)
+    GeneralSubpageHeader {
+        id: subpageHeader
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        visible: root.currentSection !== "overview"
+        title: qsTr("横向时钟样式")
+        backAccessibleName: qsTr("返回钥石设置")
+        z: 2
+        onBackRequested: root.showOverview()
+    }
+
+    StyledFlickable {
+        id: overviewFlickable
+
+        anchors.fill: parent
+        visible: root.currentSection === "overview"
+        contentWidth: width
+        contentHeight: contentColumn.y + contentColumn.implicitHeight + 24
+
+        ColumnLayout {
+            id: contentColumn
+
+            width: Math.min(600, Math.max(1, overviewFlickable.width - 48))
+            x: Math.max(24, (overviewFlickable.width - width) / 2)
+            y: 28
+            spacing: 30
+
+            KeystoneSection {
+                title: qsTr("钥石样式")
+                iconName: "toggle_off"
+
+                SearchSelectSettingRow {
+                    title: qsTr("样式")
+                    options: PersonalizationConfig.keystoneStyles
+                    value: PersonalizationConfig.keystoneStyle
+                    placeholder: qsTr("选择钥石样式")
+                    onAccepted: value => PersonalizationConfig.setKeystoneStyle(value)
+                }
+
+                SettingsRow {
+                    Layout.fillWidth: true
+                    title: qsTr("屏幕边缘")
+
+                    trailing: EdgePositionSelector {
+                        position: PersonalizationConfig.keystonePosition
+                        onPositionSelected: position =>
+                            PersonalizationConfig.setKeystonePosition(position)
+                    }
+                }
+            }
+
+            KeystoneSection {
+                title: qsTr("横向时钟")
+                iconName: "schedule"
+
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(
+                        66, (width - 8) * 42 / 220 + 12)
+
+                    HorizontalClockPreview {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.leftMargin: 4
+                        anchors.rightMargin: 4
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 6
+                        anchors.bottomMargin: 6
+                    }
+                }
+
+                SettingsRow {
+                    Layout.fillWidth: true
+                    title: qsTr("隐藏日期")
+
+                    trailing: StyledSwitch {
+                        checked: PersonalizationConfig.keystoneHideDate
+                        Accessible.name: qsTr("隐藏日期")
+                        onToggled: PersonalizationConfig.setKeystoneHideDate(checked)
+                    }
+                }
+
+                SettingsActionRow {
+                    Layout.fillWidth: true
+                    iconName: "tune"
+                    text: qsTr("横向时钟样式")
+                    description: qsTr("字体、数字位置和颜色")
+                    trailingIconName: "chevron_right"
+                    onClicked: root.openSection("horizontal-clock")
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 24
             }
         }
+    }
 
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 24
-        }
+    Loader {
+        id: pageLoader
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: subpageHeader.bottom
+        anchors.bottom: parent.bottom
+        visible: root.currentSection !== "overview"
+        source: root.currentSection === "horizontal-clock"
+            ? Qt.resolvedUrl("HorizontalClockPage.qml") : ""
     }
 }

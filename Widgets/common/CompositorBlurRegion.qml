@@ -17,6 +17,7 @@ Item {
 
     property bool surfaceReady: false
     property bool publishPending: false
+    property bool destroying: false
     property var _regionObjects: []
     property var _subtractionRegionObjects: []
 
@@ -87,10 +88,8 @@ Item {
         for (let index = 0; index < items.length; ++index) {
             const region = itemRegionComponent.createObject(
                 combinedRegion, { "sourceItem": items[index] });
-            if (region) {
-                region.changed.connect(root.publish);
+            if (region)
                 regions.push(region);
-            }
         }
         root._regionObjects = regions;
 
@@ -100,10 +99,8 @@ Item {
             const region = subtractionRegionComponent.createObject(
                 combinedRegion,
                 { "sourceItem": subtractedItems[index] });
-            if (region) {
-                region.changed.connect(root.publish);
+            if (region)
                 subtractionRegions.push(region);
-            }
         }
         root._subtractionRegionObjects = subtractionRegions;
 
@@ -118,7 +115,7 @@ Item {
     }
 
     function publish() {
-        if (!root.targetWindow)
+        if (root.destroying || !root.targetWindow)
             return;
         if (!root.submittedRegion) {
             root.clear();
@@ -127,7 +124,7 @@ Item {
         if (root.publishPending)
             return;
         root.publishPending = true;
-        Qt.callLater(root.commit);
+        commitTimer.restart();
     }
 
     function commit() {
@@ -157,7 +154,23 @@ Item {
         root.rebuildRegions();
     }
 
-    Component.onDestruction: root.clear()
+    Component.onDestruction: {
+        root.destroying = true;
+        commitTimer.stop();
+        if (root.targetWindow)
+            root.targetWindow.BackgroundEffect.blurRegion = null;
+    }
+
+    Timer {
+        id: commitTimer
+
+        interval: 0
+        repeat: false
+        onTriggered: {
+            if (!root.destroying)
+                root.commit();
+        }
+    }
 
     Connections {
         target: root.targetWindow
@@ -191,6 +204,14 @@ Item {
         }
     }
 
+    TransformWatcher {
+        id: clipTransformWatcher
+
+        a: root.targetWindow ? root.targetWindow.contentItem : null
+        b: root.clipItem
+        onTransformChanged: root.publish()
+    }
+
     Region {
         id: combinedRegion
     }
@@ -211,6 +232,15 @@ Item {
         Region {
             required property Item sourceItem
 
+            property TransformWatcher geometryWatcher: TransformWatcher {
+                a: root.targetWindow
+                    ? root.targetWindow.contentItem : null
+                b: sourceItem
+                onTransformChanged: root.publish()
+            }
+
+            onChanged: root.publish()
+
             item: sourceItem && sourceItem.visible
                 && sourceItem.opacity > 0
                 && sourceItem.width > 0
@@ -228,6 +258,15 @@ Item {
 
         Region {
             required property Item sourceItem
+
+            property TransformWatcher geometryWatcher: TransformWatcher {
+                a: root.targetWindow
+                    ? root.targetWindow.contentItem : null
+                b: sourceItem
+                onTransformChanged: root.publish()
+            }
+
+            onChanged: root.publish()
 
             item: sourceItem && sourceItem.visible
                 && sourceItem.width > 0

@@ -44,7 +44,7 @@ StyledFlickable {
                 Layout.fillWidth: true
                 text: section.title
                 color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 18
                 font.weight: Font.Medium
             }
@@ -173,7 +173,7 @@ StyledFlickable {
                 anchors.centerIn: parent
                 text: themeCard.title
                 color: themeCard.labelText
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
                 font.weight: Font.Medium
             }
@@ -272,6 +272,7 @@ StyledFlickable {
         property string textRole: "label"
         property string valueRole: "value"
         property int fieldWidth: 240
+        property bool searchable: false
 
         signal accepted(string value)
 
@@ -293,7 +294,7 @@ StyledFlickable {
                     width: parent.width
                     text: selectRow.title
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -303,7 +304,7 @@ StyledFlickable {
                     width: parent.width
                     text: selectRow.description
                     color: Appearance.colors.colSubtext
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                     visible: text !== ""
@@ -319,6 +320,7 @@ StyledFlickable {
                 placeholder: selectRow.placeholder
                 textRole: selectRow.textRole
                 valueRole: selectRow.valueRole
+                searchable: selectRow.searchable
                 maxVisibleItems: 6
                 noResultText: qsTr("无匹配结果")
                 onAccepted: value => selectRow.accepted(value)
@@ -352,7 +354,7 @@ StyledFlickable {
                     width: parent.width
                     text: toggleRow.title
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -361,7 +363,7 @@ StyledFlickable {
                     width: parent.width
                     text: toggleRow.description
                     color: Appearance.colors.colSubtext
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                     visible: text !== ""
@@ -405,7 +407,7 @@ StyledFlickable {
                 Layout.alignment: Qt.AlignVCenter
                 text: sliderRow.title
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 15
                 font.weight: Font.Medium
             }
@@ -476,7 +478,7 @@ StyledFlickable {
                     visible: !valueEditor.editing
                     text: sliderRow.formatValue(sliderRow.value)
                     color: Appearance.colors.colOnSecondaryContainer
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 13
                     font.weight: Font.Medium
                     fontSizeMode: Text.HorizontalFit
@@ -501,7 +503,7 @@ StyledFlickable {
                         bottom: Math.ceil(sliderRow.from)
                         top: Math.floor(sliderRow.to)
                     }
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 13
                     font.weight: Font.Medium
                     padding: 0
@@ -550,13 +552,13 @@ StyledFlickable {
             Layout.fillWidth: true
             text: sliderRow.description
             color: Appearance.colors.colSubtext
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             wrapMode: Text.WordWrap
             visible: text !== ""
         }
 
-        MaterialAccessibleSlider {
+        MaterialSlider {
             id: settingSlider
 
             Layout.fillWidth: true
@@ -567,7 +569,8 @@ StyledFlickable {
             value: sliderRow.value
             accessibleName: sliderRow.title
             valueFormatter: sliderValue => Math.round(sliderValue).toString()
-            onMoved: sliderRow.moved(Math.round(settingSlider.value))
+                + sliderRow.suffix
+            onMoved: value => sliderRow.moved(Math.round(value))
         }
     }
 
@@ -633,6 +636,13 @@ StyledFlickable {
                 onAccepted: value => ThemeService.setCursorTheme(value)
             }
 
+            InlineStatusBanner {
+                Layout.fillWidth: true
+                visible: ThemeService.cursorLastError !== ""
+                tone: "error"
+                message: ThemeService.cursorLastError
+            }
+
             SliderSettingRow {
                 title: qsTr("光标尺寸")
                 from: 12
@@ -685,6 +695,69 @@ StyledFlickable {
                 placeholder: qsTr("选择布局")
                 onAccepted: value =>
                     PersonalizationConfig.setPowerMenuStyle(value)
+            }
+        }
+
+        Section {
+            title: qsTr("字体")
+            iconName: "text_format"
+
+            SearchSelectSettingRow {
+                title: qsTr("界面字体")
+                description: qsTr("普通标题、正文和控件")
+                options: FontService.fontOptions
+                value: PersonalizationConfig.uiFontFamily
+                placeholder: qsTr("选择界面字体")
+                searchable: true
+                fieldWidth: 280
+                onAccepted: value =>
+                    PersonalizationConfig.setFontFamily("ui", value)
+            }
+
+            SearchSelectSettingRow {
+                title: qsTr("等宽字体")
+                description: qsTr("命令、路径和技术信息")
+                options: FontService.fontOptions
+                value: PersonalizationConfig.monoFontFamily
+                placeholder: qsTr("选择等宽字体")
+                searchable: true
+                fieldWidth: 280
+                onAccepted: value =>
+                    PersonalizationConfig.setFontFamily("mono", value)
+            }
+
+            SearchSelectSettingRow {
+                title: qsTr("数字字体")
+                description: qsTr("时间、百分比和系统数值")
+                options: FontService.fontOptions
+                value: PersonalizationConfig.numericFontFamily
+                placeholder: qsTr("选择数字字体")
+                searchable: true
+                fieldWidth: 280
+                onAccepted: value =>
+                    PersonalizationConfig.setFontFamily("numeric", value)
+            }
+
+            SearchSelectSettingRow {
+                title: qsTr("表现性字体")
+                description: qsTr("天气等强调型视觉组件")
+                options: FontService.fontOptions
+                value: PersonalizationConfig.expressiveFontFamily
+                placeholder: qsTr("选择表现性字体")
+                searchable: true
+                fieldWidth: 280
+                onAccepted: value =>
+                    PersonalizationConfig.setFontFamily("expressive", value)
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignRight
+
+                DialogActionButton {
+                    text: qsTr("恢复默认字体")
+                    onClicked: PersonalizationConfig.resetFontFamilies()
+                }
             }
         }
 

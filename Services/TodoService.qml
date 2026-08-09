@@ -8,13 +8,7 @@ import qs.Common
 Singleton {
     id: root
 
-    readonly property string stateRoot: {
-        const xdgStateHome = Quickshell.env("XDG_STATE_HOME");
-        return xdgStateHome && xdgStateHome.length > 0
-            ? xdgStateHome
-            : Paths.homeDir + "/.local/state";
-    }
-    readonly property string stateDir: stateRoot + "/quickshell/user"
+    readonly property string stateDir: Paths.stateHome
     readonly property string filePath: stateDir + "/todo.json"
 
     property bool storeReady: false

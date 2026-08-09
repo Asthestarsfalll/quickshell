@@ -15,7 +15,13 @@ import qs.Widgets.common
 Item {
     id: root
 
+    property var parentModal: null
     signal navigateRequested(string pageId)
+
+    function closeChildWindows() {
+        avatarPicker.dismiss();
+        backupPicker.dismiss();
+    }
 
     readonly property bool wideLayout: width >= 720
     readonly property real cardGap: Appearance.spacing.medium
@@ -182,8 +188,8 @@ Item {
                             Layout.fillWidth: true
                             text: qsTr("显示语言")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodyMedium
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodyMedium.pixelSize
                             font.weight: Font.Medium
                         }
 
@@ -218,8 +224,8 @@ Item {
                             Layout.fillWidth: true
                             text: BluetoothService.enabled ? qsTr("蓝牙") : qsTr("开启蓝牙以连接设备")
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodyMedium
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodyMedium.pixelSize
                         }
 
                         StyledSwitch {
@@ -284,8 +290,8 @@ Item {
                                                 text: deviceRow.modelData.name
                                                     || qsTr("未命名设备")
                                                 color: Appearance.colors.colOnSurface
-                                                font.family: Sizes.fontFamily
-                                                font.pixelSize: Sizes.typeBodyMedium
+                                                font.family: Fonts.ui
+                                                font.pixelSize: Typography.bodyMedium.pixelSize
                                                 elide: Text.ElideRight
                                             }
 
@@ -294,8 +300,8 @@ Item {
                                                 text: root.bluetoothState(
                                                     deviceRow.modelData)
                                                 color: Appearance.colors.colOnSurfaceVariant
-                                                font.family: Sizes.fontFamily
-                                                font.pixelSize: Sizes.typeBodySmall
+                                                font.family: Fonts.ui
+                                                font.pixelSize: Typography.bodySmall.pixelSize
                                             }
                                         }
 
@@ -357,8 +363,8 @@ Item {
                             && root.pairedBluetoothDevices.length === 0
                         text: qsTr("暂无已配对设备")
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                         horizontalAlignment: Text.AlignHCenter
                     }
 
@@ -397,8 +403,8 @@ Item {
                             Layout.fillWidth: true
                             text: root.providerName(RcloneService.selectedRemote)
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodyLarge
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodyLarge.pixelSize
                             font.weight: Font.DemiBold
                             elide: Text.ElideRight
                         }
@@ -434,8 +440,8 @@ Item {
                                   ? qsTr("正在读取容量…")
                                   : RcloneService.quotaMessage
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodyMedium
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodyMedium.pixelSize
                             elide: Text.ElideRight
                         }
 
@@ -457,8 +463,8 @@ Item {
                             color: RcloneService.backupState === "error"
                                 ? Appearance.colors.colError
                                 : Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodySmall
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodySmall.pixelSize
                             wrapMode: Text.Wrap
                         }
 
@@ -600,8 +606,8 @@ Item {
                             Layout.fillWidth: true
                             text: qsTr("色彩模式")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodyMedium
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodyMedium.pixelSize
                             font.weight: Font.Medium
                         }
 
@@ -646,6 +652,8 @@ Item {
     FilePickerWindow {
         id: avatarPicker
 
+        parentModal: root.parentModal
+        requiresParentWindow: true
         dialogTitle: qsTr("选择头像")
         onAccepted: (path, isDirectory) => {
             if (!isDirectory)
@@ -656,6 +664,8 @@ Item {
     FilePickerWindow {
         id: backupPicker
 
+        parentModal: root.parentModal
+        requiresParentWindow: true
         selectionMode: FilePickerWindow.FilesAndFolders
         dialogTitle: qsTr("选择要备份的文件或文件夹")
         description: qsTr("备份到所选云存储的 Clavis Backups 文件夹")

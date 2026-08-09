@@ -45,7 +45,7 @@ Rectangle {
                 : root.tone === "warning"
                     ? Appearance.colors.colOnTertiaryContainer
                     : Appearance.colors.colOnLayer2
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             wrapMode: Text.Wrap
         }

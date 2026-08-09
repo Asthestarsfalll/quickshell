@@ -113,7 +113,7 @@ Rectangle {
                 Layout.fillWidth: true
                 text: root.titleText()
                 color: Appearance.colors.colOnImage
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 12
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
@@ -127,7 +127,7 @@ Rectangle {
                     Appearance.colors.colOnImage,
                     0.82
                 )
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 10
                 textFormat: Text.PlainText
             }
@@ -195,7 +195,7 @@ Rectangle {
             Text {
                 text: root.minimumLabel()
                 color: Appearance.colors.colOnImage
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 10
                 font.weight: Font.Medium
                 textFormat: Text.PlainText
@@ -208,7 +208,7 @@ Rectangle {
             Text {
                 text: root.maximumLabel()
                 color: Appearance.colors.colOnImage
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 10
                 font.weight: Font.Medium
                 textFormat: Text.PlainText

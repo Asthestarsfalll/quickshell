@@ -33,11 +33,6 @@ QVariantMap NiriPlugin::focusedWorkspace() const { return m_focusedWorkspace; }
 QString NiriPlugin::currentOutput() const { return m_currentOutput; }
 bool NiriPlugin::inOverview() const { return m_inOverview; }
 QStringList NiriPlugin::keyboardLayoutNames() const { return m_keyboardLayoutNames; }
-QVariantList NiriPlugin::casts() const { return NiriCastParser::toVariantList(m_casts); }
-bool NiriPlugin::anyCastPresent() const { return !m_casts.isEmpty(); }
-bool NiriPlugin::anyCastActive() const { return activeCastCount() > 0; }
-int NiriPlugin::activeCastCount() const { return NiriCastParser::activeCount(m_casts); }
-
 QString NiriPlugin::currentKeyboardLayoutName() const
 {
     if (m_currentKeyboardLayoutIndex < 0 || m_currentKeyboardLayoutIndex >= m_keyboardLayoutNames.size())
@@ -221,8 +216,6 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
     bool workspaceChanged = false;
     bool windowChanged = false;
     bool outputChanged = false;
-    bool castChanged = false;
-
     if (type == QStringLiteral("WorkspacesChanged")) {
         const QJsonArray items = event.value(type).toObject().value(QStringLiteral("workspaces")).toArray();
         QHash<quint64, quint64> activeWindows;
@@ -361,38 +354,14 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
     } else if (type == QStringLiteral("KeyboardLayoutSwitched")) {
         m_currentKeyboardLayoutIndex = event.value(type).toObject().value(QStringLiteral("idx")).toInt(-1);
         emit keyboardLayoutChanged();
-    } else if (type == QStringLiteral("CastsChanged")) {
-        const QJsonArray items =
-            event.value(type).toObject().value(QStringLiteral("casts")).toArray();
-        m_casts = NiriCastParser::parseArray(items);
-        castChanged = true;
-    } else if (type == QStringLiteral("CastStartedOrChanged")) {
-        const NiriCast cast = NiriCastParser::parse(
-            event.value(type).toObject().value(QStringLiteral("cast")).toObject());
-        auto it = std::find_if(m_casts.begin(), m_casts.end(), [cast](const NiriCast &candidate) {
-            return candidate.streamId == cast.streamId;
-        });
-        if (it == m_casts.end())
-            m_casts.append(cast);
-        else
-            *it = cast;
-        castChanged = true;
-    } else if (type == QStringLiteral("CastStopped")) {
-        const quint64 streamId =
-            event.value(type).toObject().value(QStringLiteral("stream_id")).toInteger();
-        m_casts.erase(std::remove_if(m_casts.begin(), m_casts.end(),
-                                    [streamId](const NiriCast &cast) {
-                                        return cast.streamId == streamId;
-                                    }),
-                      m_casts.end());
-        castChanged = true;
     } else if (type == QStringLiteral("ConfigLoaded")) {
+        const QJsonObject data = event.value(type).toObject();
+        emit configLoaded(data.value(QStringLiteral("failed")).toBool(),
+                          data.value(QStringLiteral("error")).toString());
         fetchOutputs();
     }
 
     publishState(workspaceChanged, windowChanged, outputChanged);
-    if (castChanged)
-        emit castsChanged();
 }
 
 NiriWorkspace NiriPlugin::parseWorkspace(const QJsonObject &object) const
@@ -440,6 +409,7 @@ NiriOutput NiriPlugin::parseOutput(const QString &name, const QJsonObject &objec
     output.model = object.value(QStringLiteral("model")).toString();
     output.serial = object.value(QStringLiteral("serial")).toString();
     output.vrrEnabled = object.value(QStringLiteral("vrr_enabled")).toBool();
+    output.vrrSupported = object.value(QStringLiteral("vrr_supported")).toBool();
     const QJsonObject logical = object.value(QStringLiteral("logical")).toObject();
     output.logicalX = logical.value(QStringLiteral("x")).toInt(999999);
     output.logicalY = logical.value(QStringLiteral("y")).toInt(999999);
@@ -449,12 +419,23 @@ NiriOutput NiriPlugin::parseOutput(const QString &name, const QJsonObject &objec
     output.transform = logical.value(QStringLiteral("transform")).toString();
     const int currentMode = object.value(QStringLiteral("current_mode")).toInt(-1);
     const QJsonArray modes = object.value(QStringLiteral("modes")).toArray();
+    output.enabled = currentMode >= 0;
+    for (const QJsonValue &value : modes) {
+        const QJsonObject mode = value.toObject();
+        output.modes.append(QVariantMap{
+            {QStringLiteral("width"), mode.value(QStringLiteral("width")).toInt()},
+            {QStringLiteral("height"), mode.value(QStringLiteral("height")).toInt()},
+            {QStringLiteral("refreshRate"), mode.value(QStringLiteral("refresh_rate")).toDouble() / 1000.0},
+            {QStringLiteral("preferred"), mode.value(QStringLiteral("is_preferred")).toBool()},
+        });
+    }
     if (currentMode >= 0 && currentMode < modes.size()) {
         const QJsonObject mode = modes.at(currentMode).toObject();
         output.currentMode = QStringLiteral("%1x%2@%3")
             .arg(mode.value(QStringLiteral("width")).toInt())
             .arg(mode.value(QStringLiteral("height")).toInt())
-            .arg(mode.value(QStringLiteral("refresh_rate")).toDouble());
+            .arg(mode.value(QStringLiteral("refresh_rate")).toDouble() / 1000.0,
+                 0, 'f', 3);
     }
     return output;
 }
@@ -474,12 +455,6 @@ void NiriPlugin::loadInitialState()
         m_windows.clear();
         for (const QJsonValue &value : windows.toArray())
             m_windows.append(parseWindow(value.toObject()));
-    }
-
-    const QJsonValue casts = m_client.sendRequest(QStringLiteral("Casts"), &ok);
-    if (ok && casts.isArray()) {
-        m_casts = NiriCastParser::parseArray(casts.toArray());
-        emit castsChanged();
     }
 
     fetchOutputs();

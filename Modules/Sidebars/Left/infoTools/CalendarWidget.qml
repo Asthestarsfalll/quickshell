@@ -176,7 +176,7 @@ Item {
                 visible: headerButton.iconName.length === 0
                 text: headerButton.buttonText
                 color: Appearance.colors.colOnLayer1
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
             }
 
@@ -223,7 +223,7 @@ Item {
                 : dayButton.todayState === 0
                     ? Appearance.colors.colOnLayer1
                     : Appearance.colors.colOutlineVariant
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 14
             font.weight: dayButton.bold ? Font.DemiBold : Font.Normal
 

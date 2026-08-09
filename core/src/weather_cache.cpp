@@ -5,15 +5,15 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QStandardPaths>
 
 QString WeatherCache::defaultPath() {
-    const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    if (!cacheDir.isEmpty()) {
-        QDir().mkpath(cacheDir);
-        return cacheDir + "/clavis_weather_cache.json";
-    }
-    return QDir::homePath() + "/.cache/clavis_weather_cache.json";
+    const QByteArray configured = qgetenv("XDG_CACHE_HOME");
+    const QString base = configured.isEmpty()
+        ? QDir::homePath() + "/.cache"
+        : QString::fromUtf8(configured);
+    const QString cacheDir = base + "/clavis";
+    QDir().mkpath(cacheDir);
+    return cacheDir + "/weather.json";
 }
 
 WeatherSnapshot WeatherCache::load(const QString &path) {

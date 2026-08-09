@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 
 Item {
@@ -70,7 +70,7 @@ Item {
             Text {
                 text: qsTr("空气质量")
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
                 font.weight: Font.Medium
             }
@@ -80,7 +80,7 @@ Item {
             Text {
                 text: getAqiDescription(root.aqi) + " " + root.aqi
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
                 font.weight: Font.Medium
             }

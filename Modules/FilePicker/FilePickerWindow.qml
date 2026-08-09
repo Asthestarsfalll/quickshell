@@ -34,7 +34,8 @@ FloatingWindow {
     property string selectionPrompt: qsTr("选择一张图片")
     property string acceptLabel: qsTr("选择")
     property string formatSummary: "JPG · PNG · WebP\nBMP · GIF"
-    property bool acceptFilesOnSingleClick: false
+    property var parentModal: null
+    property bool requiresParentWindow: false
     property string currentPath: startPath
     property string selectedPath: ""
     property string selectedName: ""
@@ -43,6 +44,7 @@ FloatingWindow {
     property bool pathEditing: false
     property string pathDraft: ""
     property bool _completionHandled: true
+    property bool _folderModelAttached: true
 
     readonly property string homeDir: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     readonly property string desktopDir: StandardPaths.writableLocation(StandardPaths.DesktopLocation)
@@ -61,6 +63,7 @@ FloatingWindow {
     signal rejected()
 
     visible: false
+    parentWindow: root.parentModal
     title: "clavis-file-picker"
     implicitWidth: 920
     implicitHeight: 600
@@ -185,6 +188,10 @@ FloatingWindow {
     }
 
     function openAt(path) {
+        if (root.requiresParentWindow && !root.parentModal) {
+            console.warn("FilePickerWindow cannot open without parentModal");
+            return;
+        }
         currentPath = normalizePath(path && path !== "" ? path : picturesDir)
             || normalizePath(picturesDir)
             || "/";
@@ -248,19 +255,39 @@ FloatingWindow {
     }
 
     function selectEntry(path, name, isDir) {
-        selectedPath = path;
-        selectedName = name;
-        selectedIsDir = isDir;
+        const normalized = normalizePath(path);
+        if (normalized === "") {
+            clearSelection();
+            return;
+        }
+        selectedPath = normalized;
+        selectedName = String(name || "");
+        selectedIsDir = Boolean(isDir);
     }
 
-    function openEntry(path, isDir) {
+    function openEntry(path, name, isDir) {
         if (isDir)
             navigateTo(path);
         else {
-            selectedPath = path;
-            selectedIsDir = false;
+            selectEntry(path, name, false);
             acceptSelection();
         }
+    }
+
+    function setHiddenFilesVisible(visible) {
+        if (showHiddenFiles === visible)
+            return;
+
+        clearSelection();
+        _folderModelAttached = false;
+        Qt.callLater(() => {
+            showHiddenFiles = visible;
+            Qt.callLater(() => {
+                _folderModelAttached = true;
+                fileGrid.positionViewAtBeginning();
+                Qt.callLater(fileGrid.refreshLayout);
+            });
+        });
     }
 
     function isImageName(name) {
@@ -424,7 +451,7 @@ FloatingWindow {
                             Layout.fillWidth: true
                             text: root.dialogTitle
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 19
                             font.weight: Font.DemiBold
                             elide: Text.ElideRight
@@ -434,7 +461,7 @@ FloatingWindow {
                             Layout.fillWidth: true
                             text: root.description
                             color: Appearance.colors.colSubtext
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 12
                             elide: Text.ElideRight
                         }
@@ -479,7 +506,7 @@ FloatingWindow {
                             Layout.bottomMargin: 6
                             text: qsTr("位置")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
                         }
@@ -506,7 +533,7 @@ FloatingWindow {
                                 anchors.rightMargin: 12
                                 text: root.formatSummary
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 11
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
@@ -599,7 +626,7 @@ FloatingWindow {
                                                         visible: breadcrumbEntry.index > 0
                                                         text: "/"
                                                         color: Appearance.colors.colOnSurfaceVariant
-                                                        font.family: Sizes.fontFamilyMono
+                                                        font.family: Fonts.mono
                                                         font.pixelSize: 13
                                                     }
 
@@ -642,7 +669,7 @@ FloatingWindow {
                                     selectionColor: Appearance.colors.colSecondaryContainer
                                     color: Appearance.colors.colOnSurface
                                     verticalAlignment: TextInput.AlignVCenter
-                                    font.family: Sizes.fontFamilyMono
+                                    font.family: Fonts.mono
                                     font.pixelSize: 12
 
                                     background: Rectangle {
@@ -668,7 +695,8 @@ FloatingWindow {
                                 iconName: root.showHiddenFiles ? "visibility_off" : "visibility"
                                 tooltipText: root.showHiddenFiles ? qsTr("隐藏隐藏文件") : qsTr("显示隐藏文件")
                                 active: root.showHiddenFiles
-                                onClicked: root.showHiddenFiles = !root.showHiddenFiles
+                                onClicked: root.setHiddenFilesVisible(
+                                    !root.showHiddenFiles)
                             }
                         }
                     }
@@ -695,7 +723,7 @@ FloatingWindow {
                             Text {
                                 text: root.emptyStateText
                                 color: Appearance.colors.colSubtext
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 14
                             }
                         }
@@ -715,7 +743,7 @@ FloatingWindow {
                             clip: true
                             cellWidth: width > 0 ? width / Math.max(1, Math.floor(width / 146)) : 146
                             cellHeight: 142
-                            model: folderModel
+                            model: root._folderModelAttached ? folderModel : null
                             animateAppearance: false
                             animateMovement: false
                             onWidthChanged:
@@ -723,8 +751,6 @@ FloatingWindow {
                             onHeightChanged:
                                 Qt.callLater(fileGrid.refreshLayout)
                             onCellWidthChanged:
-                                Qt.callLater(fileGrid.refreshLayout)
-                            onCountChanged:
                                 Qt.callLater(fileGrid.refreshLayout)
 
                             delegate: MaterialRippleButton {
@@ -736,7 +762,8 @@ FloatingWindow {
                                 required property bool fileIsDir
 
                                 property bool appeared: false
-                                readonly property bool selected: root.selectedPath === filePath
+                                readonly property bool selected: root.selectedPath
+                                    === root.normalizePath(filePath)
                                 readonly property real initialX: ((index * 37) % 3 - 1) * 24
                                 readonly property real initialY: ((index * 53) % 5 - 2) * 10
 
@@ -757,11 +784,9 @@ FloatingWindow {
                                 releaseAction: () => {
                                     root.selectEntry(
                                         filePath, fileName, fileIsDir);
-                                    if (!fileIsDir
-                                            && root.acceptFilesOnSingleClick)
-                                        root.acceptSelection();
                                 }
-                                doubleClickAction: () => root.openEntry(filePath, fileIsDir)
+                                doubleClickAction: () => root.openEntry(
+                                    filePath, fileName, fileIsDir)
                                 transform: Translate {
                                     x: fileItem.appeared ? 0 : fileItem.initialX
                                     y: fileItem.appeared ? 0 : fileItem.initialY
@@ -878,7 +903,7 @@ FloatingWindow {
                                         color: fileItem.selected
                                             ? Appearance.colors.colOnSecondaryContainer
                                             : Appearance.colors.colOnSurface
-                                        font.family: Sizes.fontFamily
+                                        font.family: Fonts.ui
                                         font.pixelSize: 12
                                         font.weight: fileItem.selected ? Font.DemiBold : Font.Normal
                                         horizontalAlignment: Text.AlignHCenter
@@ -930,7 +955,7 @@ FloatingWindow {
                                               ? qsTr("双击进入 ") + root.selectedName
                                               : root.selectedName
                                         color: Appearance.colors.colOnSurfaceVariant
-                                        font.family: Sizes.fontFamily
+                                        font.family: Fonts.ui
                                         font.pixelSize: 13
                                         elide: Text.ElideMiddle
                                     }
@@ -1005,7 +1030,7 @@ FloatingWindow {
                     Layout.alignment: Qt.AlignVCenter
                     text: breadcrumbButton.label
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     font.weight: breadcrumbButton.current ? Font.DemiBold : Font.Medium
                 }
@@ -1091,7 +1116,7 @@ FloatingWindow {
                 color: locationButton.active
                     ? Appearance.colors.colOnSecondaryContainer
                     : Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 13
                 font.weight: locationButton.active ? Font.DemiBold : Font.Normal
                 elide: Text.ElideRight
@@ -1140,7 +1165,7 @@ FloatingWindow {
                     color: actionButton.primary
                         ? Appearance.colors.colOnPrimary
                         : Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 13
                     font.weight: Font.DemiBold
                 }

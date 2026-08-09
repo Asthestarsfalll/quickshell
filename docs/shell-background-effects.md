@@ -4,7 +4,7 @@
 文字、图标、图片、按钮和内部卡片不会继承额外透明度。背景模糊由
 niri 的 `ext-background-effect` 实现，需要 niri 26.04 或更新版本。
 
-Clavis 管理与主配置同目录的 `clavis-effects.kdl`。niri 默认对客户端
+Clavis 管理 `~/.config/niri/clavis/effects.kdl`。niri 默认对客户端
 请求的效果使用 X-Ray，因此“仅模糊壁纸”开启时片段不生成任何
 `background-effect` override。关闭该选项时，片段只为
 `^clavis-shell-` layer namespace 以及 Clavis 设置/文件选择窗口配置
@@ -14,7 +14,7 @@ Clavis 管理与主配置同目录的 `clavis-effects.kdl`。niri 默认对客�
 主配置必须包含：
 
 ```kdl
-include optional=true "clavis-effects.kdl"
+include optional=true "clavis/effects.kdl"
 ```
 
 若缺少该 include，设置页面会显示“Niri 集成”。只有点击“配置”后，

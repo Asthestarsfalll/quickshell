@@ -56,8 +56,8 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.title
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeTitleMedium
+                    font.family: Typography.titleMedium.family
+                    font.pixelSize: Typography.titleMedium.pixelSize
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }
@@ -67,8 +67,8 @@ Rectangle {
                     visible: text !== ""
                     text: root.supportingText
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeBodySmall
+                    font.family: Typography.bodySmall.family
+                    font.pixelSize: Typography.bodySmall.pixelSize
                     elide: Text.ElideRight
                 }
             }

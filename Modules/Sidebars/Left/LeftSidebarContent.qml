@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -10,6 +11,21 @@ Item {
     property string screenName: ""
     property bool foreground: false
     property bool presentationActive: false
+    property var weatherSourceOverride: null
+    readonly property string activeView: WidgetState.leftSidebarView
+    readonly property int instantiatedViewCount: {
+        let count = 0
+        for (let index = 0; index < viewRepeater.count; ++index) {
+            const loader = viewRepeater.itemAt(index)
+            if (loader && loader.item)
+                count += 1
+        }
+        return count
+    }
+    readonly property var weatherView: {
+        const loader = viewRepeater.itemAt(2)
+        return loader ? loader.item : null
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -150,8 +166,8 @@ Item {
                                         .colOnSecondaryContainer
                                     : Appearance.colors
                                         .colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
-                                font.pixelSize: Sizes.typeBodyMedium
+                                font.family: Fonts.ui
+                                font.pixelSize: Typography.bodyMedium.pixelSize
                                 font.weight: tabButton.active
                                     ? Font.DemiBold : Font.Medium
                             }
@@ -191,28 +207,62 @@ Item {
             color: "transparent"
             radius: Appearance.rounding.large
 
-            InfoView {
-                anchors.fill: parent
-                visible: WidgetState.leftSidebarView === "info"
-                screenName: root.screenName
-                foreground: root.foreground
-                    && WidgetState.leftSidebarView === "info"
+            Repeater {
+                id: viewRepeater
+
+                model: ["info", "sys", "weather"]
+
+                Loader {
+                    id: viewLoader
+
+                    required property string modelData
+                    property bool loadedOnce: false
+
+                    anchors.fill: parent
+                    // Cache every page visited during this sidebar content
+                    // lifetime. The outer Loader owns the common destruction
+                    // boundary after the panel has completely slid away.
+                    active: modelData === root.activeView || loadedOnce
+                    visible: active && modelData === root.activeView
+                    asynchronous: true
+                    sourceComponent: modelData === "info"
+                        ? infoComponent
+                        : modelData === "sys"
+                            ? systemComponent : weatherComponent
+
+                    onLoaded: loadedOnce = true
+                }
             }
 
-            SystemView {
-                anchors.fill: parent
-                visible: WidgetState.leftSidebarView === "sys"
-                foreground: root.foreground
-                    && WidgetState.leftSidebarView === "sys"
+            Component {
+                id: infoComponent
+
+                InfoView {
+                    screenName: root.screenName
+                    foreground: root.foreground
+                        && root.activeView === "info"
+                }
             }
 
-            WeatherView {
-                anchors.fill: parent
-                visible: WidgetState.leftSidebarView === "weather"
-                foreground: root.foreground
-                    && WidgetState.leftSidebarView === "weather"
-                presentationActive: root.presentationActive
-                    && WidgetState.leftSidebarView === "weather"
+            Component {
+                id: systemComponent
+
+                SystemView {
+                    foreground: root.foreground
+                        && root.activeView === "sys"
+                }
+            }
+
+            Component {
+                id: weatherComponent
+
+                WeatherView {
+                    weatherSourceOverride: root.weatherSourceOverride
+                    foreground: root.foreground
+                        && root.activeView === "weather"
+                    presentationActive: root.presentationActive
+                        && root.activeView === "weather"
+                }
             }
         }
     }

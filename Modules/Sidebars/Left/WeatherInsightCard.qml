@@ -51,7 +51,7 @@ Rectangle {
             visible: root.icon.length > 0
             text: root.icon
             color: root.iconColor
-            font.family: "Material Symbols Outlined"
+            font.family: Fonts.materialSymbolsOutlined
             font.pixelSize: 18
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -60,7 +60,7 @@ Rectangle {
             visible: root.title.length > 0
             text: root.title
             color: root.titleColor
-            font.family: "LXGW WenKai GB Screen"
+            font.family: Fonts.expressive
             font.pixelSize: 13
             font.bold: true
             anchors.verticalCenter: parent.verticalCenter

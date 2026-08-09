@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 import qs.Components
 import qs.Widgets.common
@@ -77,7 +77,7 @@ Item {
             Text {
                 text: root.locationName
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
                 font.weight: Font.Medium
                 elide: Text.ElideRight
@@ -87,7 +87,7 @@ Item {
             Text {
                 text: root.currentTemp
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 42
                 font.weight: Font.Light
                 lineHeight: 0.95
@@ -96,7 +96,7 @@ Item {
             Text {
                 text: "↑" + root.highTemp + "  ↓" + root.lowTemp
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 12
             }
         }

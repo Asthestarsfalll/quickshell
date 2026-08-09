@@ -7,7 +7,7 @@ import qs.Widgets.common
 Item {
     id: root
     property bool isHovered: mouseArea.containsMouse
-    readonly property int buttonSize: 28
+    readonly property int buttonSize: Sizes.barControlCircleSize
     readonly property int hoverButtonSize: 34
 
     implicitHeight: buttonSize

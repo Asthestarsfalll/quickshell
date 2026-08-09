@@ -7,6 +7,10 @@ import qs.Widgets.common
 Item {
     id: toolsRoot
 
+    property bool vertical: false
+    property string edge: "top"
+    property string popupEdge: edge
+
     ToolsBackend {
         id: toolsBackend
     }
@@ -41,6 +45,14 @@ Item {
     Keys.onRightPressed: {
         selectedIndex = (selectedIndex + 1) % toolsModel.length
     }
+    Keys.onUpPressed: {
+        if (toolsRoot.vertical)
+            selectedIndex = (selectedIndex - 1 + toolsModel.length) % toolsModel.length
+    }
+    Keys.onDownPressed: {
+        if (toolsRoot.vertical)
+            selectedIndex = (selectedIndex + 1) % toolsModel.length
+    }
     
     Keys.onReturnPressed: triggerSelected()
     Keys.onEnterPressed: triggerSelected()
@@ -74,9 +86,10 @@ Item {
         toolsBackend.stopAudio()
     }
 
-    Row {
+    Grid {
         anchors.centerIn: parent
         spacing: 8
+        columns: toolsRoot.vertical ? 1 : toolsRoot.toolsModel.length
 
         Repeater {
             model: toolsRoot.toolsModel
@@ -93,7 +106,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: modelData.icon
-                    font.family: "Material Symbols Rounded" 
+                    font.family: Fonts.materialSymbolsRounded
                     font.pixelSize: 22
                     color: Appearance.colors.colOnSurface
                 }

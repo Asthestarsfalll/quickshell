@@ -180,7 +180,7 @@ Rectangle {
             text: root.formattedDate(root.currentDate)
                 + qsTr("   •   %1 项任务").arg(remainingTasks)
             color: Appearance.colors.colOnLayer1
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 15
             elide: Text.ElideRight
         }
@@ -307,7 +307,7 @@ Rectangle {
                                     color: tabButton.toggled
                                         ? Appearance.colors.colOnSecondaryContainer
                                         : Appearance.colors.colOnLayer1
-                                    font.family: Sizes.fontFamily
+                                    font.family: Fonts.ui
                                     font.pixelSize: 12
                                 }
                             }

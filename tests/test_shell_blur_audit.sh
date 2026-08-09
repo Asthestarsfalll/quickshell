@@ -21,16 +21,24 @@ reject_text() {
 }
 
 for file in \
-    Modules/Bar/Bar.qml \
+    Modules/Bar/HorizontalBarWindow.qml \
+    Modules/Bar/VerticalBarWindow.qml \
     Modules/Bar/Tray/Tray.qml \
     Modules/Bar/Tray/TrayMenu.qml \
-    Modules/ControlCenter/BezierCurveLayerEditor.qml \
-    Modules/ControlCenter/WallpaperColorPicker.qml \
     Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     Modules/Launcher/LauncherWindow.qml \
     Modules/Sidebars/SidebarHostWindow.qml
 do
     require_text "$file" 'WlrLayershell.namespace: "clavis-shell-'
+done
+
+for file in \
+    Modules/ControlCenter/BezierCurveLayerEditor.qml \
+    Modules/ControlCenter/WallpaperColorPicker.qml
+do
+    require_text "$file" 'FloatingWindow {'
+    require_text "$file" 'parentWindow: root.parentModal'
+    require_text "$file" 'CompositorBlurRegion {'
 done
 
 for file in \
@@ -46,8 +54,13 @@ do
     reject_text "$file" 'clavis-shell-'
 done
 
-require_text Modules/Bar/Bar.qml 'additionalBackgroundItems: ['
-reject_text Modules/Bar/Bar.qml 'backgroundItem: barContent'
+for file in \
+    Modules/Bar/HorizontalBarWindow.qml \
+    Modules/Bar/VerticalBarWindow.qml
+do
+    require_text "$file" 'additionalBackgroundItems: ['
+    reject_text "$file" 'backgroundItem: barContent'
+done
 require_text Modules/Sidebars/SidebarHostWindow.qml \
     'additionalBackgroundItems: ['
 require_text Modules/ControlCenter/ControlCenterWindow.qml \
@@ -58,7 +71,10 @@ reject_text Modules/ControlCenter/ControlCenterWindow.qml \
     'ApplicationWindow {'
 reject_text Modules/ControlCenter/ControlCenterWindow.qml \
     'flags: Qt.Window | Qt.FramelessWindowHint'
-require_text controlcenter.qml \
+if [ -e controlcenter.qml ]; then
+    fail "the old detached controlcenter.qml entry point still exists"
+fi
+require_text shell.qml \
     '//@ pragma Env QT_WAYLAND_DISABLE_WINDOWDECORATION=1'
 require_text Modules/FilePicker/FilePickerWindow.qml \
     'color: "transparent"'
@@ -90,6 +106,10 @@ require_text Modules/Launcher/LauncherWindow.qml \
     'CompositorBlurRegion {'
 require_text Modules/Launcher/LauncherWindow.qml \
     'searchBar.blurRegionItems.slice(1).concat(['
+require_text Modules/Launcher/LauncherWindow.qml \
+    'onWebProgressChanged: spotlightBlur.publish()'
+reject_text Modules/Launcher/LauncherWindow.qml \
+    'style.scrimOpacity * root.windowProgress'
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'property color color: BlurService.backgroundColor('
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
@@ -113,7 +133,11 @@ require_text Widgets/common/CompositorBlurRegion.qml \
 require_text Widgets/common/CompositorBlurRegion.qml \
     'intersection: Intersection.Subtract'
 require_text Widgets/common/CompositorBlurRegion.qml \
-    'Qt.callLater(root.commit)'
+    'property TransformWatcher geometryWatcher: TransformWatcher {'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'onTransformChanged: root.publish()'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'commitTimer.restart()'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'targetWindow.BackgroundEffect.blurRegion = null'
 

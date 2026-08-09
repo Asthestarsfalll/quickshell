@@ -8,10 +8,11 @@ MaterialRippleButton {
 
     property string iconName: ""
     property string trailingIconName: "open_in_new"
+    property string description: ""
 
-    implicitHeight: 56
-    leftPadding: Appearance.spacing.small
-    rightPadding: 0
+    implicitHeight: description === "" ? Metrics.controlHeightXL : 68
+    leftPadding: Metrics.spacingL
+    rightPadding: Metrics.spacingL
     topPadding: 0
     bottomPadding: 0
     buttonRadius: Appearance.rounding.full
@@ -21,7 +22,7 @@ MaterialRippleButton {
     colRipple: Appearance.colors.colLayer2Active
 
     contentItem: RowLayout {
-        spacing: Appearance.spacing.medium
+        spacing: Metrics.spacingS
 
         MaterialSymbol {
             visible: root.iconName !== ""
@@ -30,18 +31,36 @@ MaterialRippleButton {
             color: Appearance.colors.colOnSurfaceVariant
         }
 
-        Text {
+        ColumnLayout {
             Layout.fillWidth: true
-            text: root.text
-            color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
-            font.pixelSize: Sizes.typeBodyMedium
-            font.weight: Font.Medium
-            elide: Text.ElideRight
+            spacing: 1
+
+            Text {
+                Layout.fillWidth: true
+                text: root.text
+                color: Appearance.colors.colOnSurface
+                font.family: root.description === ""
+                    ? Typography.bodyLarge.family : Typography.bodyMedium.family
+                font.pixelSize: root.description === ""
+                    ? Typography.bodyLarge.pixelSize : Typography.bodyMedium.pixelSize
+                font.weight: root.description === ""
+                    ? Font.Medium : Typography.bodyMedium.weight
+                elide: Text.ElideRight
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: root.description !== ""
+                text: root.description
+                color: Appearance.colors.colOnSurfaceVariant
+                font.family: Typography.bodySmall.family
+                font.pixelSize: Typography.bodySmall.pixelSize
+                elide: Text.ElideRight
+            }
         }
 
         Item {
-            Layout.preferredWidth: 48
+            Layout.preferredWidth: Metrics.controlHeightM
             Layout.fillHeight: true
             visible: root.trailingIconName !== ""
 

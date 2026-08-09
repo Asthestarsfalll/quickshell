@@ -617,12 +617,9 @@ Item {
 
                     const playPoint = root.curvePathPoint(root.playhead);
                     ctx.fillStyle = root.chartTertiaryColor;
-                    ctx.strokeStyle = root.chartSurfaceColor;
-                    ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.arc(root.plotX(playPoint[0]), root.plotY(playPoint[1]), 9, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.stroke();
                 }
             }
 
@@ -735,7 +732,7 @@ Item {
                             visible: !coordItem.editing
                             text: root.coordinateText(coordItem.modelData.index)
                             color: coordMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.mono
                             font.pixelSize: 13
                             font.weight: Font.Medium
                         }
@@ -752,7 +749,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             selectByMouse: true
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.mono
                             font.pixelSize: 13
                             padding: 0
                             leftPadding: 0
@@ -813,6 +810,7 @@ Item {
                         text: "content_copy"
                         iconSize: 16
                         color: copyMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
+                        fill: copyMouse.containsMouse ? 1 : 0
                     }
 
                     MouseArea {

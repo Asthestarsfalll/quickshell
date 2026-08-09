@@ -11,7 +11,7 @@ PopupToolTip {
     horizontalPadding: 10
     verticalPadding: 5
     font {
-        family: Sizes.fontFamily
+        family: Fonts.ui
         pixelSize: 12
         hintingPreference: Font.PreferNoHinting
     }

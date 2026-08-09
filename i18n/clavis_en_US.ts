@@ -3,6 +3,22 @@
 <context>
     <name>AdvancedPage</name>
     <message>
+        <source>Fcitx5</source>
+        <translation>Fcitx5</translation>
+    </message>
+    <message>
+        <source>Zsh Prompt</source>
+        <translation>Zsh Prompt</translation>
+    </message>
+    <message>
+        <source>Keytop</source>
+        <translation>Keytop</translation>
+    </message>
+    <message>
+        <source>未安装或配置模板不可用</source>
+        <translation>Not installed or its Matugen template is unavailable</translation>
+    </message>
+    <message>
         <location filename="../Modules/ControlCenter/AdvancedPage.qml" line="65" />
         <source>正在为已启用的程序生成 Matugen 配色…</source>
         <translation>Generating Matugen colors for enabled applications…</translation>
@@ -1408,21 +1424,6 @@ Scroll to adjust</translation>
 </context>
 <context>
     <name>GeneralPage</name>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="315" />
-        <source>提示音</source>
-        <translation>Alert sound</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="319" />
-        <source>番茄钟</source>
-        <translation>Pomodoro</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="320" />
-        <source>专注与休息阶段切换时播放系统提示音</source>
-        <translation>Play a system sound when focus and break stages change</translation>
-    </message>
     <message>
         <location filename="../Modules/ControlCenter/GeneralPage.qml" line="327" />
         <source>侧边栏</source>
@@ -3237,14 +3238,6 @@ Right-click to change shape; scroll to reorder</translation>
     </message>
 </context>
 <context>
-    <name>ScreencastService</name>
-    <message>
-        <location filename="../Services/ScreencastService.qml" line="14" />
-        <source>屏幕正在被捕获</source>
-        <translation>The screen is being captured</translation>
-    </message>
-</context>
-<context>
     <name>SearchSelectMenuField</name>
     <message>
         <location filename="../Widgets/common/SearchSelectMenuField.qml" line="16" />
@@ -3902,8 +3895,8 @@ detected</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="388" />
-        <source>无法解析 key 系统监测数据</source>
-        <translation>Could not parse key system monitor data</translation>
+        <source>无法解析 keytop 系统监测数据</source>
+        <translation>Could not parse keytop system monitor data</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="400" />
@@ -3912,33 +3905,23 @@ detected</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="401" />
-        <source>需要重新构建 key 后端（需要 schema v</source>
-        <translation>Rebuild the key backend (schema v</translation>
+        <source>需要重新构建 keytop（需要 schema v</source>
+        <translation>Rebuild keytop (schema v</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="412" />
-        <source>key 返回的系统监测数据不完整</source>
-        <translation>System monitor data returned by key is incomplete</translation>
-    </message>
-    <message>
-        <location filename="../Services/SystemMonitorService.qml" line="447" />
-        <source>key 版本过旧</source>
-        <translation>The key version is too old</translation>
-    </message>
-    <message>
-        <location filename="../Services/SystemMonitorService.qml" line="449" />
-        <source>当前 key 不支持 sysmon，请重新构建并安装 key 后端。</source>
-        <translation>The current key build does not support sysmon; rebuild and install the key backend.</translation>
+        <source>keytop 返回的系统监测数据不完整</source>
+        <translation>System monitor data returned by keytop is incomplete</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="512" />
-        <source>key top 不可用，请重新构建并安装 key 后端</source>
-        <translation>key top is unavailable; rebuild and install the key backend</translation>
+        <source>keytop 不可用，请安装独立 keytop</source>
+        <translation>keytop is unavailable; install the independent keytop command</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="525" />
-        <source>未找到可用终端，无法打开 key top</source>
-        <translation>No usable terminal was found, so key top could not be opened</translation>
+        <source>未找到可用终端，无法打开 keytop</source>
+        <translation>No usable terminal was found, so keytop could not be opened</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="581" />
@@ -3947,13 +3930,13 @@ detected</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="622" />
-        <source>正在重新启动 key 数据流。</source>
-        <translation>Restarting the key data stream.</translation>
+        <source>正在重新启动 keytop 数据流。</source>
+        <translation>Restarting the keytop data stream.</translation>
     </message>
     <message>
         <location filename="../Services/SystemMonitorService.qml" line="643" />
-        <source>正在重新连接 key 数据流。</source>
-        <translation>Reconnecting to the key data stream.</translation>
+        <source>正在重新连接 keytop 数据流。</source>
+        <translation>Reconnecting to the keytop data stream.</translation>
     </message>
 </context>
 <context>

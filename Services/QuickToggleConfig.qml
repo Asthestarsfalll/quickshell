@@ -8,7 +8,7 @@ import qs.Common
 Singleton {
     id: root
 
-    readonly property string configDir: Paths.homeDir + "/.cache/quickshell"
+    readonly property string configDir: Paths.configHome
     readonly property string filePath: configDir + "/quick-toggles.json"
 
     property bool storeReady: false

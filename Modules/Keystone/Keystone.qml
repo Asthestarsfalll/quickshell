@@ -46,6 +46,7 @@ Item {
         function cancelRecord(): string { return root.invoke("cancelRecord"); }
         function closeAllOthers(): string { return root.invoke("closeAllOthers"); }
         function currentStyle(): string { return PersonalizationConfig.keystoneStyle; }
+        function dashboard(): string { return root.invoke("dashboard"); }
         function hub(): string { return root.invoke("hub"); }
         function tools(): string { return root.invoke("tools"); }
     }

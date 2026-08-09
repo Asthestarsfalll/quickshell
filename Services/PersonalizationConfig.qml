@@ -12,12 +12,12 @@ Singleton {
         Quickshell.env("CLAVIS_PERSONALIZATION_CONFIG") || ""
     readonly property string filePath: root.configOverride !== ""
         ? root.configOverride
-        : Paths.homeDir + "/.cache/quickshell/personalization.json"
+        : Paths.configHome + "/config.json"
     readonly property string configDir: {
         const separator = root.filePath.lastIndexOf("/");
         return separator > 0
             ? root.filePath.slice(0, separator)
-            : Paths.homeDir + "/.cache/quickshell";
+            : Paths.configHome;
     }
 
     readonly property var fillModes: [
@@ -92,16 +92,21 @@ Singleton {
         "cava",
         "kitty",
         "fcitx5",
-        "fcitx5_panel_svg",
-        "fcitx5_highlight_svg",
+        "zsh",
+        "keytop",
         "niri",
-        "yazi",
-        "zsh_prompt"
+        "yazi"
     ]
 
     readonly property var keystoneStyles: [
         ({ "value": "bangs", "label": qsTr("刘海") }),
         ({ "value": "pill", "label": qsTr("药丸") })
+    ]
+    readonly property var edgePositions: [
+        ({ "value": "top", "label": qsTr("顶部"), "icon": "arrow_upward" }),
+        ({ "value": "left", "label": qsTr("左侧"), "icon": "arrow_back" }),
+        ({ "value": "bottom", "label": qsTr("底部"), "icon": "arrow_downward" }),
+        ({ "value": "right", "label": qsTr("右侧"), "icon": "arrow_forward" })
     ]
     readonly property var powerMenuStyles: [
         ({ "value": "grid", "label": qsTr("四宫格") }),
@@ -110,8 +115,12 @@ Singleton {
 
     property bool storeReady: false
     property bool loading: false
+    property bool loaded: false
+    readonly property bool ready: root.storeReady && root.loaded && !root.loading
 
-    property string wallpaperFolder: Paths.homeDir + "/.config/wallpaper"
+    signal settingsLoaded()
+
+    property string wallpaperFolder: Paths.dataHome + "/wallpapers"
     property string wallpaperPath: ""
     property string wallpaperPathLight: ""
     property string wallpaperPathDark: ""
@@ -167,11 +176,10 @@ Singleton {
         "cava": true,
         "kitty": true,
         "fcitx5": true,
-        "fcitx5_panel_svg": true,
-        "fcitx5_highlight_svg": true,
+        "zsh": true,
+        "keytop": true,
         "niri": true,
-        "yazi": true,
-        "zsh_prompt": true
+        "yazi": true
     })
     property string themeMode: "dark"
     property string cursorTheme: ""
@@ -180,13 +188,92 @@ Singleton {
     property int cursorHideAfterInactiveMs: 0
     property string iconTheme: ""
     property string keystoneStyle: "bangs"
+    property string barPosition: "top"
+    property string keystonePosition: "top"
+    property bool keystoneHideDate: false
+    readonly property var horizontalClockAxisDefaults: ({
+        "wght": 900,
+        "wdth": 85,
+        "opsz": 18,
+        "GRAD": 0,
+        "ROND": 25,
+        "slnt": 0
+    })
+    readonly property var horizontalClockAxisMinimums: ({
+        "wght": 1,
+        "wdth": 25,
+        "opsz": 6,
+        "GRAD": 0,
+        "ROND": 0,
+        "slnt": -10
+    })
+    readonly property var horizontalClockAxisMaximums: ({
+        "wght": 1000,
+        "wdth": 151,
+        "opsz": 144,
+        "GRAD": 100,
+        "ROND": 100,
+        "slnt": 0
+    })
+    readonly property var horizontalClockDigitDefaults: ({
+        "h0": ({
+            "x": 0, "y": -2, "rotation": -3,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "h1": ({
+            "x": 0, "y": 1, "rotation": 3,
+            "colorRole": "primary", "customColor": ""
+        }),
+        "m0": ({
+            "x": 0, "y": -1, "rotation": -2,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "m1": ({
+            "x": 0, "y": 1, "rotation": 2,
+            "colorRole": "primary", "customColor": ""
+        })
+    })
+    property int horizontalClockFontSize: 22
+    property var horizontalClockAxes: ({
+        "wght": 900,
+        "wdth": 85,
+        "opsz": 18,
+        "GRAD": 0,
+        "ROND": 25,
+        "slnt": 0
+    })
+    property var horizontalClockDigits: ({
+        "h0": ({
+            "x": 0, "y": -2, "rotation": -3,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "h1": ({
+            "x": 0, "y": 1, "rotation": 3,
+            "colorRole": "primary", "customColor": ""
+        }),
+        "m0": ({
+            "x": 0, "y": -1, "rotation": -2,
+            "colorRole": "inversePrimary", "customColor": ""
+        }),
+        "m1": ({
+            "x": 0, "y": 1, "rotation": 2,
+            "colorRole": "primary", "customColor": ""
+        })
+    })
     property string powerMenuStyle: "grid"
+
+    readonly property string uiFontFamily:
+        Fonts.configuredUi || Fonts.defaultUi
+    readonly property string monoFontFamily:
+        Fonts.configuredMono || Fonts.defaultMono
+    readonly property string numericFontFamily:
+        Fonts.configuredNumeric || Fonts.defaultNumeric
+    readonly property string expressiveFontFamily:
+        Fonts.configuredExpressive || Fonts.bundledFamilyName
 
     property real shellBackgroundOpacity: 1.0
     property bool shellBlurEnabled: false
     property bool shellBlurXray: true
-
-    property bool pomodoroSoundEnabled: false
 
     property bool keepSidebarsLoaded: true
 
@@ -217,6 +304,10 @@ Singleton {
 
     function normalizedEasingMode(value) {
         return normalizedOption(root.transitionEasingModes, value, "customBezier");
+    }
+
+    function normalizedEdgePosition(value) {
+        return normalizedOption(root.edgePositions, value, "top");
     }
 
     function normalizedIncluded(raw) {
@@ -267,6 +358,16 @@ Singleton {
         return result;
     }
 
+    function normalizedCursorTheme(value) {
+        if (typeof value !== "string")
+            return "";
+
+        const result = value.trim();
+        if (result.length > 256 || /[\u0000-\u001f\u007f]/.test(result))
+            return "";
+        return result;
+    }
+
     function normalizedMatugenTemplates(raw) {
         const source = raw && typeof raw === "object"
             && !Array.isArray(raw) ? raw : {};
@@ -311,7 +412,7 @@ Singleton {
     }
 
     function setWallpaperFolder(value) {
-        setValue("wallpaperFolder", value || Paths.homeDir + "/.config/wallpaper");
+        setValue("wallpaperFolder", value || Paths.dataHome + "/wallpapers");
     }
 
     function setWallpaperPath(value) {
@@ -443,7 +544,7 @@ Singleton {
         if (value === null || value === undefined || value === "")
             return fallback;
         const numberValue = Number(value);
-        if (isNaN(numberValue))
+        if (!isFinite(numberValue))
             return fallback;
         return Math.max(minValue, Math.min(maxValue, Math.round(numberValue)));
     }
@@ -472,6 +573,74 @@ Singleton {
         if (!isFinite(numberValue))
             return fallback;
         return Math.max(minValue, Math.min(maxValue, numberValue));
+    }
+
+    function normalizedHorizontalClockAxes(raw) {
+        const source = raw && typeof raw === "object"
+            && !Array.isArray(raw) ? raw : {};
+        const result = {};
+        const names = ["wght", "wdth", "opsz", "GRAD", "ROND", "slnt"];
+        for (let i = 0; i < names.length; i += 1) {
+            const name = names[i];
+            result[name] = root.normalizedBoundedReal(
+                source[name],
+                root.horizontalClockAxisDefaults[name],
+                root.horizontalClockAxisMinimums[name],
+                root.horizontalClockAxisMaximums[name]);
+        }
+        return result;
+    }
+
+    function normalizedHorizontalClockDigits(raw) {
+        const source = raw && typeof raw === "object"
+            && !Array.isArray(raw) ? raw : {};
+        const result = {};
+        const ids = ["h0", "h1", "m0", "m1"];
+        const colorRoles = ["primary", "inversePrimary", "custom"];
+
+        for (let i = 0; i < ids.length; i += 1) {
+            const id = ids[i];
+            const fallback = root.horizontalClockDigitDefaults[id];
+            const candidate = source[id] && typeof source[id] === "object"
+                && !Array.isArray(source[id]) ? source[id] : {};
+            const candidateColor = String(candidate.customColor || "")
+                .trim().toLowerCase();
+            const hasCustomColor = /^#([0-9a-f]{6}|[0-9a-f]{8})$/
+                .test(candidateColor);
+            let colorRole = colorRoles.indexOf(candidate.colorRole) !== -1
+                ? candidate.colorRole : fallback.colorRole;
+            if (colorRole === "custom" && !hasCustomColor)
+                colorRole = fallback.colorRole;
+
+            result[id] = {
+                "x": root.normalizedBoundedInt(candidate.x,
+                    fallback.x, -8, 8),
+                "y": root.normalizedBoundedInt(candidate.y,
+                    fallback.y, -6, 6),
+                "rotation": root.normalizedBoundedInt(candidate.rotation,
+                    fallback.rotation, -12, 12),
+                "colorRole": colorRole,
+                "customColor": hasCustomColor ? candidateColor : ""
+            };
+        }
+        return result;
+    }
+
+    function horizontalClockDigit(id) {
+        const defaults = root.horizontalClockDigitDefaults[id];
+        const configured = root.horizontalClockDigits[id];
+        return configured || defaults;
+    }
+
+    function horizontalClockDigitColor(id) {
+        const digit = root.horizontalClockDigit(id);
+        if (digit.colorRole === "custom"
+                && /^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(
+                    String(digit.customColor || "")))
+            return digit.customColor;
+        return digit.colorRole === "inversePrimary"
+            ? Appearance.colors.colInversePrimary
+            : Appearance.colors.colPrimary;
     }
 
     function normalizedAwwwPosition(value) {
@@ -659,21 +828,20 @@ Singleton {
     }
 
     function setCursorTheme(value) {
-        setValue("cursorTheme", value || "");
+        setValue("cursorTheme", root.normalizedCursorTheme(value));
     }
 
     function setCursorSize(value) {
-        const numberValue = Math.round(Number(value) || 24);
-        setValue("cursorSize", Math.max(12, Math.min(128, numberValue)));
+        setValue("cursorSize", root.normalizedBoundedInt(value, 24, 12, 128));
     }
 
     function setCursorHideWhenTyping(value) {
-        setValue("cursorHideWhenTyping", !!value);
+        setValue("cursorHideWhenTyping", typeof value === "boolean" ? value : false);
     }
 
     function setCursorHideAfterInactiveMs(value) {
-        const numberValue = Math.round(Number(value) || 0);
-        setValue("cursorHideAfterInactiveMs", Math.max(0, Math.min(5000, numberValue)));
+        setValue("cursorHideAfterInactiveMs",
+            root.normalizedBoundedInt(value, 0, 0, 5000));
     }
 
     function setIconTheme(value) {
@@ -689,6 +857,27 @@ Singleton {
             root.powerMenuStyles, value, "grid"));
     }
 
+    function setFontFamily(role, family) {
+        const allowedRoles = ["ui", "mono", "numeric", "expressive"];
+        if (allowedRoles.indexOf(role) === -1)
+            return false;
+
+        const value = String(family || "").trim();
+        if (value === "")
+            return false;
+        if (!FontService.containsFamily(value))
+            return false;
+        if (!Fonts.setConfiguredFamily(role, value))
+            return false;
+        root.save();
+        return true;
+    }
+
+    function resetFontFamilies() {
+        Fonts.resetConfiguredFamilies();
+        root.save();
+    }
+
     function setShellBackgroundOpacity(value) {
         setValue("shellBackgroundOpacity",
             normalizedBoundedReal(value, 1.0, 0.0, 1.0));
@@ -702,12 +891,112 @@ Singleton {
         setValue("shellBlurXray", !!value);
     }
 
-    function setPomodoroSoundEnabled(value) {
-        setValue("pomodoroSoundEnabled", !!value);
-    }
-
     function setKeepSidebarsLoaded(value) {
         setValue("keepSidebarsLoaded", !!value);
+    }
+
+    function setBarPosition(value) {
+        setValue("barPosition", normalizedEdgePosition(value));
+    }
+
+    function setKeystonePosition(value) {
+        setValue("keystonePosition", normalizedEdgePosition(value));
+    }
+
+    function setKeystoneHideDate(value) {
+        setValue("keystoneHideDate", !!value);
+    }
+
+    function resetHorizontalClock(persist) {
+        root.keystoneHideDate = false;
+        root.horizontalClockFontSize = 22;
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(
+            root.horizontalClockAxisDefaults);
+        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(
+            root.horizontalClockDigitDefaults);
+        if (persist !== false)
+            root.save();
+    }
+
+    function setHorizontalClockFontSize(value, persist) {
+        const next = root.normalizedBoundedInt(value, 22, 16, 28);
+        if (root.horizontalClockFontSize === next) {
+            if (persist !== false)
+                root.save();
+            return;
+        }
+        root.horizontalClockFontSize = next;
+        if (persist !== false)
+            root.save();
+    }
+
+    function setHorizontalClockAxis(axis, value, persist) {
+        const name = String(axis || "");
+        if (root.horizontalClockAxisDefaults[name] === undefined)
+            return;
+        const next = root.normalizedBoundedReal(
+            value,
+            root.horizontalClockAxisDefaults[name],
+            root.horizontalClockAxisMinimums[name],
+            root.horizontalClockAxisMaximums[name]);
+        const current = root.horizontalClockAxes[name];
+        if (current === next) {
+            if (persist !== false)
+                root.save();
+            return;
+        }
+        const axes = root.cloneMap(root.horizontalClockAxes);
+        axes[name] = next;
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(axes);
+        if (persist !== false)
+            root.save();
+    }
+
+    function setHorizontalClockDigitValue(id, field, value, persist) {
+        const name = String(id || "");
+        const propertyName = String(field || "");
+        const fallback = root.horizontalClockDigitDefaults[name];
+        if (!fallback || ["x", "y", "rotation"].indexOf(propertyName) === -1)
+            return;
+        const limits = propertyName === "x"
+            ? [-8, 8] : propertyName === "y" ? [-6, 6] : [-12, 12];
+        const current = root.horizontalClockDigit(name);
+        const next = root.normalizedBoundedInt(
+            value, fallback[propertyName], limits[0], limits[1]);
+        if (current[propertyName] === next) {
+            if (persist !== false)
+                root.save();
+            return;
+        }
+        const digits = root.normalizedHorizontalClockDigits(
+            root.horizontalClockDigits);
+        digits[name][propertyName] = next;
+        root.horizontalClockDigits = digits;
+        if (persist !== false)
+            root.save();
+    }
+
+    function setHorizontalClockDigitColor(id, role, customColor, persist) {
+        const name = String(id || "");
+        const fallback = root.horizontalClockDigitDefaults[name];
+        if (!fallback)
+            return;
+        const candidateRole = String(role || "");
+        const normalizedColor = String(customColor || "")
+            .trim().toLowerCase();
+        const customValid = /^#([0-9a-f]{6}|[0-9a-f]{8})$/
+            .test(normalizedColor);
+        const validRole = ["primary", "inversePrimary"]
+            .indexOf(candidateRole) !== -1;
+        const nextRole = validRole || (candidateRole === "custom" && customValid)
+            ? candidateRole : fallback.colorRole;
+        const digits = root.normalizedHorizontalClockDigits(
+            root.horizontalClockDigits);
+        digits[name].colorRole = nextRole;
+        digits[name].customColor = customValid ? normalizedColor : "";
+        root.horizontalClockDigits = digits;
+        if (persist !== false)
+            root.save();
     }
 
     function setScrollSmoothEnabled(value) {
@@ -800,7 +1089,13 @@ Singleton {
                 "cursorHideWhenTyping": root.cursorHideWhenTyping,
                 "cursorHideAfterInactiveMs": root.cursorHideAfterInactiveMs,
                 "iconTheme": root.iconTheme,
-                "powerMenuStyle": root.powerMenuStyle
+                "powerMenuStyle": root.powerMenuStyle,
+                "fonts": {
+                    "ui": root.uiFontFamily,
+                    "mono": root.monoFontFamily,
+                    "numeric": root.numericFontFamily,
+                    "expressive": root.expressiveFontFamily
+                }
             },
             "effects": {
                 "shellBackgroundOpacity":
@@ -809,10 +1104,17 @@ Singleton {
                 "shellBlurXray": root.shellBlurXray
             },
             "keystone": {
-                "style": root.keystoneStyle
+                "style": root.keystoneStyle,
+                "position": root.keystonePosition,
+                "hideDate": root.keystoneHideDate,
+                "horizontalClock": {
+                    "fontSize": root.horizontalClockFontSize,
+                    "axes": root.cloneMap(root.horizontalClockAxes),
+                    "digits": root.horizontalClockDigits
+                }
             },
-            "sounds": {
-                "pomodoro": root.pomodoroSoundEnabled
+            "bar": {
+                "position": root.barPosition
             },
             "sidebar": {
                 "keepLoaded": root.keepSidebarsLoaded
@@ -833,7 +1135,7 @@ Singleton {
         const theme = parsed.theme || {};
         const effects = parsed.effects || {};
         const keystone = parsed.keystone || {};
-        const sounds = parsed.sounds || {};
+        const bar = parsed.bar || {};
         const sidebar = parsed.sidebar || {};
         const interactions = parsed.interactions || {};
         const scrolling = interactions.scrolling || {};
@@ -842,8 +1144,10 @@ Singleton {
         const overview = wallpaper.overview || {};
         const parallax = wallpaper.parallax || {};
         const autoCycle = wallpaper.autoCycle || {};
+        const fonts = theme.fonts || {};
+        const horizontalClock = keystone.horizontalClock || {};
 
-        root.wallpaperFolder = wallpaper.folder || Paths.homeDir + "/.config/wallpaper";
+        root.wallpaperFolder = wallpaper.folder || Paths.dataHome + "/wallpapers";
         root.wallpaperPath = wallpaper.path === Paths.currentWallpaper ? "" : (wallpaper.path || "");
         root.wallpaperPathLight = wallpaper.pathLight || "";
         root.wallpaperPathDark = wallpaper.pathDark || "";
@@ -925,13 +1229,18 @@ Singleton {
         root.matugenTemplates =
             normalizedMatugenTemplates(theme.matugenTemplates);
         root.themeMode = theme.mode === "light" ? "light" : "dark";
-        root.cursorTheme = theme.cursorTheme || "";
-        root.cursorSize = Math.max(12, Math.min(128, Math.round(Number(theme.cursorSize) || 24)));
-        root.cursorHideWhenTyping = !!theme.cursorHideWhenTyping;
-        root.cursorHideAfterInactiveMs = Math.max(0, Math.min(5000, Math.round(Number(theme.cursorHideAfterInactiveMs) || 0)));
+        root.cursorTheme = root.normalizedCursorTheme(theme.cursorTheme);
+        root.cursorSize = root.normalizedBoundedInt(theme.cursorSize, 24, 12, 128);
+        root.cursorHideWhenTyping =
+            typeof theme.cursorHideWhenTyping === "boolean"
+                ? theme.cursorHideWhenTyping : false;
+        root.cursorHideAfterInactiveMs = root.normalizedBoundedInt(
+            theme.cursorHideAfterInactiveMs, 0, 0, 5000);
         root.iconTheme = theme.iconTheme || "";
         root.powerMenuStyle = normalizedOption(
             root.powerMenuStyles, theme.powerMenuStyle, "grid");
+        Fonts.setConfiguredFamilies(
+            fonts.ui, fonts.mono, fonts.numeric, fonts.expressive);
         root.shellBackgroundOpacity = normalizedBoundedReal(
             effects.shellBackgroundOpacity, 1.0, 0.0, 1.0);
         root.shellBlurEnabled =
@@ -941,7 +1250,16 @@ Singleton {
             typeof effects.shellBlurXray === "boolean"
                 ? effects.shellBlurXray : true;
         root.keystoneStyle = normalizedOption(root.keystoneStyles, keystone.style, "bangs");
-        root.pomodoroSoundEnabled = !!sounds.pomodoro;
+        root.keystonePosition = normalizedEdgePosition(keystone.position);
+        root.keystoneHideDate = typeof keystone.hideDate === "boolean"
+            ? keystone.hideDate : false;
+        root.horizontalClockFontSize = root.normalizedBoundedInt(
+            horizontalClock.fontSize, 22, 16, 28);
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(
+            horizontalClock.axes);
+        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(
+            horizontalClock.digits);
+        root.barPosition = normalizedEdgePosition(bar.position);
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
             ? true : !!sidebar.keepLoaded;
         root.scrollSmoothEnabled = scrolling.smoothEnabled === undefined ? true : !!scrolling.smoothEnabled;
@@ -975,7 +1293,19 @@ Singleton {
         return !theme || typeof theme !== "object"
             || Array.isArray(theme)
             || theme.powerMenuStyle === undefined
-            || theme.matugenTemplates === undefined;
+            || theme.matugenTemplates === undefined
+            || theme.fonts === undefined;
+    }
+
+    function needsEdgePositionMigration(parsed) {
+        const bar = parsed && parsed.bar;
+        const keystone = parsed && parsed.keystone;
+        return !bar || typeof bar !== "object" || Array.isArray(bar)
+            || bar.position !== root.normalizedEdgePosition(bar.position)
+            || !keystone || typeof keystone !== "object"
+            || Array.isArray(keystone)
+            || keystone.position
+                !== root.normalizedEdgePosition(keystone.position);
     }
 
     function save() {
@@ -1020,7 +1350,8 @@ Singleton {
                 parsed = JSON.parse(configFile.text().trim() || "{}");
                 shouldRepair = root.needsWallpaperMigration(parsed)
                     || root.needsEffectsMigration(parsed)
-                    || root.needsThemeMigration(parsed);
+                    || root.needsThemeMigration(parsed)
+                    || root.needsEdgePositionMigration(parsed);
                 root.loadFromObject(parsed);
                 shouldRepair = shouldRepair
                     || JSON.stringify(parsed.wallpaper || {})
@@ -1030,7 +1361,11 @@ Singleton {
                         !== JSON.stringify(
                             root.toJson().effects)
                     || JSON.stringify(parsed.theme || {})
-                        !== JSON.stringify(root.toJson().theme);
+                        !== JSON.stringify(root.toJson().theme)
+                    || JSON.stringify(parsed.bar || {})
+                        !== JSON.stringify(root.toJson().bar)
+                    || JSON.stringify(parsed.keystone || {})
+                        !== JSON.stringify(root.toJson().keystone);
             } catch (error) {
                 console.log("PersonalizationConfig failed to load:", error);
                 shouldRepair = true;
@@ -1038,10 +1373,19 @@ Singleton {
                 root.loading = false;
             }
 
+            root.loaded = true;
+            root.settingsLoaded();
             if (shouldRepair)
                 root.save();
         }
 
-        onLoadFailed: root.save()
+        onLoadFailed: {
+            root.loading = true;
+            root.loadFromObject({});
+            root.loading = false;
+            root.loaded = true;
+            root.settingsLoaded();
+            root.save();
+        }
     }
 }

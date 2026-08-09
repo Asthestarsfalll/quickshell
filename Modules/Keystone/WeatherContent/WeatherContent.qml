@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 import qs.Components
 import qs.Widgets.common
@@ -70,7 +70,7 @@ Item {
                         parent.parent.parent.contentColor,
                         0.72
                     )
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 9
                     elide: Text.ElideRight
                     textFormat: Text.PlainText
@@ -80,7 +80,7 @@ Item {
                     Layout.fillWidth: true
                     text: parent.parent.parent.value
                     color: parent.parent.parent.contentColor
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 11
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -178,7 +178,6 @@ Item {
             root.pressure = "--"
             root.hourlyData = []
             root.dailyData = []
-            hourlyCanvas.requestPaint()
             return
         }
 
@@ -228,8 +227,6 @@ Item {
             })
         }
         root.dailyData = nextDaily
-
-        hourlyCanvas.requestPaint()
     }
 
     Component.onCompleted: {
@@ -324,7 +321,7 @@ Item {
                                 ? qsTr("正在加载天气")
                                 : qsTr("天气不可用")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 16
                             font.weight: Font.Medium
                             horizontalAlignment: Text.AlignHCenter
@@ -336,7 +333,7 @@ Item {
                                 ? qsTr("正在查找本地天气预报…")
                                 : root.weatherErrorText()
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 12
                             horizontalAlignment: Text.AlignHCenter
                             wrapMode: Text.Wrap

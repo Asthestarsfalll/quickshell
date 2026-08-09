@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Common
 
 Item {
     id: root
@@ -17,7 +18,7 @@ Item {
     property color activeColor: "white"
     property color inactiveColor: "#99ffffff"
     property int fontSize: 18
-    property string fontFamily: "LXGW WenKai GB Screen"
+    property string fontFamily: Fonts.ui
     property bool fontBold: true
     property int horizontalAlignment: Text.AlignLeft
     property int wrapMode: Text.WordWrap
@@ -44,9 +45,12 @@ Item {
 
     readonly property int lyricCount: !root.lyrics ? 0 : (root.lyrics.count !== undefined ? root.lyrics.count : root.lyrics.length)
 
+    signal lyricClicked(int index)
+
     property real _currentStiffness: baseStiffness
     property real _currentDamping: baseDamping
     property bool _animating: false
+    property bool _layoutImmediateRequested: false
 
     clip: true
 
@@ -131,9 +135,9 @@ Item {
     }
 
     function scheduleLayout(immediate) {
-        Qt.callLater(function() {
-            root.layoutLines(immediate);
-        });
+        root._layoutImmediateRequested =
+            root._layoutImmediateRequested || immediate;
+        layoutTimer.restart();
     }
 
     function resetToLine(index) {
@@ -227,6 +231,18 @@ Item {
         }
 
         root._animating = running;
+    }
+
+    Timer {
+        id: layoutTimer
+
+        interval: 0
+        repeat: false
+        onTriggered: {
+            const immediate = root._layoutImmediateRequested;
+            root._layoutImmediateRequested = false;
+            root.layoutLines(immediate);
+        }
     }
 
     Timer {
@@ -365,6 +381,11 @@ Item {
                     horizontalAlignment: root.horizontalAlignment
                     wrapMode: root.wrapMode
                     elide: Text.ElideNone
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.lyricClicked(lyricItem.index)
                 }
             }
         }

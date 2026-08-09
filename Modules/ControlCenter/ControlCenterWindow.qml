@@ -13,7 +13,7 @@ import qs.Widgets.common
 FloatingWindow {
     id: root
 
-    visible: true
+    visible: false
     title: "clavis-control-center"
     implicitWidth: 1100
     implicitHeight: 750
@@ -21,8 +21,36 @@ FloatingWindow {
     color: "transparent"
     Material.theme: PersonalizationConfig.themeMode === "light" ? Material.Light : Material.Dark
     Material.accent: Appearance.colors.colPrimary
-    onClosed: Qt.quit()
-    Component.onCompleted: I18nService.initialize()
+
+    signal popoutClosed
+    property bool _wasShown: false
+
+    function showWindow() {
+        root._wasShown = true;
+        root.visible = true;
+    }
+
+    function hideWindow() {
+        if (root.visible) {
+            root.closeChildWindows();
+            root.visible = false;
+        }
+    }
+
+    function toggleWindow() {
+        if (root.visible)
+            root.hideWindow();
+        else
+            root.showWindow();
+    }
+
+    onVisibleChanged: {
+        if (!root.visible && root._wasShown) {
+            root.closeChildWindows();
+            root._wasShown = false;
+            root.popoutClosed();
+        }
+    }
 
     property real contentPadding: 8
     property int currentPage: 0
@@ -52,6 +80,14 @@ FloatingWindow {
         }
         return false;
     }
+
+    function closeChildWindows() {
+        const page = pageLoader.item;
+        if (page && typeof page.closeChildWindows === "function")
+            page.closeChildWindows();
+    }
+
+    onCurrentPageChanged: root.closeChildWindows()
 
     function openConfig() {
         Qt.openUrlExternally(Paths.fileUrl(PersonalizationConfig.filePath));
@@ -100,7 +136,7 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("设置")
                 color: Appearance.colors.colOnLayer0
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 24
                 font.weight: Font.DemiBold
             }
@@ -134,10 +170,7 @@ FloatingWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.visible = false;
-                        Qt.quit();
-                    }
+                    onClicked: root.hideWindow()
                 }
             }
 
@@ -233,8 +266,15 @@ FloatingWindow {
 
                     Loader {
                         id: pageLoader
+
+                        property var parentModal: root
                         anchors.fill: parent
                         source: root.pageSource(root.currentPage)
+
+                        onLoaded: {
+                            if (item && "parentModal" in item)
+                                item.parentModal = parentModal;
+                        }
                     }
 
                     Connections {

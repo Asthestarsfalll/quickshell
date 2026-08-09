@@ -182,7 +182,7 @@ PanelWindow {
 
             Text {
                 text: "crop_free"
-                font.family: "Material Symbols Rounded"
+                font.family: Fonts.materialSymbolsRounded
                 font.pixelSize: 17
                 color: Appearance.colors.colPrimary
             }
@@ -190,7 +190,7 @@ PanelWindow {
             Text {
                 text: Math.round(root.selectionWidth)
                     + " × " + Math.round(root.selectionHeight)
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.numeric
                 font.pixelSize: 12
                 font.weight: Font.DemiBold
                 color: Appearance.colors.colOnSurface
@@ -217,14 +217,14 @@ PanelWindow {
 
             Text {
                 text: "drag_pan"
-                font.family: "Material Symbols Rounded"
+                font.family: Fonts.materialSymbolsRounded
                 font.pixelSize: 18
                 color: Appearance.colors.colOnPrimaryContainer
             }
 
             Text {
                 text: qsTr("拖拽选择区域  ·  Esc 取消")
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.ui
                 font.pixelSize: 13
                 color: Appearance.colors.colOnPrimaryContainer
             }

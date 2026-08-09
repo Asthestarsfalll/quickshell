@@ -121,7 +121,7 @@ Item {
                             anchors.centerIn: parent
                             text: "music_note"
                             color: Appearance.colors.colOnLayer3
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 56
                         }
                     }
@@ -206,7 +206,7 @@ Item {
                 isPlaying: root.isPlaying
                 waveAmplitude: 6
                 waveFrequency: 0.05
-                thumbSize: 14
+                progressGap: 10
 
                 onSeekRequested: (position) => {
                     if (MediaManager.active && MediaManager.active.length > 0) {

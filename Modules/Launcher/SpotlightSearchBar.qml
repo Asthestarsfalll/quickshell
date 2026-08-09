@@ -121,6 +121,7 @@ Item {
         shapeHeight: root.style.searchHeight
         buttonDiameter: root.style.modeButtonDiameter
         buttonGap: root.style.modeButtonGap
+        blurEdgeInset: root.style.blurEdgeInset
         edgeSoftness: root.style.edgeSoftness
         staggerFraction:
             root.style.railStagger / root.style.railDuration
@@ -168,7 +169,7 @@ Item {
                 anchors.centerIn: parent
                 text: root.style.searchEngineName
                 color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
                 opacity: root.webEngineProgress
@@ -189,7 +190,7 @@ Item {
                 text: qsTr("搜索应用")
                 color: Appearance.applyAlpha(
                     Appearance.colors.colOnSurfaceVariant, 0.72)
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 20
                 verticalAlignment: Text.AlignVCenter
                 opacity: searchInput.text.length === 0
@@ -202,7 +203,7 @@ Item {
                 text: qsTr("搜索网页")
                 color: Appearance.applyAlpha(
                     Appearance.colors.colOnSurfaceVariant, 0.72)
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 20
                 verticalAlignment: Text.AlignVCenter
                 opacity: searchInput.text.length === 0
@@ -217,7 +218,7 @@ Item {
                 color: Appearance.colors.colOnSurface
                 selectionColor: Appearance.colors.colPrimary
                 selectedTextColor: Appearance.colors.colOnPrimary
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 20
                 verticalAlignment: TextInput.AlignVCenter
                 selectByMouse: true

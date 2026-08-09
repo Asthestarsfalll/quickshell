@@ -3,6 +3,7 @@
 #include "weather_cache.h"
 #include "weather_calculator.h"
 
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSettings>
@@ -42,7 +43,6 @@ QVariantMap airAt(const QJsonObject &hourly, int index) {
     air["ozone"] = numberAt(hourly, "ozone", index, qQNaN());
     return air;
 }
-
 }
 
 WeatherBackend::WeatherBackend(QObject *parent)
@@ -213,6 +213,7 @@ void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonO
         item["visibilityMinM"] = numberAt(daily, "visibility_min", i);
         allDaily.append(item);
     }
+
     allDaily = WeatherCalculator::completeDaily(allDaily, allHourly, location.latitude, location.longitude);
     const QDate today = QDateTime::currentDateTime().date();
     const QDate trendStart = today.addDays(-1);

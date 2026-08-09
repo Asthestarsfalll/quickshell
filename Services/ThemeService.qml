@@ -11,6 +11,11 @@ Singleton {
 
     property bool generating: false
     property string lastSource: ""
+    property bool cursorIntegrationReady: false
+    property bool cursorWritePending: false
+    property string cursorLastError: ""
+    readonly property bool cursorSyncBusy:
+        cursorWritePending || writeNiriCursorProcess.running
     property var availableIconThemes: [({ "label": qsTr("系统默认"), "value": "" })]
     property var availableCursorThemes: [({ "label": qsTr("系统默认"), "value": "" })]
     property string systemDefaultIconTheme: ""
@@ -18,6 +23,36 @@ Singleton {
 
     readonly property string sessionDesktop: (Quickshell.env("XDG_CURRENT_DESKTOP") || Quickshell.env("XDG_SESSION_DESKTOP") || "").toLowerCase()
     readonly property bool isNiriSession: sessionDesktop.indexOf("niri") !== -1 || (Quickshell.env("NIRI_SOCKET") || "") !== ""
+    readonly property string niriConfigPath:
+        Paths.xdgConfigHome + "/niri/config.kdl"
+    readonly property string cursorConfigPath:
+        Paths.xdgConfigHome + "/niri/clavis/cursor.kdl"
+    readonly property string cursorConfigScript:
+        Paths.scriptPath("theme", "write_niri_cursor_config.sh")
+    property var matugenAvailability: ({
+        "fcitx5": false,
+        "zsh": false,
+        "keytop": false
+    })
+
+    function matugenTargetAvailable(id) {
+        if (id !== "fcitx5" && id !== "zsh" && id !== "keytop")
+            return true;
+        return root.matugenAvailability[id] === true;
+    }
+
+    function detectMatugenTargets() {
+        const configHome = Paths.xdgConfigHome;
+        const script = Paths.scriptPath("theme", "detect_matugen_targets.sh");
+        detectMatugenTargetsProcess.command = [
+            "bash", script,
+            configHome + "/clavis-zsh-theme/matugen.conf",
+            configHome + "/keytop/matugen.conf",
+            configHome + "/fcitx5-matugen-theme/matugen.conf"
+        ];
+        detectMatugenTargetsProcess.running = false;
+        detectMatugenTargetsProcess.running = true;
+    }
 
     function applyConfigToAppearance() {
         Appearance.matugenScheme = PersonalizationConfig.matugenScheme;
@@ -43,7 +78,7 @@ Singleton {
     }
 
     function setMatugenTemplateEnabled(id, enabled) {
-        const changed =
+        let changed =
             PersonalizationConfig.setMatugenTemplateEnabled(id, enabled);
         if (changed && enabled)
             root.regenerateFromCurrentWallpaper();
@@ -58,30 +93,22 @@ Singleton {
 
     function setCursorTheme(value) {
         PersonalizationConfig.setCursorTheme(value);
-        root.applyCursorSettings();
     }
 
     function setCursorSize(value) {
         PersonalizationConfig.setCursorSize(value);
-        root.applyCursorSettings();
     }
 
     function setCursorHideWhenTyping(value) {
         PersonalizationConfig.setCursorHideWhenTyping(value);
-        root.applyCursorSettings();
     }
 
     function setCursorHideAfterInactiveMs(value) {
         PersonalizationConfig.setCursorHideAfterInactiveMs(value);
-        root.applyCursorSettings();
     }
 
     function setIconTheme(value) {
         PersonalizationConfig.setIconTheme(value);
-
-        const themeName = root.effectiveIconTheme();
-        if (themeName !== "")
-            Quickshell.execDetached(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", themeName]);
     }
 
     function effectiveIconTheme() {
@@ -90,14 +117,6 @@ Singleton {
 
     function effectiveCursorTheme() {
         return PersonalizationConfig.cursorTheme !== "" ? PersonalizationConfig.cursorTheme : root.systemDefaultCursorTheme;
-    }
-
-    function shellQuote(value) {
-        return "'" + String(value).replace(/'/g, "'\\''") + "'";
-    }
-
-    function escapeKdlString(value) {
-        return String(value).replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     }
 
     function unique(values) {
@@ -116,7 +135,7 @@ Singleton {
     function dataDirs() {
         const raw = Quickshell.env("XDG_DATA_DIRS") || "";
         const base = raw.trim() !== "" ? raw.split(":") : ["/usr/local/share", "/usr/share"];
-        return root.unique(base.concat([Paths.homeDir + "/.local/share", "/usr/local/share", "/usr/share"]));
+        return root.unique(base.concat([Paths.xdgDataHome, "/usr/local/share", "/usr/share"]));
     }
 
     function hasOption(options, value) {
@@ -165,40 +184,12 @@ Singleton {
         return options;
     }
 
-    function iconThemeDetectionScript() {
-        const paths = root.dataDirs().map(dir => dir + "/icons").concat([Paths.homeDir + "/.icons"]);
-        const pathsArg = paths.map(path => root.shellQuote(path)).join(" ");
-        return `
-            printf 'SYSDEFAULT:%s\\n' "$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | sed "s/'//g" || true)"
-            for dir in ${pathsArg}; do
-                [ -d "$dir" ] || continue
-                for theme in "$dir"/*/; do
-                    [ -d "$theme" ] || continue
-                    basename "$theme"
-                done
-            done | grep -v '^icons$' | grep -v '^default$' | grep -v '^hicolor$' | grep -v '^locolor$' | sort -u
-        `;
-    }
-
-    function cursorThemeDetectionScript() {
-        const paths = root.dataDirs().map(dir => dir + "/icons").concat([Paths.homeDir + "/.icons"]);
-        const pathsArg = root.unique(paths).map(path => root.shellQuote(path)).join(" ");
-        return `
-            printf 'SYSDEFAULT:%s\\n' "$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null | sed "s/'//g" || true)"
-            for dir in ${pathsArg}; do
-                [ -d "$dir" ] || continue
-                for theme in "$dir"/*/; do
-                    [ -d "$theme" ] || continue
-                    [ -d "$theme/cursors" ] || continue
-                    basename "$theme"
-                done
-            done | grep -v '^icons$' | grep -v '^default$' | sort -u
-        `;
-    }
-
     function detectAvailableThemes() {
-        detectIconThemesProcess.command = ["bash", "-c", root.iconThemeDetectionScript()];
-        detectCursorThemesProcess.command = ["bash", "-c", root.cursorThemeDetectionScript()];
+        const paths = root.dataDirs().map(dir => dir + "/icons")
+            .concat([Paths.homeDir + "/.icons"]);
+        const script = Paths.scriptPath("theme", "list_cursor_icon_themes.sh");
+        detectIconThemesProcess.command = ["bash", script, "icon", ...paths];
+        detectCursorThemesProcess.command = ["bash", script, "cursor", ...paths];
         detectIconThemesProcess.running = false;
         detectCursorThemesProcess.running = false;
         detectIconThemesProcess.running = true;
@@ -206,87 +197,32 @@ Singleton {
     }
 
     function applyCursorSettings() {
-        const themeName = root.effectiveCursorTheme();
-        if (themeName !== "")
-            Quickshell.execDetached(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", themeName]);
-        Quickshell.execDetached(["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", String(PersonalizationConfig.cursorSize)]);
-        root.updateXResources();
+        if (!root.isNiriSession || !PersonalizationConfig.ready)
+            return;
         root.generateNiriCursorConfig();
     }
 
-    function updateXResources() {
-        const themeName = root.effectiveCursorTheme();
-        if (themeName === "")
-            return;
-
-        const xresourcesPath = Paths.homeDir + "/.Xresources";
-        const script = `
-            xresources_file=${root.shellQuote(xresourcesPath)}
-            theme_name=${root.shellQuote(themeName)}
-            cursor_size=${PersonalizationConfig.cursorSize}
-
-            [ -f "$xresources_file" ] && [ ! -w "$xresources_file" ] && exit 0
-
-            current_theme=""
-            current_size=""
-            if [ -f "$xresources_file" ]; then
-                current_theme=$(grep -E '^[[:space:]]*Xcursor\\.theme:' "$xresources_file" 2>/dev/null | sed 's/.*:[[:space:]]*//' | head -1)
-                current_size=$(grep -E '^[[:space:]]*Xcursor\\.size:' "$xresources_file" 2>/dev/null | sed 's/.*:[[:space:]]*//' | head -1)
-            fi
-
-            [ "$current_theme" = "$theme_name" ] && [ "$current_size" = "$cursor_size" ] && exit 0
-
-            temp_file="$xresources_file.tmp.$$"
-            if [ -f "$xresources_file" ]; then
-                grep -v '^[[:space:]]*Xcursor\\.theme:' "$xresources_file" | grep -v '^[[:space:]]*Xcursor\\.size:' > "$temp_file" 2>/dev/null || true
-            else
-                touch "$temp_file"
-            fi
-
-            printf 'Xcursor.theme: %s\\n' "$theme_name" >> "$temp_file"
-            printf 'Xcursor.size: %s\\n' "$cursor_size" >> "$temp_file"
-            mv "$temp_file" "$xresources_file"
-            xrdb -merge "$xresources_file" 2>/dev/null || true
-        `;
-        Quickshell.execDetached(["bash", "-c", script]);
-    }
-
     function generateNiriCursorConfig() {
-        if (!root.isNiriSession)
+        if (!root.isNiriSession || !PersonalizationConfig.ready)
             return;
-
-        const niriDmsDir = Paths.homeDir + "/.config/niri/dms";
-        const cursorPath = niriDmsDir + "/cursor.kdl";
-        const themeName = root.effectiveCursorTheme();
-        const size = PersonalizationConfig.cursorSize;
-        const hideWhenTyping = PersonalizationConfig.cursorHideWhenTyping;
-        const hideAfterMs = PersonalizationConfig.cursorHideAfterInactiveMs;
-        const hasCursorConfig = themeName !== "" || size !== 24 || hideWhenTyping || hideAfterMs > 0;
-        let content = "";
-
-        if (hasCursorConfig) {
-            content = `// ! DO NOT EDIT !
-// ! AUTO-GENERATED BY CLAVIS !
-// ! CHANGES WILL BE OVERWRITTEN !
-// ! PLACE YOUR CUSTOM CONFIGURATION ELSEWHERE !
-
-cursor {
-`;
-            if (themeName !== "")
-                content += `    xcursor-theme "${root.escapeKdlString(themeName)}"\n`;
-            content += `    xcursor-size ${size}\n`;
-            if (hideWhenTyping)
-                content += "    hide-when-typing\n";
-            if (hideAfterMs > 0)
-                content += `    hide-after-inactive-ms ${hideAfterMs}\n`;
-            content += "}\n";
+        if (writeNiriCursorProcess.running) {
+            root.cursorWritePending = true;
+            return;
         }
 
+        root.cursorWritePending = false;
+        root.cursorLastError = "";
         writeNiriCursorProcess.command = [
-            "bash", "-c",
-            "mkdir -p " + root.shellQuote(niriDmsDir) + " && printf '%s' " + root.shellQuote(content) + " > " + root.shellQuote(cursorPath)
+            "bash",
+            root.cursorConfigScript,
+            root.cursorConfigPath,
+            root.niriConfigPath,
+            root.effectiveCursorTheme(),
+            String(PersonalizationConfig.cursorSize),
+            PersonalizationConfig.cursorHideWhenTyping ? "true" : "false",
+            String(PersonalizationConfig.cursorHideAfterInactiveMs),
+            "niri"
         ];
-        writeNiriCursorProcess.running = false;
         writeNiriCursorProcess.running = true;
     }
 
@@ -336,7 +272,8 @@ cursor {
     }
 
     function regenerateFromCurrentWallpaper() {
-        const path = WallpaperService.currentWallpaper || PersonalizationConfig.wallpaperPath;
+        const path = WallpaperService.currentWallpaper
+            || PersonalizationConfig.wallpaperPath;
         if (path && path !== "" && WallpaperService.isImagePath(path))
             root.generateFromWallpaper(path);
         else if (path && path !== "" && WallpaperService.isColorSource(path))
@@ -346,6 +283,8 @@ cursor {
     Component.onCompleted: {
         root.applyConfigToAppearance();
         root.detectAvailableThemes();
+        root.detectMatugenTargets();
+        root.applyCursorSettings();
         if (PersonalizationConfig.themeMode === "dark" && !UiPreferences.darkMode)
             UiPreferences.setDarkMode(true);
     }
@@ -360,7 +299,29 @@ cursor {
         function onThemeModeChanged() {
             root.applyConfigToAppearance();
         }
+
+        function onSettingsLoaded() {
+            root.applyCursorSettings();
+        }
+
+        function onCursorThemeChanged() {
+            root.applyCursorSettings();
+        }
+
+        function onCursorSizeChanged() {
+            root.applyCursorSettings();
+        }
+
+        function onCursorHideWhenTypingChanged() {
+            root.applyCursorSettings();
+        }
+
+        function onCursorHideAfterInactiveMsChanged() {
+            root.applyCursorSettings();
+        }
     }
+
+    onSystemDefaultCursorThemeChanged: root.applyCursorSettings()
 
     Process {
         id: detectIconThemesProcess
@@ -381,7 +342,66 @@ cursor {
     }
 
     Process {
+        id: detectMatugenTargetsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const next = {};
+                const lines = String(this.text || "").split("\n");
+                for (let i = 0; i < lines.length; i += 1) {
+                    const separator = lines[i].indexOf("=");
+                    if (separator <= 0)
+                        continue;
+                    next[lines[i].slice(0, separator)] =
+                        lines[i].slice(separator + 1).trim() === "true";
+                }
+                root.matugenAvailability = next;
+            }
+        }
+    }
+
+    Process {
         id: writeNiriCursorProcess
+
+        stderr: StdioCollector {
+            id: writeNiriCursorError
+        }
+
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                root.cursorIntegrationReady = true;
+                root.cursorLastError = "";
+                root.refreshCursorIntegrationState();
+            } else {
+                root.cursorLastError = writeNiriCursorError.text.trim()
+                    || qsTr("无法写入 Niri 光标配置");
+            }
+
+            if (root.cursorWritePending)
+                root.generateNiriCursorConfig();
+        }
+    }
+
+    function includesCursorConfig(text) {
+        return /(^|\n)\s*include(?:\s+optional=true)?\s+"clavis\/cursor\.kdl"\s*(?:\/\/[^\n]*)?(?:\n|$)/
+            .test(String(text || ""));
+    }
+
+    function refreshCursorIntegrationState() {
+        if (root.isNiriSession)
+            niriConfigFile.reload();
+    }
+
+    FileView {
+        id: niriConfigFile
+
+        path: root.niriConfigPath
+        blockLoading: true
+        watchChanges: true
+
+        onLoaded: root.cursorIntegrationReady =
+            root.includesCursorConfig(niriConfigFile.text())
+        onLoadFailed: root.cursorIntegrationReady = false
+        onFileChanged: Qt.callLater(root.refreshCursorIntegrationState)
     }
 
     Process {

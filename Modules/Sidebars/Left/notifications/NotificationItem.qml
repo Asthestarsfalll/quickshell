@@ -187,7 +187,7 @@ Item {
                     Layout.fillWidth: summaryTextMetrics.width >= summaryRow.implicitWidth * root.summaryElideRatio
                     visible: !root.onlyNotification
                     text: root.notificationObject ? root.notificationObject.summary : ""
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: root.fontSize
                     font.bold: true
                     color: Appearance.colors.colOnLayer3
@@ -203,7 +203,7 @@ Item {
                     wrapMode: Text.Wrap
                     maximumLineCount: 1
                     elide: Text.ElideRight
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: root.fontSize
                     color: Appearance.colors.colSubtext
 
@@ -240,7 +240,7 @@ Item {
                     wrapMode: Text.Wrap
                     maximumLineCount: root.onlyNotification && !root.expanded ? 1 : 2147483647
                     elide: root.onlyNotification && !root.expanded ? Text.ElideRight : Text.ElideNone
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: root.fontSize
                     color: Appearance.colors.colSubtext
 

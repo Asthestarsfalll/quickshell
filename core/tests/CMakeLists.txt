@@ -1,17 +1,95 @@
 find_package(Qt6 REQUIRED COMPONENTS Test)
+find_program(BASH_EXECUTABLE bash REQUIRED)
 
-qt_add_executable(clavis_core_tests
-    recording_core_test.cpp
+add_test(
+    NAME control_center_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_control_center_architecture.sh
 )
 
-target_link_libraries(clavis_core_tests PRIVATE
-    ClavisRecordingCore
-    ClavisNiriCore
-    Qt6::Core
-    Qt6::Test
+add_test(
+    NAME edge_position_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_edge_positions.sh
 )
 
-add_test(NAME clavis_core_tests COMMAND clavis_core_tests)
+add_test(
+    NAME keystone_clock_customization_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_keystone_clock_customization.sh
+)
+
+add_test(
+    NAME wallpaper_picker_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_wallpaper_picker_architecture.sh
+)
+
+add_test(
+    NAME shell_blur_audit_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_shell_blur_audit.sh
+)
+
+add_test(
+    NAME niri_cursor_config_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_niri_cursor_config.sh
+)
+
+add_test(
+    NAME idle_policy_persistence_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_idle_policy_persistence.sh
+)
+
+add_test(
+    NAME power_menu_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_power_menu.sh
+)
+
+add_test(
+    NAME autostart_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_autostart_architecture.sh
+)
+
+add_test(
+    NAME spotlight_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_spotlight_architecture.sh
+)
+
+add_test(
+    NAME font_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_font_architecture.sh
+)
+
+add_test(
+    NAME default_apps_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_default_apps_architecture.sh
+)
+
+add_test(
+    NAME shader_asset_tests
+    COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
+)
+
+add_test(
+    NAME systemd_architecture_tests
+    COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_systemd_architecture.sh
+)
+
+add_test(
+    NAME qml_unit_tests
+    COMMAND Qt6::qmltestrunner -input ${CLAVIS_SOURCE_ROOT}/tests/qml
+)
+set_tests_properties(qml_unit_tests PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QPA_PLATFORMTHEME=;QML_IMPORT_PATH=${CLAVIS_QML_BUILD_DIR}"
+)
 
 qt_add_executable(niri_workspace_deriver_tests
     niri_workspace_deriver_test.cpp
@@ -33,24 +111,42 @@ qt_add_executable(audio_visual_analyzer_tests
 )
 
 target_link_libraries(audio_visual_analyzer_tests PRIVATE
-    ClavisAudioCore
+    ClavisCavaCore
     Qt6::Core
     Qt6::Test
 )
 
 add_test(NAME audio_visual_analyzer_tests COMMAND audio_visual_analyzer_tests)
 
-qt_add_executable(sysmon_core_tests
-    sysmon_core_test.cpp
+qt_add_executable(lyrics_tests
+    lyrics_test.cpp
 )
 
-target_link_libraries(sysmon_core_tests PRIVATE
-    ClavisSysmonCore
+target_link_libraries(lyrics_tests PRIVATE
+    ClavisLyrics
+    Qt6::Core
+    Qt6::Network
+    Qt6::Qml
+    Qt6::Test
+)
+
+target_include_directories(lyrics_tests PRIVATE
+    ${CLAVIS_SOURCE_ROOT}/core/plugin/lyrics/src
+)
+
+add_test(NAME lyrics_tests COMMAND lyrics_tests)
+
+qt_add_executable(clavis_paths_tests
+    clavis_paths_test.cpp
+)
+
+target_link_libraries(clavis_paths_tests PRIVATE
+    ClavisRuntimeCore
     Qt6::Core
     Qt6::Test
 )
 
-add_test(NAME sysmon_core_tests COMMAND sysmon_core_tests)
+add_test(NAME clavis_paths_tests COMMAND clavis_paths_tests)
 
 qt_add_executable(m3shapes_tests
     m3shapes_test.cpp
@@ -67,9 +163,13 @@ target_link_libraries(m3shapes_tests PRIVATE
     Qt6::Test
 )
 
+target_include_directories(m3shapes_tests PRIVATE
+    ${CLAVIS_SOURCE_ROOT}/core/src
+)
+
 target_compile_features(m3shapes_tests PRIVATE cxx_std_20)
 target_compile_definitions(m3shapes_tests PRIVATE
-    M3SHAPES_IMPORT_PATH="$<SHELL_PATH:${CMAKE_BINARY_DIR}>"
+    M3SHAPES_IMPORT_PATH="$<SHELL_PATH:${CLAVIS_QML_BUILD_DIR}>"
 )
 add_dependencies(m3shapes_tests M3Shapes)
 
@@ -77,90 +177,3 @@ add_test(NAME m3shapes_tests COMMAND m3shapes_tests)
 set_tests_properties(m3shapes_tests PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
-
-foreach(tool_target IN ITEMS fake_gsr fake_ffmpeg fake_ffprobe fake_pactl)
-    qt_add_executable(${tool_target}
-        fake_recording_tool.cpp
-    )
-    target_link_libraries(${tool_target} PRIVATE Qt6::Core)
-    set_target_properties(${tool_target} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fake-bin
-    )
-endforeach()
-
-foreach(tool_target IN ITEMS fake_cliphist fake_wl_copy fake_wl_paste)
-    qt_add_executable(${tool_target}
-        fake_clipboard_tool.cpp
-    )
-    target_link_libraries(${tool_target} PRIVATE Qt6::Core)
-    set_target_properties(${tool_target} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fake-bin
-    )
-endforeach()
-
-set_target_properties(fake_gsr PROPERTIES OUTPUT_NAME gpu-screen-recorder)
-set_target_properties(fake_ffmpeg PROPERTIES OUTPUT_NAME ffmpeg)
-set_target_properties(fake_ffprobe PROPERTIES OUTPUT_NAME ffprobe)
-set_target_properties(fake_pactl PROPERTIES OUTPUT_NAME pactl)
-set_target_properties(fake_cliphist PROPERTIES OUTPUT_NAME cliphist)
-set_target_properties(fake_wl_copy PROPERTIES OUTPUT_NAME wl-copy)
-set_target_properties(fake_wl_paste PROPERTIES OUTPUT_NAME wl-paste)
-
-qt_add_executable(key_integration_tests
-    key_integration_test.cpp
-)
-
-target_link_libraries(key_integration_tests PRIVATE
-    Qt6::Core
-    Qt6::Test
-)
-
-target_compile_definitions(key_integration_tests PRIVATE
-    KEY_EXECUTABLE="$<TARGET_FILE:key>"
-    KEY_FAKE_BIN="${CMAKE_CURRENT_BINARY_DIR}/fake-bin"
-)
-
-add_dependencies(key_integration_tests
-    key
-    fake_gsr
-    fake_ffmpeg
-    fake_ffprobe
-    fake_pactl
-    fake_cliphist
-    fake_wl_copy
-    fake_wl_paste
-)
-
-add_test(NAME key_integration_tests COMMAND key_integration_tests)
-
-qt_add_executable(key_sysmon_integration_tests
-    key_sysmon_integration_test.cpp
-)
-
-target_link_libraries(key_sysmon_integration_tests PRIVATE
-    Qt6::Core
-    Qt6::Test
-)
-
-target_compile_definitions(key_sysmon_integration_tests PRIVATE
-    KEY_EXECUTABLE="$<TARGET_FILE:key>"
-)
-
-add_dependencies(key_sysmon_integration_tests key)
-add_test(NAME key_sysmon_integration_tests COMMAND key_sysmon_integration_tests)
-
-qt_add_executable(top_tui_helpers_tests
-    top_tui_helpers_test.cpp
-    ../cli/src/tui/top_tui_helpers.cpp
-)
-
-target_link_libraries(top_tui_helpers_tests PRIVATE
-    Qt6::Core
-    Qt6::Test
-)
-
-target_include_directories(top_tui_helpers_tests PRIVATE
-    ../cli/src/tui
-)
-
-add_test(NAME top_tui_helpers_tests COMMAND top_tui_helpers_tests)

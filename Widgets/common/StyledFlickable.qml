@@ -65,7 +65,9 @@ Flickable {
         enabled: root.smoothWheelEnabled
         NumberAnimation {
             id: scrollAnimation
-            alwaysRunToEnd: true
+            // A new wheel event replaces the running destination instead of
+            // queueing the previous one to completion first.
+            alwaysRunToEnd: false
             duration: Appearance.animation.scroll.duration
             easing.type: Appearance.animation.scroll.type
             easing.bezierCurve: Appearance.animation.scroll.bezierCurve

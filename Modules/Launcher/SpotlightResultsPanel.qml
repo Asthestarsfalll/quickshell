@@ -7,6 +7,7 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import qs.Common
 import qs.Components
+import qs.Services
 
 Item {
     id: root
@@ -189,7 +190,9 @@ Item {
         id: panelBlurRegion
 
         anchors.fill: parent
-        property real radius: root.style.resultRadius
+        anchors.margins: root.style.blurEdgeInset
+        property real radius: Math.max(0,
+            root.style.resultRadius - root.style.blurEdgeInset)
     }
 
     Rectangle {
@@ -273,7 +276,7 @@ Item {
                             color: appDelegate.index === root.selectedIndex
                                 ? root.style.selectedContentColor
                                 : Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 17
                             font.weight: Font.Medium
                             elide: Text.ElideRight
@@ -285,7 +288,7 @@ Item {
                             color: appDelegate.index === root.selectedIndex
                                 ? root.style.selectedContentColor
                                 : Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 13
                             elide: Text.ElideRight
                         }
@@ -331,6 +334,12 @@ Item {
 
                 required property int index
                 required property var modelData
+                readonly property bool isCurrentWallpaper:
+                    WallpaperService.normalizedPath(
+                        wallpaperDelegate.modelData.path)
+                    === WallpaperService.normalizedPath(
+                        WallpaperService.currentWallpaper
+                        || WallpaperService.wallpaperForScreen(""))
                 width: wallpaperGrid.cellWidth
                 height: wallpaperGrid.cellHeight
 
@@ -439,7 +448,7 @@ Item {
                             color:
                                 Appearance.colors.colPrimaryContainer
                             visible:
-                                wallpaperDelegate.modelData.current === true
+                                wallpaperDelegate.isCurrentWallpaper
 
                             MaterialSymbol {
                                 anchors.centerIn: parent
@@ -467,7 +476,7 @@ Item {
                             wallpaperDelegate.index === root.selectedIndex
                             ? root.style.selectedContentColor
                             : Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize:
                             root.style.wallpaperLabelFontSize
                         font.weight: Font.Medium
@@ -513,7 +522,7 @@ Item {
                     color: root.providerAvailable && !root.canRestore
                         ? Appearance.colors.colError
                         : Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                     font.weight: Font.DemiBold
                 }
@@ -540,7 +549,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("清空")
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 13
                         }
                     }
@@ -563,6 +572,22 @@ Item {
 
                     required property int index
                     required property var modelData
+                    readonly property int detailsRevision:
+                        ClipboardService.detailsRevision
+                    readonly property var displayData: {
+                        // ClipboardService stores inspection results in a
+                        // keyed object.  The revision is an explicit
+                        // dependency because dynamic object keys do not
+                        // produce QML notifications.
+                        const ignoredRevision =
+                            clipboardDelegate.detailsRevision;
+                        const detail = ClipboardService.detail(
+                            String(clipboardDelegate.modelData.id || ""));
+                        if (!detail)
+                            return clipboardDelegate.modelData;
+                        return Object.assign(
+                            {}, clipboardDelegate.modelData, detail);
+                    }
                     readonly property bool actionForThis:
                         String(modelData.id)
                             === root.clipboardActionEntryId
@@ -612,7 +637,7 @@ Item {
                                 anchors.fill: parent
                                 visible:
                                     String(clipboardDelegate
-                                        .modelData.previewUrl || "") !== ""
+                                        .displayData.previewUrl || "") !== ""
                                 layer.enabled: visible
                                 layer.effect: OpacityMask {
                                     maskSource: Rectangle {
@@ -630,7 +655,7 @@ Item {
                                 Image {
                                     anchors.fill: parent
                                     source: clipboardDelegate
-                                        .modelData.previewUrl || ""
+                                        .displayData.previewUrl || ""
                                     sourceSize.width: 96
                                     sourceSize.height: 96
                                     asynchronous: true
@@ -643,7 +668,7 @@ Item {
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 visible: !clipboardPreviewFrame.visible
-                                text: clipboardDelegate.modelData.icon
+                                text: clipboardDelegate.displayData.icon
                                 iconSize: 24
                                 color:
                                     clipboardDelegate.index
@@ -666,13 +691,13 @@ Item {
 
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
-                                text: clipboardDelegate.modelData.title
+                                text: clipboardDelegate.displayData.title
                                 color:
                                     clipboardDelegate.index
                                         === root.selectedIndex
                                     ? root.style.selectedContentColor
                                     : Appearance.colors.colOnSurface
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 textFormat: Text.PlainText
                                 font.pixelSize: 16
                                 maximumLineCount: 1
@@ -690,13 +715,13 @@ Item {
                                     && root.clipboardActionState === "error"
                                     && root.clipboardActionError !== ""
                                     ? root.clipboardActionError
-                                    : clipboardDelegate.modelData.subtitle
+                                    : clipboardDelegate.displayData.subtitle
                                 color:
                                     clipboardDelegate.index
                                         === root.selectedIndex
                                     ? root.style.selectedContentColor
                                     : Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 textFormat: Text.PlainText
                                 font.pixelSize: 12
                                 maximumLineCount: 1
@@ -781,7 +806,7 @@ Item {
                                         === "copied"
                                         ? Appearance.colors.colPrimary
                                         : Appearance.colors.colError
-                                    font.family: Sizes.fontFamily
+                                    font.family: Fonts.ui
                                     font.pixelSize: 12
                                 }
                             }
@@ -796,7 +821,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton
-                        Accessible.name: clipboardDelegate.modelData.title
+                        Accessible.name: clipboardDelegate.displayData.title
                         Accessible.role: Accessible.ListItem
                         onClicked: mouse => {
                             root.selectionRequested(
@@ -850,7 +875,7 @@ Item {
                             : qsTr("当前 Provider 不可用"))
                         : qsTr("没有匹配结果"))
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 15
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -871,7 +896,7 @@ Item {
             width: 320
             text: qsTr("此操作会清除 cliphist 中的全部历史记录，无法撤销。")
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 14
             wrapMode: Text.Wrap
         }

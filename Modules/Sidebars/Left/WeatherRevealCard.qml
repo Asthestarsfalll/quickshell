@@ -18,13 +18,18 @@ Item {
     readonly property int entryDuration: Math.max(250, 500 - Math.max(0, staggerIndex) * 50)
     readonly property bool layoutReady: width > 0 && height > 0 && contentTop > 0
     readonly property real revealDepth: Math.min(height, Math.max(0, entryTravel))
+    readonly property bool inViewport: layoutReady
+        && viewportHeight > 0
+        && contentTop + height > viewportContentY
+        && contentTop < viewportContentY + viewportHeight
     readonly property bool thresholdCrossed: activationEnabled
-                                                 && layoutReady
-                                                 && viewportHeight > 0
-                                                 && contentTop + revealDepth <= viewportContentY + viewportHeight
+        && inViewport
+        && contentTop + revealDepth
+            <= viewportContentY + viewportHeight
 
     property bool animationStarted: false
     property bool revealStarted: false
+    property bool revealPending: false
     property real visualOpacity: 0
     property real entryOffset: entryTravel
     property real entryScale: 1.025
@@ -32,10 +37,22 @@ Item {
     default property alias content: visualLayer.data
 
     function maybeReveal() {
-        if (thresholdCrossed && !revealStarted) {
-            revealStarted = true
+        if (thresholdCrossed && !revealStarted && !revealPending) {
+            revealPending = true
             entryAnimation.restart()
         }
+    }
+
+    function cancelPendingReveal() {
+        if (!revealPending || revealStarted)
+            return
+
+        entryAnimation.stop()
+        revealPending = false
+        animationStarted = false
+        visualOpacity = 0
+        entryOffset = entryTravel
+        entryScale = 1.025
     }
 
     function settleReveal() {
@@ -43,6 +60,7 @@ Item {
         if (!revealStarted)
             return
 
+        revealPending = false
         animationStarted = true
         visualOpacity = 1
         entryOffset = 0
@@ -50,11 +68,19 @@ Item {
     }
 
     onThresholdCrossedChanged: maybeReveal()
+    onInViewportChanged: {
+        if (inViewport)
+            maybeReveal()
+        else
+            cancelPendingReveal()
+    }
     onActivationEnabledChanged: {
         if (activationEnabled)
             maybeReveal()
-        else
+        else if (revealStarted)
             settleReveal()
+        else
+            cancelPendingReveal()
     }
     Component.onCompleted: Qt.callLater(maybeReveal)
 
@@ -84,7 +110,11 @@ Item {
         }
 
         ScriptAction {
-            script: root.animationStarted = true
+            script: {
+                root.revealPending = false
+                root.revealStarted = true
+                root.animationStarted = true
+            }
         }
 
         ParallelAnimation {

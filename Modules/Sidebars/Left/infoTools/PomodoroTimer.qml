@@ -32,7 +32,7 @@ Item {
                         return `${minutes}:${seconds}`;
                     }
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 40
                 }
 
@@ -44,7 +44,7 @@ Item {
                             ? qsTr("休息")
                             : qsTr("专注")
                     color: Appearance.colors.colSubtext
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                 }
             }
@@ -61,7 +61,7 @@ Item {
                     anchors.centerIn: parent
                     text: TimerService.pomodoroCycle + 1
                     color: Appearance.colors.colOnLayer2
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 14
                 }
             }
@@ -97,7 +97,7 @@ Item {
                     color: TimerService.pomodoroRunning
                         ? Appearance.colors.colOnSecondaryContainer
                         : Appearance.colors.colOnPrimary
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                     font.weight: Font.Medium
                     horizontalAlignment: Text.AlignHCenter
@@ -121,7 +121,7 @@ Item {
                 contentItem: Text {
                     text: qsTr("重置")
                     color: Appearance.colors.colOnErrorContainer
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                     font.weight: Font.Medium
                     horizontalAlignment: Text.AlignHCenter

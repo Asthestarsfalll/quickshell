@@ -5,13 +5,28 @@ import Qt5Compat.GraphicalEffects
 import qs.Common
 import qs.Widgets.common
 import qs.Widgets.weather
-import Clavis.Weather 1.0
+import qs.Services
 
 Item {
     id: root
 
     property bool foreground: false
     property bool presentationActive: false
+    property var weatherSourceOverride: null
+    readonly property var weatherSource:
+        weatherSourceOverride || WeatherPlugin
+    readonly property bool weatherAnimationActive:
+        weatherBackground.animationTimerRunning
+    readonly property int weatherTargetFps: weatherBackground.targetFps
+    readonly property int weatherFrameInterval:
+        weatherBackground.sceneFrameInterval
+    readonly property string weatherSceneType:
+        weatherBackground.weatherType
+    readonly property int weatherSimulationFrameCount:
+        weatherBackground.simulationFrameCount
+    readonly property int weatherPaintCount: weatherBackground.paintCount
+    readonly property real effectiveDpr:
+        Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1
     property int contentMargin: 16
     property int headerHeight: 62
     property bool lightHeaderPalette: currentIsNight()
@@ -22,6 +37,13 @@ Item {
 
     function validNumber(value) {
         return value !== undefined && value !== null && !isNaN(value)
+    }
+
+    function modelCount(model) {
+        if (!model)
+            return 0
+        return typeof model.count === "function"
+            ? model.count() : Number(model.count || 0)
     }
 
     function fmtTemp(value) {
@@ -54,13 +76,13 @@ Item {
     }
 
     function updatedText() {
-        if (WeatherPlugin.loading) return qsTr("正在刷新")
-        if (WeatherPlugin.status === "fresh" || WeatherPlugin.status === "partial") {
-            const date = new Date(WeatherPlugin.lastUpdated)
+        if (root.weatherSource.loading) return qsTr("正在刷新")
+        if (root.weatherSource.status === "fresh" || root.weatherSource.status === "partial") {
+            const date = new Date(root.weatherSource.lastUpdated)
             return qsTr("更新于 ") + Qt.formatDateTime(date, "hh:mm")
         }
-        if (WeatherPlugin.status === "stale") return qsTr("数据较旧")
-        if (WeatherPlugin.status === "error") return qsTr("更新失败")
+        if (root.weatherSource.status === "stale") return qsTr("数据较旧")
+        if (root.weatherSource.status === "error") return qsTr("更新失败")
         return qsTr("待更新")
     }
 
@@ -199,7 +221,7 @@ Item {
     }
 
     function aqiSummary() {
-        const air = WeatherPlugin.currentAirQuality || ({})
+        const air = root.weatherSource.currentAirQuality || ({})
         const values = [
             pollutantIndex(air.ozone, [0, 50, 100, 160, 240, 480]),
             pollutantIndex(air.nitrogenDioxide, [0, 10, 25, 200, 400, 1000]),
@@ -217,7 +239,8 @@ Item {
     }
 
     function today() {
-        return WeatherPlugin.dailyForecast.count() > 0 ? WeatherPlugin.dailyForecast.get(0) : ({})
+        return modelCount(root.weatherSource.dailyForecast) > 0
+            ? root.weatherSource.dailyForecast.get(0) : ({})
     }
 
     function currentIsNight() {
@@ -229,13 +252,14 @@ Item {
             return now < sunrise || now >= sunset
         }
 
-        const current = WeatherPlugin.current()
+        const current = root.weatherSource.current()
         if (current && current.isDaylight !== undefined) return !current.isDaylight
 
-        const nextHour = WeatherPlugin.hourlyForecast.count() > 0 ? WeatherPlugin.hourlyForecast.get(0) : ({})
+        const nextHour = modelCount(root.weatherSource.hourlyForecast) > 0
+            ? root.weatherSource.hourlyForecast.get(0) : ({})
         if (nextHour && nextHour.isDaylight !== undefined) return !nextHour.isDaylight
 
-        const name = (WeatherPlugin.currentIconName || "").toLowerCase()
+        const name = (root.weatherSource.currentIconName || "").toLowerCase()
         if (name.indexOf("night") >= 0 || name.indexOf("_night") >= 0) return true
         if (name.indexOf("day") >= 0 || name.indexOf("_day") >= 0) return false
 
@@ -260,8 +284,6 @@ Item {
         radius: 30
         clip: true
         color: "transparent"
-        border.width: 1
-        border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.34)
         layer.enabled: true
         layer.effect: OpacityMask {
             maskSource: Rectangle {
@@ -272,15 +294,17 @@ Item {
         }
 
         WeatherBackground {
+            id: weatherBackground
+
             anchors.fill: parent
-            weatherCode: WeatherPlugin.currentWeatherCode
-            iconName: WeatherPlugin.currentIconName
-            windSpeedMs: WeatherPlugin.currentWindSpeedMs
-            windGustsMs: WeatherPlugin.currentWindGustsMs
+            weatherCode: root.weatherSource.currentWeatherCode
+            iconName: root.weatherSource.currentIconName
+            windSpeedMs: root.weatherSource.currentWindSpeedMs
+            windGustsMs: root.weatherSource.currentWindGustsMs
             night: root.currentIsNight()
             rainBounceY: flick.y + dailyForecastCard.y - flick.contentY
             scrollProgress: Math.max(0, Math.min(1, flick.contentY / 340))
-            animate: root.foreground
+            animate: root.presentationActive
         }
 
         Rectangle {
@@ -313,7 +337,7 @@ Item {
                         Text {
                             text: "location_on"
                             color: root.headerInkMuted
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 19
                             Layout.preferredWidth: 20
                             Layout.alignment: Qt.AlignVCenter
@@ -321,9 +345,9 @@ Item {
                         }
 
                         Text {
-                            text: WeatherPlugin.locationName || qsTr("天气")
+                            text: root.weatherSource.locationName || qsTr("天气")
                             color: root.headerInk
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 19
                             font.bold: true
                             elide: Text.ElideRight
@@ -350,7 +374,7 @@ Item {
                         contentItem: Text {
                             text: "edit"
                             color: root.headerInk
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 22
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -362,9 +386,9 @@ Item {
                         implicitWidth: 38
                         implicitHeight: 38
                         Layout.alignment: Qt.AlignVCenter
-                        enabled: !WeatherPlugin.loading
+                        enabled: !root.weatherSource.loading
                         opacity: enabled ? 1 : 0.45
-                        onClicked: WeatherPlugin.refresh()
+                        onClicked: root.weatherSource.refresh()
 
                         background: Rectangle {
                             radius: width / 2
@@ -378,7 +402,7 @@ Item {
                         contentItem: Text {
                             text: "refresh"
                             color: root.headerInk
-                            font.family: "Material Symbols Outlined"
+                            font.family: Fonts.materialSymbolsOutlined
                             font.pixelSize: 22
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -392,10 +416,10 @@ Item {
 
                     Text {
                         text: "schedule"
-                        color: WeatherPlugin.status === "stale" || WeatherPlugin.status === "error"
+                        color: root.weatherSource.status === "stale" || root.weatherSource.status === "error"
                                ? root.headerErrorInk
                                : root.headerInkMuted
-                        font.family: "Material Symbols Outlined"
+                        font.family: Fonts.materialSymbolsOutlined
                         font.pixelSize: 19
                         Layout.preferredWidth: 20
                         Layout.alignment: Qt.AlignVCenter
@@ -404,10 +428,10 @@ Item {
 
                     Text {
                         text: updatedText()
-                        color: WeatherPlugin.status === "stale" || WeatherPlugin.status === "error"
+                        color: root.weatherSource.status === "stale" || root.weatherSource.status === "error"
                                ? root.headerErrorInk
                                : root.headerInk
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.mono
                         font.pixelSize: 12
                         elide: Text.ElideRight
                         Layout.fillWidth: true
@@ -435,9 +459,17 @@ Item {
 
                 Item {
                     width: parent.width
-                    height: Math.max(220, flick.height - 452 - 286 - contentColumn.spacing * 2)
+                    height: Math.max(
+                        220,
+                        currentConditionsColumn.implicitHeight
+                            + Appearance.spacing.large,
+                        flick.height - 452 - 286
+                            - contentColumn.spacing * 2
+                    )
 
                     Column {
+                        id: currentConditionsColumn
+
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
@@ -445,9 +477,9 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: WeatherPlugin.currentWeatherText || qsTr("未知")
+                            text: root.weatherSource.currentWeatherText || qsTr("未知")
                             color: Appearance.colors.colOnImage
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 26
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
@@ -464,9 +496,9 @@ Item {
                                 id: tempText
                                 anchors.left: parent.left
                                 anchors.bottom: parent.bottom
-                                text: fmtTempPlain(WeatherPlugin.currentTemperatureC)
+                                text: fmtTempPlain(root.weatherSource.currentTemperatureC)
                                 color: Appearance.colors.colOnImage
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Fonts.numeric
                                 font.pixelSize: 132
                                 font.bold: true
                                 font.letterSpacing: 0
@@ -478,17 +510,18 @@ Item {
                                 height: 108
                                 anchors.right: parent.right
                                 anchors.top: parent.top
-                                weatherCode: WeatherPlugin.currentWeatherCode
-                                iconName: WeatherPlugin.currentIconName
+                                weatherCode: root.weatherSource.currentWeatherCode
+                                iconName: root.weatherSource.currentIconName
                                 night: root.currentIsNight()
+                                playing: root.presentationActive
                             }
                         }
 
                         Text {
                             width: parent.width
-                            text: qsTr("体感温度: ") + fmtTemp(WeatherPlugin.currentFeelsLikeC)
+                            text: qsTr("体感温度: ") + fmtTemp(root.weatherSource.currentFeelsLikeC)
                             color: Appearance.colors.colOnImage
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
@@ -499,7 +532,7 @@ Item {
                             text: qsTr("最高 ") + fmtTemp(today().temperatureMaxC)
                                   + qsTr(" · 最低 ") + fmtTemp(today().temperatureMinC)
                             color: Appearance.colors.colOnImage
-                            font.family: "LXGW WenKai GB Screen"
+                            font.family: Fonts.ui
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
@@ -511,15 +544,15 @@ Item {
                     id: dailyForecastCard
                     width: parent.width
                     height: 452
-                    sourceModel: WeatherPlugin.dailyTrendForecast
-                    foreground: root.foreground
+                    sourceModel: root.weatherSource.dailyTrendForecast
+                    foreground: root.presentationActive
                 }
 
                 HourlyForecastTrendCard {
                     width: parent.width
                     height: 286
-                    sourceModel: WeatherPlugin.hourlyForecast
-                    foreground: root.foreground
+                    sourceModel: root.weatherSource.hourlyForecast
+                    foreground: root.presentationActive
                 }
 
                 RowLayout {
@@ -558,10 +591,10 @@ Item {
 
                         WeatherWindCard {
                             anchors.fill: parent
-                            directionDegrees: WeatherPlugin.currentWindDirection
-                            valueText: fmtSpeed(WeatherPlugin.currentWindSpeedMs)
-                            detailText: qsTr("阵风 ") + fmtSpeed(WeatherPlugin.currentWindGustsMs) + " · " + directionLabel(WeatherPlugin.currentWindDirection)
-                            accent: windAccent(WeatherPlugin.currentWindSpeedMs)
+                            directionDegrees: root.weatherSource.currentWindDirection
+                            valueText: fmtSpeed(root.weatherSource.currentWindSpeedMs)
+                            detailText: qsTr("阵风 ") + fmtSpeed(root.weatherSource.currentWindGustsMs) + " · " + directionLabel(root.weatherSource.currentWindDirection)
+                            accent: windAccent(root.weatherSource.currentWindSpeedMs)
                             animationEnabled: true
                             animationActive: windReveal.contentAnimationActive
                         }
@@ -605,9 +638,9 @@ Item {
 
                         WeatherHumidityCard {
                             anchors.fill: parent
-                            humidityValue: WeatherPlugin.currentRelativeHumidity
-                            humidityText: fmtPercent(WeatherPlugin.currentRelativeHumidity)
-                            dewPointText: fmtTemp(WeatherPlugin.currentDewPointC)
+                            humidityValue: root.weatherSource.currentRelativeHumidity
+                            humidityText: fmtPercent(root.weatherSource.currentRelativeHumidity)
+                            dewPointText: fmtTemp(root.weatherSource.currentDewPointC)
                             accent: humidityWaveAccent()
                             animationEnabled: true
                             animationActive: humidityReveal.contentAnimationActive
@@ -632,9 +665,9 @@ Item {
 
                         WeatherUvCard {
                             anchors.fill: parent
-                            value: WeatherPlugin.currentUvIndex
-                            level: uvLevel(WeatherPlugin.currentUvIndex)
-                            activeIndex: uvIndexBucket(WeatherPlugin.currentUvIndex)
+                            value: root.weatherSource.currentUvIndex
+                            level: uvLevel(root.weatherSource.currentUvIndex)
+                            activeIndex: uvIndexBucket(root.weatherSource.currentUvIndex)
                             animationEnabled: true
                             animationActive: uvReveal.contentAnimationActive
                         }
@@ -652,7 +685,7 @@ Item {
 
                         WeatherVisibilityCard {
                             anchors.fill: parent
-                            visibilityMeters: WeatherPlugin.currentVisibilityM
+                            visibilityMeters: root.weatherSource.currentVisibilityM
                             animationEnabled: true
                             animationActive: visibilityReveal.contentAnimationActive
                         }
@@ -676,8 +709,8 @@ Item {
 
                         WeatherPressureCard {
                             anchors.fill: parent
-                            pressureValue: WeatherPlugin.currentPressureHpa
-                            valueText: pressureValueText(WeatherPlugin.currentPressureHpa)
+                            pressureValue: root.weatherSource.currentPressureHpa
+                            valueText: pressureValueText(root.weatherSource.currentPressureHpa)
                             unitText: "hPa"
                             animationEnabled: true
                             animationActive: pressureReveal.contentAnimationActive
@@ -746,6 +779,20 @@ Item {
         }
     }
 
+    // Keep the one-pixel outline outside the OpacityMask texture. Rendering it
+    // into the masked layer made the already antialiased stroke pass through a
+    // second alpha resampling step, which softened the stable rounded edge.
+    Rectangle {
+        anchors.fill: weatherPanel
+        color: "transparent"
+        radius: weatherPanel.radius
+        border.width: 1 / root.effectiveDpr
+        border.color: Qt.rgba(
+            Appearance.colors.colOutlineVariant.r,
+            Appearance.colors.colOutlineVariant.g,
+            Appearance.colors.colOutlineVariant.b, 0.34)
+    }
+
     component SectionCard: Rectangle {
         id: card
         property string title: ""
@@ -767,7 +814,7 @@ Item {
             Text {
                 text: card.icon
                 color: Appearance.colors.colOnSurface
-                font.family: "Material Symbols Outlined"
+                font.family: Fonts.materialSymbolsOutlined
                 font.pixelSize: 20
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -775,7 +822,7 @@ Item {
             Text {
                 text: card.title
                 color: Appearance.colors.colOnSurface
-                font.family: "LXGW WenKai GB Screen"
+                font.family: Fonts.ui
                 font.bold: true
                 font.pixelSize: 15
                 anchors.verticalCenter: parent.verticalCenter

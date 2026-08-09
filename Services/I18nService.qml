@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Clavis.I18n 1.0
+import Clavis.I18n
 
 Singleton {
     id: root

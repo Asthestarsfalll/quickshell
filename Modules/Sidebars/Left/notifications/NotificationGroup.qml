@@ -206,7 +206,7 @@ MouseArea {
                             text: (topRow.showAppName
                                 ? (root.notificationGroup ? root.notificationGroup.appName : "")
                                 : (root.notificationCount > 0 ? root.notifications[0].summary : "")) || ""
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: topRow.showAppName ? topRow.fontSize : 13
                             font.bold: !topRow.showAppName
                             color: topRow.showAppName
@@ -219,7 +219,7 @@ MouseArea {
                             Layout.rightMargin: 10
                             horizontalAlignment: Text.AlignLeft
                             text: notifUtils.getFriendlyNotifTimeString(root.notificationGroup ? root.notificationGroup.time : 0)
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.numeric
                             font.pixelSize: topRow.fontSize
                             color: Appearance.colors.colSubtext
                         }

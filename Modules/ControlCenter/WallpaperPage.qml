@@ -13,6 +13,7 @@ import qs.Widgets.common
 StyledFlickable {
     id: root
 
+    property var parentModal: null
     clip: true
     contentWidth: width
     contentHeight: contentColumn.y + contentColumn.implicitHeight + 20
@@ -86,6 +87,14 @@ StyledFlickable {
         wallpaperColorPicker.showWithColor(root.currentWallpaperIsColor ? root.currentWallpaperPath : Appearance.colors.colPrimary);
     }
 
+    function closeChildWindows() {
+        wallpaperFileBrowser.dismiss();
+        wallpaperColorPicker.close();
+        overviewFileBrowser.dismiss();
+        overviewColorPicker.close();
+        bezierCurveLayerEditor.dismiss();
+    }
+
     function chooseOverviewFile() {
         const source = root.currentOverviewPath;
         const base = source !== ""
@@ -112,6 +121,7 @@ StyledFlickable {
 
         property string title: ""
         property string iconName: "settings"
+        property alias headerTrailing: headerTrailingSlot.data
         default property alias content: body.data
 
         Layout.fillWidth: true
@@ -134,9 +144,16 @@ StyledFlickable {
                 Layout.fillWidth: true
                 text: section.title
                 color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 18
                 font.weight: Font.Medium
+            }
+
+            RowLayout {
+                id: headerTrailingSlot
+
+                Layout.alignment: Qt.AlignVCenter
+                spacing: Metrics.spacingS
             }
         }
 
@@ -364,16 +381,10 @@ StyledFlickable {
                 title: qsTr("桌面壁纸管理器")
                 iconName: "display_settings"
 
-                FlatSettingsSection {
-                Layout.fillWidth: true
-
-                MaterialRadioGroup {
-                    Layout.fillWidth: true
-                    horizontal: true
-                    accessibleName: qsTr("桌面壁纸管理器")
-                    currentValue:
-                        PersonalizationConfig.desktopWallpaperBackend
-                    model: [
+                headerTrailing: SearchSelectMenuField {
+                    Layout.preferredWidth: 168
+                    Layout.preferredHeight: Metrics.controlHeightM
+                    options: [
                         ({
                             "value": "quickshell",
                             "label": "Quickshell",
@@ -390,12 +401,10 @@ StyledFlickable {
                                     : qsTr("正在检测 awww…")
                         })
                     ]
-                    onValueSelected: value => {
-                        if (value !== "awww"
-                                || AwwwWallpaperService.available)
-                            WallpaperService
-                                .setDesktopWallpaperBackend(value);
-                    }
+                    value: PersonalizationConfig.desktopWallpaperBackend
+                    Accessible.name: qsTr("桌面壁纸管理器")
+                    onAccepted: value => WallpaperService
+                        .setDesktopWallpaperBackend(value)
                 }
 
                 InlineStatusBanner {
@@ -406,7 +415,6 @@ StyledFlickable {
                     message: AwwwWallpaperService.lastError !== ""
                         ? AwwwWallpaperService.lastError
                         : WallpaperService.lastDesktopError
-                }
                 }
             }
         }
@@ -447,7 +455,7 @@ StyledFlickable {
                                     root.currentWallpaperPath)
                                 : qsTr("未选择壁纸")
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 22
                             font.weight: Font.Medium
                             horizontalAlignment: Text.AlignLeft
@@ -458,7 +466,7 @@ StyledFlickable {
                             Layout.fillWidth: true
                             text: root.currentWallpaperPath
                             color: Appearance.colors.colSubtext
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.mono
                             font.pixelSize: 14
                             horizontalAlignment: Text.AlignLeft
                             elide: Text.ElideMiddle
@@ -555,7 +563,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("转场类型")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -651,12 +659,12 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("awww FPS")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
 
-                MaterialAccessibleSlider {
+                MaterialSlider {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: Math.min(
                         520, root.pageContentWidth - 60)
@@ -703,12 +711,12 @@ StyledFlickable {
                     text: qsTr("过渡步长 · %1").arg(
                         PersonalizationConfig.awwwTransitionStep)
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
 
-                MaterialAccessibleSlider {
+                MaterialSlider {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: Math.min(
                         520, root.pageContentWidth - 60)
@@ -753,7 +761,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("过渡时间")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -765,7 +773,7 @@ StyledFlickable {
                     spacing: 12
                     enabled: root.sharedTransitionParametersEnabled
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         id: transitionDurationSlider
 
                         Layout.preferredWidth: Math.min(460, Math.max(330, root.pageContentWidth - 140))
@@ -777,7 +785,8 @@ StyledFlickable {
                         enabled: root.sharedTransitionParametersEnabled
                         accessibleName: qsTr("壁纸过渡时间")
                         valueFormatter: sliderValue => Math.round(sliderValue).toString()
-                        onMoved: WallpaperService.setTransitionDurationMs(Math.round(transitionDurationSlider.value))
+                        onMoved: value => WallpaperService
+                            .setTransitionDurationMs(Math.round(value))
                     }
 
                     Item {
@@ -843,7 +852,7 @@ StyledFlickable {
                             visible: !transitionDurationEditor.editing
                             text: PersonalizationConfig.transitionDurationMs + " ms"
                             color: durationValueMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.numeric
                             font.pixelSize: 14
                             font.weight: Font.Medium
                         }
@@ -864,7 +873,7 @@ StyledFlickable {
                                 bottom: 0
                                 top: 5000
                             }
-                            font.family: Sizes.fontFamilyMono
+                            font.family: Fonts.numeric
                             font.pixelSize: 14
                             font.weight: Font.Medium
                             padding: 0
@@ -936,7 +945,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("缓动曲线")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Medium
                 }
@@ -1068,7 +1077,7 @@ StyledFlickable {
                                 Text {
                                     text: qsTr("编辑贝塞尔")
                                     color: Appearance.colors.colOnPrimaryContainer
-                                    font.family: Sizes.fontFamily
+                                    font.family: Fonts.ui
                                     font.pixelSize: 14
                                     font.weight: Font.Medium
                                 }
@@ -1221,12 +1230,12 @@ StyledFlickable {
                         Layout.fillWidth: true
                         text: qsTr("壁纸缩放")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                         font.weight: Font.Medium
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled: root.preferredScaleControlEnabled
                         from: 1
@@ -1250,12 +1259,12 @@ StyledFlickable {
                         Layout.fillWidth: true
                         text: qsTr("横向行程列数")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                         font.weight: Font.Medium
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled: !root.desktopUsesAwww
                         from: 2
@@ -1436,11 +1445,11 @@ StyledFlickable {
                     Text {
                         text: qsTr("模糊")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled
@@ -1464,11 +1473,11 @@ StyledFlickable {
                     Text {
                         text: qsTr("暗化")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled
@@ -1491,11 +1500,11 @@ StyledFlickable {
                     Text {
                         text: qsTr("饱和度")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled
@@ -1519,11 +1528,11 @@ StyledFlickable {
                     Text {
                         text: qsTr("对比度")
                         color: Appearance.colors.colOnSurface
-                        font.family: Sizes.fontFamily
-                        font.pixelSize: Sizes.typeBodyMedium
+                        font.family: Fonts.ui
+                        font.pixelSize: Typography.bodyMedium.pixelSize
                     }
 
-                    MaterialAccessibleSlider {
+                    MaterialSlider {
                         Layout.fillWidth: true
                         enabled:
                             PersonalizationConfig.overviewEnabled
@@ -1558,27 +1567,27 @@ StyledFlickable {
 
     WallpaperFileBrowser {
         id: wallpaperFileBrowser
+        parentModal: root.parentModal
         startPath: PersonalizationConfig.wallpaperFolder
         onFolderSelected: path => {
             WallpaperService.setWallpaperFolder(path);
         }
         onFileSelected: path => {
-            const folder = WallpaperService.parentFolder(path);
-            if (folder !== "")
-                WallpaperService.setWallpaperFolder(folder);
-            WallpaperService.setWallpaper(
+            WallpaperService.setWallpaperFromFile(
                 path, root.selectedDesktopOutput);
         }
     }
 
     WallpaperColorPicker {
         id: wallpaperColorPicker
+        parentModal: root.parentModal
         onColorSelected: color => WallpaperService.setWallpaper(
             color, root.selectedDesktopOutput)
     }
 
     WallpaperFileBrowser {
         id: overviewFileBrowser
+        parentModal: root.parentModal
         startPath: PersonalizationConfig.wallpaperFolder
         onFileSelected: path =>
             WallpaperService.setOverviewWallpaper(
@@ -1587,6 +1596,7 @@ StyledFlickable {
 
     WallpaperColorPicker {
         id: overviewColorPicker
+        parentModal: root.parentModal
         onColorSelected: color =>
             WallpaperService.setOverviewWallpaper(
                 color, root.selectedOverviewOutput)
@@ -1594,6 +1604,7 @@ StyledFlickable {
 
     BezierCurveLayerEditor {
         id: bezierCurveLayerEditor
+        parentModal: root.parentModal
         onCurveEdited: nextCurve => WallpaperService.setTransitionBezierCurve(nextCurve)
     }
 }

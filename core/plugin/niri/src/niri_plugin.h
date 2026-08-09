@@ -2,7 +2,6 @@
 
 #include "niri_icon_lookup.h"
 #include "niri_ipc_client.h"
-#include "niri_cast_parser.h"
 #include "niri_output_model.h"
 #include "niri_window_model.h"
 #include "niri_workspace_model.h"
@@ -30,11 +29,6 @@ class NiriPlugin : public QObject {
     Q_PROPERTY(bool inOverview READ inOverview NOTIFY overviewChanged)
     Q_PROPERTY(QStringList keyboardLayoutNames READ keyboardLayoutNames NOTIFY keyboardLayoutChanged)
     Q_PROPERTY(QString currentKeyboardLayoutName READ currentKeyboardLayoutName NOTIFY keyboardLayoutChanged)
-    Q_PROPERTY(QVariantList casts READ casts NOTIFY castsChanged)
-    Q_PROPERTY(bool anyCastPresent READ anyCastPresent NOTIFY castsChanged)
-    Q_PROPERTY(bool anyCastActive READ anyCastActive NOTIFY castsChanged)
-    Q_PROPERTY(int activeCastCount READ activeCastCount NOTIFY castsChanged)
-
 public:
     explicit NiriPlugin(QObject *parent = nullptr);
     ~NiriPlugin() override;
@@ -51,11 +45,6 @@ public:
     bool inOverview() const;
     QStringList keyboardLayoutNames() const;
     QString currentKeyboardLayoutName() const;
-    QVariantList casts() const;
-    bool anyCastPresent() const;
-    bool anyCastActive() const;
-    int activeCastCount() const;
-
     Q_INVOKABLE bool connectToNiri();
     Q_INVOKABLE QVariantList workspacesForOutput(const QString &outputName) const;
     Q_INVOKABLE QVariantList windowsForWorkspace(quint64 workspaceId) const;
@@ -95,7 +84,7 @@ signals:
     void focusedWorkspaceChanged();
     void overviewChanged();
     void keyboardLayoutChanged();
-    void castsChanged();
+    void configLoaded(bool failed, const QString &error);
 
 private slots:
     void handleEvent(const QJsonObject &event);
@@ -126,7 +115,6 @@ private:
     QList<NiriWorkspace> m_workspaces;
     QList<NiriWindow> m_windows;
     QList<NiriOutput> m_outputs;
-    QList<NiriCast> m_casts;
     QString m_lastError;
     QString m_currentOutput;
     QVariantMap m_focusedWindow;

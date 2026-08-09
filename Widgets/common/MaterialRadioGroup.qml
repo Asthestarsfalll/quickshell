@@ -201,8 +201,8 @@ FocusScope {
                                     : Appearance.colors.colOnSurface
                                 : Appearance.colors
                                     .colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodyMedium
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodyMedium.pixelSize
                             font.weight: Font.Medium
                         }
 
@@ -213,8 +213,8 @@ FocusScope {
                             text: option.optionSupportingText
                             color:
                                 Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: Sizes.typeBodySmall
+                            font.family: Fonts.ui
+                            font.pixelSize: Typography.bodySmall.pixelSize
                             wrapMode: Text.Wrap
                         }
                     }

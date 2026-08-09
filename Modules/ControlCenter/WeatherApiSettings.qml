@@ -3,8 +3,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import Quickshell
-import Clavis.Weather 1.0
-import Clavis.WeatherMap 1.0
+import Clavis.WeatherMap
 import qs.Common
 import qs.Components
 import qs.Modules.Keystone.WeatherContent
@@ -131,20 +130,12 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("天气")
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 22
                     font.weight: Font.DemiBold
                     textFormat: Text.PlainText
                 }
 
-                Text {
-                    Layout.fillWidth: true
-                    text: qsTr("配置 Keystone 天气地图服务")
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: 13
-                    textFormat: Text.PlainText
-                }
             }
         }
 
@@ -188,20 +179,12 @@ StyledFlickable {
                             Layout.fillWidth: true
                             text: "OpenWeather Weather Maps"
                             color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 16
                             font.weight: Font.Medium
                             textFormat: Text.PlainText
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: qsTr("用于天气数据覆盖层")
-                            color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: 12
-                            textFormat: Text.PlainText
-                        }
                     }
 
                     Rectangle {
@@ -245,7 +228,7 @@ StyledFlickable {
                                 color: WeatherMapPlugin.apiConfigured
                                     ? Appearance.colors.colOnPrimaryContainer
                                     : Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamily
+                                font.family: Fonts.ui
                                 font.pixelSize: 13
                                 font.weight: Font.DemiBold
                                 textFormat: Text.PlainText
@@ -264,7 +247,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: "OpenWeather API key"
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 14
                     font.weight: Font.Medium
                     textFormat: Text.PlainText
@@ -286,16 +269,47 @@ StyledFlickable {
                             | Qt.ImhNoPredictiveText
                             | Qt.ImhNoAutoUppercase
                         maximumLength: 128
-                        rightPadding: 52
                         enabled: WeatherMapPlugin.credentialsReady
                             && !WeatherMapPlugin.credentialBusy
-                        color: Appearance.colors.colOnSurface
-                        placeholderTextColor: Appearance.colors.colOnSurfaceVariant
-                        Material.theme: PersonalizationConfig.themeMode === "light"
-                            ? Material.Light
-                            : Material.Dark
-                        Material.containerStyle: Material.Outlined
-                        Material.foreground: Appearance.colors.colOnSurface
+                        trailingContent: Component {
+                            ToolButton {
+                                id: visibilityButton
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                focusPolicy: Qt.StrongFocus
+                                Accessible.name: root.revealApiKey
+                                    ? qsTr("隐藏 API key")
+                                    : qsTr("显示 API key")
+                                onClicked: root.revealApiKey =
+                                    !root.revealApiKey
+
+                                background: Rectangle {
+                                    radius: Appearance.rounding.full
+                                    color: visibilityButton.down
+                                        ? Appearance.colors.colLayer3Active
+                                        : visibilityButton.hovered
+                                            || visibilityButton.activeFocus
+                                            ? Appearance.colors.colLayer3Hover
+                                            : "transparent"
+                                }
+
+                                contentItem: MaterialSymbol {
+                                    text: root.revealApiKey
+                                        ? "visibility_off" : "visibility"
+                                    iconSize: 20
+                                    color: Appearance.colors.colOnSurfaceVariant
+                                }
+
+                                StyledToolTip {
+                                    extraVisibleCondition:
+                                        visibilityButton.hovered
+                                    text: root.revealApiKey
+                                        ? qsTr("隐藏 API key")
+                                        : qsTr("显示 API key")
+                                }
+                            }
+                        }
                         Accessible.name: "OpenWeather API key"
                         Accessible.description: qsTr("安全保存到系统密钥环")
                         onTextChanged: {
@@ -306,54 +320,13 @@ StyledFlickable {
                         }
                         onAccepted: root.applyApiKey()
                     }
-
-                    ToolButton {
-                        id: visibilityButton
-
-                        anchors.right: parent.right
-                        anchors.rightMargin: 6
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 44
-                        height: 44
-                        hoverEnabled: true
-                        focusPolicy: Qt.StrongFocus
-                        Accessible.name: root.revealApiKey
-                            ? qsTr("隐藏 API key")
-                            : qsTr("显示 API key")
-                        onClicked: root.revealApiKey = !root.revealApiKey
-
-                        background: Rectangle {
-                            radius: Appearance.rounding.full
-                            color: visibilityButton.down
-                                ? Appearance.colors.colLayer3Active
-                                : visibilityButton.hovered
-                                    || visibilityButton.activeFocus
-                                    ? Appearance.colors.colLayer3Hover
-                                    : "transparent"
-                        }
-
-                        contentItem: MaterialSymbol {
-                            text: root.revealApiKey
-                                ? "visibility_off"
-                                : "visibility"
-                            iconSize: 20
-                            color: Appearance.colors.colOnSurfaceVariant
-                        }
-
-                        StyledToolTip {
-                            extraVisibleCondition: visibilityButton.hovered
-                            text: root.revealApiKey
-                                ? qsTr("隐藏 API key")
-                                : qsTr("显示 API key")
-                        }
-                    }
                 }
 
                 Text {
                     Layout.fillWidth: true
                     text: qsTr("密钥保存在系统密钥环中，保存后立即生效。")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     lineHeight: 1.35
                     wrapMode: Text.WordWrap
@@ -395,7 +368,7 @@ StyledFlickable {
                             color: root.feedbackError
                                 ? Appearance.colors.colOnErrorContainer
                                 : Appearance.colors.colOnPrimaryContainer
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                             textFormat: Text.PlainText
@@ -483,7 +456,7 @@ StyledFlickable {
                     Layout.fillWidth: true
                     text: qsTr("密钥仅保存在系统密钥环中，不会写入项目配置或显示在界面中。")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 12
                     lineHeight: 1.35
                     wrapMode: Text.WordWrap

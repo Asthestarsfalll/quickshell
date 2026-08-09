@@ -3,6 +3,6 @@ import qs.Modules.Keystone.Styles.Shared
 
 KeystoneSurface {
     detached: true
-    topMargin: 8
+    edgeMargin: 8
     maxPillRadius: 24
 }

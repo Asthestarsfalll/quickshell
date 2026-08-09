@@ -224,7 +224,7 @@ FocusScope {
                         anchors.centerIn: parent
                         text: "lock"
                         color: Appearance.colors.colOnSurface
-                        font.family: "Material Symbols Rounded"
+                        font.family: Fonts.materialSymbolsRounded
                         font.pixelSize: 24
                         opacity: root.busy ? 0 : 1
                         Behavior on opacity {
@@ -298,7 +298,7 @@ FocusScope {
                     anchors.centerIn: parent
                     text: root.busy ? qsTr("正在加载…") : qsTr("输入密码")
                     color: root.busy ? Appearance.colors.colSecondary : Appearance.colors.colOutline
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 17
                     opacity: root.hasText ? 0 : 1
                     scale: root.hasText ? 0.96 : 1
@@ -603,7 +603,7 @@ FocusScope {
                     anchors.centerIn: parent
                     text: "arrow_forward"
                     color: root.hasText ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
-                    font.family: "Material Symbols Rounded"
+                    font.family: Fonts.materialSymbolsRounded
                     font.pixelSize: 24
                     font.weight: 500
                 }

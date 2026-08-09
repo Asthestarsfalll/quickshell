@@ -49,6 +49,8 @@ PanelWindow {
     property real _railAnimationTarget: 0
     property real _webAnimationTarget: 0
 
+    onWebProgressChanged: spotlightBlur.publish()
+
     readonly property var activeResults: mode === "apps"
         ? appProvider.results
         : (mode === "wallpapers"
@@ -636,15 +638,9 @@ PanelWindow {
         blurEnabled: root.showing
     }
 
-    Rectangle {
+    MouseArea {
         anchors.fill: parent
-        color: Appearance.colors.colScrim
-        opacity: style.scrimOpacity * root.windowProgress
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.requestClose()
-        }
+        onClicked: root.requestClose()
     }
 
     Item {

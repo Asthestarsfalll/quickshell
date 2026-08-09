@@ -39,16 +39,13 @@ Item {
 
             screenshotProcess.command = [
                 "bash",
-                "-c",
-                "grim -g \"$1\" - | wl-copy",
-                "clavis-screenshot",
+                Paths.scriptPath("capture", "screenshot_to_clipboard.sh"),
                 geometry
             ]
             screenshotProcess.running = true
         }
     }
 
-    // 简单工具依然保持内联
-    Process { id: colorPickerProcess; command: ["bash", "-c", "nohup bash -c 'sleep 0.3; hyprpicker -a' >/dev/null 2>&1 &"] }
+    Process { id: colorPickerProcess; command: ["hyprpicker", "-a"] }
     Process { id: screenshotProcess }
 }

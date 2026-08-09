@@ -59,7 +59,7 @@ Item {
         anchors.centerIn: parent
         visible: root.showSymbol
         text: root.isUrgent ? "priority_high" : notifUtils.findSuitableMaterialSymbol(root.summary)
-        font.family: "Material Symbols Rounded"
+        font.family: Fonts.materialSymbolsRounded
         font.pixelSize: root.materialIconSize
         color: root.isUrgent ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSecondaryContainer
     }

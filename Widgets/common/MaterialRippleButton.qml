@@ -16,6 +16,8 @@ Button {
     property int rippleFadeDuration: Appearance.animation.expressiveSlowEffects.duration
     property real rippleOpacity: 0.1
     property bool rippleEnabled: true
+    property bool pointerPressActive: false
+    property bool dispatchingPointerClick: false
     property alias backgroundContent: backgroundContentHost.data
     property var downAction
     property var releaseAction
@@ -47,6 +49,21 @@ Button {
             clearRipple();
     }
 
+    onPressedChanged: {
+        if (!root.rippleEnabled)
+            return;
+        if (root.pressed && !root.pointerPressActive)
+            root.startRipple(root.width / 2, root.height / 2);
+        else if (!root.pressed && ripple.visible)
+            rippleFadeAnim.restart();
+    }
+
+    onClicked: {
+        if (!root.pointerPressActive && !root.dispatchingPointerClick
+                && root.releaseAction)
+            root.releaseAction(null);
+    }
+
     function clearRipple() {
         rippleAnim.stop();
         rippleFadeAnim.stop();
@@ -59,17 +76,17 @@ Button {
 
     function startRipple(x, y) {
         clearRipple();
-        const stateY = buttonBackground.y;
-        rippleAnim.x = x;
-        rippleAnim.y = y - stateY;
+        const origin = buttonBackground.mapFromItem(pointerArea, x, y);
+        rippleAnim.x = origin.x;
+        rippleAnim.y = origin.y;
 
         const dist = (ox, oy) => ox * ox + oy * oy;
-        const stateEndY = stateY + buttonBackground.height;
+        const stateEndY = buttonBackground.height;
         rippleAnim.radius = Math.sqrt(Math.max(
-            dist(0, stateY),
+            dist(0, 0),
             dist(0, stateEndY),
-            dist(width, stateY),
-            dist(width, stateEndY)
+            dist(buttonBackground.width, 0),
+            dist(buttonBackground.width, stateEndY)
         ));
 
         ripple.activeColor = root.rippleColor;
@@ -88,6 +105,7 @@ Button {
         radius: root.buttonEffectiveRadius
         implicitHeight: 30
         color: root.buttonColor
+        clip: true
 
         layer.enabled: true
         layer.effect: OpacityMask {
@@ -145,7 +163,7 @@ Button {
     contentItem: Text {
         text: root.buttonText
         color: Appearance.colors.colOnLayer1
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 13
         verticalAlignment: Text.AlignVCenter
     }
@@ -171,6 +189,7 @@ Button {
                 return;
             }
 
+            root.pointerPressActive = true;
             root.down = true;
             if (root.downAction)
                 root.downAction(event);
@@ -180,12 +199,15 @@ Button {
 
         onReleased: event => {
             root.down = false;
+            root.pointerPressActive = false;
             if (event.button !== Qt.LeftButton)
                 return;
 
             if (root.releaseAction)
                 root.releaseAction(event);
+            root.dispatchingPointerClick = true;
             root.click();
+            root.dispatchingPointerClick = false;
 
             if (root.rippleEnabled)
                 rippleFadeAnim.restart();
@@ -198,6 +220,7 @@ Button {
 
         onCanceled: {
             root.down = false;
+            root.pointerPressActive = false;
             if (root.rippleEnabled)
                 rippleFadeAnim.restart();
         }

@@ -121,7 +121,7 @@ WidgetPanel {
                             Layout.fillWidth: true
                             text: qsTr("输出设备")
                             color: Appearance.colors.colOnLayer1
-                            font.family: Sizes.fontFamily
+                            font.family: Fonts.ui
                             font.pixelSize: 12
                             font.weight: Font.Medium
                         }

@@ -1,16 +1,18 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Common
+import qs.Components
 
 Rectangle {
     id: root
 
     property string title: ""
+    property string iconName: ""
     property string supportingText: ""
     default property alias content: body.data
 
-    implicitHeight: sectionLayout.implicitHeight + Appearance.spacing.medium * 2
-    radius: Appearance.rounding.large
+    implicitHeight: sectionLayout.implicitHeight + Metrics.cardPadding * 2
+    radius: Metrics.cornerL
     color: Appearance.colors.colLayer1
 
     ColumnLayout {
@@ -18,19 +20,41 @@ Rectangle {
 
         anchors {
             fill: parent
-            margins: Appearance.spacing.medium
+            margins: Metrics.cardPadding
         }
-        spacing: Appearance.spacing.small
+        spacing: Metrics.spacingS
 
-        Text {
+        RowLayout {
             Layout.fillWidth: true
-            visible: root.title.length > 0
-            text: root.title
-            color: Appearance.colors.colOnLayer2
-            font.family: Sizes.fontFamily
-            font.pixelSize: 15
-            font.weight: Font.DemiBold
-            elide: Text.ElideRight
+            visible: root.title.length > 0 || root.iconName.length > 0
+            spacing: Metrics.spacingS
+
+            Rectangle {
+                visible: root.iconName.length > 0
+                Layout.preferredWidth: Metrics.controlHeightM
+                Layout.preferredHeight: Metrics.controlHeightM
+                radius: Appearance.rounding.normal
+                color: Appearance.colors.colSecondaryContainer
+
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: root.iconName
+                    iconSize: Metrics.iconM
+                    fill: 1
+                    color: Appearance.colors.colOnSecondaryContainer
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: root.title.length > 0
+                text: root.title
+                color: Appearance.colors.colOnLayer2
+                font.family: Typography.titleMedium.family
+                font.pixelSize: Typography.titleMedium.pixelSize
+                font.weight: Typography.titleMedium.weight
+                elide: Text.ElideRight
+            }
         }
 
         Text {
@@ -38,7 +62,7 @@ Rectangle {
             visible: root.supportingText.length > 0
             text: root.supportingText
             color: Appearance.colors.colOnLayer1
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 12
             wrapMode: Text.Wrap
         }
@@ -47,7 +71,7 @@ Rectangle {
             id: body
 
             Layout.fillWidth: true
-            spacing: Appearance.spacing.xSmall
+            spacing: Metrics.spacingXS
         }
     }
 }

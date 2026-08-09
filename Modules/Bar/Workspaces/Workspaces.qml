@@ -1,8 +1,7 @@
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
-import Clavis.Niri 1.0
+import Clavis.Niri
 import qs.Common
 import qs.Services
 import qs.Widgets.common
@@ -11,10 +10,11 @@ Item {
     id: root
 
     property string screenName: ""
+    property bool vertical: false
     readonly property bool hasMultipleOutputs: Niri.outputs.count > 1
 
-    implicitHeight: 36
-    implicitWidth: layout.width + 24
+    implicitHeight: vertical ? layout.implicitHeight + 16 : Sizes.barPillThickness
+    implicitWidth: vertical ? Sizes.barVisualThickness : layout.implicitWidth + 24
 
     function acceptsOutput(outputName) {
         if (root.screenName === "")
@@ -24,29 +24,14 @@ Item {
         return outputName === root.screenName
     }
 
-    Rectangle {
-        id: bgRect
-        anchors.fill: parent
-        color: BlurService.backgroundColor(
-            Appearance.colors.colLayer0)
-        radius: height / 2
-        visible: false
-    }
+    TopBarPillBackground { anchors.fill: parent }
 
-    MultiEffect {
-        source: bgRect
-        anchors.fill: bgRect
-        shadowEnabled: true
-        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
-        shadowBlur: 0.8
-        shadowVerticalOffset: 3
-        shadowHorizontalOffset: 0
-    }
-
-    RowLayout {
+    GridLayout {
         id: layout
         anchors.centerIn: parent
-        spacing: 8
+        rowSpacing: 8
+        columnSpacing: 8
+        columns: root.vertical ? 1 : Math.max(1, Niri.workspaces.count)
 
         Repeater {
             model: Niri.workspaces
@@ -60,10 +45,15 @@ Item {
                 property bool isHovered: mouseArea.containsMouse
 
                 visible: belongsToScreen
-                implicitWidth: !belongsToScreen ? 0 : ((active || isHovered) ? 32 : 12)
-                implicitHeight: belongsToScreen ? 12 : 0
+                implicitWidth: !belongsToScreen ? 0
+                    : root.vertical ? 12 : ((active || isHovered) ? 32 : 12)
+                implicitHeight: !belongsToScreen ? 0
+                    : root.vertical ? ((active || isHovered) ? 32 : 12) : 12
 
                 Behavior on implicitWidth {
+                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
+                Behavior on implicitHeight {
                     NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
                 }
 

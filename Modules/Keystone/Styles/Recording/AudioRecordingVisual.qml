@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import Clavis.Audio 1.0
+import Clavis.Cava
 import qs.Common
 
 Item {
@@ -84,7 +84,7 @@ Item {
                 text: root.formatElapsed(root.elapsedMs)
                 horizontalAlignment: Text.AlignRight
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamilyMono
+                font.family: Fonts.numeric
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
                 font.features: { "tnum": 1 }

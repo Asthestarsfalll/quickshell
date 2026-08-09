@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
-import Clavis.Sysmon 1.0
 import qs.Common
+import qs.Services
 
 Rectangle {
     id: root
@@ -26,28 +26,31 @@ Rectangle {
         ResourceTile {
             Layout.topMargin: Sizes.lockOuterPadding
             icon: "memory"
-            value: SysmonPlugin.cpuUsage / 100
+            value: Number(SystemMonitorService.cpu.usagePercent) / 100
             accent: Appearance.colors.colPrimary
         }
 
         ResourceTile {
             Layout.topMargin: Sizes.lockOuterPadding
             icon: "thermostat"
-            value: Math.min(1, Math.max(0, SysmonPlugin.coreTemp / 90))
+            value: Math.min(1, Math.max(0,
+                (Number(SystemMonitorService.cpu.packageTemperatureCelsius)
+                    || Number(SystemMonitorService.cpu.temperatureCelsius)) / 90))
             accent: Appearance.colors.colSecondary
         }
 
         ResourceTile {
             Layout.bottomMargin: Sizes.lockOuterPadding
             icon: "memory_alt"
-            value: SysmonPlugin.ramUsage / 100
+            value: Number(SystemMonitorService.memory.usagePercent) / 100
             accent: Appearance.colors.colSecondary
         }
 
         ResourceTile {
             Layout.bottomMargin: Sizes.lockOuterPadding
             icon: "hard_disk"
-            value: SysmonPlugin.diskUsage / 100
+            value: (SystemMonitorService.disks.length > 0
+                ? Number(SystemMonitorService.disks[0].usagePercent) : 0) / 100
             accent: Appearance.colors.colTertiary
         }
     }
@@ -118,7 +121,7 @@ Rectangle {
             anchors.centerIn: parent
             text: tile.icon
             color: tile.accent
-            font.family: "Material Symbols Outlined"
+            font.family: Fonts.materialSymbolsOutlined
             font.pixelSize: Math.max(Sizes.lockResourceIconMinSize, tile.arcRadius * Sizes.lockResourceIconScale)
             font.weight: 600
             horizontalAlignment: Text.AlignHCenter
@@ -133,4 +136,7 @@ Rectangle {
             }
         }
     }
+
+    Component.onCompleted: SystemMonitorService.acquire()
+    Component.onDestruction: SystemMonitorService.release()
 }

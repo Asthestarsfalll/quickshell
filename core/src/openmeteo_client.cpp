@@ -2,6 +2,7 @@
 
 #include <QJsonDocument>
 #include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QUrlQuery>
 
 OpenMeteoClient::OpenMeteoClient(QObject *parent) : QObject(parent) {}

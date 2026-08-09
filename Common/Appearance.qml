@@ -7,7 +7,7 @@ import QtQuick
 Singleton {
     id: root
 
-    readonly property string colorsPath: Quickshell.env("HOME") + "/.cache/quickshell-dev-colorscheme/colors.json"
+    readonly property string colorsPath: Paths.generatedHome + "/clavis/colors.json"
     property string matugenScheme: "scheme-tonal-spot"
     property string matugenMode: "dark"
     readonly property string effectiveMatugenMode: matugenMode.toLowerCase() === "light" ? "light" : "dark"

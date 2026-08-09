@@ -32,6 +32,16 @@ Item {
     property int nextLeafId: 0
     property int snowflakeTargetCount: 24
     property var snowflakes: []
+    readonly property bool fastParticleScene:
+        weatherType === "rain"
+        || weatherType === "storm"
+        || weatherType === "snow"
+        || windy
+    readonly property int targetFps: fastParticleScene ? 30 : 15
+    readonly property int sceneFrameInterval: fastParticleScene ? 33 : 66
+    readonly property bool animationTimerRunning: sceneTimer.running
+    property int simulationFrameCount: 0
+    property int paintCount: 0
 
     function classifyWeatherType() {
         const name = (root.iconName || "").toLowerCase()
@@ -1040,6 +1050,7 @@ Item {
         property real phase: 0
 
         onPaint: {
+            root.paintCount += 1
             const ctx = getContext("2d")
             const fade = Math.max(0, 1 - root.scrollProgress)
             const colors = root.palette()
@@ -1104,6 +1115,7 @@ Item {
                 y2: model.y2
                 startRotation: model.startRotation
                 endRotation: model.endRotation
+                animationRunning: root.animate
                 onFinished: root.removeLeaf(leafId)
             }
         }
@@ -1151,7 +1163,9 @@ Item {
     }
 
     Timer {
-        interval: 16
+        id: sceneTimer
+
+        interval: root.sceneFrameInterval
         running: root.animate
         repeat: true
 
@@ -1167,6 +1181,7 @@ Item {
             const dt = lastTickMs > 0 ? Math.min(0.05, (now - lastTickMs) / 1000.0) : interval / 1000.0
             const stepScale = dt / root.frameBaseDt
             lastTickMs = now
+            root.simulationFrameCount += 1
             const base = root.driftBaseSpeed()
             const nextBands = []
             for (let i = 0; i < root.cloudBands.length; ++i) {

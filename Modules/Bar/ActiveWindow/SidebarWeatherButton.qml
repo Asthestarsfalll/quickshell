@@ -1,30 +1,32 @@
 import QtQuick
 import QtQuick.Layouts
-import Clavis.Weather 1.0
+import qs.Services
 import qs.Common
 import qs.Widgets.common
 
 Item {
     id: root
 
+    property bool vertical: false
     readonly property string temperatureText: WeatherPlugin.hasValidData ? Math.round(WeatherPlugin.currentTemperatureC) + "°" : "--°"
     readonly property int iconSize: 20
     readonly property int temperatureSize: 12
     readonly property int contentSpacing: 6
     readonly property int iconSlotWidth: 24
     readonly property real temperatureSlotWidth: Math.ceil(temperatureMetrics.width)
-    readonly property real contentWidth: iconSlotWidth + contentSpacing + temperatureSlotWidth
+    readonly property real contentWidth: iconSlotWidth + contentSpacing
+        + temperatureSlotWidth
     readonly property real buttonWidth: contentWidth + 20
     readonly property int buttonHeight: 28
 
-    implicitHeight: buttonHeight
-    implicitWidth: buttonWidth
+    implicitHeight: vertical ? Sizes.barWeatherVerticalPillHeight : buttonHeight
+    implicitWidth: vertical ? buttonHeight : buttonWidth
     clip: true
 
     TextMetrics {
         id: temperatureMetrics
         text: root.temperatureText
-        font.family: "JetBrainsMono Nerd Font"
+        font.family: Fonts.numeric
         font.pixelSize: root.temperatureSize
         font.bold: true
     }
@@ -32,8 +34,8 @@ Item {
     Rectangle {
         id: background
         anchors.centerIn: parent
-        width: root.buttonWidth
-        height: root.buttonHeight
+        width: root.width
+        height: root.height
         radius: height / 2
         color: Appearance.colors.colTertiaryContainer
         clip: true
@@ -97,22 +99,25 @@ Item {
         WidgetState.leftSidebarOpen = true;
     }
 
-    RowLayout {
+    GridLayout {
         id: contentRow
         anchors.centerIn: parent
-        width: root.contentWidth
-        height: root.buttonHeight
-        spacing: root.contentSpacing
+        width: root.vertical ? root.buttonHeight : root.contentWidth
+        height: root.vertical ? root.height : root.buttonHeight
+        rowSpacing: root.vertical ? 2 : 0
+        columnSpacing: root.vertical ? 0 : root.contentSpacing
+        columns: root.vertical ? 1 : 2
 
         Item {
-            Layout.preferredWidth: root.iconSlotWidth
-            Layout.preferredHeight: root.buttonHeight
-            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: root.vertical
+                ? root.buttonHeight : root.iconSlotWidth
+            Layout.preferredHeight: root.vertical ? 20 : root.buttonHeight
+            Layout.alignment: Qt.AlignCenter
 
             Text {
                 anchors.centerIn: parent
                 text: WeatherPlugin.currentIconName || "cloud"
-                font.family: "Material Symbols Rounded"
+                font.family: Fonts.materialSymbolsRounded
                 font.variableAxes: { "FILL": 0 }
                 font.pixelSize: root.iconSize
                 color: Appearance.colors.colOnTertiaryContainer
@@ -122,14 +127,16 @@ Item {
         }
 
         Item {
-            Layout.preferredWidth: root.temperatureSlotWidth
-            Layout.preferredHeight: root.buttonHeight
-            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: root.vertical
+                ? root.buttonHeight : root.temperatureSlotWidth
+            Layout.preferredHeight: root.vertical ? 16 : root.buttonHeight
+            Layout.alignment: Qt.AlignCenter
+            visible: true
 
             Text {
                 anchors.centerIn: parent
                 text: root.temperatureText
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: Fonts.numeric
                 font.pixelSize: root.temperatureSize
                 font.bold: true
                 color: Appearance.colors.colOnTertiaryContainer

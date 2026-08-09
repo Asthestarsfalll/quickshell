@@ -1,7 +1,6 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import M3Shapes
-import Clavis.Sysmon 1.0
 import qs.Common
 import qs.Components
 import qs.Services
@@ -12,15 +11,15 @@ Rectangle {
 
     signal avatarEditRequested()
 
-    readonly property string systemUser: SysmonPlugin.systemUser || "user"
-    readonly property string hostName: SysmonPlugin.hostName || "host"
-    readonly property string wmName: SysmonPlugin.wmName || "unknown"
-    readonly property string distroName: SysmonPlugin.distroName || "Linux"
-    readonly property string chassis: SysmonPlugin.chassis || qsTr("电脑")
-    readonly property string uptime: SysmonPlugin.uptime || "0m"
+    readonly property string systemUser: SystemIdentityService.accountName
+    readonly property string hostName: SystemIdentityService.hostName
+    readonly property string wmName: SystemIdentityService.wmName
+    readonly property string distroName: SystemIdentityService.distroName
+    readonly property string chassis: SystemIdentityService.chassis
+    readonly property string uptime: SystemIdentityService.uptimeText
 
     function distroLogo() {
-        const id = String(SysmonPlugin.distroId || "").toLowerCase();
+        const id = String(SystemIdentityService.distroId || "").toLowerCase();
         const logos = {
             "arch": "󰣇",
             "archlinux": "󰣇",
@@ -185,7 +184,7 @@ Rectangle {
             anchors.centerIn: parent
             text: root.distroLogo()
             color: Appearance.colors.colOnPrimaryContainer
-            font.family: Sizes.fontFamilyMono
+            font.family: Fonts.mono
             font.pixelSize: 25
             font.bold: true
         }
@@ -269,7 +268,7 @@ Rectangle {
                 width: Math.max(0, wmContainer.width - 44)
                 text: root.wmName + "..."
                 color: Appearance.colors.colOnSecondaryContainer
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 12
                 font.weight: Font.Medium
                 font.italic: true
@@ -289,7 +288,7 @@ Rectangle {
         anchors.topMargin: 10
         text: root.systemUser + " @ " + root.hostName
         color: Appearance.colors.colOnSurface
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 15
         font.weight: Font.DemiBold
         elide: Text.ElideRight
@@ -303,7 +302,7 @@ Rectangle {
         anchors.topMargin: 3
         text: root.distroName + " · " + root.chassis
         color: Appearance.colors.colOnSurfaceVariant
-        font.family: Sizes.fontFamily
+        font.family: Fonts.ui
         font.pixelSize: 12
         elide: Text.ElideRight
     }
@@ -316,7 +315,7 @@ Rectangle {
         anchors.rightMargin: 16
         text: qsTr("已运行 ") + root.uptime
         color: Appearance.colors.colOnSurfaceVariant
-        font.family: Sizes.fontFamilyMono
+        font.family: Fonts.numeric
         font.pixelSize: 12
         elide: Text.ElideRight
     }

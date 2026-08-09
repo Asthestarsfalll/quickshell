@@ -24,7 +24,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             text: qsTr("光标主题")
             color: Appearance.colors.colOnSurface
-            font.family: Sizes.fontFamily
+            font.family: Fonts.ui
             font.pixelSize: 15
             font.weight: Font.Medium
             elide: Text.ElideRight

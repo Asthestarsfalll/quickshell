@@ -16,9 +16,8 @@ WeatherListModel::WeatherListModel(QObject *parent) : QAbstractListModel(parent)
         "sunset", "dawn", "dusk", "moonrise", "moonset", "moonPhaseAngle",
         "day", "night", "airQuality", "minuteInterval"
     };
-    for (int i = 0; i < names.size(); ++i) {
+    for (int i = 0; i < names.size(); ++i)
         m_roles[Qt::UserRole + 1 + i] = names[i];
-    }
 }
 
 int WeatherListModel::rowCount(const QModelIndex &parent) const {
@@ -34,18 +33,14 @@ QVariant WeatherListModel::data(const QModelIndex &index, int role) const {
     return m_items[index.row()].value(QString::fromUtf8(name));
 }
 
-QHash<int, QByteArray> WeatherListModel::roleNames() const {
-    return m_roles;
-}
+QHash<int, QByteArray> WeatherListModel::roleNames() const { return m_roles; }
 
 QVariantMap WeatherListModel::get(int index) const {
     if (index < 0 || index >= m_items.size()) return {};
     return m_items[index];
 }
 
-int WeatherListModel::count() const {
-    return m_items.size();
-}
+int WeatherListModel::count() const { return m_items.size(); }
 
 void WeatherListModel::setItems(const QList<QVariantMap> &items) {
     beginResetModel();

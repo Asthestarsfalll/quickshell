@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects 
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Mpris
+import Clavis.Lyrics
 import qs.Common 
 import qs.Services 
 import qs.Widgets.common
@@ -13,11 +13,12 @@ Item {
     
     required property var player
     property bool active: false
-    property var lyricsModel: []
+    readonly property var lyricsModel: Lyrics.lyrics
     property int currentLineIndex: 0
     
     readonly property string trackTitle: player ? player.trackTitle : ""
     readonly property string trackArtist: player ? player.trackArtist : ""
+    readonly property string trackAlbum: player ? (player.trackAlbum || "") : ""
     readonly property string playerName: player ? (player.identity || player.busName || "") : ""
     readonly property string artUrl: player ? (player.trackArtUrl || "") : ""
     
@@ -50,39 +51,31 @@ Item {
     }
 
     // ================= 1. 歌词获取逻辑 =================
-    Process {
-        id: lyricsFetcher
-        command: ["python3", Paths.scriptPath("media", "lyrics_fetcher.py"), root.trackTitle, root.trackArtist, root.playerName]
-        stdout: SplitParser {
-            onRead: data => {
-                try {
-                    var json = JSON.parse(data)
-                    if (json.length > 0) { 
-                        root.lyricsModel = json; root.currentLineIndex = 0;
-                        root.currentLoadedTitle = root.trackTitle
-                    } else { 
-                        root.lyricsModel = [{time: 0, text: qsTr("暂无歌词")}]
-                    }
-                } catch (e) { root.lyricsModel = [{time: 0, text: qsTr("歌词错误")}] }
-            }
-        }
+    onTrackTitleChanged: triggerReload()
+    onTrackArtistChanged: triggerReload()
+    onTrackAlbumChanged: triggerReload()
+    onActiveChanged: {
+        if (active && root.trackTitle !== root.currentLoadedTitle)
+            triggerReload()
+        if (!active)
+            Lyrics.cancel()
     }
 
-    onTrackTitleChanged: triggerReload()
-    onActiveChanged: { if (active && root.trackTitle !== root.currentLoadedTitle) triggerReload() }
-
     function triggerReload() {
-        if (!root.active) return
-        if (lyricsFetcher.running) lyricsFetcher.running = false
+        if (!root.active || root.trackTitle === "")
+            return
         debounceTimer.restart()
     }
 
-    Timer { 
-        id: debounceTimer; interval: 300; repeat: false; 
+    Timer {
+        id: debounceTimer
+        interval: 300
+        repeat: false
         onTriggered: {
-            if (root.trackTitle !== "") { 
-                root.lyricsModel = []; root.currentLineIndex = 0; 
-                lyricsFetcher.running = true 
+            if (root.trackTitle !== "") {
+                Lyrics.setTrack(root.trackArtist, root.trackTitle, root.trackAlbum, root.player ? root.player.length : 0)
+                root.currentLineIndex = 0
+                root.currentLoadedTitle = root.trackTitle
             }
         }
     }
@@ -101,6 +94,9 @@ Item {
                 if (root.lyricsModel[i].time <= (currentSec + 0.5)) activeIdx = i; else break
             }
             if (activeIdx === -1) activeIdx = 0
+            const backendIndex = Lyrics.indexForTime(currentSec)
+            if (backendIndex >= 0)
+                activeIdx = backendIndex
             if (activeIdx !== root.currentLineIndex) {
                 root.currentLineIndex = activeIdx
             }
@@ -129,7 +125,7 @@ Item {
             }
             Text {
                 visible: root.artUrl === ""; anchors.centerIn: parent
-                text: "\uf001"; font.family: "Symbols Nerd Font Mono"; font.pixelSize: 14; color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
+                text: "\uf001"; font.family: Fonts.nerdSymbols; font.pixelSize: 14; color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
             }
         }
 
@@ -172,11 +168,22 @@ Item {
                     anchors.centerIn: parent
                     text: modelData.text
                     color: Appearance.colors.colOnLayer0
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Bold
                     elide: Text.ElideRight
                     horizontalAlignment: Text.AlignHCenter 
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        if (!root.player || root.player.canSeek === false)
+                            return
+                        const target = Lyrics.timeForIndex(index)
+                        if (target >= 0)
+                            root.player.position = target
+                    }
                 }
             }
         }

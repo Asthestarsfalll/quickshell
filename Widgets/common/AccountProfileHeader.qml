@@ -253,8 +253,8 @@ Rectangle {
                 Layout.fillWidth: true
                 text: root.accountIdentity
                 color: Appearance.colors.colOnSurface
-                font.family: Sizes.fontFamily
-                font.pixelSize: Sizes.typeTitleLarge
+                font.family: Fonts.ui
+                font.pixelSize: Typography.titleLarge.pixelSize
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
@@ -266,7 +266,7 @@ Rectangle {
                 Text {
                     text: root.distroLogo()
                     color: Appearance.colors.colPrimary
-                    font.family: Sizes.fontFamilyMono
+                    font.family: Fonts.numeric
                     font.pixelSize: 18
                 }
 
@@ -274,8 +274,8 @@ Rectangle {
                     Layout.maximumWidth: parent.width * 0.44
                     text: root.distroName
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeBodyMedium
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.bodyMedium.pixelSize
                     elide: Text.ElideRight
                 }
 
@@ -289,8 +289,8 @@ Rectangle {
                     Layout.fillWidth: true
                     text: qsTr("已运行 %1").arg(root.uptimeText)
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeBodyMedium
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.bodyMedium.pixelSize
                     elide: Text.ElideRight
                 }
             }
@@ -314,8 +314,8 @@ Rectangle {
                 Text {
                     text: qsTr("软件包")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeBodyMedium
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.bodyMedium.pixelSize
                 }
 
                 Text {
@@ -324,8 +324,8 @@ Rectangle {
                         ? root.totalPackageCount : "—"
                     horizontalAlignment: Text.AlignRight
                     color: Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeBodyMedium
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.bodyMedium.pixelSize
                     font.weight: Font.DemiBold
                 }
             }
@@ -345,8 +345,8 @@ Rectangle {
                 Text {
                     text: qsTr("待更新")
                     color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Sizes.fontFamily
-                    font.pixelSize: Sizes.typeBodyMedium
+                    font.family: Fonts.ui
+                    font.pixelSize: Typography.bodyMedium.pixelSize
                 }
 
                 Text {
@@ -357,8 +357,8 @@ Rectangle {
                     color: root.pendingUpdateCount > 0
                         ? Appearance.colors.colPrimary
                         : Appearance.colors.colOnSurface
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: Sizes.typeBodyMedium
+                    font.family: Fonts.numeric
+                    font.pixelSize: Typography.bodyMedium.pixelSize
                     font.weight: Font.DemiBold
                 }
             }

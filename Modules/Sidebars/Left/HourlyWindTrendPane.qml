@@ -81,7 +81,11 @@ Item {
         const list = []
         let highest = 0
         let validCount = 0
-        const count = root.sourceModel && root.sourceModel.count ? Math.min(root.maxHours, root.sourceModel.count()) : 0
+        const modelCount = root.sourceModel
+            ? (typeof root.sourceModel.count === "function"
+                ? root.sourceModel.count()
+                : Number(root.sourceModel.count || 0)) : 0
+        const count = Math.min(root.maxHours, modelCount)
         for (let i = 0; i < count; ++i) {
             const item = root.sourceModel.get(i) || ({})
             const speed = Number(item.windSpeedMs)
@@ -167,7 +171,7 @@ Item {
                         y: root.topPadding
                         text: modelData.hourText
                         color: parent.hourColor
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.numeric
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -198,7 +202,7 @@ Item {
                         y: parent.barTop - 22
                         text: modelData.speedText
                         color: Appearance.colors.colOnSurfaceVariant
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Fonts.numeric
                         font.pixelSize: 12
                     }
                 }
@@ -237,7 +241,7 @@ Item {
         visible: !root.hasData
         text: qsTr("风况数据暂不可用")
         color: Appearance.colors.colOnSurfaceVariant
-        font.family: "LXGW WenKai GB Screen"
+        font.family: Fonts.ui
         font.pixelSize: 16
     }
 }

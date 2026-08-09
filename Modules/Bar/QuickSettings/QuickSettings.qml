@@ -1,44 +1,36 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import qs.Common
 import qs.Services as Services
+import qs.Widgets.common
 
 Item {
     id: root
 
     property var screen: null
+    property bool vertical: false
     
-    // 维持 36 的高度
-    implicitHeight: 36
-    implicitWidth: layout.width + 16
+    implicitHeight: vertical ? layout.implicitHeight + 16 : Sizes.barPillThickness
+    implicitWidth: vertical ? Sizes.barVisualThickness
+        : layout.implicitWidth + 2 * Sizes.barPillHorizontalPadding
 
-    Rectangle {
-        id: bgRect
+    TopBarPillBackground {
         anchors.fill: parent
-        color: Services.BlurService.backgroundColor(
+        fillColor: Services.BlurService.backgroundColor(
             Appearance.colors.colLayer0)
-        radius: height / 2 
-        visible: false 
     }
 
-    MultiEffect {
-        source: bgRect
-        anchors.fill: bgRect
-        shadowEnabled: true
-        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
-        shadowBlur: 0.8
-        shadowVerticalOffset: 3
-    }
-
-    RowLayout {
+    GridLayout {
         id: layout
         anchors.centerIn: parent
-        spacing: 8 
+        rowSpacing: 8
+        columnSpacing: 8
+        columns: root.vertical ? 1 : 6
         
         // 直接调用同目录下的组件，无需 import
         Network {
             screen: root.screen
+            vertical: root.vertical
         }
         Brightness {
             screen: root.screen

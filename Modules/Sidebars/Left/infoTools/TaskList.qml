@@ -64,7 +64,7 @@ Item {
                         Layout.topMargin: root.itemPadding
                         text: taskItem.modelData.content
                         color: Appearance.colors.colOnLayer2
-                        font.family: Sizes.fontFamily
+                        font.family: Fonts.ui
                         font.pixelSize: 14
                         wrapMode: Text.Wrap
                     }
@@ -131,7 +131,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 text: root.emptyPlaceholderText
                 color: Appearance.colors.colOutline
-                font.family: Sizes.fontFamily
+                font.family: Fonts.ui
                 font.pixelSize: 14
                 horizontalAlignment: Text.AlignHCenter
             }

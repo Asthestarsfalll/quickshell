@@ -6,20 +6,14 @@ import qs.Components
 RowLayout {
     id: root
 
-    enum Style {
-        Primary,
-        Tonal
-    }
-
     property var model: []
     property var currentValue: ""
     property int buttonHeight: 36
     property int horizontalPadding: 24
-    property int innerRadius: 6
+    readonly property int innerRadius: 6
     property real edgeRadius: buttonHeight / 2
-    property int pressedExpansion: 10
+    readonly property int pressedExpansion: 10
     property int buttonMinWidth: 0
-    property int style: StyledButtonGroup.Style.Primary
     property bool iconOnly: false
     property bool roundOuterSegments: true
     property int iconSize: 21
@@ -81,16 +75,6 @@ RowLayout {
     }
 
     function fillColor(active, hovered, pressed) {
-        if (style === StyledButtonGroup.Style.Tonal) {
-            if (active)
-                return pressed ? Appearance.colors.colPrimaryContainerActive
-                               : hovered ? Appearance.colors.colPrimaryContainerHover
-                                         : Appearance.colors.colPrimaryContainer;
-            return pressed ? Appearance.colors.colLayer4Active
-                           : hovered ? Appearance.colors.colLayer4
-                                     : Appearance.colors.colLayer2;
-        }
-
         if (active)
             return pressed ? Appearance.colors.colPrimaryActive
                            : hovered ? Appearance.colors.colPrimaryHover
@@ -101,8 +85,6 @@ RowLayout {
     }
 
     function contentColor(active) {
-        if (style === StyledButtonGroup.Style.Tonal)
-            return active ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurfaceVariant;
         return active ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer;
     }
 
@@ -122,19 +104,26 @@ RowLayout {
             readonly property bool last: index === root.model.length - 1
             readonly property bool pressed: segmentMouse.pressed && segmentEnabled
             readonly property bool hovered: segmentMouse.containsMouse && segmentEnabled
-            readonly property real leftRadius: (active || (root.roundOuterSegments && first) || pressed) ? root.edgeRadius : root.innerRadius
-            readonly property real rightRadius: (active || (root.roundOuterSegments && last) || pressed) ? root.edgeRadius : root.innerRadius
+            readonly property real leftRadius: (active
+                || (root.roundOuterSegments && first)
+                || (pressed && root.pressedExpansion > 0))
+                    ? root.edgeRadius : root.innerRadius
+            readonly property real rightRadius: (active
+                || (root.roundOuterSegments && last)
+                || (pressed && root.pressedExpansion > 0))
+                    ? root.edgeRadius : root.innerRadius
             readonly property color segmentColor: root.fillColor(active, hovered, pressed)
             readonly property color inkColor: root.contentColor(active)
             readonly property string labelText: root.textFor(modelData)
             readonly property string iconText: root.iconFor(modelData)
             readonly property string tooltipText: root.tooltipFor(modelData)
 
-            Layout.preferredWidth: root.segmentWidth(modelData, label.implicitWidth, root.iconSize)
-                                   + (pressed ? root.pressedExpansion : 0)
+            Layout.preferredWidth: root.segmentWidth(modelData,
+                label.implicitWidth, root.iconSize)
+                + (pressed ? root.pressedExpansion : 0)
             Layout.preferredHeight: root.buttonHeight
             opacity: segmentEnabled ? 1 : 0.45
-            scale: pressed ? 0.97 : 1
+            scale: pressed && root.pressedExpansion > 0 ? 0.97 : 1
             z: pressed ? 3 : active ? 2 : hovered ? 1 : 0
 
             Behavior on Layout.preferredWidth {
@@ -155,10 +144,14 @@ RowLayout {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Math.max(segment.leftRadius, segment.rightRadius)
+                topLeftRadius: segment.leftRadius
+                topRightRadius: segment.rightRadius
+                bottomLeftRadius: segment.leftRadius
+                bottomRightRadius: segment.rightRadius
                 color: segment.segmentColor
+                antialiasing: true
 
-                Behavior on radius {
+                Behavior on topLeftRadius {
                     NumberAnimation {
                         duration: Appearance.animation.elementResize.duration
                         easing.type: Appearance.animation.elementResize.type
@@ -173,19 +166,8 @@ RowLayout {
                         easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                     }
                 }
-            }
 
-            Rectangle {
-                anchors.left: segment.leftRadius < segment.rightRadius ? parent.left : undefined
-                anchors.right: segment.rightRadius < segment.leftRadius ? parent.right : undefined
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: parent.width / 2 + 5
-                visible: segment.leftRadius !== segment.rightRadius
-                radius: Math.min(segment.leftRadius, segment.rightRadius)
-                color: segment.segmentColor
-
-                Behavior on radius {
+                Behavior on topRightRadius {
                     NumberAnimation {
                         duration: Appearance.animation.elementResize.duration
                         easing.type: Appearance.animation.elementResize.type
@@ -193,11 +175,19 @@ RowLayout {
                     }
                 }
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Appearance.animation.expressiveEffects.duration
-                        easing.type: Appearance.animation.expressiveEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                Behavior on bottomLeftRadius {
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                    }
+                }
+
+                Behavior on bottomRightRadius {
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
                     }
                 }
             }
@@ -229,7 +219,7 @@ RowLayout {
                     text: segment.labelText
                     visible: !root.iconOnly && segment.labelText !== ""
                     color: segment.inkColor
-                    font.family: Sizes.fontFamily
+                    font.family: Fonts.ui
                     font.pixelSize: root.textPixelSize
                     font.weight: segment.active ? Font.Medium : Font.Normal
                     anchors.verticalCenter: parent.verticalCenter
