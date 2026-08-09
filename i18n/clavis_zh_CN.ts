@@ -1814,6 +1814,14 @@
         <source>搜索</source>
         <translation>搜索</translation>
     </message>
+    <message>
+        <source>已有剪贴板操作正在执行</source>
+        <translation>已有剪贴板操作正在执行</translation>
+    </message>
+    <message>
+        <source>复制失败</source>
+        <translation>复制失败</translation>
+    </message>
 </context>
 <context>
     <name>LeftSidebarContent</name>
@@ -6501,6 +6509,186 @@
 窗口: </source>
         <translation>
 窗口: </translation>
+    </message>
+</context>
+<context>
+    <name>ClipboardService</name>
+    <message>
+        <source>cliphist 监听服务未运行；请启用服务后重新复制内容</source>
+        <translation>cliphist 监听服务未运行；请启用服务后重新复制内容</translation>
+    </message>
+    <message>
+        <source>缺少 cliphist，无法读取剪贴板历史</source>
+        <translation>缺少 cliphist，无法读取剪贴板历史</translation>
+    </message>
+    <message>
+        <source>缺少 wl-copy，无法恢复剪贴板内容</source>
+        <translation>缺少 wl-copy，无法恢复剪贴板内容</translation>
+    </message>
+    <message>
+        <source>缺少 cliphist 或 wl-copy，剪贴板历史不可用</source>
+        <translation>缺少 cliphist 或 wl-copy，剪贴板历史不可用</translation>
+    </message>
+    <message>
+        <source>无法从 cliphist 解码该条目</source>
+        <translation>无法从 cliphist 解码该条目</translation>
+    </message>
+    <message>
+        <source>无法检查该剪贴板条目</source>
+        <translation>无法检查该剪贴板条目</translation>
+    </message>
+    <message>
+        <source>无法生成剪贴板预览</source>
+        <translation>无法生成剪贴板预览</translation>
+    </message>
+    <message>
+        <source>该剪贴板内容超过安全大小限制</source>
+        <translation>该剪贴板内容超过安全大小限制</translation>
+    </message>
+    <message>
+        <source>图片数据已损坏或尺寸过大</source>
+        <translation>图片数据已损坏或尺寸过大</translation>
+    </message>
+    <message>
+        <source>剪贴板中的文件已不存在</source>
+        <translation>剪贴板中的文件已不存在</translation>
+    </message>
+    <message>
+        <source>无法可靠恢复该剪贴板格式</source>
+        <translation>无法可靠恢复该剪贴板格式</translation>
+    </message>
+    <message>
+        <source>wl-copy 写入系统剪贴板失败</source>
+        <translation>wl-copy 写入系统剪贴板失败</translation>
+    </message>
+    <message>
+        <source>剪贴板服务返回了无效数据</source>
+        <translation>剪贴板服务返回了无效数据</translation>
+    </message>
+    <message>
+        <source>当前 key 不提供所需的剪贴板能力</source>
+        <translation>当前 key 不提供所需的剪贴板能力</translation>
+    </message>
+    <message>
+        <source>已有剪贴板操作正在执行</source>
+        <translation>已有剪贴板操作正在执行</translation>
+    </message>
+    <message>
+        <source>当前 key 不支持所需的剪贴板能力</source>
+        <translation>当前 key 不支持所需的剪贴板能力</translation>
+    </message>
+    <message>
+        <source>剪贴板历史不可用</source>
+        <translation>剪贴板历史不可用</translation>
+    </message>
+    <message>
+        <source>剪贴板操作失败</source>
+        <translation>剪贴板操作失败</translation>
+    </message>
+    <message>
+        <source>无法检查剪贴板条目</source>
+        <translation>无法检查剪贴板条目</translation>
+    </message>
+</context>
+<context>
+    <name>SpotlightClipboardProvider</name>
+    <message numerus="yes">
+        <source>%n 个文件</source>
+        <comment>clipboard file count</comment>
+        <translation>
+            <numerusform>%n 个文件</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>文件</source>
+        <translation>文件</translation>
+    </message>
+    <message>
+        <source>图片剪贴板</source>
+        <translation>图片剪贴板</translation>
+    </message>
+    <message>
+        <source>二进制剪贴板</source>
+        <translation>二进制剪贴板</translation>
+    </message>
+    <message>
+        <source>HTML 内容</source>
+        <translation>HTML 内容</translation>
+    </message>
+    <message>
+        <source>空文本</source>
+        <translation>空文本</translation>
+    </message>
+    <message>
+        <source>未知二进制内容</source>
+        <translation>未知二进制内容</translation>
+    </message>
+    <message>
+        <source>没有可安全显示的正文</source>
+        <translation>没有可安全显示的正文</translation>
+    </message>
+    <message>
+        <source>文本</source>
+        <translation>文本</translation>
+    </message>
+    <message>
+        <source>剪贴板恢复不可用</source>
+        <translation>剪贴板恢复不可用</translation>
+    </message>
+    <message>
+        <source>该格式无法可靠恢复</source>
+        <translation>该格式无法可靠恢复</translation>
+    </message>
+</context>
+<context>
+    <name>SpotlightResultsPanel</name>
+    <message>
+        <source>缺少 wl-copy：恢复功能不可用</source>
+        <translation>缺少 wl-copy：恢复功能不可用</translation>
+    </message>
+    <message>
+        <source>剪贴板历史</source>
+        <translation>剪贴板历史</translation>
+    </message>
+    <message>
+        <source>清空</source>
+        <translation>清空</translation>
+    </message>
+    <message>
+        <source>删除剪贴板条目</source>
+        <translation>删除剪贴板条目</translation>
+    </message>
+    <message>
+        <source>已复制</source>
+        <translation>已复制</translation>
+    </message>
+    <message>
+        <source>复制失败</source>
+        <translation>复制失败</translation>
+    </message>
+    <message>
+        <source>正在读取…</source>
+        <translation>正在读取…</translation>
+    </message>
+    <message>
+        <source>当前 Provider 不可用</source>
+        <translation>当前 Provider 不可用</translation>
+    </message>
+    <message>
+        <source>没有匹配结果</source>
+        <translation>没有匹配结果</translation>
+    </message>
+    <message>
+        <source>清空剪贴板历史？</source>
+        <translation>清空剪贴板历史？</translation>
+    </message>
+    <message>
+        <source>此操作会清除 cliphist 中的全部历史记录，无法撤销。</source>
+        <translation>此操作会清除 cliphist 中的全部历史记录，无法撤销。</translation>
+    </message>
+    <message>
+        <source>取消</source>
+        <translation>取消</translation>
     </message>
 </context>
 </TS>

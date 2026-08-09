@@ -290,17 +290,16 @@ Singleton {
         if (root._actionName === "restore") {
             root.restored(responseId);
         } else if (root._actionName === "delete") {
+            root.entries = (root.entries || []).filter(
+                entry => String(entry.id || "") !== responseId);
             const nextDetails = Object.assign({}, root.detailsById);
             delete nextDetails[responseId];
             root.detailsById = nextDetails;
-            root.detailsRevision += 1;
             root.deleted(responseId);
-            root.refresh();
         } else if (root._actionName === "clear") {
+            root.entries = [];
             root.detailsById = {};
-            root.detailsRevision += 1;
             root.cleared();
-            root.refresh();
         }
     }
 

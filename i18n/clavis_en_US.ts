@@ -1814,6 +1814,14 @@ Scroll to adjust</translation>
         <source>搜索</source>
         <translation>Search</translation>
     </message>
+    <message>
+        <source>已有剪贴板操作正在执行</source>
+        <translation>A clipboard operation is already running</translation>
+    </message>
+    <message>
+        <source>复制失败</source>
+        <translation>Copy failed</translation>
+    </message>
 </context>
 <context>
     <name>LeftSidebarContent</name>
@@ -6501,6 +6509,186 @@ Scroll to adjust; click to open sound</translation>
 窗口: </source>
         <translation>
 Windows: </translation>
+    </message>
+</context>
+<context>
+    <name>ClipboardService</name>
+    <message>
+        <source>cliphist 监听服务未运行；请启用服务后重新复制内容</source>
+        <translation>The cliphist watcher is not running; enable the service and copy content again</translation>
+    </message>
+    <message>
+        <source>缺少 cliphist，无法读取剪贴板历史</source>
+        <translation>cliphist is missing; clipboard history cannot be read</translation>
+    </message>
+    <message>
+        <source>缺少 wl-copy，无法恢复剪贴板内容</source>
+        <translation>wl-copy is missing; clipboard contents cannot be restored</translation>
+    </message>
+    <message>
+        <source>缺少 cliphist 或 wl-copy，剪贴板历史不可用</source>
+        <translation>cliphist or wl-copy is missing; clipboard history is unavailable</translation>
+    </message>
+    <message>
+        <source>无法从 cliphist 解码该条目</source>
+        <translation>Unable to decode this entry from cliphist</translation>
+    </message>
+    <message>
+        <source>无法检查该剪贴板条目</source>
+        <translation>Unable to inspect this clipboard entry</translation>
+    </message>
+    <message>
+        <source>无法生成剪贴板预览</source>
+        <translation>Unable to generate a clipboard preview</translation>
+    </message>
+    <message>
+        <source>该剪贴板内容超过安全大小限制</source>
+        <translation>This clipboard content exceeds the safe size limit</translation>
+    </message>
+    <message>
+        <source>图片数据已损坏或尺寸过大</source>
+        <translation>Image data is damaged or too large</translation>
+    </message>
+    <message>
+        <source>剪贴板中的文件已不存在</source>
+        <translation>The file in the clipboard no longer exists</translation>
+    </message>
+    <message>
+        <source>无法可靠恢复该剪贴板格式</source>
+        <translation>This clipboard format cannot be restored reliably</translation>
+    </message>
+    <message>
+        <source>wl-copy 写入系统剪贴板失败</source>
+        <translation>wl-copy failed to write the system clipboard</translation>
+    </message>
+    <message>
+        <source>剪贴板服务返回了无效数据</source>
+        <translation>The clipboard service returned invalid data</translation>
+    </message>
+    <message>
+        <source>当前 key 不提供所需的剪贴板能力</source>
+        <translation>The current key does not provide the required clipboard capability</translation>
+    </message>
+    <message>
+        <source>已有剪贴板操作正在执行</source>
+        <translation>A clipboard operation is already running</translation>
+    </message>
+    <message>
+        <source>当前 key 不支持所需的剪贴板能力</source>
+        <translation>The current key does not support the required clipboard capabilities</translation>
+    </message>
+    <message>
+        <source>剪贴板历史不可用</source>
+        <translation>Clipboard history is unavailable</translation>
+    </message>
+    <message>
+        <source>剪贴板操作失败</source>
+        <translation>Clipboard operation failed</translation>
+    </message>
+    <message>
+        <source>无法检查剪贴板条目</source>
+        <translation>Unable to inspect clipboard entry</translation>
+    </message>
+</context>
+<context>
+    <name>SpotlightClipboardProvider</name>
+    <message numerus="yes">
+        <source>%n 个文件</source>
+        <comment>clipboard file count</comment>
+        <translation>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>文件</source>
+        <translation>File</translation>
+    </message>
+    <message>
+        <source>图片剪贴板</source>
+        <translation>Clipboard image</translation>
+    </message>
+    <message>
+        <source>二进制剪贴板</source>
+        <translation>Binary clipboard content</translation>
+    </message>
+    <message>
+        <source>HTML 内容</source>
+        <translation>HTML content</translation>
+    </message>
+    <message>
+        <source>空文本</source>
+        <translation>Empty text</translation>
+    </message>
+    <message>
+        <source>未知二进制内容</source>
+        <translation>Unknown binary content</translation>
+    </message>
+    <message>
+        <source>没有可安全显示的正文</source>
+        <translation>No safe text to display</translation>
+    </message>
+    <message>
+        <source>文本</source>
+        <translation>Text</translation>
+    </message>
+    <message>
+        <source>剪贴板恢复不可用</source>
+        <translation>Clipboard restore is unavailable</translation>
+    </message>
+    <message>
+        <source>该格式无法可靠恢复</source>
+        <translation>This format cannot be restored reliably</translation>
+    </message>
+</context>
+<context>
+    <name>SpotlightResultsPanel</name>
+    <message>
+        <source>缺少 wl-copy：恢复功能不可用</source>
+        <translation>wl-copy is missing: restore is unavailable</translation>
+    </message>
+    <message>
+        <source>剪贴板历史</source>
+        <translation>Clipboard history</translation>
+    </message>
+    <message>
+        <source>清空</source>
+        <translation>Clear</translation>
+    </message>
+    <message>
+        <source>删除剪贴板条目</source>
+        <translation>Delete clipboard entry</translation>
+    </message>
+    <message>
+        <source>已复制</source>
+        <translation>Copied</translation>
+    </message>
+    <message>
+        <source>复制失败</source>
+        <translation>Copy failed</translation>
+    </message>
+    <message>
+        <source>正在读取…</source>
+        <translation>Reading…</translation>
+    </message>
+    <message>
+        <source>当前 Provider 不可用</source>
+        <translation>Current provider is unavailable</translation>
+    </message>
+    <message>
+        <source>没有匹配结果</source>
+        <translation>No matching results</translation>
+    </message>
+    <message>
+        <source>清空剪贴板历史？</source>
+        <translation>Clear clipboard history?</translation>
+    </message>
+    <message>
+        <source>此操作会清除 cliphist 中的全部历史记录，无法撤销。</source>
+        <translation>This clears all clipboard history in cliphist and cannot be undone.</translation>
+    </message>
+    <message>
+        <source>取消</source>
+        <translation>Cancel</translation>
     </message>
 </context>
 </TS>

@@ -7,6 +7,8 @@ app_provider="$repo_dir/Modules/Launcher/SpotlightAppProvider.qml"
 wallpaper_provider="$repo_dir/Modules/Launcher/SpotlightWallpaperProvider.qml"
 clipboard_provider="$repo_dir/Modules/Launcher/SpotlightClipboardProvider.qml"
 results_panel="$repo_dir/Modules/Launcher/SpotlightResultsPanel.qml"
+launcher_window="$repo_dir/Modules/Launcher/LauncherWindow.qml"
+clipboard_service="$repo_dir/Services/ClipboardService.qml"
 wallpaper_service="$repo_dir/Services/WallpaperService.qml"
 
 fail() {
@@ -50,7 +52,15 @@ reject_text "$results_panel" 'clipboardDelegate.modelData.icon'
 
 require_text "$clipboard_provider" 'const useInspectedDetails = needle !== "";'
 require_text "$clipboard_provider" 'function onDetailsRevisionChanged()'
+require_text "$clipboard_provider" 'function removeResult(id)'
+require_text "$clipboard_provider" 'function updateResult(id)'
 require_text "$clipboard_provider" \
     'if (String(root.query || "").trim() !== "")'
+require_text "$results_panel" 'model: root.mode === "clipboard" ? root.clipboardModel : []'
+require_text "$launcher_window" 'FocusScope {'
+require_text "$launcher_window" 'event.key === Qt.Key_1'
+require_text "$launcher_window" 'event.key === Qt.Key_2'
+require_text "$launcher_window" 'event.key === Qt.Key_3'
+reject_text "$clipboard_service" 'root.refresh();'
 
 printf '%s\n' 'spotlight architecture audit passed'

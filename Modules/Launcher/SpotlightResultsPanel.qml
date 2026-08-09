@@ -15,6 +15,7 @@ Item {
     required property SpotlightStyle style
     required property string mode
     required property var results
+    required property var clipboardModel
     required property int selectedIndex
 
     property bool expanded: mode !== "web"
@@ -49,6 +50,7 @@ Item {
             + style.wallpaperLabelHeight
             + style.wallpaperGridGap
     readonly property Item blurRegionItem: panelBlurRegion
+    readonly property bool modalActive: clearDialog.visible
     readonly property int targetHeight: {
         if (!expanded)
             return 0;
@@ -72,6 +74,7 @@ Item {
     signal clearRequested()
     signal inspectionRequested(string id)
     signal inspectionReleased(string id)
+    signal modalClosed()
 
     height: targetHeight
     opacity: expanded ? 1 : 0
@@ -563,7 +566,7 @@ Item {
                 Layout.fillHeight: true
                 clip: true
                 spacing: 0
-                model: root.mode === "clipboard" ? root.results : []
+                model: root.mode === "clipboard" ? root.clipboardModel : []
                 currentIndex: root.selectedIndex
                 boundsBehavior: Flickable.StopAtBounds
 
@@ -887,18 +890,118 @@ Item {
         id: clearDialog
 
         anchors.centerIn: Overlay.overlay
+        width: 380
         modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
         title: qsTr("清空剪贴板历史？")
-        standardButtons: Dialog.Cancel | Dialog.Ok
-        onAccepted: root.clearRequested()
 
-        Text {
-            width: 320
-            text: qsTr("此操作会清除 cliphist 中的全部历史记录，无法撤销。")
-            color: Appearance.colors.colOnSurface
-            font.family: Fonts.ui
-            font.pixelSize: 14
-            wrapMode: Text.Wrap
+        background: Rectangle {
+            radius: Appearance.rounding.extraLarge
+            color: Appearance.colors.colSurfaceContainerHigh
+            border.width: 1
+            border.color: Appearance.colors.colOutlineVariant
         }
+
+        contentItem: ColumnLayout {
+            spacing: 10
+
+            Text {
+                Layout.fillWidth: true
+                text: clearDialog.title
+                color: Appearance.colors.colOnSurface
+                font.family: Fonts.ui
+                font.pixelSize: 22
+                font.weight: Font.Medium
+                wrapMode: Text.Wrap
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("此操作会清除 cliphist 中的全部历史记录，无法撤销。")
+                color: Appearance.colors.colOnSurfaceVariant
+                font.family: Fonts.ui
+                font.pixelSize: 14
+                wrapMode: Text.Wrap
+            }
+        }
+
+        footer: RowLayout {
+            spacing: 8
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Button {
+                id: cancelButton
+
+                Layout.preferredWidth: 76
+                Layout.preferredHeight: 40
+                focusPolicy: Qt.StrongFocus
+                text: qsTr("取消")
+                Accessible.name: text
+                onClicked: clearDialog.close()
+
+                background: Rectangle {
+                    radius: Appearance.rounding.full
+                    color: cancelButton.down
+                        ? Appearance.colors.colSurfaceContainerHighestActive
+                        : cancelButton.hovered
+                        ? Appearance.colors.colSurfaceContainerHighestHover
+                        : "transparent"
+                    border.width: cancelButton.activeFocus ? 2 : 0
+                    border.color: Appearance.colors.colPrimary
+                }
+
+                contentItem: Text {
+                    text: cancelButton.text
+                    color: Appearance.colors.colPrimary
+                    font.family: Fonts.ui
+                    font.pixelSize: 14
+                    font.weight: Font.Medium
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+
+            Button {
+                id: confirmButton
+
+                Layout.preferredWidth: 76
+                Layout.preferredHeight: 40
+                focusPolicy: Qt.StrongFocus
+                text: qsTr("清空")
+                Accessible.name: text
+                onClicked: {
+                    root.clearRequested();
+                    clearDialog.close();
+                }
+
+                background: Rectangle {
+                    radius: Appearance.rounding.full
+                    color: confirmButton.down
+                        ? Appearance.colors.colErrorContainerActive
+                        : confirmButton.hovered
+                        ? Appearance.colors.colErrorContainerHover
+                        : Appearance.colors.colErrorContainer
+                    border.width: confirmButton.activeFocus ? 2 : 0
+                    border.color: Appearance.colors.colOnErrorContainer
+                }
+
+                contentItem: Text {
+                    text: confirmButton.text
+                    color: Appearance.colors.colOnErrorContainer
+                    font.family: Fonts.ui
+                    font.pixelSize: 14
+                    font.weight: Font.Medium
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+        }
+
+        onOpened: cancelButton.forceActiveFocus()
+        onClosed: root.modalClosed()
     }
 }

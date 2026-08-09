@@ -41,6 +41,9 @@ PanelWindow {
     property string clipboardActionEntryId: ""
     property bool clipboardActionKeepOpen: false
     property string clipboardActionError: ""
+    property bool clipboardSelectionRecoveryPending: false
+    property string clipboardSelectionRecoveryTargetId: ""
+    property string clipboardSelectionRecoveryId: ""
 
     property real windowProgress: 0
     property real railProgress: 0
@@ -57,6 +60,7 @@ PanelWindow {
             ? wallpaperProvider.results
             : (mode === "clipboard" ? clipboardProvider.results : []))
     readonly property bool clipboardMode: mode === "clipboard"
+    readonly property bool spotlightModalActive: resultsPanel.modalActive
     readonly property bool clipboardCanRestore:
         clipboardProvider.canRestore
     readonly property bool wallpaperMode: mode === "wallpapers"
@@ -103,6 +107,11 @@ PanelWindow {
         onRestored: id => root.finishClipboardRestore(id)
         onRestoreFailed: (id, code, message) =>
             root.failClipboardRestore(id, code, message)
+        onDeleteFailed: (id, code, message) => {
+            root.clipboardSelectionRecoveryPending = false;
+            root.clipboardSelectionRecoveryTargetId = "";
+            root.clipboardSelectionRecoveryId = "";
+        }
     }
 
     Timer {
@@ -187,7 +196,7 @@ PanelWindow {
 
         if (root.windowPhase === "open"
                 || root.windowPhase === "opening") {
-            searchBar.focusInput();
+            root.focusSpotlight();
             return true;
         }
 
@@ -195,8 +204,17 @@ PanelWindow {
             root.visible = true;
         root.windowPhase = "opening";
         root.animateWindow(1);
-        Qt.callLater(searchBar.focusInput);
+        root.focusSpotlight();
         return true;
+    }
+
+    function focusSpotlight() {
+        if (!root.showing || root.spotlightModalActive)
+            return;
+        Qt.callLater(() => {
+            if (root.showing && !root.spotlightModalActive)
+                searchBar.focusInput();
+        });
     }
 
     function requestClose() {
@@ -243,13 +261,16 @@ PanelWindow {
         root.selectedResultId = "";
         root.mode = localMode;
         root.previousLocalMode = localMode;
+        root.clipboardSelectionRecoveryPending = false;
+        root.clipboardSelectionRecoveryTargetId = "";
+        root.clipboardSelectionRecoveryId = "";
         root.selectResult(root.activeResults.length > 0 ? 0 : -1);
         if (localMode === "clipboard") {
             if (enteringClipboard)
                 root.resetClipboardAction();
             clipboardProvider.refresh();
         }
-        searchBar.focusInput();
+        root.focusSpotlight();
         return true;
     }
 
@@ -264,7 +285,7 @@ PanelWindow {
         root.selectedResultId = "";
         root.setRailExpanded(false);
         root.animateWeb(1);
-        searchBar.focusInput();
+        root.focusSpotlight();
         return true;
     }
 
@@ -278,7 +299,7 @@ PanelWindow {
         root.selectResult(root.activeResults.length > 0 ? 0 : -1);
         if (root.mode === "clipboard")
             clipboardProvider.refresh();
-        searchBar.focusInput();
+        root.focusSpotlight();
         return true;
     }
 
@@ -336,8 +357,42 @@ PanelWindow {
 
     function reconcileSelection() {
         if (root.activeResults.length === 0) {
+            root.clipboardSelectionRecoveryPending = false;
+            root.clipboardSelectionRecoveryTargetId = "";
+            root.clipboardSelectionRecoveryId = "";
             root.selectResult(-1);
             return;
+        }
+
+        if (root.clipboardSelectionRecoveryPending) {
+            const targetId = root.clipboardSelectionRecoveryTargetId;
+            const targetStillPresent = root.activeResults.some(
+                result => result
+                    && String(result.id || "") === targetId);
+            if (targetStillPresent) {
+                const targetIndex = root.activeResults.findIndex(
+                    result => result
+                        && String(result.id || "") === targetId);
+                if (targetIndex >= 0)
+                    root.selectResult(targetIndex);
+                return;
+            }
+
+            const recoveryId = root.clipboardSelectionRecoveryId;
+            root.clipboardSelectionRecoveryPending = false;
+            root.clipboardSelectionRecoveryTargetId = "";
+            root.clipboardSelectionRecoveryId = "";
+            if (recoveryId !== "") {
+                for (let index = 0;
+                        index < root.activeResults.length;
+                        index += 1) {
+                    const result = root.activeResults[index];
+                    if (result && String(result.id) === recoveryId) {
+                        root.selectResult(index);
+                        return;
+                    }
+                }
+            }
         }
 
         let restoredIndex = -1;
@@ -432,6 +487,35 @@ PanelWindow {
         clipboardFeedbackTimer.stop();
     }
 
+    function deleteClipboardEntry(index) {
+        if (index < 0 || index >= root.activeResults.length)
+            return false;
+        const target = root.activeResults[index];
+        if (!target)
+            return false;
+
+        root.clipboardSelectionRecoveryPending =
+            root.selectedResultId === String(target.id || "");
+        root.clipboardSelectionRecoveryTargetId =
+            root.clipboardSelectionRecoveryPending
+            ? String(target.id || "") : "";
+        root.clipboardSelectionRecoveryId = "";
+        if (root.clipboardSelectionRecoveryPending) {
+            const successor = root.activeResults[index + 1]
+                || root.activeResults[index - 1];
+            root.clipboardSelectionRecoveryId = successor
+                ? String(successor.id || "") : "";
+        }
+
+        const started = clipboardProvider.deleteEntry(index);
+        if (!started) {
+            root.clipboardSelectionRecoveryPending = false;
+            root.clipboardSelectionRecoveryTargetId = "";
+            root.clipboardSelectionRecoveryId = "";
+        }
+        return started;
+    }
+
     function activateSelected(keepClipboardOpen) {
         if (root.modeRailExpanded && root.modeFocusIndex >= 0) {
             root.setLocalMode(root.modeForIndex(root.modeFocusIndex));
@@ -506,6 +590,8 @@ PanelWindow {
     }
 
     function handleEscape() {
+        if (root.spotlightModalActive)
+            return;
         if (root.mode === "web") {
             root.exitWeb();
         } else if (root.modeRailExpanded || root.railProgress > 0.001) {
@@ -518,9 +604,29 @@ PanelWindow {
     }
 
     function handleKey(event) {
+        if (root.spotlightModalActive)
+            return;
         const control = (event.modifiers & Qt.ControlModifier) !== 0;
         const shift = (event.modifiers & Qt.ShiftModifier) !== 0;
 
+        if (control && event.key === Qt.Key_1) {
+            root.setLocalMode("apps");
+            root.setRailExpanded(false);
+            event.accepted = true;
+            return;
+        }
+        if (control && event.key === Qt.Key_2) {
+            root.setLocalMode("wallpapers");
+            root.setRailExpanded(false);
+            event.accepted = true;
+            return;
+        }
+        if (control && event.key === Qt.Key_3) {
+            root.setLocalMode("clipboard");
+            root.setRailExpanded(false);
+            event.accepted = true;
+            return;
+        }
         if (control && event.key === Qt.Key_K) {
             root.enterWeb();
             event.accepted = true;
@@ -569,7 +675,7 @@ PanelWindow {
         if (event.key === Qt.Key_Delete
                 && root.mode === "clipboard"
                 && root.selectedResultIndex >= 0) {
-            clipboardProvider.deleteEntry(root.selectedResultIndex);
+            root.deleteClipboardEntry(root.selectedResultIndex);
             event.accepted = true;
         }
     }
@@ -589,7 +695,7 @@ PanelWindow {
             if (root._windowAnimationTarget >= 1) {
                 root.windowProgress = 1;
                 root.windowPhase = "open";
-                searchBar.focusInput();
+                root.focusSpotlight();
                 return;
             }
             root.windowProgress = 0;
@@ -600,6 +706,9 @@ PanelWindow {
             root.previousLocalMode = "apps";
             root.selectedResultIndex = -1;
             root.selectedResultId = "";
+            root.clipboardSelectionRecoveryPending = false;
+            root.clipboardSelectionRecoveryTargetId = "";
+            root.clipboardSelectionRecoveryId = "";
             root.modeRailExpanded = false;
             root.modeFocusIndex = -1;
             root.railProgress = 0;
@@ -643,8 +752,12 @@ PanelWindow {
         onClicked: root.requestClose()
     }
 
-    Item {
+    FocusScope {
         id: spotlightRoot
+
+        focus: true
+        Keys.priority: Keys.BeforeItem
+        Keys.onPressed: event => root.handleKey(event)
 
         readonly property real baseY:
             Math.max(40, root.height * 0.22 - searchBar.height / 2)
@@ -715,6 +828,7 @@ PanelWindow {
             style: style
             mode: root.mode
             results: root.activeResults
+            clipboardModel: clipboardProvider.resultModel
             selectedIndex: root.selectedResultIndex
             loading: root.clipboardMode && clipboardProvider.loading
             providerAvailable:
@@ -744,12 +858,13 @@ PanelWindow {
                 root.activateResult(index, keepOpen);
             }
             onDeleteRequested: index =>
-                clipboardProvider.deleteEntry(index)
+                root.deleteClipboardEntry(index)
             onClearRequested: clipboardProvider.clear()
             onInspectionRequested: id =>
                 clipboardProvider.requestDetails(id)
             onInspectionReleased: id =>
                 clipboardProvider.releaseDetails(id)
+            onModalClosed: root.focusSpotlight()
         }
     }
 }
