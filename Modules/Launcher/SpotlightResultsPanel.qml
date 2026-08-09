@@ -51,6 +51,7 @@ Item {
             + style.wallpaperLabelHeight
             + style.wallpaperGridGap
     readonly property Item blurRegionItem: panelBlurRegion
+    readonly property Item modalBlurRegionItem: clearDialog.blurRegionItem
     readonly property bool modalActive: clearDialog.visible
     readonly property int targetHeight: {
         if (!expanded)

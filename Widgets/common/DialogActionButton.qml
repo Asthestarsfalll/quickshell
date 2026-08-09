@@ -28,15 +28,6 @@ MaterialRippleButton {
     focusPolicy: Qt.StrongFocus
     Accessible.name: root.text
 
-    backgroundContent: Rectangle {
-        anchors.fill: parent
-        radius: root.buttonEffectiveRadius
-        color: "transparent"
-        border.width: root.activeFocus ? 2 : 0
-        border.color: Appearance.colors.colPrimary
-        antialiasing: true
-    }
-
     contentItem: Text {
         id: label
 

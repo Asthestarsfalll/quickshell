@@ -742,7 +742,8 @@ PanelWindow {
         backgroundItem: searchBar.blurRegionItems[0]
         additionalBackgroundItems:
             searchBar.blurRegionItems.slice(1).concat([
-                resultsPanel.blurRegionItem
+                resultsPanel.blurRegionItem,
+                resultsPanel.modalBlurRegionItem
             ])
         blurEnabled: root.showing
     }

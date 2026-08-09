@@ -183,8 +183,10 @@ Singleton {
             cliphist: false, wlCopy: false, wlPaste: false
         };
         root.capabilities = response.capabilities;
-        root.entries = Array.isArray(response.entries)
+        const nextEntries = Array.isArray(response.entries)
             ? response.entries : [];
+        root.entries = nextEntries;
+        root.pruneDetails(nextEntries);
         root.error = response.ok === true
             ? null
             : root.normalizedError(
@@ -192,6 +194,30 @@ Singleton {
                 "clipboard_unavailable",
                 qsTr("剪贴板历史不可用"));
         root.revision += 1;
+    }
+
+    function pruneDetails(entries) {
+        const activeIds = ({ });
+        const source = Array.isArray(entries) ? entries : [];
+        for (let index = 0; index < source.length; index += 1) {
+            const id = String(source[index].id || "");
+            if (id !== "")
+                activeIds[id] = true;
+        }
+
+        const current = root.detailsById || ({ });
+        const next = ({ });
+        let changed = false;
+        for (const id in current) {
+            if (activeIds[id])
+                next[id] = current[id];
+            else
+                changed = true;
+        }
+        if (!changed)
+            return;
+        root.detailsById = next;
+        root.detailsRevision += 1;
     }
 
     function refresh(limit) {
@@ -295,10 +321,12 @@ Singleton {
             const nextDetails = Object.assign({}, root.detailsById);
             delete nextDetails[responseId];
             root.detailsById = nextDetails;
+            root.detailsRevision += 1;
             root.deleted(responseId);
         } else if (root._actionName === "clear") {
             root.entries = [];
             root.detailsById = {};
+            root.detailsRevision += 1;
             root.cleared();
         }
     }
@@ -364,11 +392,15 @@ Singleton {
                 && response.schemaVersion === 1
                 && response.command === "clipboard.inspect"
                 && response.ok === true) {
-            const nextDetails = Object.assign({}, root.detailsById);
-            nextDetails[id] = response;
-            root.detailsById = nextDetails;
-            root.detailsRevision += 1;
-            root.inspected(id);
+            const stillListed = (root.entries || []).some(
+                entry => String(entry.id || "") === id);
+            if (stillListed) {
+                const nextDetails = Object.assign({}, root.detailsById);
+                nextDetails[id] = response;
+                root.detailsById = nextDetails;
+                root.detailsRevision += 1;
+                root.inspected(id);
+            }
         } else {
             const failure = root.normalizedError(
                 response ? response.error : null,

@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Common
 import qs.Services
 
 Item {
@@ -25,7 +26,8 @@ Item {
 
     function mergedEntry(entry) {
         const id = String(entry.id || "");
-        return ClipboardService.detail(id) || entry;
+        const detail = ClipboardService.detail(id);
+        return detail ? Object.assign({}, entry, detail) : entry;
     }
 
     function textSummary(value) {
@@ -36,6 +38,107 @@ Item {
             .map(line => line.replace(/\t/g, " ").trim())
             .filter(line => line !== "");
         return lines;
+    }
+
+    function humanReadableSize(value) {
+        const bytes = Number(value);
+        if (!isFinite(bytes) || bytes <= 0)
+            return "";
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        let amount = bytes;
+        let unit = 0;
+        while (amount >= 1024 && unit < units.length - 1) {
+            amount /= 1024;
+            unit += 1;
+        }
+        const digits = unit === 0 || amount >= 100
+            ? 0 : amount >= 10 ? 1 : 2;
+        return amount.toFixed(digits) + " " + units[unit];
+    }
+
+    function compactParentPath(value) {
+        let path = String(value || "").trim();
+        const home = String(Paths.homeDir || "").replace(/\/+$/, "");
+        if (home !== ""
+                && (path === home || path.indexOf(home + "/") === 0))
+            path = "~" + path.slice(home.length);
+        return path;
+    }
+
+    function fileExtension(file) {
+        const name = String(file && file.name || "");
+        const separator = name.lastIndexOf(".");
+        return separator > 0 ? name.slice(separator + 1).toLowerCase() : "";
+    }
+
+    function friendlyFileType(file) {
+        const category = String(file && file.category || "file")
+            .toLowerCase();
+        if (category === "folder")
+            return qsTr("文件夹");
+
+        if (category === "code") {
+            const codeTypes = {
+                c: "C",
+                h: "C/C++",
+                cc: "C++",
+                cpp: "C++",
+                cxx: "C++",
+                hpp: "C++",
+                rs: "Rust",
+                py: "Python",
+                js: "JavaScript",
+                jsx: "JavaScript",
+                ts: "TypeScript",
+                tsx: "TypeScript",
+                lua: "Lua",
+                qml: "QML",
+                java: "Java",
+                kt: "Kotlin",
+                kts: "Kotlin",
+                go: "Go",
+                rb: "Ruby",
+                php: "PHP",
+                sh: "Shell",
+                bash: "Bash",
+                zsh: "Zsh",
+                fish: "Fish"
+            };
+            const extension = root.fileExtension(file);
+            return codeTypes[extension] || qsTr("代码");
+        }
+
+        if (category === "pdf")
+            return "PDF";
+        const extension = root.fileExtension(file);
+        if (extension !== "")
+            return extension.toUpperCase();
+        const mime = String(file && file.mimeType || "");
+        const slash = mime.indexOf("/");
+        if (slash >= 0) {
+            const subtype = mime.slice(slash + 1)
+                .split(";", 1)[0]
+                .toUpperCase();
+            if (subtype !== "")
+                return subtype;
+        }
+        return qsTr("文件");
+    }
+
+    function singleFileSubtitle(file) {
+        const parts = [];
+        const category = String(file && file.category || "file")
+            .toLowerCase();
+        parts.push(root.friendlyFileType(file));
+        if (category !== "folder") {
+            const size = root.humanReadableSize(file && file.byteSize);
+            if (size !== "")
+                parts.push(size);
+        }
+        const parent = root.compactParentPath(file && file.parent);
+        if (parent !== "")
+            parts.push(parent);
+        return parts.join(" · ");
     }
 
     function displayTitle(entry, rawPreview) {
@@ -65,11 +168,15 @@ Item {
         const kind = String(entry.payloadKind || "binary");
         if (kind === "file" || kind === "file-list") {
             const files = Array.isArray(entry.files) ? entry.files : [];
-            return files
-                .slice(0, 3)
-                .map(file => String(file.name || ""))
-                .filter(name => name !== "")
-                .join("、");
+            if (files.length > 1)
+                return files
+                    .slice(0, 3)
+                    .map(file => String(file.name || ""))
+                    .filter(name => name !== "")
+                    .join("、");
+            if (files.length === 1)
+                return root.singleFileSubtitle(files[0]);
+            return qsTr("文件");
         }
         if (kind === "image") {
             const mime = String(entry.mimeType || "");
@@ -151,17 +258,10 @@ Item {
 
     function rebuild() {
         const needle = String(root.query || "").trim().toLocaleLowerCase();
-        // In the normal browsing view, inspection only enriches an existing
-        // entry.  Keep the result collection stable so ListView can retain
-        // its viewport and delegates.  Search is different: inspected text
-        // can change whether an entry matches the query, so it is rebuilt
-        // when details arrive.
-        const useInspectedDetails = needle !== "";
         const source = ClipboardService.entries || [];
         const next = [];
         for (let index = 0; index < source.length; index += 1) {
-            const entry = useInspectedDetails
-                ? root.mergedEntry(source[index]) : source[index];
+            const entry = root.mergedEntry(source[index]);
             const result = root.resultForEntry(
                 entry, index, source.length, needle);
             if (result)

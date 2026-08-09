@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Common
+import qs.Services
 
 Dialog {
     id: root
@@ -16,6 +17,7 @@ Dialog {
     property Item initialFocusItem
     property real contentPadding: Metrics.spacingXL
     property real contentSpacing: Metrics.spacingM
+    readonly property alias blurRegionItem: dialogSurface.blurRegionItem
 
     implicitWidth: 380
     implicitHeight: contentFrame.implicitHeight
@@ -30,10 +32,23 @@ Dialog {
         color: "transparent"
     }
 
-    background: Rectangle {
-        radius: Appearance.rounding.extraLarge
-        color: Appearance.colors.colSurfaceContainerHigh
-        antialiasing: true
+    background: Item {
+        id: dialogSurface
+
+        anchors.fill: parent
+
+        readonly property alias blurRegionItem: surfaceFill
+
+        Rectangle {
+            id: surfaceFill
+
+            anchors.fill: parent
+            visible: root.visible
+            radius: Appearance.rounding.extraLarge
+            color: BlurService.backgroundColor(
+                Appearance.m3colors.m3surfaceContainerHigh)
+            antialiasing: true
+        }
     }
 
     contentItem: Item {
