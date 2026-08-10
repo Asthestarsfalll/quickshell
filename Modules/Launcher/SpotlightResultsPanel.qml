@@ -576,9 +576,25 @@ Item {
                     id: clipboardDelegate
 
                     required property int index
-                    required property var modelData
+                    required property string clipboardEntryId
                     readonly property int detailsRevision:
                         ClipboardService.detailsRevision
+                    readonly property var clipboardEntry: {
+                        // The ListModel carries only the stable ID.  Keeping
+                        // the result object in the provider's JS array avoids
+                        // QVariant role type changes when a lightweight row
+                        // is replaced by its inspected detail.
+                        const currentResults = root.results;
+                        const id = clipboardDelegate.clipboardEntryId;
+                        for (let resultIndex = 0;
+                                resultIndex < currentResults.length;
+                                resultIndex += 1) {
+                            const result = currentResults[resultIndex];
+                            if (String(result.id || "") === id)
+                                return result;
+                        }
+                        return {};
+                    }
                     readonly property var displayData: {
                         // ClipboardService stores inspection results in a
                         // keyed object.  The revision is an explicit
@@ -587,14 +603,14 @@ Item {
                         const ignoredRevision =
                             clipboardDelegate.detailsRevision;
                         const detail = ClipboardService.detail(
-                            String(clipboardDelegate.modelData.id || ""));
+                            String(clipboardDelegate.clipboardEntry.id || ""));
                         if (!detail)
-                            return clipboardDelegate.modelData;
+                            return clipboardDelegate.clipboardEntry;
                         return Object.assign(
-                            {}, clipboardDelegate.modelData, detail);
+                            {}, clipboardDelegate.clipboardEntry, detail);
                     }
                     readonly property bool actionForThis:
-                        String(modelData.id)
+                        String(clipboardEntry.id)
                             === root.clipboardActionEntryId
                     readonly property alias activationArea: clipboardMouse
                     readonly property alias textArea: clipboardTextColumn
@@ -606,10 +622,10 @@ Item {
 
                     Component.onCompleted:
                         root.inspectionRequested(
-                            String(clipboardDelegate.modelData.id))
+                            String(clipboardDelegate.clipboardEntry.id))
                     Component.onDestruction:
                         root.inspectionReleased(
-                            String(clipboardDelegate.modelData.id))
+                            String(clipboardDelegate.clipboardEntry.id))
 
                     Rectangle {
                         anchors.fill: parent

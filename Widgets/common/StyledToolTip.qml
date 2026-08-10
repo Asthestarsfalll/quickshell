@@ -7,7 +7,6 @@ PopupToolTip {
 
     property font font
 
-    respectParentHierarchy: true
     horizontalPadding: 10
     verticalPadding: 5
     font {

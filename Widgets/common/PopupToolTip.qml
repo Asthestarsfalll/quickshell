@@ -17,7 +17,6 @@ Item {
     readonly property string contextualEdge: findContextEdge(root.parent)
     property var anchorEdges: edgeToAnchor(contextualEdge)
     property var anchorGravity: anchorEdges
-    property bool respectParentHierarchy: false
     property font font
 
     font {
@@ -45,39 +44,21 @@ Item {
         }
     }
 
-    function hierarchyAvailable(item) {
-        let current = item;
-        while (current !== null && current !== undefined) {
-            if (current.enabled !== undefined && !current.enabled)
-                return false;
-            if (current.visible !== undefined && !current.visible)
-                return false;
-            if (current.opacity !== undefined
-                    && current.opacity <= 0.001)
-                return false;
-            current = current.parent;
-        }
-        return true;
-    }
-
-    readonly property bool parentHierarchyAvailable:
-        !root.respectParentHierarchy
-        // The tooltip's own effective visibility depends on this property.
-        // Start at its parent so the availability check cannot include itself.
-        || root.hierarchyAvailable(root.parent)
     readonly property var anchorWindow: root.QsWindow.window
     readonly property bool anchorWindowReady:
         root.anchorWindow !== null
         && root.anchorWindow !== undefined
         && root.anchorWindow.backingWindowVisible
     readonly property bool usingFallback: fallbackTooltip.visible
+    // Visibility is intentionally based on the direct anchor only. Walking
+    // the QML parent hierarchy from a binding makes the tooltip's Loader and
+    // its Controls/layout ancestors depend on one another.
     readonly property bool internalVisibleCondition:
-        root.parentHierarchyAvailable
-        && ((extraVisibleCondition
-                && (parent === null
-                    || parent.hovered === undefined
-                    || parent.hovered))
-            || alternativeVisibleCondition)
+        (extraVisibleCondition
+            && (root.parent === null
+                || root.parent.hovered === undefined
+                || root.parent.hovered))
+        || alternativeVisibleCondition
     readonly property var popupWindow: tooltipLoader.item
 
     function updateAnchor() {

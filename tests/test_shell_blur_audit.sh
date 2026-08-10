@@ -128,6 +128,10 @@ require_text Widgets/common/StyledToolTip.qml \
     'PopupToolTip {'
 require_text Widgets/common/PopupToolTip.qml \
     'CompositorBlurRegion {'
+require_text Widgets/common/PopupToolTip.qml \
+    'root.parent.hovered'
+reject_text Widgets/common/PopupToolTip.qml \
+    'parentHierarchyAvailable'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'combinedRegion.regions = combinedRegions'
 require_text Widgets/common/CompositorBlurRegion.qml \

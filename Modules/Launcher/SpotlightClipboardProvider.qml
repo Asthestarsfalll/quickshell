@@ -209,7 +209,9 @@ Item {
     function replaceModel(next) {
         clipboardModel.clear();
         for (let index = 0; index < next.length; index += 1)
-            clipboardModel.append({ modelData: next[index] });
+            clipboardModel.append({
+                clipboardEntryId: String(next[index].id || "")
+            });
     }
 
     function resultForEntry(entry, index, sourceLength, needle) {
@@ -292,7 +294,6 @@ Item {
             return false;
         const next = root.results.slice();
         next[resultIndex] = result;
-        clipboardModel.setProperty(resultIndex, "modelData", result);
         root.results = next;
         return true;
     }
