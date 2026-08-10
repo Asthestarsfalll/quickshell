@@ -101,7 +101,9 @@ require_text Modules/ControlCenter/WallpaperFileBrowser.qml \
 reject_text Modules/ControlCenter/WallpaperFileBrowser.qml \
     'PanelWindow {'
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
-    'subtractedBackgroundItems: [dashboardBlurCutout]'
+    'subtractedBackgroundItems: root.showDashboardHole'
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    '? [dashboardBlurCutout] : []'
 require_text Modules/Launcher/LauncherWindow.qml \
     'CompositorBlurRegion {'
 require_text Modules/Launcher/LauncherWindow.qml \

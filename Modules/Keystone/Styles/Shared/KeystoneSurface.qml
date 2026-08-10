@@ -236,8 +236,8 @@ Variants {
                     visible: false
                     Rectangle {
                         // 【宽度 340，左移至 18 完美对齐右侧卡片】
-                        width: 340
-                        height: 456
+                        width: 340 * root.dashboardHoleProgress
+                        height: 456 * root.dashboardHoleProgress
                         anchors.left: parent.horizontalCenter
                         anchors.leftMargin: 48
                         anchors.top: parent.top
@@ -395,8 +395,34 @@ Variants {
                 property bool isCollapsedHovered: isCollapsedMode && (keystoneMouseArea.containsMouse || collapsedInputArea.containsMouse)
                 property bool hasClosablePopup: !contentPresentationActive
                     && (expanded || isLyricsMode || isHubMode || isToolsMode)
-                
-                property bool showDashboardHole: isHubMode && hubTabIndex === 0
+
+                readonly property bool dashboardTabActive:
+                    isHubMode && hubTabIndex === 0
+                // Grow the fixed final cutout with the same geometry morph as
+                // the surface. Keeping this continuous avoids both a large
+                // cut through the collapsed surface and a late hole pop-in.
+                readonly property real dashboardHoleProgress: {
+                    if (!dashboardTabActive)
+                        return 0;
+
+                    const widthSpan = Math.max(1, targetW - collapsedW);
+                    const heightSpan = Math.max(1, targetH - collapsedH);
+                    return Math.max(0, Math.min(1,
+                        (width - collapsedW) / widthSpan,
+                        (height - collapsedH) / heightSpan));
+                }
+                readonly property bool showDashboardHole:
+                    dashboardTabActive
+                    && dashboardHoleProgress > 0
+
+                // HubContent changes its own currentIndex when a tab is
+                // clicked. Keep the two pieces of state synchronized
+                // explicitly; a child assignment would otherwise break a
+                // binding installed on HubContent.currentIndex.
+                onHubTabIndexChanged: {
+                    if (hub.currentIndex !== root.hubTabIndex)
+                        hub.currentIndex = root.hubTabIndex;
+                }
 
                 property int lyricsW: lyricsWidget.implicitWidth; property int lyricsH: 42 
                 property int expandedW: 540; property int expandedH: 210
@@ -780,8 +806,8 @@ Variants {
                 Item {
                     id: dashboardBlurCutout
 
-                    width: 340
-                    height: 456
+                    width: 340 * root.dashboardHoleProgress
+                    height: 456 * root.dashboardHoleProgress
                     anchors.left: parent.horizontalCenter
                     anchors.leftMargin: 48
                     anchors.top: parent.top
@@ -1188,8 +1214,14 @@ Variants {
                         
                         player: root.currentPlayer
                         screen: keystoneWindow.screen
-                        currentIndex: root.hubTabIndex
-                        onCurrentIndexChanged: root.hubTabIndex = currentIndex
+                        onCurrentIndexChanged: {
+                            if (root.hubTabIndex !== currentIndex)
+                                root.hubTabIndex = currentIndex;
+                        }
+                        Component.onCompleted: {
+                            if (currentIndex !== root.hubTabIndex)
+                                currentIndex = root.hubTabIndex;
+                        }
                         onCloseRequested: root.showHub = false
                         onAvatarEditRequested: {
                             root.showHub = false
@@ -1415,7 +1447,8 @@ Variants {
             CompositorBlurRegion {
                 targetWindow: keystoneWindow
                 backgroundItem: root
-                subtractedBackgroundItems: [dashboardBlurCutout]
+                subtractedBackgroundItems: root.showDashboardHole
+                    ? [dashboardBlurCutout] : []
                 radius: root.radius
             }
         }

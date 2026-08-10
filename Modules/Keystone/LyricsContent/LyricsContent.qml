@@ -122,9 +122,7 @@ Item {
                     id: lyricText
                     anchors.centerIn: parent
                     text: modelData.text
-                    color: parent.isCurrent
-                        ? Appearance.colors.colPrimary
-                        : Appearance.colors.colOnLayer0
+                    color: Appearance.m3colors.darkmode ? "white" : "black"
                     font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Bold
@@ -140,16 +138,6 @@ Item {
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        if (!root.player || root.player.canSeek !== true)
-                            return
-                        const target = Lyrics.timeForIndex(index)
-                        if (target >= 0)
-                            root.player.position = target
-                    }
-                }
             }
         }
 

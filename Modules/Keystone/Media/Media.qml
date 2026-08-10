@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import Clavis.Lyrics
 import qs.Common
+import qs.Components
 import qs.Services
 import qs.Widgets.common
 
@@ -138,24 +139,32 @@ Item {
             }
         }
 
-        Rectangle {
+        Item {
             id: lyricsToggleBtn
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: 16
-            width: 36; height: 36; radius: 18
-            color: root.showLyrics ? root.dynamicThemeColor : "transparent"
-            border.color: root.showLyrics ? "transparent" : "#44FFFFFF"
-            z: 10 
-            
-            Text {
+            width: 36
+            height: 36
+            z: 10
+
+            MaterialSymbol {
                 anchors.centerIn: parent
-                text: "lyrics" 
-                font.family: Fonts.materialSymbolsOutlined
-                font.pixelSize: 18
-                color: root.showLyrics ? root.dynamicOnThemeColor : "white"
+                text: "lyrics"
+                iconSize: 18
+                color: "white"
+                fill: root.showLyrics
+                    || lyricsToggleArea.containsMouse
+                    || lyricsToggleArea.pressed ? 1 : 0
             }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.showLyrics = !root.showLyrics }
+
+            MouseArea {
+                id: lyricsToggleArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.showLyrics = !root.showLyrics
+            }
         }
 
         Item {
