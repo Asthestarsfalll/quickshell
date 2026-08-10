@@ -32,7 +32,6 @@ Item {
                    currentIndex === 2 ? 960 :
                    currentIndex === 3 ? 960 :
                    760
-    Behavior on implicitWidth { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
     
     implicitHeight: 80 + 20 + (
         currentIndex === 0 ? 520 : 
@@ -40,7 +39,6 @@ Item {
         currentIndex === 2 ? 300 :
         570
     )
-    Behavior on implicitHeight { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
 
     RowLayout {
         id: tabBar
