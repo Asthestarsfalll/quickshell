@@ -90,6 +90,17 @@ private:
         NetEaseLyrics,
     };
 
+    enum class ProviderOutcome {
+        Pending,
+        NotFound,
+        CandidateRejected,
+        NoLyrics,
+        Success,
+        TransportError,
+        InvalidResponse,
+        ParseFailure,
+    };
+
     QNetworkAccessManager m_defaultManager;
     QNetworkAccessManager *m_manager = &m_defaultManager;
     QPointer<QNetworkReply> m_reply;
@@ -98,9 +109,14 @@ private:
     quint64 m_generation = 0;
     bool m_forceNetwork = false;
     bool m_autoFallback = false;
-    bool m_searchOnly = false;
-    bool m_hadNetworkError = false;
     int m_netEaseCandidateIndex = 0;
+
+    ProviderOutcome m_lrclibOutcome = ProviderOutcome::Pending;
+    ProviderOutcome m_netEaseSearchOutcome = ProviderOutcome::Pending;
+    ProviderOutcome m_netEaseCandidateOutcome = ProviderOutcome::Pending;
+    bool m_netEaseSawValidLyricResponse = false;
+    bool m_netEaseSawNoLyrics = false;
+    bool m_netEaseSawParseFailure = false;
 
     bool m_loading = false;
     bool m_hasLyrics = false;
@@ -137,6 +153,8 @@ private:
     void clearLyrics();
     void clearCandidates();
     void clearSource();
+    void resetProviderOutcomes();
+    void resetNetEaseSession();
 
     quint64 beginGeneration();
     void cancelInFlight();

@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QNetworkCookieJar>
 #include <QNetworkRequest>
 #include <QRegularExpression>
 #include <QSaveFile>
@@ -19,8 +20,10 @@
 namespace {
 
 constexpr int kLoadDebounceMs = 80;
-constexpr int kNetEaseSearchLimit = 10;
-constexpr double kMinimumNetEaseScore = 55.0;
+constexpr int kNetEaseSearchLimit = 5;
+
+constexpr auto kNetEaseUserAgent =
+    "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0";
 
 QString normalized(const QString &value)
 {
@@ -141,24 +144,41 @@ double candidateScore(const QString &artist, const QString &title, const QString
 
     const double titleScore = textSimilarity(title, candidateTitle);
     const double artistScore = textSimilarity(artist, candidateArtist);
-    if (titleScore < 0.45 || (!artist.isEmpty() && artistScore < 0.35))
+    // The title is the only required identity field. A missing artist/album/
+    // duration is incomplete metadata, not evidence that the candidate is
+    // wrong. Only an obviously unrelated title is rejected here; the score
+    // remains primarily a ranking signal for the fallback loop.
+    if (titleScore < 0.45
+        || (!artist.isEmpty() && !candidateArtist.isEmpty() && artistScore < 0.25))
         return -1.0;
 
-    double score = titleScore * 50.0 + artistScore * 35.0;
-    if (!album.isEmpty() && !candidateAlbum.isEmpty())
-        score += textSimilarity(album, candidateAlbum) * 10.0;
+    double weightedScore = titleScore * 50.0;
+    double availableWeight = 50.0;
+
+    if (!artist.isEmpty() && !candidateArtist.isEmpty()) {
+        weightedScore += artistScore * 35.0;
+        availableWeight += 35.0;
+    }
+
+    if (!album.isEmpty() && !candidateAlbum.isEmpty()) {
+        weightedScore += textSimilarity(album, candidateAlbum) * 10.0;
+        availableWeight += 10.0;
+    }
 
     if (duration > 0.0 && candidateDuration > 0.0) {
         const double difference = std::abs(duration - candidateDuration);
+        double durationScore = 0.0;
         if (difference <= 2.0)
-            score += 25.0;
+            durationScore = 1.0;
         else if (difference <= 5.0)
-            score += 16.0;
+            durationScore = 0.64;
         else if (difference <= 12.0)
-            score += 6.0;
-        else
-            score -= 12.0;
+            durationScore = 0.24;
+        weightedScore += durationScore * 25.0;
+        availableWeight += 25.0;
     }
+
+    double score = availableWeight > 0.0 ? weightedScore / availableWeight * 100.0 : 0.0;
 
     static const QStringList versionTerms = {
         QStringLiteral("live"),
@@ -172,7 +192,7 @@ double candidateScore(const QString &artist, const QString &title, const QString
     };
     for (const QString &term : versionTerms) {
         if (hasVersionTerm(candidateTitle, term) && !hasVersionTerm(title, term))
-            score -= 20.0;
+            score -= 18.0;
     }
     return score;
 }
@@ -273,6 +293,7 @@ void Lyrics::setTrack(const QString &artist, const QString &title,
     clearSource();
     setProvider({});
     setError({});
+    resetProviderOutcomes();
 
     if (m_title.isEmpty()) {
         setLoading(false);
@@ -282,8 +303,6 @@ void Lyrics::setTrack(const QString &artist, const QString &title,
 
     m_forceNetwork = false;
     m_autoFallback = true;
-    m_searchOnly = false;
-    m_hadNetworkError = false;
     setLoading(true);
     setStatus(QStringLiteral("loading"));
     scheduleLoad();
@@ -306,11 +325,10 @@ void Lyrics::clearTrack()
 
     m_forceNetwork = false;
     m_autoFallback = false;
-    m_searchOnly = false;
-    m_hadNetworkError = false;
     m_netEaseCandidates.clear();
     m_pendingCandidate.clear();
     m_netEaseCandidateIndex = 0;
+    resetProviderOutcomes();
     clearCandidates();
     clearLyrics();
     clearSource();
@@ -329,11 +347,10 @@ void Lyrics::refresh()
     m_loadDebounce.stop();
     m_forceNetwork = true;
     m_autoFallback = true;
-    m_searchOnly = false;
-    m_hadNetworkError = false;
     m_netEaseCandidates.clear();
     m_pendingCandidate.clear();
     m_netEaseCandidateIndex = 0;
+    resetProviderOutcomes();
     clearCandidates();
     clearLyrics();
     clearSource();
@@ -353,11 +370,10 @@ void Lyrics::requestCandidates()
     m_loadDebounce.stop();
     m_forceNetwork = true;
     m_autoFallback = false;
-    m_searchOnly = true;
-    m_hadNetworkError = false;
     m_netEaseCandidates.clear();
     m_pendingCandidate.clear();
     m_netEaseCandidateIndex = 0;
+    resetProviderOutcomes();
     clearCandidates();
     setError({});
     setLoading(true);
@@ -380,8 +396,7 @@ void Lyrics::selectCandidate(int index)
     m_loadDebounce.stop();
     m_forceNetwork = true;
     m_autoFallback = false;
-    m_searchOnly = false;
-    m_hadNetworkError = false;
+    resetProviderOutcomes();
     clearLyrics();
     clearSource();
     setSelectedCandidate(candidate);
@@ -402,6 +417,7 @@ void Lyrics::selectCandidate(int index)
         startReply(QUrl(QStringLiteral("https://lrclib.net/api/get/") + id),
                    ReplyKind::LrclibTrack, generation);
     } else if (provider.compare(QStringLiteral("NetEase"), Qt::CaseInsensitive) == 0) {
+        resetNetEaseSession();
         startNetEaseLyrics(candidate, generation);
     } else {
         finishError(QStringLiteral("不支持的歌词 provider"));
@@ -584,6 +600,22 @@ void Lyrics::clearSource()
     m_sourceCandidate.clear();
 }
 
+void Lyrics::resetProviderOutcomes()
+{
+    m_lrclibOutcome = ProviderOutcome::Pending;
+    m_netEaseSearchOutcome = ProviderOutcome::Pending;
+    m_netEaseCandidateOutcome = ProviderOutcome::Pending;
+    m_netEaseSawValidLyricResponse = false;
+    m_netEaseSawNoLyrics = false;
+    m_netEaseSawParseFailure = false;
+}
+
+void Lyrics::resetNetEaseSession()
+{
+    if (m_manager)
+        m_manager->setCookieJar(new QNetworkCookieJar(m_manager));
+}
+
 quint64 Lyrics::beginGeneration()
 {
     ++m_generation;
@@ -619,11 +651,10 @@ void Lyrics::startLoad(quint64 generation, bool bypassCache)
 
     m_forceNetwork = bypassCache;
     m_autoFallback = true;
-    m_searchOnly = false;
-    m_hadNetworkError = false;
     m_netEaseCandidates.clear();
     m_pendingCandidate.clear();
     m_netEaseCandidateIndex = 0;
+    resetProviderOutcomes();
     startLrclibTrack(generation);
 }
 
@@ -780,6 +811,13 @@ void Lyrics::startLrclibSearch(quint64 generation)
 
 void Lyrics::startNetEaseSearch(quint64 generation)
 {
+    if (generation != m_generation)
+        return;
+
+    // NetEase may reject a request carrying stale cookies. Start every
+    // search/fallback chain with a fresh jar, while keeping it alive for the
+    // subsequent lyric requests for the selected candidates.
+    resetNetEaseSession();
     startReply(netEaseSearchUrl(), ReplyKind::NetEaseSearch, generation);
 }
 
@@ -787,7 +825,7 @@ void Lyrics::startNetEaseLyrics(const QVariantMap &candidate, quint64 generation
 {
     const QString id = candidate.value(QStringLiteral("id")).toString();
     if (id.isEmpty()) {
-        m_hadNetworkError = true;
+        m_netEaseCandidateOutcome = ProviderOutcome::CandidateRejected;
         tryNextNetEaseCandidate(generation);
         return;
     }
@@ -810,11 +848,16 @@ void Lyrics::startReply(const QUrl &url, ReplyKind kind, quint64 generation)
     QNetworkRequest request(url);
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                          QNetworkRequest::AlwaysNetwork);
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Clavis/lyrics"));
     request.setRawHeader("Accept", "application/json");
-    request.setRawHeader("Cache-Control", "no-cache");
-    if (url.host().contains(QStringLiteral("music.163.com")))
+    request.setRawHeader("Cache-Control", "no-cache, no-store");
+    request.setRawHeader("Pragma", "no-cache");
+    request.setRawHeader("Connection", "close");
+    if (url.host().contains(QStringLiteral("music.163.com"))) {
+        request.setRawHeader("User-Agent", kNetEaseUserAgent);
         request.setRawHeader("Referer", "https://music.163.com/");
+    } else {
+        request.setRawHeader("User-Agent", "Clavis/lyrics");
+    }
 
     QNetworkReply *reply = m_manager->get(request);
     m_reply = reply;
@@ -845,63 +888,150 @@ void Lyrics::handleReply(QNetworkReply *reply, ReplyKind kind, quint64 generatio
     const QByteArray body = reply->readAll();
     reply->deleteLater();
 
-    if (requestFailed || (statusCode > 0 && statusCode >= 400))
-        m_hadNetworkError = true;
+    const bool httpFailure = statusCode >= 400;
+    const bool notFound = statusCode == 404;
+
+    if (requestFailed || httpFailure) {
+        switch (kind) {
+        case ReplyKind::LrclibTrack:
+            m_lrclibOutcome = notFound ? ProviderOutcome::NotFound
+                                        : ProviderOutcome::TransportError;
+            if (m_autoFallback)
+                startNetEaseSearch(generation);
+            else if (notFound)
+                finishEmpty();
+            else
+                finishError(QStringLiteral("LRCLIB 请求失败"));
+            return;
+        case ReplyKind::LrclibSearch:
+            m_lrclibOutcome = notFound ? ProviderOutcome::NotFound
+                                        : ProviderOutcome::TransportError;
+            startNetEaseSearch(generation);
+            return;
+        case ReplyKind::NetEaseSearch:
+            m_netEaseSearchOutcome = notFound ? ProviderOutcome::NotFound
+                                               : ProviderOutcome::TransportError;
+            if (m_autoFallback) {
+                m_netEaseCandidateIndex = 0;
+                tryNextNetEaseCandidate(generation);
+            } else if (notFound) {
+                finishEmpty();
+            } else {
+                finishError(QStringLiteral("NetEase 搜索请求失败"));
+            }
+            return;
+        case ReplyKind::NetEaseLyrics:
+            m_netEaseCandidateOutcome = notFound ? ProviderOutcome::NoLyrics
+                                                  : ProviderOutcome::TransportError;
+            if (notFound)
+                m_netEaseSawNoLyrics = true;
+            if (m_autoFallback)
+                tryNextNetEaseCandidate(generation);
+            else if (notFound)
+                finishEmpty();
+            else
+                finishError(QStringLiteral("NetEase 歌词请求失败"));
+            return;
+        }
+    }
 
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(body, &parseError);
     const bool validJson = parseError.error == QJsonParseError::NoError;
-    if (!validJson)
-        m_hadNetworkError = true;
+    if (!validJson) {
+        switch (kind) {
+        case ReplyKind::LrclibTrack:
+            m_lrclibOutcome = ProviderOutcome::InvalidResponse;
+            if (m_autoFallback)
+                startNetEaseSearch(generation);
+            else
+                finishError(QStringLiteral("LRCLIB 返回了无效响应"));
+            return;
+        case ReplyKind::LrclibSearch:
+            m_lrclibOutcome = ProviderOutcome::InvalidResponse;
+            startNetEaseSearch(generation);
+            return;
+        case ReplyKind::NetEaseSearch:
+            m_netEaseSearchOutcome = ProviderOutcome::InvalidResponse;
+            if (m_autoFallback) {
+                m_netEaseCandidateIndex = 0;
+                tryNextNetEaseCandidate(generation);
+            } else {
+                finishError(QStringLiteral("NetEase 搜索返回了无效响应"));
+            }
+            return;
+        case ReplyKind::NetEaseLyrics:
+            m_netEaseCandidateOutcome = ProviderOutcome::InvalidResponse;
+            if (m_autoFallback)
+                tryNextNetEaseCandidate(generation);
+            else
+                finishError(QStringLiteral("NetEase 歌词返回了无效响应"));
+            return;
+        }
+    }
 
     switch (kind) {
     case ReplyKind::LrclibTrack:
-        if (!requestFailed && validJson && document.isObject()
-            && handleLrclibTrack(document.object(), generation)) {
+        if (!document.isObject()) {
+            m_lrclibOutcome = ProviderOutcome::InvalidResponse;
+            if (m_autoFallback)
+                startNetEaseSearch(generation);
+            else
+                finishError(QStringLiteral("LRCLIB 返回了无效响应"));
+            return;
+        }
+        if (handleLrclibTrack(document.object(), generation)) {
             return;
         }
         if (m_autoFallback) {
             startNetEaseSearch(generation);
-        } else if (m_searchOnly) {
-            finishError(QStringLiteral("LRCLIB 歌词不可用"));
+        } else if (m_lrclibOutcome == ProviderOutcome::NotFound) {
+            finishEmpty();
         } else {
-            finishError(QStringLiteral("LRCLIB 歌词不可用"));
+            finishError(QStringLiteral("LRCLIB 歌词内容不可用"));
         }
         return;
 
     case ReplyKind::LrclibSearch:
-        if (!requestFailed && validJson)
+        if (!document.isArray()) {
+            m_lrclibOutcome = ProviderOutcome::InvalidResponse;
+        } else {
             handleLrclibSearch(document, generation);
+        }
         startNetEaseSearch(generation);
         return;
 
     case ReplyKind::NetEaseSearch:
-        if (!requestFailed && validJson)
+        if (document.isObject())
             handleNetEaseSearch(document, generation);
+        else
+            m_netEaseSearchOutcome = ProviderOutcome::InvalidResponse;
         if (m_autoFallback) {
             m_netEaseCandidateIndex = 0;
             tryNextNetEaseCandidate(generation);
         } else {
-            setLoading(false);
-            if (m_hadNetworkError && m_candidates.isEmpty())
-                finishError(statusCode > 0
-                                ? QStringLiteral("歌词服务返回 HTTP %1").arg(statusCode)
-                                : QStringLiteral("歌词服务不可用"));
-            else if (m_candidates.isEmpty())
+            if (m_netEaseSearchOutcome == ProviderOutcome::TransportError
+                || m_netEaseSearchOutcome == ProviderOutcome::InvalidResponse) {
+                finishError(QStringLiteral("NetEase 搜索不可用"));
+            } else if (m_candidates.isEmpty()) {
                 finishEmpty();
-            else if (m_status == QStringLiteral("loading"))
+            } else {
+                setLoading(false);
                 setStatus(QStringLiteral("empty"));
+            }
         }
         return;
 
     case ReplyKind::NetEaseLyrics:
-        if (!requestFailed && validJson && document.isObject()
-            && handleNetEaseLyrics(document.object(), generation)) {
+        if (!document.isObject()) {
+            m_netEaseCandidateOutcome = ProviderOutcome::InvalidResponse;
+        } else if (handleNetEaseLyrics(document.object(), generation)) {
             return;
         }
-        m_hadNetworkError = true;
         if (m_autoFallback)
             tryNextNetEaseCandidate(generation);
+        else if (m_netEaseCandidateOutcome == ProviderOutcome::NoLyrics)
+            finishEmpty();
         else
             finishError(QStringLiteral("NetEase 歌词内容不可用"));
         return;
@@ -914,8 +1044,10 @@ bool Lyrics::handleLrclibTrack(const QJsonObject &json, quint64 generation)
                                                QStringLiteral("synced_lyrics")});
     const QString plain = firstString(json, {QStringLiteral("plainLyrics"),
                                               QStringLiteral("plain_lyrics")});
-    if (synced.isEmpty() && plain.isEmpty())
+    if (synced.isEmpty() && plain.isEmpty()) {
+        m_lrclibOutcome = ProviderOutcome::NotFound;
         return false;
+    }
 
     QVariantMap candidate = m_selectedCandidate;
     const QString id = jsonId(json.value(QStringLiteral("id")));
@@ -930,36 +1062,73 @@ bool Lyrics::handleLrclibTrack(const QJsonObject &json, quint64 generation)
     candidate.insert(QStringLiteral("syncedLyrics"), synced);
     candidate.insert(QStringLiteral("plainLyrics"), plain);
 
-    return acceptRawLyrics(QStringLiteral("LRCLIB"), synced, plain, candidate, generation, true);
+    const bool accepted = acceptRawLyrics(QStringLiteral("LRCLIB"), synced, plain,
+                                          candidate, generation, true);
+    m_lrclibOutcome = accepted ? ProviderOutcome::Success : ProviderOutcome::ParseFailure;
+    return accepted;
 }
 
 void Lyrics::handleLrclibSearch(const QJsonDocument &document, quint64 generation)
 {
     if (generation != m_generation || !document.isArray())
         return;
-    appendCandidates(parseLrclibCandidates(document));
+    const QVariantList candidates = parseLrclibCandidates(document);
+    appendCandidates(candidates);
+    m_lrclibOutcome = candidates.isEmpty() ? ProviderOutcome::NotFound
+                                           : ProviderOutcome::Success;
 }
 
 void Lyrics::handleNetEaseSearch(const QJsonDocument &document, quint64 generation)
 {
     if (generation != m_generation)
         return;
+    const QJsonObject result = document.object().value(QStringLiteral("result")).toObject();
+    const QJsonValue songsValue = result.value(QStringLiteral("songs"));
+    if (!songsValue.isArray()) {
+        m_netEaseSearchOutcome = ProviderOutcome::InvalidResponse;
+        return;
+    }
+
     m_netEaseCandidates = parseNetEaseCandidates(document);
     appendCandidates(m_netEaseCandidates);
+    if (songsValue.toArray().isEmpty())
+        m_netEaseSearchOutcome = ProviderOutcome::NotFound;
+    else if (m_netEaseCandidates.isEmpty())
+        m_netEaseSearchOutcome = ProviderOutcome::CandidateRejected;
+    else
+        m_netEaseSearchOutcome = ProviderOutcome::Success;
 }
 
 bool Lyrics::handleNetEaseLyrics(const QJsonObject &json, quint64 generation)
 {
+    const QJsonValue lrcValue = json.value(QStringLiteral("lrc"));
+    const QJsonValue translatedValue = json.value(QStringLiteral("tlyric"));
+    if ((!lrcValue.isUndefined() && !lrcValue.isObject())
+        || (!translatedValue.isUndefined() && !translatedValue.isObject())
+        || (lrcValue.isUndefined() && translatedValue.isUndefined())) {
+        m_netEaseCandidateOutcome = ProviderOutcome::InvalidResponse;
+        return false;
+    }
+
+    m_netEaseSawValidLyricResponse = true;
     const QJsonObject lrc = json.value(QStringLiteral("lrc")).toObject();
     const QJsonObject translated = json.value(QStringLiteral("tlyric")).toObject();
     const QString synced = firstString(lrc, {QStringLiteral("lyric")});
     const QString plain = synced.isEmpty()
         ? firstString(translated, {QStringLiteral("lyric")}) : QString();
-    if (synced.isEmpty() && plain.isEmpty())
+    if (synced.isEmpty() && plain.isEmpty()) {
+        m_netEaseCandidateOutcome = ProviderOutcome::NoLyrics;
+        m_netEaseSawNoLyrics = true;
         return false;
+    }
 
-    return acceptRawLyrics(QStringLiteral("NetEase"), synced, plain,
-                           m_pendingCandidate, generation, true);
+    const bool accepted = acceptRawLyrics(QStringLiteral("NetEase"), synced, plain,
+                                          m_pendingCandidate, generation, true);
+    m_netEaseCandidateOutcome = accepted ? ProviderOutcome::Success
+                                         : ProviderOutcome::ParseFailure;
+    if (!accepted)
+        m_netEaseSawParseFailure = true;
+    return accepted;
 }
 
 void Lyrics::tryNextNetEaseCandidate(quint64 generation)
@@ -969,16 +1138,31 @@ void Lyrics::tryNextNetEaseCandidate(quint64 generation)
 
     while (m_netEaseCandidateIndex < m_netEaseCandidates.size()) {
         const QVariantMap candidate = m_netEaseCandidates.at(m_netEaseCandidateIndex++).toMap();
-        if (candidate.value(QStringLiteral("score")).toDouble() < kMinimumNetEaseScore)
+        if (candidate.value(QStringLiteral("score")).toDouble() < 0.0)
             continue;
         startNetEaseLyrics(candidate, generation);
         return;
     }
 
-    if (m_hadNetworkError)
-        finishError(QStringLiteral("NetEase 歌词不可用"));
-    else
+    if (m_netEaseSearchOutcome == ProviderOutcome::TransportError
+        || m_netEaseSearchOutcome == ProviderOutcome::InvalidResponse) {
+        finishError(QStringLiteral("NetEase 搜索不可用"));
+    } else if (m_lrclibOutcome == ProviderOutcome::TransportError
+               || m_lrclibOutcome == ProviderOutcome::InvalidResponse
+               || m_lrclibOutcome == ProviderOutcome::ParseFailure) {
+        finishError(QStringLiteral("歌词服务返回了无效内容"));
+    } else if (!m_netEaseCandidates.isEmpty()
+               && !m_netEaseSawNoLyrics
+               && !m_netEaseSawValidLyricResponse
+               && (m_netEaseCandidateOutcome == ProviderOutcome::TransportError
+                   || m_netEaseCandidateOutcome == ProviderOutcome::InvalidResponse
+                   || m_netEaseSawParseFailure)) {
+        finishError(QStringLiteral("NetEase 歌词请求失败"));
+    } else {
+        // A valid search with no lyrics is a normal not-found result, even if
+        // LRCLIB previously returned HTTP 404 or a candidate was rejected.
         finishEmpty();
+    }
 }
 
 void Lyrics::appendCandidates(const QVariantList &candidates)
@@ -1073,7 +1257,7 @@ QVariantList Lyrics::parseNetEaseCandidates(const QJsonDocument &document) const
             QStringLiteral("NetEase"), id, item.value(QStringLiteral("name")).toString(),
             artistNames.join(QStringLiteral(", ")), album, jsonDurationSeconds(item));
         const double score = candidateScore(m_artist, m_title, m_album, m_duration, candidate);
-        if (score < kMinimumNetEaseScore)
+        if (score < 0.0)
             continue;
         candidate.insert(QStringLiteral("score"), score);
         result.append(candidate);
@@ -1265,12 +1449,13 @@ QUrl Lyrics::lrclibUrl(bool search) const
 
 QUrl Lyrics::netEaseSearchUrl() const
 {
-    QUrl url(QStringLiteral("https://music.163.com/api/search/get/web"));
+    QUrl url(QStringLiteral("https://music.163.com/api/search/get"));
     QUrlQuery query;
-    query.addQueryItem(QStringLiteral("s"), m_artist + QLatin1Char(' ') + m_title);
+    const QString searchText = m_artist.isEmpty()
+        ? m_title
+        : m_title + QLatin1Char(' ') + m_artist;
+    query.addQueryItem(QStringLiteral("s"), searchText);
     query.addQueryItem(QStringLiteral("type"), QStringLiteral("1"));
-    query.addQueryItem(QStringLiteral("offset"), QStringLiteral("0"));
-    query.addQueryItem(QStringLiteral("total"), QStringLiteral("true"));
     query.addQueryItem(QStringLiteral("limit"), QString::number(kNetEaseSearchLimit));
     url.setQuery(query);
     return url;
@@ -1281,8 +1466,8 @@ QUrl Lyrics::netEaseLyricsUrl(const QString &id) const
     QUrl url(QStringLiteral("https://music.163.com/api/song/lyric"));
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("id"), id);
-    query.addQueryItem(QStringLiteral("lv"), QStringLiteral("-1"));
-    query.addQueryItem(QStringLiteral("kv"), QStringLiteral("-1"));
+    query.addQueryItem(QStringLiteral("lv"), QStringLiteral("1"));
+    query.addQueryItem(QStringLiteral("kv"), QStringLiteral("1"));
     query.addQueryItem(QStringLiteral("tv"), QStringLiteral("-1"));
     url.setQuery(query);
     return url;

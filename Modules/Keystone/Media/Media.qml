@@ -23,6 +23,12 @@ Item {
     property string album: (player && player.trackAlbum) ? player.trackAlbum : ""
     readonly property bool isActive: root.visible && root.player
     property bool showLyrics: false 
+    readonly property var lyricsModel: Lyrics.lyrics
+
+    onShowLyricsChanged: {
+        if (root.showLyrics)
+            Qt.callLater(lyricsView.positionPlaybackLine);
+    }
 
     readonly property string spectrumToken: "keystone-media"
     Component.onCompleted: {
@@ -228,30 +234,95 @@ Item {
                 Text { text: root.album; color: "#888888"; font.pixelSize: 12; Layout.alignment: Qt.AlignHCenter; elide: Text.ElideRight; Layout.maximumWidth: root.width - 80 }
             }
 
-            Item {
-                id: lyricsContainer
-                width: stage.width - 280
-                height: 240
-                y: 10
-                StyledListView {
-                    id: lyricsView
-                    anchors.fill: parent
-                    model: Lyrics.lyrics
-                    interactive: true
-                    showVerticalScrollBar: false
-                    animateAppearance: false
-                    animateMovement: false
-                    smoothWheelEnabled: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    spacing: 8
+                Item {
+                    id: lyricsContainer
+                    width: stage.width - 280
+                    height: 240
+                    y: 10
 
-                    highlightRangeMode: ListView.ApplyRange
-                    preferredHighlightBegin: height * 0.32
-                    preferredHighlightEnd: height * 0.68
-                    highlightMoveDuration: Appearance.animation.expressiveDefaultSpatial.duration
-                    highlightMoveVelocity: -1
+                    Text {
+                        id: firstLineMeasure
 
-                    currentIndex: root.playbackIndex
+                        visible: false
+                        width: lyricsView.width
+                        text: root.lyricsModel && root.lyricsModel.length > 0
+                            ? String(root.lyricsModel[0].text || "") : ""
+                        font.family: Fonts.ui
+                        font.pixelSize: 18
+                        font.bold: true
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Text {
+                        id: lastLineMeasure
+
+                        visible: false
+                        width: lyricsView.width
+                        text: root.lyricsModel && root.lyricsModel.length > 0
+                            ? String(root.lyricsModel[root.lyricsModel.length - 1].text || "") : ""
+                        font.family: Fonts.ui
+                        font.pixelSize: 18
+                        font.bold: true
+                        wrapMode: Text.WordWrap
+                    }
+
+                    StyledListView {
+                        id: lyricsView
+
+                        readonly property real minimumLineHeight: 34
+                        readonly property real firstLineHeight: Math.max(
+                            minimumLineHeight, firstLineMeasure.implicitHeight)
+                        readonly property real lastLineHeight: Math.max(
+                            minimumLineHeight, lastLineMeasure.implicitHeight)
+                        readonly property real currentLineHeight: Math.max(
+                            minimumLineHeight, currentItem ? currentItem.height : 0)
+                        readonly property real leadingSpacerHeight: count > 0
+                            ? Math.max(0, (height - firstLineHeight) / 2) : 0
+                        readonly property real trailingSpacerHeight: count > 0
+                            ? Math.max(0, (height - lastLineHeight) / 2) : 0
+
+                        function positionPlaybackLine() {
+                            const index = root.playbackIndex;
+                            if (index >= 0 && index < count)
+                                positionViewAtIndex(index, ListView.Center);
+                        }
+
+                        anchors.fill: parent
+                        model: root.lyricsModel
+                        interactive: true
+                        showVerticalScrollBar: false
+                        animateAppearance: false
+                        animateMovement: false
+                        smoothWheelEnabled: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        spacing: 8
+
+                        highlightRangeMode: ListView.ApplyRange
+                        preferredHighlightBegin: Math.max(0, (height - currentLineHeight) / 2)
+                        preferredHighlightEnd: Math.min(height, (height + currentLineHeight) / 2)
+                        highlightMoveDuration: Appearance.animation.expressiveDefaultSpatial.duration
+                        highlightMoveVelocity: -1
+
+                        currentIndex: root.playbackIndex
+
+                        header: Item {
+                            width: lyricsView.width
+                            height: lyricsView.leadingSpacerHeight
+                        }
+
+                        footer: Item {
+                            width: lyricsView.width
+                            height: lyricsView.trailingSpacerHeight
+                        }
+
+                        Component.onCompleted: Qt.callLater(positionPlaybackLine)
+                        onCountChanged: Qt.callLater(positionPlaybackLine)
+                        onCurrentIndexChanged: {
+                            if (currentIndex >= 0)
+                                Qt.callLater(positionPlaybackLine);
+                        }
+                        onWidthChanged: Qt.callLater(positionPlaybackLine)
+                        onHeightChanged: Qt.callLater(positionPlaybackLine)
 
                     delegate: Item {
                         id: lyricDelegate
@@ -272,11 +343,14 @@ Item {
                         transformOrigin: Item.Left
 
                         Behavior on scale {
-                            SpringAnimation {
-                                spring: 3.5
-                                damping: 0.45
-                                mass: 0.9
-                                epsilon: 0.01
+                            NumberAnimation {
+                                duration: Appearance.animation.expressiveFastEffects.duration
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: [
+                                    0.2, 0.0,
+                                    0.0, 1.0,
+                                    1.0, 1.0
+                                ]
                             }
                         }
                         Behavior on opacity {
@@ -295,9 +369,9 @@ Item {
                             text: modelData.text || ""
                             color: !root.synchronizedLyrics
                                 ? "#ddffffff"
-                                : (lyricDelegate.hovered
-                                ? "#ddffffff"
-                                : (lyricDelegate.activeLine ? "white" : "#99ffffff"))
+                                : (lyricDelegate.activeLine
+                                ? "white"
+                                : (lyricDelegate.hovered ? "#ddffffff" : "#99ffffff"))
                             font.family: Fonts.ui
                             font.pixelSize: 18
                             font.bold: true
