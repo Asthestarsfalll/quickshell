@@ -10,7 +10,8 @@ Item {
 
     property var player: null
     property var screen: null
-    readonly property Item holeGlassItem: holeCardCarousel.blurBackgroundItem
+    readonly property var holeGlassItems:
+        holeCardCarousel.blurBackgroundItems
 
     implicitWidth: 860
     implicitHeight: 520

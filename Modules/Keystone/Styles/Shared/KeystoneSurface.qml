@@ -1436,8 +1436,7 @@ Variants {
                 subtractedBackgroundItems: root.showDashboardHole
                     ? [dashboardBlurCutout] : []
                 postSubtractionBackgroundItems: root.showDashboardHole
-                    && hub.dashboardGlassItem
-                    ? [hub.dashboardGlassItem] : []
+                    ? hub.dashboardGlassItems : []
                 radius: root.radius
             }
         }

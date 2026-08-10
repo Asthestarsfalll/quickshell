@@ -121,11 +121,17 @@ require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'postSubtractionBackgroundItems: root.showDashboardHole'
 require_text Modules/Keystone/DashboardContent/HoleCardCarousel.qml \
-    'readonly property Item blurBackgroundItem: glassBackdrop'
+    'readonly property var blurBackgroundItems: ['
+require_text Modules/Keystone/DashboardContent/HoleCardCarousel.qml \
+    'readonly property Item glassBackgroundItem: glassBackground'
 require_text Modules/Keystone/DashboardContent/HoleCardCarousel.qml \
     'anchors.margins: 10 + cardRoot.contentMargin'
 reject_text Modules/Keystone/DashboardContent/HoleCardCarousel.qml \
-    'id: cardBackground'
+    'glassBackdrop'
+require_text Modules/Keystone/DashboardContent/DashboardContent.qml \
+    'readonly property var holeGlassItems:'
+require_text Modules/Keystone/Hub/HubContent.qml \
+    'readonly property var dashboardGlassItems:'
 reject_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'id: solidRootBg'
 require_text Modules/Lock/LockSurface.qml \

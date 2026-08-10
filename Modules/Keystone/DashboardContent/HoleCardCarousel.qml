@@ -12,11 +12,16 @@ Item {
     property var screen: null
     readonly property int cardCount: 4
     readonly property real switchThreshold: width * 0.2
-    readonly property Item blurBackgroundItem: glassBackdrop
     readonly property real glassAlpha:
         BlurService.enabled
             ? Math.min(PersonalizationConfig.shellBackgroundOpacity, 0.68)
             : 1.0
+    readonly property var blurBackgroundItems: [
+        scheduleCard.glassBackgroundItem,
+        mediaCard.glassBackgroundItem,
+        weatherCard.glassBackgroundItem,
+        quickSettingsPage.glassBackgroundItem
+    ]
 
     property real cardOffset: 0
     property real wheelRemainder: 0
@@ -90,21 +95,22 @@ Item {
         Qt.callLater(startQueuedStep);
     }
 
-    Rectangle {
-        id: glassBackdrop
-
-        anchors.fill: parent
-        anchors.margins: 10
-        radius: 20
-        color: Appearance.applyAlpha(
-            Appearance.colors.colLayer0, root.glassAlpha)
-    }
-
     component CarouselCard: Item {
         id: cardRoot
 
         default property alias content: innerContainer.data
         property real contentMargin: 14
+        readonly property Item glassBackgroundItem: glassBackground
+
+        Rectangle {
+            id: glassBackground
+
+            anchors.fill: parent
+            anchors.margins: 10
+            radius: 20
+            color: Appearance.applyAlpha(
+                Appearance.colors.colLayer0, root.glassAlpha)
+        }
 
         Item {
             id: innerContainer
@@ -115,6 +121,7 @@ Item {
     }
 
     CarouselCard {
+        id: scheduleCard
         width: root.width
         height: root.height
         x: root.cardX(0)
@@ -125,6 +132,7 @@ Item {
     }
 
     CarouselCard {
+        id: mediaCard
         width: root.width
         height: root.height
         x: root.cardX(1)
@@ -137,6 +145,7 @@ Item {
     }
 
     CarouselCard {
+        id: weatherCard
         width: root.width
         height: root.height
         x: root.cardX(2)
@@ -149,6 +158,7 @@ Item {
     }
 
     CarouselCard {
+        id: quickSettingsPage
         width: root.width
         height: root.height
         x: root.cardX(3)

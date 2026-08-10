@@ -17,8 +17,8 @@ Item {
     property var player: null
     property var screen: null
     property int currentIndex: 0
-    readonly property Item dashboardGlassItem:
-        dashboardContent.holeGlassItem
+    readonly property var dashboardGlassItems:
+        dashboardContent.holeGlassItems
     
     Shortcut {
         sequence: "Tab"
