@@ -302,6 +302,7 @@ Item {
                         preferredHighlightEnd: Math.min(height, (height + currentLineHeight) / 2)
                         highlightMoveDuration: Appearance.animation.expressiveDefaultSpatial.duration
                         highlightMoveVelocity: -1
+                        highlightFollowsCurrentItem: true
 
                         currentIndex: root.playbackIndex
 
@@ -317,10 +318,6 @@ Item {
 
                         Component.onCompleted: Qt.callLater(positionPlaybackLine)
                         onCountChanged: Qt.callLater(positionPlaybackLine)
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0)
-                                Qt.callLater(positionPlaybackLine);
-                        }
                         onWidthChanged: Qt.callLater(positionPlaybackLine)
                         onHeightChanged: Qt.callLater(positionPlaybackLine)
 
@@ -344,13 +341,9 @@ Item {
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Appearance.animation.expressiveFastEffects.duration
-                                easing.type: Easing.BezierSpline
-                                easing.bezierCurve: [
-                                    0.2, 0.0,
-                                    0.0, 1.0,
-                                    1.0, 1.0
-                                ]
+                                duration: Appearance.animation.expressiveDefaultEffects.duration
+                                easing.type: Appearance.animation.expressiveDefaultEffects.type
+                                easing.bezierCurve: Appearance.animation.expressiveDefaultEffects.bezierCurve
                             }
                         }
                         Behavior on opacity {
