@@ -17,6 +17,8 @@ Item {
     property var player: null
     property var screen: null
     property int currentIndex: 0
+    readonly property Item dashboardGlassItem:
+        dashboardContent.holeGlassItem
     
     Shortcut {
         sequence: "Tab"
@@ -116,6 +118,7 @@ Item {
         anchors.topMargin: 10 
 
         DashboardContent {
+            id: dashboardContent
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
             player: root.player

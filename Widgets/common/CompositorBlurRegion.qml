@@ -10,6 +10,7 @@ Item {
     required property Item backgroundItem
     property var additionalBackgroundItems: []
     property var subtractedBackgroundItems: []
+    property var postSubtractionBackgroundItems: []
     property bool blurEnabled: true
     property bool compositorEnabled: BlurService.enabled
     property real radius: 0
@@ -20,10 +21,12 @@ Item {
     property bool destroying: false
     property var _regionObjects: []
     property var _subtractionRegionObjects: []
+    property var _postSubtractionRegionObjects: []
 
     readonly property int visibleBackgroundCount: {
         let count = 0;
-        const items = root.allBackgroundItems();
+        const items = root.allBackgroundItems().concat(
+            root.allPostSubtractionBackgroundItems());
         for (let index = 0; index < items.length; ++index) {
             const item = items[index];
             if (item && item.visible && item.opacity > 0
@@ -45,6 +48,8 @@ Item {
     readonly property alias regionObjects: root._regionObjects
     readonly property alias subtractionRegionObjects:
         root._subtractionRegionObjects
+    readonly property alias postSubtractionRegionObjects:
+        root._postSubtractionRegionObjects
 
     visible: false
 
@@ -76,12 +81,27 @@ Item {
         return items;
     }
 
+    function allPostSubtractionBackgroundItems() {
+        const items = [];
+        const postSubtraction =
+            root.postSubtractionBackgroundItems || [];
+        for (let index = 0; index < postSubtraction.length; ++index) {
+            const item = postSubtraction[index];
+            if (item && items.indexOf(item) < 0)
+                items.push(item);
+        }
+        return items;
+    }
+
     function rebuildRegions() {
         for (let index = 0; index < root._regionObjects.length; ++index)
             root._regionObjects[index].destroy();
         for (let index = 0;
                 index < root._subtractionRegionObjects.length; ++index)
             root._subtractionRegionObjects[index].destroy();
+        for (let index = 0;
+                index < root._postSubtractionRegionObjects.length; ++index)
+            root._postSubtractionRegionObjects[index].destroy();
 
         const regions = [];
         const items = root.allBackgroundItems();
@@ -104,10 +124,28 @@ Item {
         }
         root._subtractionRegionObjects = subtractionRegions;
 
+        const postSubtractionRegions = [];
+        const postSubtractionItems =
+            root.allPostSubtractionBackgroundItems();
+        for (let index = 0;
+                index < postSubtractionItems.length; ++index) {
+            const region = itemRegionComponent.createObject(
+                combinedRegion,
+                { "sourceItem": postSubtractionItems[index] });
+            if (region)
+                postSubtractionRegions.push(region);
+        }
+        root._postSubtractionRegionObjects = postSubtractionRegions;
+
+        // Region children are evaluated in order. Keep the operation chain
+        // explicit: (base + additional) - subtraction + post-subtraction.
         const combinedRegions = regions.slice();
         for (let index = 0;
                 index < subtractionRegions.length; ++index)
             combinedRegions.push(subtractionRegions[index]);
+        for (let index = 0;
+                index < postSubtractionRegions.length; ++index)
+            combinedRegions.push(postSubtractionRegions[index]);
         if (root.clipItem)
             combinedRegions.push(clipRegion);
         combinedRegion.regions = combinedRegions;
@@ -145,6 +183,7 @@ Item {
     onBackgroundItemChanged: rebuildRegions()
     onAdditionalBackgroundItemsChanged: rebuildRegions()
     onSubtractedBackgroundItemsChanged: rebuildRegions()
+    onPostSubtractionBackgroundItemsChanged: rebuildRegions()
     onClipItemChanged: rebuildRegions()
     onSubmittedRegionChanged: publish()
 
@@ -250,6 +289,7 @@ Item {
                 && sourceItem.radius !== undefined
                 ? Math.max(0, Math.round(sourceItem.radius))
                 : Math.max(0, Math.round(root.radius))
+            intersection: Intersection.Combine
         }
     }
 

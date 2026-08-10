@@ -10,6 +10,7 @@ Item {
 
     property var player: null
     property var screen: null
+    readonly property Item holeGlassItem: holeCardCarousel.blurBackgroundItem
 
     implicitWidth: 860
     implicitHeight: 520
@@ -43,6 +44,7 @@ Item {
             Layout.fillHeight: true
 
             HoleCardCarousel {
+                id: holeCardCarousel
                 width: 340
                 anchors.left: parent.left
                 anchors.leftMargin: 30

@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Common
+import qs.Services
 
 Item {
     id: root
@@ -11,6 +12,11 @@ Item {
     property var screen: null
     readonly property int cardCount: 4
     readonly property real switchThreshold: width * 0.2
+    readonly property Item blurBackgroundItem: glassBackdrop
+    readonly property real glassAlpha:
+        BlurService.enabled
+            ? Math.min(PersonalizationConfig.shellBackgroundOpacity, 0.68)
+            : 1.0
 
     property real cardOffset: 0
     property real wheelRemainder: 0
@@ -84,26 +90,27 @@ Item {
         Qt.callLater(startQueuedStep);
     }
 
+    Rectangle {
+        id: glassBackdrop
+
+        anchors.fill: parent
+        anchors.margins: 10
+        radius: 20
+        color: Appearance.applyAlpha(
+            Appearance.colors.colLayer0, root.glassAlpha)
+    }
+
     component CarouselCard: Item {
         id: cardRoot
 
         default property alias content: innerContainer.data
         property real contentMargin: 14
 
-        Rectangle {
-            id: cardBackground
-
-            anchors.fill: parent
-            anchors.margins: 10
-            radius: 20
-            color: Appearance.colors.colLayer0
-        }
-
         Item {
             id: innerContainer
 
-            anchors.fill: cardBackground
-            anchors.margins: cardRoot.contentMargin
+            anchors.fill: parent
+            anchors.margins: 10 + cardRoot.contentMargin
         }
     }
 

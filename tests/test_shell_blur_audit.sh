@@ -118,6 +118,14 @@ require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'context.globalCompositeOperation ='
 require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     '"destination-out";'
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'postSubtractionBackgroundItems: root.showDashboardHole'
+require_text Modules/Keystone/DashboardContent/HoleCardCarousel.qml \
+    'readonly property Item blurBackgroundItem: glassBackdrop'
+require_text Modules/Keystone/DashboardContent/HoleCardCarousel.qml \
+    'anchors.margins: 10 + cardRoot.contentMargin'
+reject_text Modules/Keystone/DashboardContent/HoleCardCarousel.qml \
+    'id: cardBackground'
 reject_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
     'id: solidRootBg'
 require_text Modules/Lock/LockSurface.qml \
@@ -138,6 +146,16 @@ require_text Widgets/common/CompositorBlurRegion.qml \
     'combinedRegion.regions = combinedRegions'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'intersection: Intersection.Subtract'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'property var postSubtractionBackgroundItems: []'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    '_postSubtractionRegionObjects'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'intersection: Intersection.Combine'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'onPostSubtractionBackgroundItemsChanged: rebuildRegions()'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'combinedRegions.push(postSubtractionRegions[index])'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'property TransformWatcher geometryWatcher: TransformWatcher {'
 require_text Widgets/common/CompositorBlurRegion.qml \
