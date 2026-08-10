@@ -1437,6 +1437,8 @@ Variants {
                     ? [dashboardBlurCutout] : []
                 postSubtractionBackgroundItems: root.showDashboardHole
                     ? hub.dashboardGlassItems : []
+                postSubtractionClipItem: root.showDashboardHole
+                    ? dashboardBlurCutout : null
                 radius: root.radius
             }
         }

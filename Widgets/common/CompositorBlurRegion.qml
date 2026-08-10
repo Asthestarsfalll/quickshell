@@ -11,6 +11,8 @@ Item {
     property var additionalBackgroundItems: []
     property var subtractedBackgroundItems: []
     property var postSubtractionBackgroundItems: []
+    // Applies only to regions added after subtraction.
+    property Item postSubtractionClipItem: null
     property bool blurEnabled: true
     property bool compositorEnabled: BlurService.enabled
     property real radius: 0
@@ -129,9 +131,12 @@ Item {
             root.allPostSubtractionBackgroundItems();
         for (let index = 0;
                 index < postSubtractionItems.length; ++index) {
-            const region = itemRegionComponent.createObject(
+            const region = postSubtractionRegionComponent.createObject(
                 combinedRegion,
-                { "sourceItem": postSubtractionItems[index] });
+                {
+                    "sourceItem": postSubtractionItems[index],
+                    "clipItem": root.postSubtractionClipItem
+                });
             if (region)
                 postSubtractionRegions.push(region);
         }
@@ -184,6 +189,7 @@ Item {
     onAdditionalBackgroundItemsChanged: rebuildRegions()
     onSubtractedBackgroundItemsChanged: rebuildRegions()
     onPostSubtractionBackgroundItemsChanged: rebuildRegions()
+    onPostSubtractionClipItemChanged: rebuildRegions()
     onClipItemChanged: rebuildRegions()
     onSubmittedRegionChanged: publish()
 
@@ -317,6 +323,62 @@ Item {
                 ? Math.max(0, Math.round(sourceItem.radius))
                 : Math.max(0, Math.round(root.radius))
             intersection: Intersection.Subtract
+        }
+    }
+
+    Component {
+        id: postSubtractionRegionComponent
+
+        // Keep each post-subtraction item as a stable Region group. Its
+        // children express (post item ∩ post clip), while the group itself
+        // is combined with the already-built base/subtraction chain.
+        Region {
+            required property Item sourceItem
+            property Item clipItem: null
+
+            property TransformWatcher sourceGeometryWatcher:
+                TransformWatcher {
+                    a: root.targetWindow
+                        ? root.targetWindow.contentItem : null
+                    b: sourceItem
+                    onTransformChanged: root.publish()
+                }
+
+            property TransformWatcher clipGeometryWatcher:
+                TransformWatcher {
+                    a: root.targetWindow
+                        ? root.targetWindow.contentItem : null
+                    b: clipItem
+                    onTransformChanged: root.publish()
+                }
+
+            onChanged: root.publish()
+
+            Region {
+                item: sourceItem && sourceItem.visible
+                    && sourceItem.opacity > 0
+                    && sourceItem.width > 0
+                    && sourceItem.height > 0
+                    ? sourceItem : null
+                radius: sourceItem
+                    && sourceItem.radius !== undefined
+                    ? Math.max(0, Math.round(sourceItem.radius))
+                    : Math.max(0, Math.round(root.radius))
+                intersection: Intersection.Combine
+            }
+
+            Region {
+                item: clipItem && clipItem.visible
+                    && clipItem.width > 0
+                    && clipItem.height > 0
+                    ? clipItem : null
+                radius: clipItem
+                    && clipItem.radius !== undefined
+                    ? Math.max(0, Math.round(clipItem.radius))
+                    : Math.max(0, Math.round(root.radius))
+                intersection: clipItem
+                    ? Intersection.Intersect : Intersection.Combine
+            }
         }
     }
 }

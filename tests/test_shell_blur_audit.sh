@@ -155,15 +155,31 @@ require_text Widgets/common/CompositorBlurRegion.qml \
 require_text Widgets/common/CompositorBlurRegion.qml \
     'property var postSubtractionBackgroundItems: []'
 require_text Widgets/common/CompositorBlurRegion.qml \
+    'property Item postSubtractionClipItem: null'
+require_text Widgets/common/CompositorBlurRegion.qml \
     '_postSubtractionRegionObjects'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'intersection: Intersection.Combine'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'onPostSubtractionBackgroundItemsChanged: rebuildRegions()'
 require_text Widgets/common/CompositorBlurRegion.qml \
+    'onPostSubtractionClipItemChanged: rebuildRegions()'
+require_text Widgets/common/CompositorBlurRegion.qml \
     'combinedRegions.push(postSubtractionRegions[index])'
 require_text Widgets/common/CompositorBlurRegion.qml \
+    'id: postSubtractionRegionComponent'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'intersection: clipItem'
+require_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'postSubtractionClipItem: root.showDashboardHole'
+reject_text Modules/Keystone/Styles/Shared/KeystoneSurface.qml \
+    'clipItem: dashboardBlurCutout'
+require_text Widgets/common/CompositorBlurRegion.qml \
     'property TransformWatcher geometryWatcher: TransformWatcher {'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'property TransformWatcher sourceGeometryWatcher:'
+require_text Widgets/common/CompositorBlurRegion.qml \
+    'property TransformWatcher clipGeometryWatcher:'
 require_text Widgets/common/CompositorBlurRegion.qml \
     'onTransformChanged: root.publish()'
 require_text Widgets/common/CompositorBlurRegion.qml \
