@@ -22,6 +22,39 @@ Item {
         return list.length > 0 ? list[0] : null;
     }
 
+    // One shared, low-frequency position tick feeds all media surfaces. MPRIS
+    // implementations do not need a separate QML polling loop per consumer.
+    property real currentPosition: 0
+
+    function refreshPosition() {
+        const player = root.active;
+        root.currentPosition = player ? Math.max(0, Number(player.position) || 0) : 0;
+    }
+
+    onActiveChanged: root.refreshPosition()
+    Component.onCompleted: root.refreshPosition()
+
+    Timer {
+        interval: 250
+        repeat: true
+        triggeredOnStart: true
+        running: root.active !== null
+        onTriggered: {
+            const player = root.active;
+            if (player && player.positionChanged)
+                player.positionChanged();
+            root.refreshPosition();
+        }
+    }
+
+    Connections {
+        target: root.active
+        ignoreUnknownSignals: true
+
+        function onPositionChanged() { root.refreshPosition(); }
+        function onLengthChanged() { root.refreshPosition(); }
+    }
+
     // 监听底层状态：如果用户手动指定的播放器被彻底关掉（进程结束），则清空手动状态，让系统重新接管
     Connections {
         target: Mpris.players

@@ -21,56 +21,16 @@ Item {
     property string title: (player && player.trackTitle) ? player.trackTitle : qsTr("未在播放")
     property string artist: (player && player.trackArtist) ? player.trackArtist : qsTr("未知艺术家")
     property string album: (player && player.trackAlbum) ? player.trackAlbum : ""
-    readonly property string playerName: player ? (player.identity || player.busName || "") : ""
-
     readonly property bool isActive: root.visible && root.player
     property bool showLyrics: false 
 
-    property bool _isReady: false
     readonly property string spectrumToken: "keystone-media"
     Component.onCompleted: {
-        _isReady = true;
         if (root.isActive)
             AudioSpectrum.acquire(root.spectrumToken);
         MediaPalette.extract(root.artUrl, Appearance.colors.colPrimary);
-        root.reloadLyrics();
     }
     Component.onDestruction: AudioSpectrum.release(root.spectrumToken)
-
-    // ==========================================
-    // Lyrics are fetched and parsed by the in-process Clavis.Lyrics service.
-    // ==========================================
-    ListModel { id: lyricsModel }
-
-    Connections {
-        target: root
-        function onTitleChanged() {
-            root.reloadLyrics();
-        }
-    }
-
-    function reloadLyrics() {
-        if (!root.title || root.title === qsTr("未在播放")) {
-            Lyrics.cancel();
-            return;
-        }
-
-        lyricsModel.clear();
-        lyricsModel.append({"time": 0, "text": qsTr("🎵 正在搜寻歌词...")});
-        lyricsView.resetToLine(0);
-        Lyrics.setTrack(root.artist, root.title, root.album, root.player ? root.player.length : 0);
-    }
-
-    Connections {
-        target: Lyrics
-        function onLyricsChanged() {
-            lyricsModel.clear();
-            const lines = Lyrics.lyrics || [];
-            for (let i = 0; i < lines.length; ++i)
-                lyricsModel.append(lines[i]);
-            lyricsView.resetToLine(0);
-        }
-    }
 
     Connections {
         target: root
@@ -85,9 +45,8 @@ Item {
     Behavior on dynamicThemeColor { ColorAnimation { duration: 800; easing.type: Easing.OutQuint } }
     Behavior on dynamicTrackColor { ColorAnimation { duration: 800; easing.type: Easing.OutQuint } }
 
-    // ==========================================
-    // 进度与时间高频同步逻辑
-    // ==========================================
+    // MediaManager owns the single 250 ms MPRIS position tick. The lyric
+    // index remains a pure projection of playback time, never of contentY.
     Connections {
         target: root
         function onIsActiveChanged() {
@@ -97,24 +56,16 @@ Item {
                 AudioSpectrum.release(root.spectrumToken);
         }
     }
-    
-    property double currentPos: 0
-    Timer {
-        interval: 100
-        running: root.isActive
-        repeat: true
-        onTriggered: {
-            if (root.player && !mediaProgress.pressed) {
-                root.currentPos = root.player.position;
-                if (root.showLyrics && lyricsModel.count > 0) {
-                    let pos = root.currentPos;
-                    let newIdx = Lyrics.indexForTime(pos);
-                    if (newIdx < 0) newIdx = 0;
-                    if (lyricsView.activeLine !== newIdx)
-                        lyricsView.syncToLine(newIdx, pos, false);
-                }
-            }
-        }
+
+    readonly property double currentPos: root.player && root.player === MediaManager.active
+        ? MediaManager.currentPosition
+        : (root.player ? Math.max(0, Number(root.player.position) || 0) : 0)
+    readonly property bool synchronizedLyrics: Lyrics.hasSynchronizedLyrics
+    readonly property int playbackIndex: {
+        const lines = Lyrics.lyrics;
+        if (!root.player || !root.synchronizedLyrics || !lines || lines.length === 0)
+            return -1;
+        return Lyrics.indexForTime(root.currentPos);
     }
 
     function formatTime(val) {
@@ -282,31 +233,116 @@ Item {
                 width: stage.width - 280
                 height: 240
                 y: 10
-                SpringLyricView {
+                StyledListView {
                     id: lyricsView
                     anchors.fill: parent
-                    lyrics: lyricsModel
-                    tiltAngle: 0
-                    alignPosition: 0.35
-                    lineGap: 22
-                    currentScale: 1.0
-                    inactiveScale: 0.97
-                    activeColor: "white"
-                    inactiveColor: "#99ffffff"
-                    fontSize: 18
-                    fontFamily: Fonts.ui
-                    fontBold: true
-                    horizontalAlignment: Text.AlignLeft
-                    wrapMode: Text.WordWrap
+                    model: Lyrics.lyrics
+                    interactive: true
+                    showVerticalScrollBar: false
+                    animateAppearance: false
+                    animateMovement: false
+                    smoothWheelEnabled: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    spacing: 8
 
-                    onLyricClicked: (index) => {
-                        if (!root.player || root.player.canSeek === false)
-                            return;
-                        const target = Lyrics.timeForIndex(index);
-                        if (target >= 0) {
-                            root.player.position = target;
-                            root.currentPos = target;
+                    highlightRangeMode: ListView.ApplyRange
+                    preferredHighlightBegin: height * 0.32
+                    preferredHighlightEnd: height * 0.68
+                    highlightMoveDuration: Appearance.animation.expressiveDefaultSpatial.duration
+                    highlightMoveVelocity: -1
+
+                    currentIndex: root.playbackIndex
+
+                    delegate: Item {
+                        id: lyricDelegate
+
+                        required property int index
+                        required property var modelData
+                        readonly property bool activeLine: index === root.playbackIndex
+                        readonly property int distance: root.playbackIndex < 0
+                            ? 99 : Math.abs(index - root.playbackIndex)
+                        readonly property bool hovered: hoverHandler.hovered
+
+                        width: ListView.view.width
+                        height: Math.max(34, lyricText.implicitHeight)
+                        scale: !root.synchronizedLyrics
+                            ? 1.0 : (hovered ? 1.01 : (activeLine ? 1.0 : 0.97))
+                        opacity: !root.synchronizedLyrics
+                            ? 0.82 : (activeLine ? 1.0 : (distance <= 2 ? 0.58 : 0.24))
+                        transformOrigin: Item.Left
+
+                        Behavior on scale {
+                            SpringAnimation {
+                                spring: 3.5
+                                damping: 0.45
+                                mass: 0.9
+                                epsilon: 0.01
+                            }
                         }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Appearance.animation.expressiveFastEffects.duration
+                                easing.type: Appearance.animation.expressiveFastEffects.type
+                                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                            }
+                        }
+
+                        Text {
+                            id: lyricText
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.text || ""
+                            color: !root.synchronizedLyrics
+                                ? "#ddffffff"
+                                : (lyricDelegate.hovered
+                                ? "#ddffffff"
+                                : (lyricDelegate.activeLine ? "white" : "#99ffffff"))
+                            font.family: Fonts.ui
+                            font.pixelSize: 18
+                            font.bold: true
+                            horizontalAlignment: Text.AlignLeft
+                            wrapMode: Text.WordWrap
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Appearance.animation.expressiveFastEffects.duration
+                                    easing.type: Appearance.animation.expressiveFastEffects.type
+                                    easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                                }
+                            }
+                        }
+
+                        HoverHandler {
+                            id: hoverHandler
+                        }
+
+                        TapHandler {
+                            acceptedButtons: Qt.LeftButton
+                            onTapped: {
+                                if (!root.player || root.player.canSeek !== true)
+                                    return;
+                                const target = Lyrics.timeForIndex(lyricDelegate.index);
+                                if (target >= 0)
+                                    root.player.position = target;
+                            }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        width: parent.width - 24
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        color: "#bbffffff"
+                        font.family: Fonts.ui
+                        font.pixelSize: 15
+                        visible: Lyrics.status !== "ready"
+                        text: Lyrics.status === "loading"
+                            ? qsTr("正在加载歌词…")
+                            : (Lyrics.status === "error"
+                                ? (Lyrics.error || qsTr("歌词加载失败"))
+                                : qsTr("暂无歌词"))
                     }
                 }
 
@@ -357,7 +393,6 @@ Item {
                         onSeekRequested: (position) => {
                             if (root.player && root.player.length > 0) {
                                 root.player.position = position * root.player.length;
-                                root.currentPos = root.player.position;
                             }
                         }
                     }

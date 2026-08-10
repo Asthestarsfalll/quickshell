@@ -3,6 +3,7 @@ import Qt5Compat.GraphicalEffects
 import M3Shapes
 import qs.Common
 import qs.Components
+import qs.Services
 
 // Adapted from Caelestia Shell's dashboard media card and CoverArt (GPL-3.0).
 Item {
@@ -21,33 +22,11 @@ Item {
         ? player.trackAlbum : qsTr("未知专辑")
     readonly property string artist: hasPlayer && player.trackArtist
         ? player.trackArtist : qsTr("未知艺术家")
-    property real currentPosition: 0
+    readonly property real currentPosition: hasPlayer && player === MediaManager.active
+        ? MediaManager.currentPosition : 0
     property real coverRotation: 360
     readonly property real progress: hasPlayer && player.length > 0
         ? Math.max(0, Math.min(1, currentPosition / player.length)) : 0
-
-    function syncPosition() {
-        currentPosition = hasPlayer ? Math.max(0, Number(player.position) || 0) : 0;
-    }
-
-    onPlayerChanged: syncPosition()
-    Component.onCompleted: syncPosition()
-
-    Timer {
-        interval: 500
-        repeat: true
-        triggeredOnStart: true
-        running: root.active && root.hasPlayer
-        onTriggered: root.syncPosition()
-    }
-
-    Connections {
-        target: root.player
-        ignoreUnknownSignals: true
-
-        function onPositionChanged() { root.syncPosition(); }
-        function onTrackTitleChanged() { root.syncPosition(); }
-    }
 
     NumberAnimation on coverRotation {
         from: 360

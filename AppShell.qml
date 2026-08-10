@@ -18,6 +18,7 @@ Item {
 
     Component.onCompleted: {
         I18nService.initialize();
+        LyricsTrackService.initialize();
     }
 
     WallpaperBackground {}

@@ -14,15 +14,20 @@ Item {
     required property var player
     property bool active: false
     readonly property var lyricsModel: Lyrics.lyrics
-    property int currentLineIndex: 0
+    readonly property int currentLineIndex: {
+        const lines = Lyrics.lyrics;
+        const synchronized = Lyrics.hasSynchronizedLyrics;
+        if (!root.player || !synchronized || !lines || lines.length === 0)
+            return -1;
+
+        const position = root.player === MediaManager.active
+            ? MediaManager.currentPosition
+            : Math.max(0, Number(root.player.position) || 0);
+        return Lyrics.indexForTime(position);
+    }
     
-    readonly property string trackTitle: player ? player.trackTitle : ""
-    readonly property string trackArtist: player ? player.trackArtist : ""
-    readonly property string trackAlbum: player ? (player.trackAlbum || "") : ""
-    readonly property string playerName: player ? (player.identity || player.busName || "") : ""
     readonly property string artUrl: player ? (player.trackArtUrl || "") : ""
     
-    property string currentLoadedTitle: ""
     readonly property string spectrumToken: "keystone-lyrics"
 
     Component.onCompleted: {
@@ -50,60 +55,10 @@ Item {
         }
     }
 
-    // ================= 1. 歌词获取逻辑 =================
-    onTrackTitleChanged: triggerReload()
-    onTrackArtistChanged: triggerReload()
-    onTrackAlbumChanged: triggerReload()
-    onActiveChanged: {
-        if (active && root.trackTitle !== root.currentLoadedTitle)
-            triggerReload()
-        if (!active)
-            Lyrics.cancel()
-    }
+    // The singleton controller owns track loading. This compact view only
+    // projects the shared timeline and never cancels or reloads it.
 
-    function triggerReload() {
-        if (!root.active || root.trackTitle === "")
-            return
-        debounceTimer.restart()
-    }
-
-    Timer {
-        id: debounceTimer
-        interval: 300
-        repeat: false
-        onTriggered: {
-            if (root.trackTitle !== "") {
-                Lyrics.setTrack(root.trackArtist, root.trackTitle, root.trackAlbum, root.player ? root.player.length : 0)
-                root.currentLineIndex = 0
-                root.currentLoadedTitle = root.trackTitle
-            }
-        }
-    }
-
-    // ================= 2. 极简同步逻辑 =================
-    Timer {
-        interval: 100
-        running: root.active && root.lyricsModel.length > 1 && root.player
-        repeat: true
-        onTriggered: {
-            if (!root.player) return
-            var rawPos = root.player.position
-            var currentSec = (rawPos > 100000) ? (rawPos / 1000000) : rawPos
-            var activeIdx = -1
-            for (var i = 0; i < root.lyricsModel.length; i++) {
-                if (root.lyricsModel[i].time <= (currentSec + 0.5)) activeIdx = i; else break
-            }
-            if (activeIdx === -1) activeIdx = 0
-            const backendIndex = Lyrics.indexForTime(currentSec)
-            if (backendIndex >= 0)
-                activeIdx = backendIndex
-            if (activeIdx !== root.currentLineIndex) {
-                root.currentLineIndex = activeIdx
-            }
-        }
-    }
-
-    // ================= 3. 界面层 =================
+    // ================= 界面层 =================
     Item {
         anchors.fill: parent
         clip: true 
@@ -155,7 +110,7 @@ Item {
             delegate: Item {
                 width: ListView.view.width
                 height: 42 
-                property bool isCurrent: ListView.isCurrentItem
+                readonly property bool isCurrent: index === root.currentLineIndex
 
                 onIsCurrentChanged: {
                     if (isCurrent) {
@@ -167,18 +122,28 @@ Item {
                     id: lyricText
                     anchors.centerIn: parent
                     text: modelData.text
-                    color: Appearance.colors.colOnLayer0
+                    color: parent.isCurrent
+                        ? Appearance.colors.colPrimary
+                        : Appearance.colors.colOnLayer0
                     font.family: Fonts.ui
                     font.pixelSize: 15
                     font.weight: Font.Bold
                     elide: Text.ElideRight
                     horizontalAlignment: Text.AlignHCenter 
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Appearance.animation.expressiveFastEffects.duration
+                            easing.type: Appearance.animation.expressiveFastEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                        }
+                    }
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        if (!root.player || root.player.canSeek === false)
+                        if (!root.player || root.player.canSeek !== true)
                             return
                         const target = Lyrics.timeForIndex(index)
                         if (target >= 0)
@@ -186,6 +151,22 @@ Item {
                     }
                 }
             }
+        }
+
+        Text {
+            anchors.centerIn: lyricsView
+            width: lyricsView.width - 12
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.65)
+            font.family: Fonts.ui
+            font.pixelSize: 13
+            visible: Lyrics.status !== "ready"
+            text: Lyrics.status === "loading"
+                ? qsTr("正在加载歌词…")
+                : (Lyrics.status === "error"
+                    ? (Lyrics.error || qsTr("歌词加载失败"))
+                    : qsTr("暂无歌词"))
         }
 
         // ============================================================

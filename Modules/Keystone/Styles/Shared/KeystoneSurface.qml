@@ -1057,33 +1057,7 @@ Variants {
                     root.triggerSliderOSD("volume")
                 }
                 
-                property var currentPlayer: null
-
-                Timer {
-                    id: stickyTimer
-                    interval: 500; repeat: true; triggeredOnStart: true
-                    running: Mpris.players.values.length > 0
-                    onRunningChanged: { if (!running) root.currentPlayer = null }
-                    onTriggered: {
-                        var players = Mpris.players.values
-                        if (players.length === 0) { root.currentPlayer = null; return }
-                        var playingPlayer = null
-                        for (let i = 0; i < players.length; i++) { 
-                            if (players[i].isPlaying) { playingPlayer = players[i]; break } 
-                        }
-                        if (playingPlayer) { 
-                            if (root.currentPlayer !== playingPlayer) root.currentPlayer = playingPlayer 
-                        } else {
-                            var currentIsValid = false
-                            if (root.currentPlayer) { 
-                                for (let i = 0; i < players.length; i++) { 
-                                    if (players[i] === root.currentPlayer) { currentIsValid = true; break } 
-                                } 
-                            }
-                            if (!currentIsValid) root.currentPlayer = players[0]
-                        }
-                    }
-                }
+                readonly property var currentPlayer: MediaManager.active
 
                 MouseArea {
                     id: keystoneMouseArea  

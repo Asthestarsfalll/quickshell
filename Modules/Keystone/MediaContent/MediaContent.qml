@@ -24,18 +24,7 @@ Item {
         ? MediaManager.active.trackArtist 
         : qsTr("未知艺术家")
     
-    property double currentPos: 0
-    
-    Timer {
-        interval: 100
-        running: root.isActive
-        repeat: true
-        onTriggered: {
-            if (MediaManager.active && !progressBar.pressed) {
-                root.currentPos = MediaManager.active.position;
-            }
-        }
-    }
+    readonly property double currentPos: root.isActive ? MediaManager.currentPosition : 0
     
     property double progress: (isActive && MediaManager.active.length > 0) 
         ? (root.currentPos / MediaManager.active.length) 
@@ -212,7 +201,6 @@ Item {
                     if (MediaManager.active && MediaManager.active.length > 0) {
                         let targetPos = position * MediaManager.active.length;
                         MediaManager.active.position = targetPos;
-                        root.currentPos = targetPos;
                     }
                 }
             }
