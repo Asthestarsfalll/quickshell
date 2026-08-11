@@ -248,6 +248,7 @@ Item {
                 id: systemComponent
 
                 SystemView {
+                    screenName: root.screenName
                     foreground: root.foreground
                         && root.activeView === "sys"
                 }

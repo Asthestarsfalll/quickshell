@@ -3,8 +3,8 @@ import QtQuick.Layouts
 import qs.Common
 import qs.Components
 import qs.Widgets.common
-import "../../../ControlCenter" as ControlCenter
-import "../../../../Common/functions/SystemFormat.js" as Format
+import "../ControlCenter" as ControlCenter
+import "../../Common/functions/SystemFormat.js" as Format
 
 Rectangle {
     id: root

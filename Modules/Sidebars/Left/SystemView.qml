@@ -3,17 +3,35 @@ import M3Shapes
 import qs.Common
 import qs.Services
 import qs.Widgets.common
+import qs.Modules.SystemCards
 import "./system"
 import "./system/SystemGridLayout.js" as GridLayout
-import "../../../Common/functions/SystemFormat.js" as Format
 
 Item {
     id: root
 
+    property string screenName: ""
     property bool foreground: false
     readonly property bool isForeground: root.foreground
+    readonly property var activeSidebarIds: {
+        const ids = SystemCardService.sidebarCardIds.slice();
+        // Keep the source delegate in the sidebar model until the top-level
+        // ghost has finished its short transfer hand-off.  The state has
+        // already moved to Desktop, but destroying the source in the same
+        // turn would invalidate ShaderEffectSource.
+        if (SystemCardDragSession.active
+                && SystemCardDragSession.tileId !== ""
+                && ids.indexOf(SystemCardDragSession.tileId) === -1) {
+            ids.push(SystemCardDragSession.tileId);
+        }
+        return ids;
+    }
+    readonly property var tileDefinitions:
+        GridLayout.definitions(root.activeSidebarIds)
     readonly property int gridColumns: GridLayout.columnCount
-    readonly property int gridRows: GridLayout.rowCount
+    readonly property int gridRows:
+        GridLayout.contentRowCount(
+            root.committedLayout, root.activeSidebarIds)
     readonly property real gridGap: Appearance.spacing.small
     readonly property int gridCellWidth: 152
     readonly property int gridCellHeight: 160
@@ -23,26 +41,18 @@ Item {
     readonly property int gridContentHeight:
         root.gridRows * root.gridCellHeight
             + (root.gridRows - 1) * root.gridGap
-    readonly property int chartUpdateInterval: Math.max(
-        250,
-        Number(SystemMonitorService.sourceIntervalMs)
-            || SystemMonitorService.intervalMs
-    )
-    readonly property var primaryGpu:
-        SystemMonitorService.gpus.length > 0
-            ? SystemMonitorService.gpus[0]
-            : ({})
-    readonly property var cpuTemperature:
-        Format.isNumber(
-            SystemMonitorService.cpu.packageTemperatureCelsius
-        )
-            ? SystemMonitorService.cpu.packageTemperatureCelsius
-            : SystemMonitorService.cpu.temperatureCelsius
-    readonly property var tileDefinitions: GridLayout.definitions()
+    readonly property var sidebarAnchors: {
+        const result = {};
+        root.activeSidebarIds.forEach(function(id) {
+            result[id] = SystemCardService.sidebarAnchor(id);
+        });
+        return result;
+    }
 
-    property bool serviceAcquired: false
     property bool preferencesApplied: false
-    property var committedLayout: GridLayout.defaultLayout()
+    property bool serviceForegroundAcquired: false
+    property var committedLayout: GridLayout.defaultLayout(
+        root.activeSidebarIds, root.sidebarAnchors)
     property var previewLayout: []
     property string draggingTileId: ""
     property Item dragSourceItem: null
@@ -53,49 +63,7 @@ Item {
     property int targetColumn: -1
     property int targetRow: -1
     property bool dragTargetValid: false
-
-    function normalizedPercent(value) {
-        return Format.isNumber(value)
-            ? Math.max(0, Math.min(1, value / 100))
-            : -1;
-    }
-
-    function temperatureBadge(value) {
-        return Format.isNumber(value)
-            ? Math.round(value) + "°"
-            : "";
-    }
-
-    function cpuDetail() {
-        const system = SystemMonitorService.system;
-        const physical = Number(system.physicalCoreCount || 0);
-        const logical = Number(system.logicalCpuCount || 0);
-        if (physical > 0 && logical > 0)
-            return physical + qsTr(" 核 · ") + logical + qsTr(" 线程");
-        return qsTr("总体利用率");
-    }
-
-    function cpuSupporting() {
-        const frequency = Format.frequencyMHz(
-            SystemMonitorService.cpu.frequencyCurrentMHz
-        );
-        if (Format.isNumber(SystemMonitorService.cpu.powerWatts))
-            return frequency + " · "
-                + Format.watts(SystemMonitorService.cpu.powerWatts);
-        return frequency;
-    }
-
-    function gpuSupporting() {
-        if (SystemMonitorService.gpus.length === 0)
-            return qsTr("未检测到可用图形设备");
-        const gpu = root.primaryGpu;
-        if (Format.isNumber(gpu.vramUsedBytes)
-                && Format.isNumber(gpu.vramTotalBytes)) {
-            return Format.bytes(gpu.vramUsedBytes)
-                + " / " + Format.bytes(gpu.vramTotalBytes);
-        }
-        return Format.watts(gpu.powerWatts);
-    }
+    property bool desktopExtraction: false
 
     function layoutPlacement(layout, tileId) {
         return GridLayout.placementFor(layout, tileId);
@@ -103,44 +71,22 @@ Item {
 
     function displayPlacement(tileId) {
         if (root.draggingTileId === tileId)
-            return root.layoutPlacement(
-                root.committedLayout,
-                tileId
-            );
+            return root.layoutPlacement(root.committedLayout, tileId);
         if (root.draggingTileId.length > 0
-                && root.dragTargetValid) {
-            return root.layoutPlacement(
-                root.previewLayout,
-                tileId
-            );
+                && root.dragTargetValid && !root.desktopExtraction) {
+            return root.layoutPlacement(root.previewLayout, tileId);
         }
         return root.layoutPlacement(root.committedLayout, tileId);
     }
 
-    function componentFor(tileId) {
-        switch (tileId) {
-        case "time":
-            return timeComponent;
-        case "battery":
-            return batteryComponent;
-        case "cpu":
-            return cpuComponent;
-        case "gpu":
-            return gpuComponent;
-        case "memoryUsed":
-            return memoryUsedComponent;
-        case "wifi":
-            return wifiComponent;
-        case "network":
-            return networkComponent;
-        case "storage":
-            return storageComponent;
-        case "calendar":
-            return calendarComponent;
-        case "weather":
-            return weatherComponent;
+    function sidebarContainsPoint(x, y) {
+        let item = root;
+        while (item) {
+            if (typeof item.containsPoint === "function")
+                return item.containsPoint(x, y);
+            item = item.parent;
         }
-        return null;
+        return false;
     }
 
     function applyStoredLayout(forceRefresh) {
@@ -151,15 +97,16 @@ Item {
         }
 
         const hydrated = GridLayout.hydrateSaved(
-            UiPreferences.systemGridLayout
+            UiPreferences.systemGridLayout,
+            root.activeSidebarIds,
+            root.sidebarAnchors
         );
-        const normalized = GridLayout.serializeLayout(hydrated);
+        const normalized = GridLayout.serializeLayout(
+            hydrated, root.activeSidebarIds);
         root.committedLayout = hydrated;
         root.preferencesApplied = true;
         if (JSON.stringify(normalized)
-                !== JSON.stringify(
-                    UiPreferences.systemGridLayout || {}
-                )) {
+                !== JSON.stringify(UiPreferences.systemGridLayout || {})) {
             UiPreferences.setSystemGridLayout(normalized);
         }
     }
@@ -172,11 +119,21 @@ Item {
         root.dragSourceItem = sourceItem;
         root.dragPointerX = pointerX;
         root.dragPointerY = pointerY;
-        root.dragOffsetX = pointerX - sourceItem.x;
-        root.dragOffsetY = pointerY - sourceItem.y;
+        const sourcePosition = sourceItem.mapToItem(null, 0, 0);
+        root.dragOffsetX = pointerX - sourcePosition.x;
+        root.dragOffsetY = pointerY - sourcePosition.y;
         root.targetColumn = -1;
         root.targetRow = -1;
         root.dragTargetValid = false;
+        root.desktopExtraction = false;
+        SystemCardDragSession.begin(
+            tileId,
+            sourceItem,
+            pointerX,
+            pointerY,
+            root.dragOffsetX,
+            root.dragOffsetY
+        );
         dashboard.forceActiveFocus();
         root.updateDrag(tileId, pointerX, pointerY);
     }
@@ -187,16 +144,29 @@ Item {
 
         root.dragPointerX = pointerX;
         root.dragPointerY = pointerY;
-        const definition = GridLayout.definitionFor(tileId);
+        SystemCardDragSession.update(pointerX, pointerY);
+
+        if (root.desktopExtraction)
+            return;
+        if (!root.sidebarContainsPoint(pointerX, pointerY)) {
+            root.desktopExtraction = true;
+            root.previewLayout = [];
+            root.dragTargetValid = false;
+            root.targetColumn = -1;
+            root.targetRow = -1;
+            return;
+        }
+
+        const localPoint = dashboard.mapFromItem(null, pointerX, pointerY);
+        const definition = GridLayout.tileDefinitionFor(tileId);
         if (!definition)
             return;
 
         const rawColumn = Math.round(
-            (pointerX - root.dragOffsetX)
-                / dashboard.columnStride
+            (localPoint.x - root.dragOffsetX) / dashboard.columnStride
         );
         const rawRow = Math.round(
-            (pointerY - root.dragOffsetY)
+            (localPoint.y - root.dragOffsetY)
                 / dashboard.rowStride
         );
         const anchor = GridLayout.clampAnchor(
@@ -215,7 +185,8 @@ Item {
             root.committedLayout,
             tileId,
             anchor.column,
-            anchor.row
+            anchor.row,
+            root.activeSidebarIds
         );
         root.previewLayout = solved || [];
         root.dragTargetValid = solved !== null;
@@ -225,50 +196,84 @@ Item {
         if (tileId !== root.draggingTileId)
             return;
 
+        if (root.desktopExtraction) {
+            const scene = root.screenName !== ""
+                ? WallpaperSceneService.sceneFor(root.screenName) : null;
+            const point = scene
+                ? scene.screenToWallpaper(root.dragPointerX,
+                    root.dragPointerY)
+                : { x: root.dragPointerX, y: root.dragPointerY };
+            const canvasWidth = scene ? scene.canvasWidth : 1;
+            const canvasHeight = scene ? scene.canvasHeight : 1;
+            SystemCardDragSession.freezeGhost();
+            SystemCardService.setContainer(
+                tileId,
+                "desktop",
+                root.screenName,
+                point.x / Math.max(1, canvasWidth),
+                point.y / Math.max(1, canvasHeight)
+            );
+            root.resetDragState(true);
+            WidgetState.leftSidebarOpen = false;
+            transferGhostTimer.restart();
+            return;
+        }
+
         if (root.dragTargetValid) {
             root.committedLayout = root.previewLayout;
             UiPreferences.setSystemGridLayout(
-                GridLayout.serializeLayout(root.committedLayout)
+                GridLayout.serializeLayout(
+                    root.committedLayout, root.activeSidebarIds)
             );
+            SystemCardService.setSidebarLayout(root.committedLayout);
         }
-        root.resetDragState();
+        root.resetDragState(false);
     }
 
     function cancelDrag(tileId) {
         if (tileId && tileId !== root.draggingTileId)
             return;
-        root.resetDragState();
+        SystemCardDragSession.cancel();
+        root.resetDragState(false);
     }
 
-    function resetDragState() {
+    function resetDragState(keepSession) {
+        if (!keepSession)
+            SystemCardDragSession.end();
         root.draggingTileId = "";
         root.dragSourceItem = null;
         root.previewLayout = [];
         root.dragTargetValid = false;
         root.targetColumn = -1;
         root.targetRow = -1;
+        root.desktopExtraction = false;
     }
 
     function syncServiceOwnership() {
-        if (root.isForeground && !root.serviceAcquired) {
-            SystemMonitorService.acquire();
-            root.serviceAcquired = true;
-        } else if (!root.isForeground && root.serviceAcquired) {
-            SystemMonitorService.release();
-            root.serviceAcquired = false;
+        if (root.isForeground && !root.serviceForegroundAcquired) {
+            SystemCardService.setSidebarForeground(true);
+            root.serviceForegroundAcquired = true;
+        } else if (!root.isForeground && root.serviceForegroundAcquired) {
+            SystemCardService.setSidebarForeground(false);
+            root.serviceForegroundAcquired = false;
         }
     }
 
-    onIsForegroundChanged: syncServiceOwnership()
+    onIsForegroundChanged: root.syncServiceOwnership()
+
+    onActiveSidebarIdsChanged: {
+        if (root.draggingTileId.length === 0)
+            root.applyStoredLayout(true);
+    }
 
     Component.onCompleted: {
-        root.syncServiceOwnership();
         root.applyStoredLayout();
+        root.syncServiceOwnership();
     }
 
     Component.onDestruction: {
-        if (root.serviceAcquired)
-            SystemMonitorService.release();
+        if (root.serviceForegroundAcquired)
+            SystemCardService.setSidebarForeground(false);
     }
 
     Connections {
@@ -284,205 +289,28 @@ Item {
         }
     }
 
-    Component {
-        id: timeComponent
+    Connections {
+        target: SystemCardService
 
-        SystemClockCard {
-            active: root.isForeground
+        function onCardStateChanged() {
+            root.applyStoredLayout(true);
         }
     }
 
-    Component {
-        id: batteryComponent
+    Connections {
+        target: SystemCardDragSession
 
-        SystemBatteryTank {
-            battery: SystemMonitorService.battery
+        function onCancelRequested(tileId) {
+            if (root.draggingTileId === String(tileId))
+                root.cancelDrag(String(tileId));
         }
     }
 
-    Component {
-        id: cpuComponent
-
-        ExpressiveMetricTile {
-            label: "CPU"
-            iconName: "memory"
-            detailText: root.cpuDetail()
-            valueText: Format.percent(
-                SystemMonitorService.cpu.usagePercent,
-                0
-            )
-            supportingText: root.cpuSupporting()
-            temperatureText:
-                root.temperatureBadge(root.cpuTemperature)
-            usage: root.normalizedPercent(
-                SystemMonitorService.cpu.usagePercent
-            )
-            trendValues: SystemMonitorService.cpuHistory
-            chartActive: root.isForeground
-            updateInterval: root.chartUpdateInterval
-            decorationSize: 50
-            valueSize: Typography.headlineMedium.pixelSize
-            containerColor:
-                Appearance.colors.colPrimaryContainer
-            foregroundColor:
-                Appearance.colors.colOnPrimaryContainer
-            accentColor: Appearance.colors.colPrimary
-            accentForegroundColor:
-                Appearance.colors.colOnPrimary
-        }
-    }
-
-    Component {
-        id: gpuComponent
-
-        ExpressiveMetricTile {
-            label: "GPU"
-            iconName: "developer_board"
-            detailText: root.primaryGpu.name || qsTr("图形设备")
-            valueText: SystemMonitorService.gpus.length > 0
-                ? Format.percent(
-                    root.primaryGpu.utilizationPercent,
-                    0
-                )
-                : "—"
-            supportingText: root.gpuSupporting()
-            temperatureText: root.temperatureBadge(
-                root.primaryGpu.temperatureCelsius
-            )
-            usage: SystemMonitorService.gpus.length > 0
-                ? root.normalizedPercent(
-                    root.primaryGpu.utilizationPercent
-                )
-                : -1
-            trendValues: SystemMonitorService.gpuHistory
-            chartActive: root.isForeground
-            updateInterval: root.chartUpdateInterval
-            shapeOverride: MaterialShape.Gem
-            decorationSize: 50
-            valueSize: Typography.headlineMedium.pixelSize
-            containerColor:
-                Appearance.colors.colSecondaryContainer
-            foregroundColor:
-                Appearance.colors.colOnSecondaryContainer
-            accentColor: Appearance.colors.colSecondary
-            accentForegroundColor:
-                Appearance.colors.colOnSecondary
-        }
-    }
-
-    Component {
-        id: memoryUsedComponent
-
-        SystemLiquidMetricCard {
-            iconName: "memory_alt"
-            valueText: Format.percent(
-                SystemMonitorService.memory.usagePercent,
-                0
-            )
-            supportingText: Format.bytes(
-                SystemMonitorService.memory.usedBytes
-            ) + " / " + Format.bytes(
-                SystemMonitorService.memory.totalBytes
-            )
-            level: root.normalizedPercent(
-                SystemMonitorService.memory.usagePercent
-            )
-            valueAvailable: Format.isNumber(
-                SystemMonitorService.memory.usagePercent
-            )
-            accessibilityName: qsTr("内存已使用 ")
-                + Format.percent(
-                    SystemMonitorService.memory.usagePercent,
-                    0
-                )
-                + "，" + Format.bytes(
-                    SystemMonitorService.memory.usedBytes
-                )
-                + " / " + Format.bytes(
-                    SystemMonitorService.memory.totalBytes
-                )
-            shapeId: MaterialShape.Slanted
-            shapeColor: Appearance.colors.colPrimaryContainer
-            liquidColor: Appearance.applyAlpha(
-                Appearance.colors.colTertiary,
-                0.66
-            )
-            contentColor: Appearance.colors.colOnPrimaryContainer
-        }
-    }
-
-    Component {
-        id: wifiComponent
-
-        SystemLiquidMetricCard {
-            iconName: NetworkService.wifiConnected
-                ? "wifi"
-                : "wifi_off"
-            valueText:
-                NetworkService.wifiConnected
-                    ? Format.percent(
-                        NetworkService.signalStrength,
-                        0
-                    )
-                    : "—"
-            supportingText: qsTr("Wi-Fi 信号强度")
-            level: root.normalizedPercent(
-                NetworkService.signalStrength
-            )
-            valueAvailable: NetworkService.wifiConnected
-            accessibilityName:
-                NetworkService.wifiConnected
-                    ? qsTr("Wi-Fi 信号强度 ")
-                        + Format.percent(
-                            NetworkService.signalStrength,
-                            0
-                        )
-                    : qsTr("Wi-Fi 未连接")
-            shapeId: MaterialShape.Pentagon
-            shapeColor:
-                Appearance.colors.colTertiaryContainer
-            liquidColor: Appearance.applyAlpha(
-                Appearance.colors.colTertiary,
-                0.64
-            )
-            contentColor: Appearance.colors.colOnTertiaryContainer
-        }
-    }
-
-    Component {
-        id: networkComponent
-
-        SystemNetworkCard {
-            network: SystemMonitorService.network
-            downloadHistory:
-                SystemMonitorService.networkDownloadHistory
-            uploadHistory:
-                SystemMonitorService.networkUploadHistory
-            chartActive: root.isForeground
-            updateInterval: root.chartUpdateInterval
-        }
-    }
-
-    Component {
-        id: storageComponent
-
-        SystemStorageCard {
-            disks: SystemMonitorService.disks
-        }
-    }
-
-    Component {
-        id: calendarComponent
-
-        SystemCalendarCard {
-            active: root.isForeground
-        }
-    }
-
-    Component {
-        id: weatherComponent
-
-        SystemWeatherCard {}
+    Timer {
+        id: transferGhostTimer
+        interval: Appearance.animation.expressiveFastSpatial.duration
+        repeat: false
+        onTriggered: SystemCardDragSession.end()
     }
 
     Item {
@@ -525,10 +353,7 @@ Item {
             anchors.fill: parent
             visible: SystemMonitorService.hasData
             contentWidth: width
-            contentHeight: Math.max(
-                height,
-                root.gridContentHeight
-            )
+            contentHeight: Math.max(height, root.gridContentHeight)
             interactive: contentHeight > height + 1
                 && root.draggingTileId.length === 0
             showVerticalScrollBar: contentHeight > height + 1
@@ -539,8 +364,7 @@ Item {
 
             function scrollBy(delta) {
                 const next = dashboardScroll.clampContentY(
-                    dashboardScroll.contentY + delta
-                );
+                    dashboardScroll.contentY + delta);
                 dashboardScroll.scrollTargetY = next;
                 dashboardScroll.contentY = next;
             }
@@ -552,30 +376,20 @@ Item {
                     event.accepted = true;
                     return;
                 }
-                if (dashboardScroll.contentHeight
-                        <= dashboardScroll.height + 1) {
+                if (dashboardScroll.contentHeight <= dashboardScroll.height + 1)
                     return;
-                }
                 if (event.key === Qt.Key_Up)
                     dashboardScroll.scrollBy(-64);
                 else if (event.key === Qt.Key_Down)
                     dashboardScroll.scrollBy(64);
                 else if (event.key === Qt.Key_PageUp)
-                    dashboardScroll.scrollBy(
-                        -dashboardScroll.height * 0.8
-                    );
+                    dashboardScroll.scrollBy(-dashboardScroll.height * 0.8);
                 else if (event.key === Qt.Key_PageDown)
-                    dashboardScroll.scrollBy(
-                        dashboardScroll.height * 0.8
-                    );
+                    dashboardScroll.scrollBy(dashboardScroll.height * 0.8);
                 else if (event.key === Qt.Key_Home)
-                    dashboardScroll.scrollBy(
-                        -dashboardScroll.contentHeight
-                    );
+                    dashboardScroll.scrollBy(-dashboardScroll.contentHeight);
                 else if (event.key === Qt.Key_End)
-                    dashboardScroll.scrollBy(
-                        dashboardScroll.contentHeight
-                    );
+                    dashboardScroll.scrollBy(dashboardScroll.contentHeight);
                 else
                     return;
                 event.accepted = true;
@@ -584,21 +398,14 @@ Item {
             Item {
                 id: dashboard
 
-                x: Math.max(
-                    0,
-                    Math.floor(
-                        (dashboardScroll.width
-                            - root.gridContentWidth) / 2
-                    )
-                )
+                x: Math.max(0, Math.floor(
+                    (dashboardScroll.width - root.gridContentWidth) / 2))
                 width: root.gridContentWidth
                 height: root.gridContentHeight
                 focus: root.draggingTileId.length > 0
 
-                readonly property int cellWidth:
-                    root.gridCellWidth
-                readonly property int cellHeight:
-                    root.gridCellHeight
+                readonly property int cellWidth: root.gridCellWidth
+                readonly property int cellHeight: root.gridCellHeight
                 readonly property real columnStride:
                     cellWidth + root.gridGap
                 readonly property real rowStride:
@@ -617,28 +424,23 @@ Item {
                     x: root.targetColumn * dashboard.columnStride
                     y: root.targetRow * dashboard.rowStride
                     width: {
-                        const definition = GridLayout.definitionFor(
-                            root.draggingTileId
-                        );
+                        const definition = GridLayout.tileDefinitionFor(
+                            root.draggingTileId);
                         return definition
-                            ? definition.columnSpan
-                                * dashboard.cellWidth
-                                + (definition.columnSpan - 1)
-                                    * root.gridGap
+                            ? definition.columnSpan * dashboard.cellWidth
+                                + (definition.columnSpan - 1) * root.gridGap
                             : 0;
                     }
                     height: {
-                        const definition = GridLayout.definitionFor(
-                            root.draggingTileId
-                        );
+                        const definition = GridLayout.tileDefinitionFor(
+                            root.draggingTileId);
                         return definition
-                            ? definition.rowSpan
-                                * dashboard.cellHeight
-                                + (definition.rowSpan - 1)
-                                    * root.gridGap
+                            ? definition.rowSpan * dashboard.cellHeight
+                                + (definition.rowSpan - 1) * root.gridGap
                             : 0;
                     }
                     visible: root.draggingTileId.length > 0
+                        && !root.desktopExtraction
                         && root.targetColumn >= 0
                         && root.targetRow >= 0
                     radius: Appearance.rounding.extraLarge
@@ -646,8 +448,7 @@ Item {
                         root.dragTargetValid
                             ? Appearance.colors.colPrimary
                             : Appearance.colors.colError,
-                        0.14
-                    )
+                        0.14)
                     border.width: 2
                     border.color: root.dragTargetValid
                         ? Appearance.colors.colPrimary
@@ -656,23 +457,16 @@ Item {
 
                     Behavior on x {
                         NumberAnimation {
-                            duration: Appearance.animation
-                                .expressiveEffects.duration
-                            easing.type: Appearance.animation
-                                .expressiveEffects.type
-                            easing.bezierCurve: Appearance.animation
-                                .expressiveEffects.bezierCurve
+                            duration: Appearance.animation.expressiveEffects.duration
+                            easing.type: Appearance.animation.expressiveEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
                     }
-
                     Behavior on y {
                         NumberAnimation {
-                            duration: Appearance.animation
-                                .expressiveEffects.duration
-                            easing.type: Appearance.animation
-                                .expressiveEffects.type
-                            easing.bezierCurve: Appearance.animation
-                                .expressiveEffects.bezierCurve
+                            duration: Appearance.animation.expressiveEffects.duration
+                            easing.type: Appearance.animation.expressiveEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
                     }
                 }
@@ -690,81 +484,27 @@ Item {
 
                         tileId: definition.id
                         x: placement
-                            ? placement.column
-                                * dashboard.columnStride
-                            : 0
+                            ? placement.column * dashboard.columnStride : 0
                         y: placement
-                            ? placement.row
-                                * dashboard.rowStride
-                            : 0
-                        width: definition.columnSpan
-                            * dashboard.cellWidth
-                            + (definition.columnSpan - 1)
-                                * root.gridGap
-                        height: definition.rowSpan
-                            * dashboard.cellHeight
-                            + (definition.rowSpan - 1)
-                                * root.gridGap
-                        sourceComponent:
-                            root.componentFor(tile.tileId)
-                        dragging:
-                            root.draggingTileId === tile.tileId
+                            ? placement.row * dashboard.rowStride : 0
+                        width: definition.columnSpan * dashboard.cellWidth
+                            + (definition.columnSpan - 1) * root.gridGap
+                        height: definition.rowSpan * dashboard.cellHeight
+                            + (definition.rowSpan - 1) * root.gridGap
+                        active: root.isForeground
+                        dragging: root.draggingTileId === tile.tileId
                         z: dragging ? 30 : 1
 
                         onDragStarted: (
-                            tileId,
-                            sourceItem,
-                            pointerX,
-                            pointerY
+                            tileId, sourceItem, pointerX, pointerY
                         ) => root.beginDrag(
-                            tileId,
-                            sourceItem,
-                            pointerX,
-                            pointerY
-                        )
+                            tileId, sourceItem, pointerX, pointerY)
                         onDragMoved: (
-                            tileId,
-                            pointerX,
-                            pointerY
+                            tileId, pointerX, pointerY
                         ) => root.updateDrag(
-                            tileId,
-                            pointerX,
-                            pointerY
-                        )
-                        onDragFinished: tileId =>
-                            root.finishDrag(tileId)
-                        onDragCanceled: tileId =>
-                            root.cancelDrag(tileId)
-                    }
-                }
-
-                ShaderEffectSource {
-                    id: dragProxy
-
-                    x: root.dragPointerX - root.dragOffsetX
-                    y: root.dragPointerY - root.dragOffsetY
-                    width: root.dragSourceItem
-                        ? root.dragSourceItem.width
-                        : 0
-                    height: root.dragSourceItem
-                        ? root.dragSourceItem.height
-                        : 0
-                    visible: root.dragSourceItem !== null
-                    sourceItem: root.dragSourceItem
-                    sourceRect: Qt.rect(0, 0, width, height)
-                    hideSource: visible
-                    live: true
-                    smooth: true
-                    opacity: 0.96
-                    scale: visible ? 1.025 : 1
-                    z: 50
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: Appearance.animation
-                                .expressiveEffects.duration
-                            easing.type: Easing.OutBack
-                        }
+                            tileId, pointerX, pointerY)
+                        onDragFinished: tileId => root.finishDrag(tileId)
+                        onDragCanceled: tileId => root.cancelDrag(tileId)
                     }
                 }
             }

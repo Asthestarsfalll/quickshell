@@ -1,7 +1,7 @@
 import QtQuick
 import qs.Common
 import qs.Services
-import "../../../../Common/functions/DateFormat.js" as DateFormat
+import "../../Common/functions/DateFormat.js" as DateFormat
 
 Item {
     id: root

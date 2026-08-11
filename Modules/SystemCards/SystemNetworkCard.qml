@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import M3Shapes
 import qs.Common
 import qs.Components
-import "../../../../Common/functions/SystemFormat.js" as Format
+import "../../Common/functions/SystemFormat.js" as Format
 
 Rectangle {
     id: root

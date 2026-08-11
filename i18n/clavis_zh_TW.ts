@@ -1290,17 +1290,17 @@
 <context>
     <name>ExpressiveMetricTile</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/ExpressiveMetricTile.qml" line="88" />
+        <location filename="../Modules/SystemCards/ExpressiveMetricTile.qml" line="88" />
         <source> 图标</source>
         <translation> 圖示</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/ExpressiveMetricTile.qml" line="168" />
+        <location filename="../Modules/SystemCards/ExpressiveMetricTile.qml" line="168" />
         <source> 最近一分钟趋势</source>
         <translation> 最近一分鐘趨勢</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/ExpressiveMetricTile.qml" line="170" />
+        <location filename="../Modules/SystemCards/ExpressiveMetricTile.qml" line="170" />
         <source>当前值 </source>
         <translation>當前值 </translation>
     </message>
@@ -3333,89 +3333,89 @@
 <context>
     <name>SystemBatteryTank</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="96" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="96" />
         <source>充满还需 </source>
         <translation>充滿還需 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="99" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="99" />
         <source>充满时长未知</source>
         <translation>充滿時長未知</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="106" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="106" />
         <source>耗电时长 </source>
         <translation>耗電時長 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="109" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="109" />
         <source>耗电时长未知</source>
         <translation>耗電時長未知</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="112" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="112" />
         <source>已接通电源，未在充电</source>
         <translation>已接通電源，未在充電</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="117" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="117" />
         <source>电池，</source>
         <translation>電池，</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="123" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="123" />
         <source>已接通电源</source>
         <translation>已接通電源</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="124" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="124" />
         <source>未接通电源</source>
         <translation>未接通電源</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="126" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="126" />
         <source>未检测到电池</source>
         <translation>未檢測到電池</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="230" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="230" />
         <source>电池</source>
         <translation>電池</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="285" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="285" />
         <source>充电 </source>
         <translation>充電 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="286" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="286" />
         <source>功率 </source>
         <translation>功率 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="288" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="288" />
         <source>放电 </source>
         <translation>放電 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="292" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="292" />
         <source>功率未知</source>
         <translation>功率未知</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="314" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="314" />
         <source>健康 </source>
         <translation>健康 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="331" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="331" />
         <source>未检测到
 电池</source>
         <translation>未檢測到
 電池</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemBatteryTank.qml" line="352" />
+        <location filename="../Modules/SystemCards/SystemBatteryTank.qml" line="352" />
         <source>不可用</source>
         <translation>不可用</translation>
     </message>
@@ -3423,147 +3423,147 @@
 <context>
     <name>SystemCalendarCard</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="10" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="10" />
         <source>一月</source>
         <translation>一月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="10" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="10" />
         <source>二月</source>
         <translation>二月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="10" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="10" />
         <source>三月</source>
         <translation>三月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="10" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="10" />
         <source>四月</source>
         <translation>四月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="11" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="11" />
         <source>五月</source>
         <translation>五月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="11" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="11" />
         <source>六月</source>
         <translation>六月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="11" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="11" />
         <source>七月</source>
         <translation>七月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="11" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="11" />
         <source>八月</source>
         <translation>八月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="12" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="12" />
         <source>九月</source>
         <translation>九月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="12" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="12" />
         <source>十月</source>
         <translation>十月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="12" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="12" />
         <source>十一月</source>
         <translation>十一月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="12" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="12" />
         <source>十二月</source>
         <translation>十二月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="15" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="15" />
         <source>周日</source>
         <translation>週日</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="15" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="15" />
         <source>周一</source>
         <translation>週一</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="15" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="15" />
         <source>周二</source>
         <translation>週二</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="15" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="15" />
         <source>周三</source>
         <translation>週三</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="16" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="16" />
         <source>周四</source>
         <translation>週四</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="16" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="16" />
         <source>周五</source>
         <translation>週五</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="16" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="16" />
         <source>周六</source>
         <translation>週六</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="19" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="19" />
         <source>星期日</source>
         <translation>星期日</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="19" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="19" />
         <source>星期一</source>
         <translation>星期一</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="19" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="19" />
         <source>星期二</source>
         <translation>星期二</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="19" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="19" />
         <source>星期三</source>
         <translation>星期三</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="20" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="20" />
         <source>星期四</source>
         <translation>星期四</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="20" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="20" />
         <source>星期五</source>
         <translation>星期五</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="20" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="20" />
         <source>星期六</source>
         <translation>星期六</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="38" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="38" />
         <source>年</source>
         <translation>年</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="39" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="39" />
         <source>月</source>
         <translation>月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemCalendarCard.qml" line="40" />
+        <location filename="../Modules/SystemCards/SystemCalendarCard.qml" line="40" />
         <source>日，</source>
         <translation>日，</translation>
     </message>
@@ -3571,97 +3571,97 @@
 <context>
     <name>SystemClockCard</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="30" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="30" />
         <source>星期日</source>
         <translation>星期日</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="31" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="31" />
         <source>星期一</source>
         <translation>星期一</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="32" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="32" />
         <source>星期二</source>
         <translation>星期二</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="33" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="33" />
         <source>星期三</source>
         <translation>星期三</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="34" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="34" />
         <source>星期四</source>
         <translation>星期四</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="35" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="35" />
         <source>星期五</source>
         <translation>星期五</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="36" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="36" />
         <source>星期六</source>
         <translation>星期六</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="39" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="39" />
         <source>一月</source>
         <translation>一月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="39" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="39" />
         <source>二月</source>
         <translation>二月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="39" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="39" />
         <source>三月</source>
         <translation>三月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="39" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="39" />
         <source>四月</source>
         <translation>四月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="40" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="40" />
         <source>五月</source>
         <translation>五月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="40" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="40" />
         <source>六月</source>
         <translation>六月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="40" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="40" />
         <source>七月</source>
         <translation>七月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="40" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="40" />
         <source>八月</source>
         <translation>八月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="41" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="41" />
         <source>九月</source>
         <translation>九月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="41" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="41" />
         <source>十月</source>
         <translation>十月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="41" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="41" />
         <source>十一月</source>
         <translation>十一月</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemClockCard.qml" line="41" />
+        <location filename="../Modules/SystemCards/SystemClockCard.qml" line="41" />
         <source>十二月</source>
         <translation>十二月</translation>
     </message>
@@ -3751,12 +3751,12 @@
 <context>
     <name>SystemLoadingState</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemLoadingState.qml" line="11" />
+        <location filename="../Modules/SystemCards/SystemLoadingState.qml" line="11" />
         <source>正在连接系统监测服务</source>
         <translation>正在連線系統監測服務</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemLoadingState.qml" line="35" />
+        <location filename="../Modules/SystemCards/SystemLoadingState.qml" line="35" />
         <source>首个有效快照到达后显示实时指标</source>
         <translation>首個有效快照到達後顯示即時指標</translation>
     </message>
@@ -3950,43 +3950,43 @@
 <context>
     <name>SystemNetworkCard</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="20" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="20" />
         <source>网络，下载 </source>
         <translation>網路，下載 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="24" />
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="161" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="24" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="161" />
         <source>，上传 </source>
         <translation>，上傳 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="64" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="64" />
         <source>网络</source>
         <translation>網路</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="74" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="74" />
         <source>全部接口</source>
         <translation>全部介面</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="93" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="93" />
         <source>下载</source>
         <translation>下載</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="121" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="121" />
         <source>上传</source>
         <translation>上傳</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="156" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="156" />
         <source>网络最近一分钟趋势</source>
         <translation>網路最近一分鐘趨勢</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemNetworkCard.qml" line="157" />
+        <location filename="../Modules/SystemCards/SystemNetworkCard.qml" line="157" />
         <source>下载 </source>
         <translation>下載 </translation>
     </message>
@@ -3994,7 +3994,7 @@
 <context>
     <name>SystemSparkline</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemSparkline.qml" line="22" />
+        <location filename="../Modules/SystemCards/SystemSparkline.qml" line="22" />
         <source>最近一分钟趋势</source>
         <translation>最近一分鐘趨勢</translation>
     </message>
@@ -4002,37 +4002,37 @@
 <context>
     <name>SystemStorageCard</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemStorageCard.qml" line="29" />
+        <location filename="../Modules/SystemCards/SystemStorageCard.qml" line="29" />
         <source>存储设备</source>
         <translation>儲存裝置</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemStorageCard.qml" line="65" />
+        <location filename="../Modules/SystemCards/SystemStorageCard.qml" line="65" />
         <source>存储 </source>
         <translation>儲存 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemStorageCard.qml" line="68" />
+        <location filename="../Modules/SystemCards/SystemStorageCard.qml" line="68" />
         <source>，已使用 </source>
         <translation>，已使用 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemStorageCard.qml" line="132" />
+        <location filename="../Modules/SystemCards/SystemStorageCard.qml" line="132" />
         <source>已使用</source>
         <translation>已使用</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemStorageCard.qml" line="151" />
+        <location filename="../Modules/SystemCards/SystemStorageCard.qml" line="151" />
         <source>存储</source>
         <translation>儲存</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemStorageCard.qml" line="165" />
+        <location filename="../Modules/SystemCards/SystemStorageCard.qml" line="165" />
         <source>未检测到存储盘</source>
         <translation>未檢測到儲存盤</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemStorageCard.qml" line="196" />
+        <location filename="../Modules/SystemCards/SystemStorageCard.qml" line="196" />
         <source>选择存储盘</source>
         <translation>選擇儲存盤</translation>
     </message>
@@ -4040,27 +4040,27 @@
 <context>
     <name>SystemUnavailableState</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemUnavailableState.qml" line="11" />
+        <location filename="../Modules/SystemCards/SystemUnavailableState.qml" line="11" />
         <source>系统监测服务不可用</source>
         <translation>系統監測服務不可用</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemUnavailableState.qml" line="12" />
+        <location filename="../Modules/SystemCards/SystemUnavailableState.qml" line="12" />
         <source>请确认 key 已构建并可从当前环境运行。</source>
         <translation>請確認 key 已構建並可從當前環境執行。</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemUnavailableState.qml" line="68" />
+        <location filename="../Modules/SystemCards/SystemUnavailableState.qml" line="68" />
         <source>正在重新连接系统监测服务</source>
         <translation>正在重新連線系統監測服務</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemUnavailableState.qml" line="75" />
+        <location filename="../Modules/SystemCards/SystemUnavailableState.qml" line="75" />
         <source>重试</source>
         <translation>重試</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemUnavailableState.qml" line="79" />
+        <location filename="../Modules/SystemCards/SystemUnavailableState.qml" line="79" />
         <source>重试系统监测连接</source>
         <translation>重試系統監測連線</translation>
     </message>
@@ -4151,73 +4151,73 @@
 <context>
     <name>SystemWeatherCard</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="80" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="80" />
         <source>正在定位</source>
         <translation>正在定位</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="84" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="84" />
         <source>坐标未知</source>
         <translation>座標未知</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="92" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="92" />
         <source>天气，</source>
         <translation>天氣，</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="96" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="96" />
         <source>正在获取</source>
         <translation>正在獲取</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="97" />
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="264" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="97" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="264" />
         <source>位置未知</source>
         <translation>位置未知</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="98" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="98" />
         <source>，坐标 </source>
         <translation>，座標 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="99" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="99" />
         <source>，湿度 </source>
         <translation>，溼度 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="101" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="101" />
         <source>，风速 </source>
         <translation>，風速 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="103" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="103" />
         <source>，气压 </source>
         <translation>，氣壓 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="105" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="105" />
         <source>，能见度 </source>
         <translation>，能見度 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="107" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="107" />
         <source>，日出 </source>
         <translation>，日出 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="108" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="108" />
         <source>，日落 </source>
         <translation>，日落 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="231" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="231" />
         <source>正在获取天气</source>
         <translation>正在獲取天氣</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/system/SystemWeatherCard.qml" line="232" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="232" />
         <source>天气不可用</source>
         <translation>天氣不可用</translation>
     </message>
@@ -6690,5 +6690,49 @@
         <source>取消</source>
         <translation>取消</translation>
     </message>
+</context>
+<context>
+    <name>SystemCardCatalog</name>
+    <message><source>时钟</source><translation>時鐘</translation></message>
+    <message><source>电池</source><translation>電池</translation></message>
+    <message><source>CPU</source><translation>CPU</translation></message>
+    <message><source>GPU</source><translation>GPU</translation></message>
+    <message><source>内存</source><translation>記憶體</translation></message>
+    <message><source>Wi-Fi</source><translation>Wi-Fi</translation></message>
+    <message><source>网络</source><translation>網路</translation></message>
+    <message><source>存储</source><translation>儲存</translation></message>
+    <message><source>日历</source><translation>日曆</translation></message>
+    <message><source>天气</source><translation>天氣</translation></message>
+</context>
+<context>
+    <name>GeneralSidebarPage</name>
+    <message><source>系统卡片</source><translation>系統卡片</translation></message>
+    <message><source>桌面卡片排版</source><translation>桌面卡片排版</translation></message>
+    <message><source>桌面</source><translation>桌面</translation></message>
+    <message><source>侧边栏</source><translation>側邊欄</translation></message>
+    <message><source>自由拖拽</source><translation>自由拖曳</translation></message>
+    <message><source>最空旷处</source><translation>最空曠處</translation></message>
+    <message><source>最密集处</source><translation>最密集處</translation></message>
+</context>
+<context>
+    <name>DesktopCard</name>
+    <message><source>自由拖拽</source><translation>自由拖曳</translation></message>
+    <message><source>最空旷处</source><translation>最空曠處</translation></message>
+    <message><source>最密集处</source><translation>最密集處</translation></message>
+    <message><source>收回到侧边栏</source><translation>收回到側邊欄</translation></message>
+</context>
+<context>
+    <name>SystemCardContent</name>
+    <message><source>CPU</source><translation>CPU</translation></message>
+    <message><source>GPU</source><translation>GPU</translation></message>
+    <message><source> 核 · </source><translation> 核 · </translation></message>
+    <message><source> 线程</source><translation> 執行緒</translation></message>
+    <message><source>总体利用率</source><translation>整體使用率</translation></message>
+    <message><source>未检测到可用图形设备</source><translation>未偵測到可用圖形裝置</translation></message>
+    <message><source>图形设备</source><translation>圖形裝置</translation></message>
+    <message><source>内存已使用 </source><translation>已使用記憶體 </translation></message>
+    <message><source>Wi-Fi 信号强度</source><translation>Wi-Fi 訊號強度</translation></message>
+    <message><source>Wi-Fi 信号强度 </source><translation>Wi-Fi 訊號強度 </translation></message>
+    <message><source>Wi-Fi 未连接</source><translation>Wi-Fi 未連線</translation></message>
 </context>
 </TS>

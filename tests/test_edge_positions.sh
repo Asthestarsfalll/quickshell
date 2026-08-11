@@ -103,7 +103,7 @@ require_text Modules/Bar/SysMonitor/SysMonitor.qml \
 require_text Modules/Bar/SysMonitor/SysMonitor.qml \
     'Format.rootDisk(SystemMonitorService.disks)'
 require_text Common/functions/SystemFormat.js 'function rootDisk(disks)'
-require_text Modules/Sidebars/Left/system/SystemStorageCard.qml \
+require_text Modules/SystemCards/SystemStorageCard.qml \
     'Format.rootDiskIndex(root.disks)'
 require_text Modules/Bar/SysMonitor/SysMonitor.qml \
     'function normalizedTemperature(value)'

@@ -1,34 +1,32 @@
 .pragma library
 
+Qt.include("../../../SystemCards/SystemCardCatalog.js");
+
 var columnCount = 3;
 var rowCount = 7;
-var schemaVersion = 6;
+// v6 was the all-ten-card layout.  v7 deliberately stores only the active
+// sidebar subset; cards on Desktop are represented by SystemCardState.
+var schemaVersion = 7;
+var legacySchemaVersion = 6;
 
-var tileDefinitions = [
-    { id: "time", columnSpan: 2, rowSpan: 2 },
-    { id: "battery", columnSpan: 1, rowSpan: 2 },
-    { id: "cpu", columnSpan: 1, rowSpan: 1 },
-    { id: "gpu", columnSpan: 1, rowSpan: 1 },
-    { id: "memoryUsed", columnSpan: 1, rowSpan: 1 },
-    { id: "wifi", columnSpan: 1, rowSpan: 1 },
-    { id: "network", columnSpan: 2, rowSpan: 1 },
-    { id: "storage", columnSpan: 3, rowSpan: 1 },
-    { id: "calendar", columnSpan: 1, rowSpan: 1 },
-    { id: "weather", columnSpan: 3, rowSpan: 1 }
-];
+function idsFor(activeIds) {
+    var requested = Array.isArray(activeIds) ? activeIds : ids();
+    var seen = {};
+    return ids().filter(function(id) {
+        if (requested.indexOf(id) === -1 || seen[id])
+            return false;
+        seen[id] = true;
+        return true;
+    });
+}
 
-var defaultAnchors = {
-    time: { column: 0, row: 0 },
-    battery: { column: 2, row: 0 },
-    cpu: { column: 0, row: 2 },
-    gpu: { column: 1, row: 2 },
-    memoryUsed: { column: 2, row: 2 },
-    wifi: { column: 0, row: 3 },
-    network: { column: 1, row: 3 },
-    storage: { column: 0, row: 4 },
-    calendar: { column: 0, row: 5 },
-    weather: { column: 0, row: 6 }
-};
+function definitions(activeIds) {
+    return sidebarDefinitions(idsFor(activeIds));
+}
+
+function tileDefinitionFor(id) {
+    return definitionFor(String(id));
+}
 
 function cloneTile(tile) {
     return {
@@ -38,47 +36,6 @@ function cloneTile(tile) {
         columnSpan: Number(tile.columnSpan),
         rowSpan: Number(tile.rowSpan)
     };
-}
-
-function definitions() {
-    return tileDefinitions.map(function(definition) {
-        return {
-            id: definition.id,
-            columnSpan: definition.columnSpan,
-            rowSpan: definition.rowSpan
-        };
-    });
-}
-
-function definitionFor(id) {
-    for (var index = 0; index < tileDefinitions.length; index += 1) {
-        if (tileDefinitions[index].id === id)
-            return tileDefinitions[index];
-    }
-    return null;
-}
-
-function defaultLayout() {
-    return tileDefinitions.map(function(definition) {
-        var anchor = defaultAnchors[definition.id];
-        return {
-            id: definition.id,
-            column: anchor.column,
-            row: anchor.row,
-            columnSpan: definition.columnSpan,
-            rowSpan: definition.rowSpan
-        };
-    });
-}
-
-function placementFor(layout, id) {
-    if (!Array.isArray(layout))
-        return null;
-    for (var index = 0; index < layout.length; index += 1) {
-        if (layout[index].id === id)
-            return layout[index];
-    }
-    return null;
 }
 
 function maskFor(column, row, columnSpan, rowSpan) {
@@ -99,24 +56,34 @@ function withinBounds(tile) {
         && tile.row + tile.rowSpan <= rowCount;
 }
 
-function validateLayout(layout) {
-    if (!Array.isArray(layout) || layout.length !== tileDefinitions.length)
+function placementFor(layout, id) {
+    if (!Array.isArray(layout))
+        return null;
+    for (var index = 0; index < layout.length; index += 1) {
+        if (layout[index].id === id)
+            return layout[index];
+    }
+    return null;
+}
+
+function validateLayout(layout, activeIds) {
+    var expected = idsFor(activeIds);
+    if (!Array.isArray(layout) || layout.length !== expected.length)
         return false;
 
     var seen = {};
     var occupied = 0;
     for (var index = 0; index < layout.length; index += 1) {
         var tile = layout[index];
-        var definition = definitionFor(tile.id);
-        if (!definition || seen[tile.id])
+        var definition = tileDefinitionFor(tile && tile.id);
+        if (!tile || !definition || expected.indexOf(tile.id) === -1
+                || seen[tile.id])
             return false;
         if (Number(tile.columnSpan) !== definition.columnSpan
-                || Number(tile.rowSpan) !== definition.rowSpan) {
+                || Number(tile.rowSpan) !== definition.rowSpan
+                || !withinBounds(tile)) {
             return false;
         }
-        if (!withinBounds(tile))
-            return false;
-
         var mask = maskFor(
             tile.column,
             tile.row,
@@ -129,64 +96,13 @@ function validateLayout(layout) {
         seen[tile.id] = true;
     }
 
-    for (var definitionIndex = 0;
-            definitionIndex < tileDefinitions.length;
-            definitionIndex += 1) {
-        if (!seen[tileDefinitions[definitionIndex].id])
+    for (var expectedIndex = 0;
+            expectedIndex < expected.length;
+            expectedIndex += 1) {
+        if (!seen[expected[expectedIndex]])
             return false;
     }
     return true;
-}
-
-function hydrateSaved(savedLayout) {
-    if (!savedLayout
-            || Number(savedLayout.version) !== schemaVersion
-            || !Array.isArray(savedLayout.tiles)) {
-        return defaultLayout();
-    }
-
-    var anchors = {};
-    for (var index = 0; index < savedLayout.tiles.length; index += 1) {
-        var saved = savedLayout.tiles[index];
-        if (!saved || typeof saved.id !== "string" || anchors[saved.id])
-            return defaultLayout();
-        anchors[saved.id] = {
-            column: Number(saved.column),
-            row: Number(saved.row)
-        };
-    }
-
-    var hydrated = tileDefinitions.map(function(definition) {
-        var anchor = anchors[definition.id];
-        return {
-            id: definition.id,
-            column: anchor ? anchor.column : NaN,
-            row: anchor ? anchor.row : NaN,
-            columnSpan: definition.columnSpan,
-            rowSpan: definition.rowSpan
-        };
-    });
-    return validateLayout(hydrated) ? hydrated : defaultLayout();
-}
-
-function serializeLayout(layout) {
-    var source = validateLayout(layout) ? layout : defaultLayout();
-    return {
-        version: schemaVersion,
-        tiles: tileDefinitions.map(function(definition) {
-            var tile = placementFor(source, definition.id);
-            return {
-                id: definition.id,
-                column: tile.column,
-                row: tile.row
-            };
-        })
-    };
-}
-
-function serializedLayoutsEqual(first, second) {
-    return JSON.stringify(serializeLayout(hydrateSaved(first)))
-        === JSON.stringify(serializeLayout(hydrateSaved(second)));
 }
 
 function clampAnchor(definition, column, row) {
@@ -208,14 +124,197 @@ function clampAnchor(definition, column, row) {
     };
 }
 
+function preferredAnchor(id, preferredAnchors) {
+    var fallback = defaultAnchorFor(id);
+    var preferred = preferredAnchors && preferredAnchors[id]
+        ? preferredAnchors[id] : fallback;
+    return clampAnchor(
+        tileDefinitionFor(id),
+        preferred.column,
+        preferred.row
+    );
+}
+
+function nearestFree(definition, original, occupied) {
+    var candidates = [];
+    for (var row = 0; row <= rowCount - definition.rowSpan; row += 1) {
+        for (var column = 0;
+                column <= columnCount - definition.columnSpan;
+                column += 1) {
+            var mask = maskFor(
+                column,
+                row,
+                definition.columnSpan,
+                definition.rowSpan
+            );
+            if ((occupied & mask) !== 0)
+                continue;
+            candidates.push({
+                column: column,
+                row: row,
+                mask: mask,
+                cost: (Math.abs(column - original.column)
+                    + Math.abs(row - original.row)) * 1000
+                    + row * columnCount + column
+            });
+        }
+    }
+    candidates.sort(function(left, right) {
+        return left.cost - right.cost;
+    });
+    return candidates.length > 0 ? candidates[0] : null;
+}
+
+function defaultLayout(activeIds, preferredAnchors) {
+    var expected = idsFor(activeIds);
+    var layout = [];
+    var occupied = 0;
+    for (var index = 0; index < expected.length; index += 1) {
+        var id = expected[index];
+        var definition = tileDefinitionFor(id);
+        var anchor = preferredAnchor(id, preferredAnchors);
+        var candidate = nearestFree(definition, anchor, occupied);
+        if (!candidate)
+            return [];
+        layout.push({
+            id: id,
+            column: candidate.column,
+            row: candidate.row,
+            columnSpan: definition.columnSpan,
+            rowSpan: definition.rowSpan
+        });
+        occupied |= candidate.mask;
+    }
+    return layout;
+}
+
+function hydrateSaved(savedLayout, activeIds, preferredAnchors) {
+    var expected = idsFor(activeIds);
+    var fallback = defaultLayout(expected, preferredAnchors);
+    if (!savedLayout
+            || (Number(savedLayout.version) !== schemaVersion
+                && Number(savedLayout.version) !== legacySchemaVersion)
+            || !Array.isArray(savedLayout.tiles)) {
+        return fallback;
+    }
+
+    var anchors = {};
+    var savedOccupied = 0;
+    for (var index = 0; index < savedLayout.tiles.length; index += 1) {
+        var saved = savedLayout.tiles[index];
+        var savedDefinition = saved && typeof saved.id === "string"
+            ? tileDefinitionFor(saved.id) : null;
+        var savedColumn = saved ? Number(saved.column) : NaN;
+        var savedRow = saved ? Number(saved.row) : NaN;
+        if (!saved || !savedDefinition
+                || anchors[saved.id]
+                || !Number.isInteger(savedColumn)
+                || !Number.isInteger(savedRow)) {
+            return fallback;
+        }
+        // A malformed persisted layout must not be silently reinterpreted as
+        // a new arrangement.  Partial v7 documents may contain cards that
+        // are no longer in this sidebar subset, so only active IDs take part
+        // in the bounds/collision validation below.
+        if (expected.indexOf(saved.id) !== -1) {
+            var savedTile = {
+                column: savedColumn,
+                row: savedRow,
+                columnSpan: savedDefinition.columnSpan,
+                rowSpan: savedDefinition.rowSpan
+            };
+            if (!withinBounds(savedTile))
+                return fallback;
+            var savedMask = maskFor(
+                savedColumn,
+                savedRow,
+                savedDefinition.columnSpan,
+                savedDefinition.rowSpan
+            );
+            if ((savedOccupied & savedMask) !== 0)
+                return fallback;
+            savedOccupied |= savedMask;
+        }
+        anchors[saved.id] = {
+            column: savedColumn,
+            row: savedRow
+        };
+    }
+
+    var hydrated = defaultLayout(expected, preferredAnchors);
+    // Rebuild in catalog order, honoring saved anchors first and falling back
+    // to the card's remembered sidebar anchor when it was absent from v7.
+    var occupied = 0;
+    var result = [];
+    for (var expectedIndex = 0;
+            expectedIndex < expected.length;
+            expectedIndex += 1) {
+        var id = expected[expectedIndex];
+        var definition = tileDefinitionFor(id);
+        var anchor = anchors[id]
+            ? clampAnchor(definition, anchors[id].column, anchors[id].row)
+            : preferredAnchor(id, preferredAnchors);
+        var candidate = nearestFree(definition, anchor, occupied);
+        if (!candidate)
+            return fallback;
+        result.push({
+            id: id,
+            column: candidate.column,
+            row: candidate.row,
+            columnSpan: definition.columnSpan,
+            rowSpan: definition.rowSpan
+        });
+        occupied |= candidate.mask;
+    }
+    return validateLayout(result, expected) ? result : hydrated;
+}
+
+function serializeLayout(layout, activeIds) {
+    var expected = idsFor(activeIds);
+    var source = validateLayout(layout, expected)
+        ? layout
+        : defaultLayout(expected);
+    return {
+        version: schemaVersion,
+        tiles: expected.map(function(id) {
+            var tile = placementFor(source, id);
+            return {
+                id: id,
+                column: tile.column,
+                row: tile.row
+            };
+        })
+    };
+}
+
+function serializedLayoutsEqual(first, second, activeIds) {
+    return JSON.stringify(serializeLayout(
+        hydrateSaved(first, activeIds), activeIds))
+        === JSON.stringify(serializeLayout(
+            hydrateSaved(second, activeIds), activeIds));
+}
+
+function contentRowCount(layout, activeIds) {
+    if (!Array.isArray(layout) || layout.length === 0)
+        return 1;
+    var allowed = Array.isArray(activeIds) ? idsFor(activeIds) : null;
+    var lastRow = 0;
+    for (var index = 0; index < layout.length; index += 1) {
+        var tile = layout[index];
+        if (allowed && allowed.indexOf(tile.id) === -1)
+            continue;
+        lastRow = Math.max(lastRow,
+            Number(tile.row) + Number(tile.rowSpan));
+    }
+    return Math.max(1, Math.min(rowCount, lastRow));
+}
+
 function candidatesFor(tile, original) {
     var candidates = [];
     for (var row = 0; row <= rowCount - tile.rowSpan; row += 1) {
         for (var column = 0;
                 column <= columnCount - tile.columnSpan;
                 column += 1) {
-            var distance = Math.abs(column - original.column)
-                + Math.abs(row - original.row);
             candidates.push({
                 column: column,
                 row: row,
@@ -225,22 +324,26 @@ function candidatesFor(tile, original) {
                     tile.columnSpan,
                     tile.rowSpan
                 ),
-                cost: distance * 1000 + row * columnCount + column
+                cost: (Math.abs(column - original.column)
+                    + Math.abs(row - original.row)) * 1000
+                    + row * columnCount + column
             });
         }
     }
-    candidates.sort(function(first, second) {
-        return first.cost - second.cost;
+    candidates.sort(function(left, right) {
+        return left.cost - right.cost;
     });
     return candidates;
 }
 
-function moveLayout(layout, tileId, targetColumn, targetRow) {
-    var current = validateLayout(layout)
+function moveLayout(layout, tileId, targetColumn, targetRow, activeIds) {
+    var expected = idsFor(activeIds || (Array.isArray(layout)
+        ? layout.map(function(tile) { return tile.id; }) : null));
+    var current = validateLayout(layout, expected)
         ? layout.map(cloneTile)
-        : defaultLayout();
+        : defaultLayout(expected);
     var moving = placementFor(current, tileId);
-    var definition = definitionFor(tileId);
+    var definition = tileDefinitionFor(tileId);
     if (!moving || !definition)
         return null;
 
@@ -255,7 +358,6 @@ function moveLayout(layout, tileId, targetColumn, targetRow) {
     current.forEach(function(tile) {
         originalById[tile.id] = tile;
     });
-
     var remaining = current.filter(function(tile) {
         return tile.id !== tileId;
     });
@@ -274,7 +376,6 @@ function moveLayout(layout, tileId, targetColumn, targetRow) {
             originalById[tile.id]
         );
     });
-
     var bestCost = Number.POSITIVE_INFINITY;
     var bestPlacements = null;
     var placements = {};
@@ -315,11 +416,9 @@ function moveLayout(layout, tileId, targetColumn, targetRow) {
             });
             return;
         }
-
         var optimistic = lowerBound(index, occupiedMask);
         if (!isFinite(optimistic) || totalCost + optimistic >= bestCost)
             return;
-
         var tile = remaining[index];
         var candidates = candidateMap[tile.id];
         for (var candidateIndex = 0;
@@ -342,24 +441,25 @@ function moveLayout(layout, tileId, targetColumn, targetRow) {
     if (!bestPlacements)
         return null;
 
-    var result = tileDefinitions.map(function(tileDefinition) {
-        if (tileDefinition.id === tileId) {
+    var result = expected.map(function(id) {
+        var tileDefinition = tileDefinitionFor(id);
+        if (id === tileId) {
             return {
-                id: tileId,
+                id: id,
                 column: target.column,
                 row: target.row,
                 columnSpan: tileDefinition.columnSpan,
                 rowSpan: tileDefinition.rowSpan
             };
         }
-        var placement = bestPlacements[tileDefinition.id];
+        var placement = bestPlacements[id];
         return {
-            id: tileDefinition.id,
+            id: id,
             column: placement.column,
             row: placement.row,
             columnSpan: tileDefinition.columnSpan,
             rowSpan: tileDefinition.rowSpan
         };
     });
-    return validateLayout(result) ? result : null;
+    return validateLayout(result, expected) ? result : null;
 }

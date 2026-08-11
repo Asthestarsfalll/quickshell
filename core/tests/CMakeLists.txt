@@ -183,3 +183,21 @@ add_test(NAME m3shapes_tests COMMAND m3shapes_tests)
 set_tests_properties(m3shapes_tests PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
 )
+
+qt_add_executable(wallpaper_analyzer_tests
+    wallpaper_analyzer_test.cpp
+)
+
+target_link_libraries(wallpaper_analyzer_tests PRIVATE
+    ClavisDesktopCardsCore
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Qml
+    Qt6::Test
+)
+
+target_include_directories(wallpaper_analyzer_tests PRIVATE
+    ${CLAVIS_SOURCE_ROOT}/core/plugin/desktopcards/src
+)
+
+add_test(NAME wallpaper_analyzer_tests COMMAND wallpaper_analyzer_tests)

@@ -8,6 +8,10 @@ Item {
     property string sourcePath: ""
     property int imageFillMode: Image.PreserveAspectCrop
     property bool panoramaEnabled: false
+    // DesktopWallpaper supplies the per-output WallpaperScene transform.
+    // Overview surfaces leave this null and retain their local transition
+    // geometry.
+    property var sharedTransform: null
     property real horizontalProgress: 0.5
     property int textureWidth:
         Math.min(Math.max(1, Math.round(width)), 8192)
@@ -34,10 +38,14 @@ Item {
             lastReadyImageWidth, lastReadyImageHeight,
             panoramaEnabled && !sourceIsColor)
     readonly property real wallpaperX:
-        panoramaGeometry.active
-            ? WallpaperMath.wallpaperPosition(
-                panoramaGeometry.overflowX, horizontalProgress)
-            : 0
+        root.sharedTransform
+            && root.sharedTransform.panoramaSelected
+            && panoramaGeometry.active
+            ? root.sharedTransform.animatedOffsetX
+            : panoramaGeometry.active
+                ? WallpaperMath.wallpaperPosition(
+                    panoramaGeometry.overflowX, horizontalProgress)
+                : 0
 
     signal loadFailed(string source)
 

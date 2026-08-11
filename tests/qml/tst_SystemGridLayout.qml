@@ -56,7 +56,7 @@ TestCase {
     function test_serializationRoundTrip() {
         const layout = GridLayout.defaultLayout();
         const serialized = GridLayout.serializeLayout(layout);
-        compare(serialized.version, 6);
+        compare(serialized.version, 7);
         compare(serialized.tiles.length, 10);
 
         const hydrated = GridLayout.hydrateSaved(serialized);
@@ -69,7 +69,7 @@ TestCase {
 
     function test_invalidSavedLayoutsFallBack() {
         const duplicate = {
-            version: 6,
+            version: 7,
             tiles: [
                 { id: "time", column: 0, row: 0 },
                 { id: "time", column: 2, row: 0 }
@@ -79,7 +79,6 @@ TestCase {
             GridLayout.defaultLayout()
         );
         outOfBounds.tiles[0].column = 2;
-
         compare(
             JSON.stringify(
                 serialized(GridLayout.hydrateSaved(duplicate))
@@ -239,5 +238,51 @@ TestCase {
                 }
             }
         }
+    }
+
+    function test_subsetLayoutDoesNotReserveDesktopCards() {
+        const active = ["time", "cpu", "weather"];
+        const layout = GridLayout.defaultLayout(active);
+
+        verify(GridLayout.validateLayout(layout, active));
+        compare(layout.length, active.length);
+        compare(GridLayout.contentRowCount(layout), 7);
+        verify(GridLayout.placementFor(layout, "battery") === null);
+
+        const serialized = GridLayout.serializeLayout(layout, active);
+        compare(serialized.version, 7);
+        compare(serialized.tiles.length, active.length);
+
+        const hydrated = GridLayout.hydrateSaved(
+            serialized, active);
+        verify(GridLayout.validateLayout(hydrated, active));
+        compare(hydrated.length, active.length);
+    }
+
+    function test_legacyAllCardLayoutMigratesToActiveSubset() {
+        const legacy = {
+            version: 6,
+            tiles: GridLayout.defaultLayout().map(tile => ({
+                id: tile.id,
+                column: tile.column,
+                row: tile.row
+            }))
+        };
+        const active = ["cpu", "network"];
+        const hydrated = GridLayout.hydrateSaved(legacy, active);
+
+        verify(GridLayout.validateLayout(hydrated, active));
+        compare(hydrated.length, 2);
+        compare(
+            GridLayout.serializeLayout(hydrated, active).version,
+            7
+        );
+    }
+
+    function test_emptySubsetHasMinimalContentHeight() {
+        const layout = GridLayout.defaultLayout([]);
+        verify(GridLayout.validateLayout(layout, []));
+        compare(layout.length, 0);
+        compare(GridLayout.contentRowCount(layout), 1);
     }
 }

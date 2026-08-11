@@ -16,6 +16,7 @@ Item {
     property bool transitionsEnabled: true
     property bool panoramaEnabled: false
     property real horizontalProgress: 0.5
+    property var sharedTransform: null
     property int textureWidth:
         Math.min(Math.max(1, Math.round(width)), 8192)
     property int textureHeight:
@@ -274,6 +275,7 @@ Item {
         imageFillMode: root.imageFillMode
         panoramaEnabled: root.panoramaEnabled
         horizontalProgress: root.horizontalProgress
+        sharedTransform: root.sharedTransform
         textureWidth: root.textureWidth
         textureHeight: root.textureHeight
         visible: root.currentViewport === viewportA
@@ -293,6 +295,7 @@ Item {
         imageFillMode: root.imageFillMode
         panoramaEnabled: root.panoramaEnabled
         horizontalProgress: root.horizontalProgress
+        sharedTransform: root.sharedTransform
         textureWidth: root.textureWidth
         textureHeight: root.textureHeight
         visible: root.currentViewport === viewportB

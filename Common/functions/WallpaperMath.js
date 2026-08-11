@@ -182,3 +182,34 @@ function wallpaperPosition(overflow, progress) {
     const safeOverflow = Math.max(0, Number(overflow) || 0);
     return -safeOverflow * clamp01(progress);
 }
+
+function wallpaperToScreen(offsetX, offsetY, wallpaperX, wallpaperY) {
+    return {
+        x: Number(offsetX) + Number(wallpaperX),
+        y: Number(offsetY) + Number(wallpaperY)
+    };
+}
+
+function screenToWallpaper(offsetX, offsetY, screenX, screenY) {
+    return {
+        x: Number(screenX) - Number(offsetX),
+        y: Number(screenY) - Number(offsetY)
+    };
+}
+
+function wallpaperToNormalized(canvasWidth, canvasHeight, wallpaperX,
+                               wallpaperY) {
+    return {
+        xNorm: clamp01(Number(wallpaperX)
+            / Math.max(1, Number(canvasWidth) || 1)),
+        yNorm: clamp01(Number(wallpaperY)
+            / Math.max(1, Number(canvasHeight) || 1))
+    };
+}
+
+function normalizedToWallpaper(canvasWidth, canvasHeight, xNorm, yNorm) {
+    return {
+        x: clamp01(xNorm) * Math.max(1, Number(canvasWidth) || 1),
+        y: clamp01(yNorm) * Math.max(1, Number(canvasHeight) || 1)
+    };
+}

@@ -71,6 +71,54 @@ TestCase {
             geometry.overflowX, 1), -1920);
     }
 
+    function test_wallpaperScreenTransformsRoundTrip() {
+        const offsetX = -900;
+        const offsetY = -24;
+        const wallpaperPoint = { x: 1400, y: 360 };
+        const screenPoint = WallpaperMath.wallpaperToScreen(
+            offsetX, offsetY, wallpaperPoint.x, wallpaperPoint.y);
+        compare(screenPoint.x, 500);
+        compare(screenPoint.y, 336);
+
+        const roundTrip = WallpaperMath.screenToWallpaper(
+            offsetX, offsetY, screenPoint.x, screenPoint.y);
+        compare(roundTrip.x, wallpaperPoint.x);
+        compare(roundTrip.y, wallpaperPoint.y);
+    }
+
+    function test_panoramaCardStaysInWallpaperSpaceWhileOffsetMoves() {
+        const geometry = WallpaperMath.panoramaGeometry(
+            1920, 1080, 2048, 576, true);
+        const wallpaperX = 400;
+        const firstOffset = WallpaperMath.wallpaperPosition(
+            geometry.overflowX, 0.15625);
+        const secondOffset = WallpaperMath.wallpaperPosition(
+            geometry.overflowX, 0.46875);
+        const firstScreen = WallpaperMath.wallpaperToScreen(
+            firstOffset, 0, wallpaperX, 200);
+        const secondScreen = WallpaperMath.wallpaperToScreen(
+            secondOffset, 0, wallpaperX, 200);
+
+        compare(wallpaperX, 400);
+        verify(secondScreen.x < firstScreen.x);
+        compare(
+            WallpaperMath.screenToWallpaper(
+                secondOffset, 0, secondScreen.x, secondScreen.y).x,
+            wallpaperX
+        );
+    }
+
+    function test_normalizedWallpaperCoordinatesAreResolutionIndependent() {
+        const normalized = WallpaperMath.wallpaperToNormalized(
+            3840, 1080, 1920, 540);
+        compare(normalized.xNorm, 0.5);
+        compare(normalized.yNorm, 0.5);
+        const mapped = WallpaperMath.normalizedToWallpaper(
+            7680, 2160, normalized.xNorm, normalized.yNorm);
+        compare(mapped.x, 3840);
+        compare(mapped.y, 1080);
+    }
+
     function test_panoramaFallsBackForNonWideImages() {
         const sameAspect = WallpaperMath.panoramaGeometry(
             1920, 1080, 1920, 1080, true);

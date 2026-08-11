@@ -35,5 +35,68 @@ StyledFlickable {
                 }
             }
         }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("系统卡片")
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: Metrics.spacingXS
+                rowSpacing: Metrics.spacingXS
+
+                Repeater {
+                    model: SystemCardService.cardIds
+
+                    delegate: SettingsRow {
+                        required property string modelData
+
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        iconName: SystemCardService.cardIcon(modelData)
+                        title: SystemCardService.cardName(modelData)
+                        supportingText: {
+                            const cards = SystemCardService.cards;
+                            const state = cards ? cards[modelData] : null;
+                            return state && state.container === "desktop"
+                                ? qsTr("桌面") : qsTr("侧边栏");
+                        }
+
+                        trailing: StyledSwitch {
+                            checked: {
+                                const cards = SystemCardService.cards;
+                                const state = cards
+                                    ? cards[modelData] : null;
+                                return state ? state.enabled : true;
+                            }
+                            Accessible.name: SystemCardService.cardName(
+                                modelData)
+                            onToggled: SystemCardService.setCardEnabled(
+                                modelData, checked)
+                        }
+                    }
+                }
+            }
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("桌面卡片排版")
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [
+                    { value: "free", label: qsTr("自由拖拽") },
+                    { value: "leastBusy", label: qsTr("最空旷处") },
+                    { value: "mostBusy", label: qsTr("最密集处") }
+                ]
+                currentValue: SystemCardService.globalDesktopLayoutMode
+                buttonHeight: 40
+                horizontalPadding: 14
+                onValueSelected: value =>
+                    SystemCardService.setGlobalDesktopLayoutMode(value)
+            }
+        }
     }
 }

@@ -18,6 +18,7 @@ Singleton {
     property bool preferencesReady: false
     property bool savePending: false
     property var systemGridLayout: ({})
+    property var systemCards: ({})
 
     function normalizedLanguage(value) {
         const normalized = String(value || "").replace("-", "_").toLowerCase();
@@ -73,6 +74,21 @@ Singleton {
         root.save();
     }
 
+    function setSystemCards(cards) {
+        try {
+            root.systemCards = JSON.parse(
+                JSON.stringify(cards || {})
+            );
+        } catch (error) {
+            console.log(
+                "UiPreferences rejected system card state:",
+                error
+            );
+            return;
+        }
+        root.save();
+    }
+
     function save() {
         if (!root.storeReady) {
             root.savePending = true;
@@ -83,7 +99,8 @@ Singleton {
         prefsFile.setText(JSON.stringify({
             "dndEnabled": root.dndEnabled,
             "language": root.language,
-            "systemGridLayout": root.systemGridLayout
+            "systemGridLayout": root.systemGridLayout,
+            "systemCards": root.systemCards
         }, null, 2));
     }
 
@@ -121,6 +138,11 @@ Singleton {
                         && typeof parsed.systemGridLayout === "object") {
                     root.systemGridLayout =
                         parsed.systemGridLayout;
+                }
+                if (parsed.systemCards
+                        && typeof parsed.systemCards === "object"
+                        && !Array.isArray(parsed.systemCards)) {
+                    root.systemCards = parsed.systemCards;
                 }
             } catch (error) {
                 console.log("UiPreferences failed to load:", error);

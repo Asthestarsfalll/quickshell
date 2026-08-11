@@ -1,14 +1,15 @@
 import QtQuick
 import qs.Common
+import qs.Modules.SystemCards
 
 Item {
     id: root
 
     required property string tileId
-    property Component sourceComponent
+    property bool active: true
     property bool dragging: false
     property bool motionEnabled: true
-    readonly property Item contentItem: cardLoader.item
+    readonly property Item contentItem: cardContent
 
     signal dragStarted(
         string tileId,
@@ -62,11 +63,12 @@ Item {
         }
     }
 
-    Loader {
-        id: cardLoader
+    SystemCardContent {
+        id: cardContent
 
         anchors.fill: parent
-        sourceComponent: root.sourceComponent
+        tileId: root.tileId
+        active: root.active
     }
 
     HoverHandler {
@@ -79,6 +81,7 @@ Item {
         id: dragHandler
 
         target: null
+        enabled: root.active
         acceptedButtons: Qt.LeftButton
         grabPermissions:
             PointerHandler.CanTakeOverFromAnything
@@ -90,7 +93,7 @@ Item {
             if (active) {
                 started = true;
                 const point = root.mapToItem(
-                    root.parent,
+                    null,
                     centroid.position.x,
                     centroid.position.y
                 );
@@ -110,7 +113,7 @@ Item {
             if (!active)
                 return;
             const point = root.mapToItem(
-                root.parent,
+                null,
                 centroid.position.x,
                 centroid.position.y
             );

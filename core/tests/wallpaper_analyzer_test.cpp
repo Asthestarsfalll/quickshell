@@ -1,0 +1,101 @@
+#include "wallpaper_analyzer.h"
+
+#include <QImage>
+#include <QTemporaryDir>
+#include <QTest>
+
+class WallpaperAnalyzerTest final : public QObject {
+    Q_OBJECT
+
+private slots:
+    void findsLowAndHighBusyRegions();
+    void staleGenerationCannotPublish();
+    void invalidWallpaperFallsBackGracefully();
+};
+
+void WallpaperAnalyzerTest::findsLowAndHighBusyRegions()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString path = directory.filePath(QStringLiteral("synthetic.png"));
+    QImage image(240, 120, QImage::Format_RGB32);
+    for (int y = 0; y < image.height(); ++y) {
+        for (int x = 0; x < image.width(); ++x) {
+            if (x < image.width() / 2)
+                image.setPixel(x, y, qRgb(220, 220, 220));
+            else
+                image.setPixel(x, y, qRgb((x % 2) ? 0 : 255, 0, 0));
+        }
+    }
+    QVERIFY(image.save(path));
+
+    WallpaperAnalyzer analyzer;
+    WallpaperAnalysisResult *result = nullptr;
+    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
+            this, [&](const QString &, int, WallpaperAnalysisResult *value) {
+                result = value;
+            });
+
+    analyzer.request(QStringLiteral("busy-test"), 1, path,
+                    240, 120, QStringLiteral("Stretch"), 240, 120);
+    QTRY_VERIFY_WITH_TIMEOUT(result != nullptr, 5000);
+    QTRY_COMPARE_WITH_TIMEOUT(analyzer.pendingCount(), 0, 5000);
+
+    QVERIFY(result->valid());
+    const double calm = result->busyScore(0, 0, 110, 120);
+    const double busy = result->busyScore(130, 0, 110, 120);
+    QVERIFY2(busy > calm,
+             qPrintable(QStringLiteral("busy=%1 calm=%2")
+                            .arg(busy).arg(calm)));
+}
+
+void WallpaperAnalyzerTest::staleGenerationCannotPublish()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString path = directory.filePath(QStringLiteral("stale.png"));
+    QImage image(320, 180, QImage::Format_RGB32);
+    image.fill(qRgb(100, 140, 180));
+    QVERIFY(image.save(path));
+
+    WallpaperAnalyzer analyzer;
+    QList<int> generations;
+    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
+            this, [&](const QString &, int generation,
+                      WallpaperAnalysisResult *) {
+                generations.append(generation);
+            });
+
+    analyzer.request(QStringLiteral("same-request"), 1, path,
+                    320, 180, QStringLiteral("Stretch"), 320, 180);
+    analyzer.request(QStringLiteral("same-request"), 2, path,
+                    320, 180, QStringLiteral("Stretch"), 320, 180);
+
+    QTRY_VERIFY_WITH_TIMEOUT(generations.contains(2), 5000);
+    QTRY_COMPARE_WITH_TIMEOUT(analyzer.pendingCount(), 0, 5000);
+    QVERIFY(!generations.contains(1));
+}
+
+void WallpaperAnalyzerTest::invalidWallpaperFallsBackGracefully()
+{
+    WallpaperAnalyzer analyzer;
+    WallpaperAnalysisResult *result = nullptr;
+    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
+            this, [&](const QString &, int, WallpaperAnalysisResult *value) {
+                result = value;
+            });
+
+    analyzer.request(QStringLiteral("invalid-test"), 1,
+                    QStringLiteral("/path/that/does/not/exist.png"),
+                    1920, 1080, QStringLiteral("Fill"), 0, 0);
+    QTRY_VERIFY_WITH_TIMEOUT(result != nullptr, 5000);
+    QVERIFY(!result->valid());
+    QCOMPARE(result->canvasWidth(), 1920.0);
+    QCOMPARE(result->canvasHeight(), 1080.0);
+    QCOMPARE(result->busyScore(0, 0, 100, 100), 0.0);
+}
+
+QTEST_MAIN(WallpaperAnalyzerTest)
+#include "wallpaper_analyzer_test.moc"

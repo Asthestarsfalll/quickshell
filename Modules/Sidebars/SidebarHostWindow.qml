@@ -149,6 +149,42 @@ PanelWindow {
         panelScreen: root.screen
     }
 
+    // A sidebar card keeps its source delegate alive for the duration of the
+    // pointer grab, while this top-level ghost is allowed to cross the whole
+    // panel surface.  No MIME/Wayland DnD is involved.
+    ShaderEffectSource {
+        id: systemCardDragGhost
+
+        x: SystemCardDragSession.pointerX
+            - SystemCardDragSession.offsetX
+        y: SystemCardDragSession.pointerY
+            - SystemCardDragSession.offsetY
+        width: SystemCardDragSession.sourceItem
+            ? SystemCardDragSession.sourceItem.width : 0
+        height: SystemCardDragSession.sourceItem
+            ? SystemCardDragSession.sourceItem.height : 0
+        visible: SystemCardDragSession.active
+            && SystemCardDragSession.sourceItem !== null
+        sourceItem: SystemCardDragSession.sourceItem
+        sourceRect: Qt.rect(0, 0, width, height)
+        // Keep the source delegate alive but never paint it twice during the
+        // frozen transfer hand-off.
+        hideSource: visible
+        live: visible && !SystemCardDragSession.frozen
+        smooth: true
+        opacity: 0.96
+        scale: visible ? 1.025 : 1
+        z: 100
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveEffects.duration
+                easing.type: Appearance.animation.expressiveEffects.type
+                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+            }
+        }
+    }
+
     CompositorBlurRegion {
         targetWindow: root
         backgroundItem: leftSidebar.blurBackgroundItem
@@ -164,6 +200,11 @@ PanelWindow {
         focus: root.anySidebarOpen
 
         Keys.onEscapePressed: event => {
+            if (SystemCardDragSession.active) {
+                SystemCardDragSession.requestCancel();
+                event.accepted = true;
+                return;
+            }
             WidgetState.closeAllPopups();
             event.accepted = true;
         }

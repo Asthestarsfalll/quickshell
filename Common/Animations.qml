@@ -129,6 +129,9 @@ Singleton {
         }
 
         readonly property QtObject expressiveEffects: expressiveDefaultEffects
+        // Shared spatial token for wallpaper-card reflow, including the
+        // sidebar-to-desktop handoff and geometry remapping.
+        readonly property QtObject desktopCardReflow: expressiveDefaultSpatial
         readonly property QtObject elementMoveFast: expressiveFastSpatial
         readonly property QtObject wallpaperParallax: QtObject {
             readonly property int duration: root.durations.large

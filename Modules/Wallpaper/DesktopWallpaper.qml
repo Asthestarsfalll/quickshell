@@ -1,66 +1,18 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Clavis.Niri
 import qs.Common
 import qs.Services
-import "../../Common/functions/WallpaperMath.js" as WallpaperMath
 
 Variants {
     id: variants
 
     model: Quickshell.screens
-    property var lastFocusedHorizontalColumnByWorkspace: ({})
-
-    function rememberFocusedWindow() {
-        const next = WallpaperMath.rememberFocusedHorizontalColumn(
-            variants.lastFocusedHorizontalColumnByWorkspace,
-            Niri.focusedWindow);
-        if (next !== variants.lastFocusedHorizontalColumnByWorkspace)
-            variants.lastFocusedHorizontalColumnByWorkspace = next;
-    }
-
-    function resolveHorizontalColumn(workspace, columns) {
-        const workspaceId = workspace && workspace.id
-            ? workspace.id : 0;
-        if (!workspaceId || !columns || columns.length === 0)
-            return 0;
-
-        variants.rememberFocusedWindow();
-        const workspaceKey = String(workspaceId);
-        let preferred = Number(
-            variants.lastFocusedHorizontalColumnByWorkspace[
-                workspaceKey]);
-
-        if (!isFinite(preferred) || preferred <= 0) {
-            const activeWindow = Niri.windowById(
-                workspace.activeWindowId || 0);
-            if (WallpaperMath.isHorizontalTiledWindow(activeWindow))
-                preferred = Number(activeWindow.layoutColumn);
-        }
-
-        const resolved = WallpaperMath.nearestHorizontalColumn(
-            columns, preferred);
-        const remembered =
-            variants.lastFocusedHorizontalColumnByWorkspace[
-                workspaceKey];
-        if (Number(remembered) !== resolved) {
-            const next = {};
-            const current =
-                variants.lastFocusedHorizontalColumnByWorkspace;
-            for (let key in current)
-                next[key] = current[key];
-            next[workspaceKey] = resolved;
-            variants.lastFocusedHorizontalColumnByWorkspace = next;
-        }
-        return resolved;
-    }
 
     PanelWindow {
         id: wallpaperWindow
 
         required property var modelData
-
         screen: modelData
         color: "transparent"
 
@@ -68,14 +20,14 @@ Variants {
         WlrLayershell.namespace: "clavis-wallpaper"
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
-        anchors.top: true
-        anchors.bottom: true
-        anchors.left: true
-        anchors.right: true
-
-        mask: Region {
-            item: Item {}
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
         }
+
+        mask: Region { item: Item {} }
 
         Item {
             id: root
@@ -84,188 +36,72 @@ Variants {
             clip: true
             visible: AwwwWallpaperService.quickshellContentVisible
 
-            property int serviceRevision: WallpaperService.revision
-            property int settingsRevision:
-                WallpaperService.settingsRevision
-            property var outputWorkspaces: []
-            property var activeWorkspace: ({})
-            property var horizontalColumns: []
-            property int focusedHorizontalColumn: 0
+            readonly property string screenKey: String(modelData.name)
+            // sceneFor() creates and registers a scene.  Keep creation
+            // outside this binding and only observe the service cache here.
+            readonly property var scene:
+                WallpaperSceneService.scenes[root.screenKey] || null
 
-            readonly property string targetSource:
-                serviceRevision >= 0
-                    ? WallpaperService
-                        .wallpaperForScreen(modelData.name)
-                    : ""
-            readonly property string targetFillModeName:
-                settingsRevision >= 0
-                    ? WallpaperService
-                        .fillModeForScreen(modelData.name)
-                    : "Fill"
-            readonly property int targetFillMode:
-                WallpaperService.qtFillMode(targetFillModeName)
-            readonly property real targetShaderFillMode:
-                WallpaperService.shaderFillMode(targetFillModeName)
-            readonly property bool panoramaSelected:
-                targetFillModeName === "panorama"
-            readonly property bool hasHorizontalDriver:
-                PersonalizationConfig.parallaxFollowTiledColumns
-                || PersonalizationConfig.parallaxFollowSidebars
-            readonly property bool hasVerticalDriver:
-                PersonalizationConfig.parallaxVerticalEnabled
-                && PersonalizationConfig.parallaxFollowWorkspaces
-            readonly property bool parallaxRequested:
-                hasHorizontalDriver || hasVerticalDriver
-            readonly property bool parallaxSupported:
-                WallpaperMath.supportsParallaxCanvas(
-                    !panoramaSelected
-                        && targetFillMode === Image.PreserveAspectCrop,
-                    targetSource,
-                    WallpaperService.isColorSource(targetSource))
-            readonly property bool manualParallaxActive:
-                parallaxRequested && parallaxSupported
-            readonly property real preferredScale:
-                panoramaSelected
-                    ? 1
-                    : manualParallaxActive
-                    ? PersonalizationConfig.parallaxPreferredScale : 1
-            readonly property var parallaxCanvas:
-                WallpaperMath.parallaxCanvasGeometry(
-                    width, height, preferredScale,
-                    manualParallaxActive)
-            readonly property real scaledWidth:
-                parallaxCanvas.scaledWidth
-            readonly property real scaledHeight:
-                parallaxCanvas.scaledHeight
-            readonly property real overflowX:
-                parallaxCanvas.overflowX
-            readonly property real overflowY:
-                parallaxCanvas.overflowY
-            readonly property real tiledProgress: {
-                if (!PersonalizationConfig
-                        .parallaxFollowTiledColumns)
-                    return 0.5;
-                return WallpaperMath.focusedColumnProgress(
-                    horizontalColumns,
-                    focusedHorizontalColumn,
-                    PersonalizationConfig.parallaxTiledColumnSpan);
+            // Wallpaper renderer and DesktopCardHost bind to this exact
+            // scene object.  Card coordinates never observe Niri directly.
+            property real sceneWidth: root.width
+            property real sceneHeight: root.height
+
+            Binding {
+                when: root.scene !== null
+                target: root.scene
+                property: "screenWidth"
+                value: root.width
             }
-            readonly property bool leftSidebarOnThisScreen:
-                WidgetState.leftSidebarOpen
-                && Brightness.activeScreen
-                && Brightness.activeScreen.name === modelData.name
-            readonly property string rightSidebarScreenName:
-                WidgetState.qsScreenName !== ""
-                    ? WidgetState.qsScreenName
-                    : (Brightness.activeScreen
-                        ? Brightness.activeScreen.name : "")
-            readonly property bool rightSidebarOnThisScreen:
-                WidgetState.qsOpen
-                && rightSidebarScreenName === modelData.name
-            readonly property real sidebarStep:
-                PersonalizationConfig.parallaxPreferredScale
-                / Math.max(2,
-                    PersonalizationConfig.parallaxTiledColumnSpan)
-                / 2
-            readonly property real horizontalProgress: {
-                return WallpaperMath.horizontalProgress(
-                    tiledProgress,
-                    PersonalizationConfig.parallaxFollowSidebars
-                        && leftSidebarOnThisScreen,
-                    PersonalizationConfig.parallaxFollowSidebars
-                        && rightSidebarOnThisScreen,
-                    sidebarStep);
+            Binding {
+                when: root.scene !== null
+                target: root.scene
+                property: "screenHeight"
+                value: root.height
             }
-            property real panoramaHorizontalProgress:
-                horizontalProgress
-            readonly property real verticalProgress: {
-                if (!PersonalizationConfig.parallaxVerticalEnabled
-                        || !PersonalizationConfig
-                            .parallaxFollowWorkspaces)
-                    return 0.5;
-                return WallpaperMath.workspaceProgress(
-                    outputWorkspaces);
+            Binding {
+                when: root.scene !== null
+                target: root.scene
+                property: "imagePixelWidth"
+                value: renderer.imagePixelWidth
             }
-
-            Behavior on panoramaHorizontalProgress {
-                enabled: root.panoramaSelected
-
-                NumberAnimation {
-                    duration: Appearance.animation
-                        .wallpaperParallax.duration
-                    easing.type: Appearance.animation
-                        .wallpaperParallax.type
-                }
-            }
-
-            function clamp01(value) {
-                return WallpaperMath.clamp01(value);
-            }
-
-            function refreshNiriState() {
-                root.outputWorkspaces =
-                    Niri.workspacesForOutput(modelData.name);
-                root.activeWorkspace =
-                    Niri.activeWorkspaceForOutput(modelData.name);
-                const workspaceId = root.activeWorkspace
-                    && root.activeWorkspace.id
-                    ? root.activeWorkspace.id : 0;
-                const windows = workspaceId
-                    ? Niri.windowsForWorkspace(workspaceId) : [];
-                root.horizontalColumns =
-                    WallpaperMath.horizontalColumns(windows);
-                root.focusedHorizontalColumn =
-                    variants.resolveHorizontalColumn(
-                        root.activeWorkspace,
-                        root.horizontalColumns);
-            }
-
-            Component.onCompleted: root.refreshNiriState()
-
-            Connections {
-                target: Niri
-
-                function onWorkspacesChanged() {
-                    root.refreshNiriState();
-                }
-
-                function onWindowsChanged() {
-                    root.refreshNiriState();
-                }
-
-                function onOutputsChanged() {
-                    root.refreshNiriState();
-                }
+            Binding {
+                when: root.scene !== null
+                target: root.scene
+                property: "imagePixelHeight"
+                value: renderer.imagePixelHeight
             }
 
             WallpaperTransitionSurface {
                 id: renderer
 
-                x: !root.panoramaSelected && root.overflowX > 0
-                    ? WallpaperMath.wallpaperPosition(
-                        root.overflowX, root.horizontalProgress)
-                    : 0
-                y: !root.panoramaSelected && root.overflowY > 0
-                    ? WallpaperMath.wallpaperPosition(
-                        root.overflowY, root.verticalProgress)
-                    : 0
-                width: root.panoramaSelected
+                x: root.scene && !root.scene.panoramaSelected
+                    ? root.scene.animatedOffsetX : 0
+                y: root.scene ? root.scene.animatedOffsetY : 0
+                width: root.scene && root.scene.panoramaSelected
                     ? Math.max(1, root.width)
-                    : Math.max(1, root.scaledWidth)
-                height: root.panoramaSelected
+                    : root.scene
+                        ? Math.max(1, root.scene.canvasWidth)
+                        : Math.max(1, root.width)
+                height: root.scene && root.scene.panoramaSelected
                     ? Math.max(1, root.height)
-                    : Math.max(1, root.scaledHeight)
-                sourcePath: root.targetSource
-                imageFillMode: root.targetFillMode
-                shaderFillMode: root.targetShaderFillMode
-                panoramaEnabled: root.panoramaSelected
-                    && !WallpaperService.isColorSource(root.targetSource)
-                horizontalProgress:
-                    root.panoramaHorizontalProgress
-                transitionType:
-                    PersonalizationConfig.wallpaperTransitionType
-                includedTransitions:
-                    PersonalizationConfig.includedTransitions
+                    : root.scene
+                        ? Math.max(1, root.scene.canvasHeight)
+                        : Math.max(1, root.height)
+                sourcePath: root.scene ? root.scene.sourcePath : ""
+                imageFillMode: root.scene
+                    ? root.scene.fillMode : Image.PreserveAspectCrop
+                shaderFillMode: root.scene
+                    ? WallpaperService.shaderFillMode(
+                        root.scene.fillModeName) : 2
+                panoramaEnabled: root.scene
+                    ? root.scene.panoramaSelected
+                        && !root.scene.sourceIsColor : false
+                horizontalProgress: root.scene
+                    ? root.scene.panoramaHorizontalProgress : 0.5
+                sharedTransform: root.scene
+                transitionType: PersonalizationConfig.wallpaperTransitionType
+                includedTransitions: PersonalizationConfig.includedTransitions
                 transitionDurationMs:
                     PersonalizationConfig.transitionDurationMs
                 transitionEasingMode:
@@ -283,25 +119,11 @@ Variants {
                     WallpaperService.reportDesktopError(
                         modelData.name, message);
                 }
-
-                Behavior on x {
-                    NumberAnimation {
-                        duration: Appearance.animation
-                            .wallpaperParallax.duration
-                        easing.type: Appearance.animation
-                            .wallpaperParallax.type
-                    }
-                }
-
-                Behavior on y {
-                    NumberAnimation {
-                        duration: Appearance.animation
-                            .wallpaperParallax.duration
-                        easing.type: Appearance.animation
-                            .wallpaperParallax.type
-                    }
-                }
             }
+
+            Component.onCompleted:
+                WallpaperSceneService.sceneFor(root.screenKey)
+
+        }
         }
     }
-}

@@ -25,9 +25,9 @@ typography=Common/Typography.qml
 font_service=Services/FontService.qml
 config=Services/PersonalizationConfig.qml
 theme=Modules/ControlCenter/ThemePage.qml
-clock=Modules/Sidebars/Left/system/SystemClockCard.qml
-calendar=Modules/Sidebars/Left/system/SystemCalendarCard.qml
-liquid=Modules/Sidebars/Left/system/SystemLiquidMetricCard.qml
+clock=Modules/SystemCards/SystemClockCard.qml
+calendar=Modules/SystemCards/SystemCalendarCard.qml
+liquid=Modules/SystemCards/SystemLiquidMetricCard.qml
 
 for file in "$fonts" "$typography" "$font_service" "$config" "$theme" \
     "$clock" "$calendar" "$liquid"; do

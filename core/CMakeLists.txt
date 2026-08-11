@@ -55,6 +55,7 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 # Base reusable logic
 add_subdirectory(src)
+add_subdirectory(plugin/desktopcards)
 
 if(BUILD_TESTING)
     add_subdirectory(tests)
