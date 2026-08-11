@@ -197,9 +197,9 @@ Variants {
             DesktopCardCanvas {
                 id: cardCanvas
 
+                anchors.fill: parent
                 scene: window.scene
                 screenName: modelData.name
-                analysis: window.analysis
                 hostItem: viewport
             }
         }

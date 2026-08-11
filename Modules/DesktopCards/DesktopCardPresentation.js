@@ -9,6 +9,13 @@ function offsetForRects(sourceRect, targetRect) {
     };
 }
 
+function projectWallpaperPoint(x, y, sceneOffsetX, sceneOffsetY) {
+    return {
+        x: Number(x) + Number(sceneOffsetX),
+        y: Number(y) + Number(sceneOffsetY)
+    };
+}
+
 function translatedRect(rect, offset) {
     return {
         x: Number(rect.x) + Number(offset.x),

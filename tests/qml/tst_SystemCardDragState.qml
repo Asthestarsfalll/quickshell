@@ -122,7 +122,7 @@ TestCase {
         compare(visible.y, nextTarget.y + 12);
     }
 
-    function test_handoffPinTracksProjectionUntilFirstFrame() {
+    function test_handoffUsesCurrentProjectionAtOwnershipTransfer() {
         const ghost = { x: 640, y: 360, width: 152, height: 160 };
         const readyTarget = {
             x: 640, y: 360, width: 152, height: 160
@@ -132,9 +132,9 @@ TestCase {
         compare(readyOffset.x, 0);
         compare(readyOffset.y, 0);
 
-        // The logical projection changes after Loader readiness but before
-        // the real DesktopCard's first frame. Recomputing A-currentB keeps
-        // that first frame at the frozen ghost rect.
+        // The logical projection may change while the delegate is loading.
+        // Handoff uses the current projected target, not a moving-parent
+        // compensation captured earlier.
         const firstFrameTarget = {
             x: 584, y: 360, width: 152, height: 160
         };
@@ -145,6 +145,83 @@ TestCase {
 
         compare(pinnedOffset.x, 56);
         verify(Presentation.rectsWithinTolerance(firstFrame, ghost, 1));
+    }
+
+    function test_fixedCanvasProjectsWallpaperOffsetPerCard() {
+        const canvas = { x: 0, y: 0 };
+        const logical = { x: 1200, y: 480 };
+        const first = Presentation.projectWallpaperPoint(
+            logical.x, logical.y, -200, 0);
+        const second = Presentation.projectWallpaperPoint(
+            logical.x, logical.y, -300, 0);
+
+        compare(canvas.x, 0);
+        compare(canvas.y, 0);
+        compare(first.x, 1000);
+        compare(second.x, 900);
+        compare(logical.x, 1200);
+    }
+
+    function test_handoffContinuityWhenProjectionChanges() {
+        const ghost = { x: 700, y: 360, width: 152, height: 160 };
+        const logical = { x: 900, y: 360 };
+        const projected = Presentation.projectWallpaperPoint(
+            logical.x, logical.y, -100, 0);
+        const target = {
+            x: projected.x,
+            y: projected.y,
+            width: ghost.width,
+            height: ghost.height
+        };
+        const offset = Presentation.offsetForRects(ghost, target);
+        const firstVisible = Presentation.translatedRect(target, offset);
+
+        compare(target.x, 800);
+        compare(offset.x, -100);
+        verify(Presentation.rectsWithinTolerance(
+            firstVisible, ghost, 1));
+    }
+
+    function test_noParallaxNeedsNoPresentationMovement() {
+        const logical = { x: 640, y: 360 };
+        const projected = Presentation.projectWallpaperPoint(
+            logical.x, logical.y, 0, 0);
+        const offset = Presentation.offsetForRects(
+            { x: 640, y: 360 }, projected);
+
+        compare(projected.x, 640);
+        compare(projected.y, 360);
+        compare(offset.x, 0);
+        compare(offset.y, 0);
+    }
+
+    function test_layoutAndParallaxProjectWithoutDoubleEasing() {
+        const before = Presentation.projectWallpaperPoint(
+            500, 300, -50, 20);
+        const after = Presentation.projectWallpaperPoint(
+            700, 300, -100, 20);
+
+        compare(before.x, 450);
+        compare(after.x, 600);
+        compare(after.y, 320);
+    }
+
+    function test_dragCanInheritCurrentPresentedPosition() {
+        const currentVisualScreen = { x: 750, y: 420 };
+        const sceneOffset = { x: -100, y: 20 };
+        const visualWallpaper = {
+            x: currentVisualScreen.x - sceneOffset.x,
+            y: currentVisualScreen.y - sceneOffset.y
+        };
+        const firstDragFrame = Presentation.projectWallpaperPoint(
+            visualWallpaper.x,
+            visualWallpaper.y,
+            sceneOffset.x,
+            sceneOffset.y
+        );
+
+        compare(firstDragFrame.x, currentVisualScreen.x);
+        compare(firstDragFrame.y, currentVisualScreen.y);
     }
 
     function test_sidebarReorderCanFinishWithoutTransfer() {

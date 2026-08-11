@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import qs.Common
 import "./SystemCardDragState.js" as DragState
 
 Singleton {
@@ -57,7 +56,6 @@ Singleton {
     signal finished()
     signal canceled()
     signal transferAccepted(string cardId)
-    signal frozenGhostPresented(string cardId)
     signal cancelRequested(string requestedTileId)
 
     function transition(nextPhase, reason) {
@@ -81,7 +79,6 @@ Singleton {
 
     function clearToIdle(reason) {
         const cardId = root.tileId;
-        handoffWatchdogTimer.stop();
         // Move to idle before clearing sourceItem.  If the source was
         // destroyed, its automatic null assignment must not recursively
         // interpret this cleanup as a new cancellation.
@@ -185,35 +182,9 @@ Singleton {
         return true;
     }
 
-    function notifyFrozenGhostPresented() {
-        if (!root.active || root.phase !== root.frozenTransferPhase
-                || root.transferPreparing || root.transferCommitted)
-            return false;
-        console.log(
-            "[SystemCards] frozen ghost presented", root.tileId);
-        root.frozenGhostPresented(root.tileId);
-        return true;
-    }
-
-    function updateFrozenGhostRect(x, y, width, height) {
-        if (!root.active || root.phase !== root.frozenTransferPhase
-                || root.transferPreparing || root.transferCommitted)
-            return false;
-        const nextWidth = Number(width);
-        const nextHeight = Number(height);
-        if (!(nextWidth > 0) || !(nextHeight > 0))
-            return false;
-        root.frozenGhostX = Number(x);
-        root.frozenGhostY = Number(y);
-        root.frozenGhostWidth = nextWidth;
-        root.frozenGhostHeight = nextHeight;
-        root.frozenGhostRectValid = true;
-        return true;
-    }
-
     // Enter the finishing phase while the ghost remains the sole visible
-    // owner. The normal path ends when DesktopCardCanvas reports that the
-    // real delegate is ready; the timer below is only an abnormal watchdog.
+    // owner. DesktopCardCanvas ends it as soon as its projected presentation
+    // rect has been initialized to the frozen ghost rect.
     function finishTransfer() {
         if (!root.active || !root.transferCommitted)
             return false;
@@ -222,7 +193,6 @@ Singleton {
         if (root.phase !== nextPhase)
             root.transition(nextPhase,
                 "desktop handoff waiting " + root.tileId);
-        handoffWatchdogTimer.restart();
         return true;
     }
 
@@ -306,36 +276,12 @@ Singleton {
 
         console.log("[SystemCards] drag source destroyed", root.tileId);
         if (root.transferCommitted) {
-            // Sidebar teardown must not remove the handoff barrier before the
-            // DesktopCard has consumed frozenGhostRect. The watchdog remains
-            // the abnormal fallback if no desktop host ever becomes ready.
-            console.log(
-                "[SystemCards] source gone; keeping desktop handoff",
-                root.tileId
-            );
+            // Ownership is already committed and the visual proxy no longer
+            // exists. Clear only the gesture barrier; Desktop ownership is
+            // never rolled back.
+            root.finishGhost();
         } else {
             root.cancel();
-        }
-    }
-
-    Timer {
-        id: handoffWatchdogTimer
-
-        // This is not part of the successful handoff path. It only prevents
-        // a broken/unavailable Desktop host from leaving the global session
-        // active forever.
-        interval: Math.max(
-            1000,
-            Appearance.animation.expressiveSlowSpatial.duration * 3)
-        repeat: false
-        onTriggered: {
-            if (root.transferCommitted) {
-                console.warn(
-                    "[SystemCards] desktop handoff watchdog", root.tileId);
-                root.finishGhost();
-            } else {
-                root.cancel();
-            }
         }
     }
 }

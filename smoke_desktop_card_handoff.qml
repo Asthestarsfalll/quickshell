@@ -8,8 +8,7 @@ ShellRoot {
     id: root
 
     property Item sourceItem: null
-    property string phase: "committed-source"
-    property string frozenPresentedId: ""
+    property string phase: "normal-handoff"
 
     Component {
         id: sourceComponent
@@ -30,11 +29,6 @@ ShellRoot {
         SystemCardDragSession.begin(
             "cpu", root.sourceItem, 100, 120, 20, 30);
         SystemCardDragSession.freezeGhost();
-        if (!SystemCardDragSession.notifyFrozenGhostPresented()
-                || root.frozenPresentedId !== "cpu") {
-            root.fail("frozen ghost presentation barrier did not signal");
-            return;
-        }
         SystemCardDragSession.prepareVisualHandoff("cpu");
         SystemCardDragSession.markTransferCommitted("cpu");
         const rect = SystemCardDragSession.frozenGhostRect;
@@ -44,20 +38,11 @@ ShellRoot {
                 + JSON.stringify(rect));
             return;
         }
-        root.sourceItem.destroy();
-        root.phase = "committed-source-destroyed";
-        Qt.callLater(function() {
-            if (!SystemCardDragSession.active
-                    || !SystemCardDragSession.transferCommitted) {
-                root.fail("source destruction cleared committed handoff");
-                return;
-            }
-            if (!SystemCardDragSession.completeVisualHandoff("cpu")) {
-                root.fail("ready delegate did not complete handoff");
-                return;
-            }
-            Qt.callLater(root.checkCommittedSource);
-        });
+        if (!SystemCardDragSession.completeVisualHandoff("cpu")) {
+            root.fail("ready delegate did not complete handoff");
+            return;
+        }
+        Qt.callLater(root.checkCommittedSource);
     }
 
     function checkCommittedSource() {
@@ -69,6 +54,25 @@ ShellRoot {
         }
         if (SystemCardDragSession.transferCommitted) {
             root.fail("committed transfer flag survived cleanup");
+            return;
+        }
+
+        root.sourceItem = sourceComponent.createObject(root);
+        SystemCardDragSession.begin(
+            "battery", root.sourceItem, 100, 120, 20, 30);
+        SystemCardDragSession.freezeGhost();
+        SystemCardDragSession.prepareVisualHandoff("battery");
+        SystemCardDragSession.markTransferCommitted("battery");
+        root.sourceItem.destroy();
+        root.phase = "committed-source-destroyed";
+        Qt.callLater(root.checkCommittedSourceDestroyed);
+    }
+
+    function checkCommittedSourceDestroyed() {
+        if (SystemCardDragSession.phase
+                !== SystemCardDragSession.idlePhase) {
+            root.fail("destroyed committed source stranded session: "
+                + SystemCardDragSession.phase);
             return;
         }
 
@@ -92,14 +96,6 @@ ShellRoot {
     }
 
     Component.onCompleted: Qt.callLater(root.beginCommittedSourceCheck)
-
-    Connections {
-        target: SystemCardDragSession
-
-        function onFrozenGhostPresented(cardId) {
-            root.frozenPresentedId = String(cardId);
-        }
-    }
 
     Timer {
         interval: 5000

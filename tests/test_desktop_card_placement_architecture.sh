@@ -55,9 +55,8 @@ reject_text "$host" 'pendingLayoutFocusId'
 # First presentation has a disabled position Behavior and an explicit
 # presentation barrier before automatic reflow is allowed.
 require_text "$canvas" 'property bool positionInitialized: false'
-require_text "$canvas" 'property bool positionAnimationEnabled: false'
 require_text "$canvas" 'slot.positionInitialized = true;'
-require_text "$canvas" 'enabled: slot.positionAnimationEnabled'
+require_text "$canvas" 'enabled: slot.positionInitialized && slot.active'
 require_text "$host" 'allActiveCardsPresented'
 require_text "$canvas" 'property real presentationOffsetX: 0'
 require_text "$canvas" 'property real presentationOffsetY: 0'

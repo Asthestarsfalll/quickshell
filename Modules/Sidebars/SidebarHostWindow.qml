@@ -180,46 +180,6 @@ PanelWindow {
         z: 100
     }
 
-    // A release can update and remove the ghost in one render cycle. Then
-    // the logged release rect was never actually shown: the user sees the
-    // previous pointer frame followed by DesktopCard at the new rect. Cross
-    // two animation ticks so one complete scene frame contains the frozen
-    // release ghost before committing desktop ownership.
-    FrameAnimation {
-        id: frozenGhostFrameGate
-
-        property int frameCount: 0
-
-        onTriggered: {
-            frameCount += 1;
-            if (frameCount < 2)
-                return;
-            stop();
-            SystemCardDragSession.updateFrozenGhostRect(
-                systemCardDragGhost.x,
-                systemCardDragGhost.y,
-                systemCardDragGhost.width,
-                systemCardDragGhost.height
-            );
-            SystemCardDragSession.notifyFrozenGhostPresented();
-        }
-    }
-
-    Connections {
-        target: SystemCardDragSession
-
-        function onPhaseChanged() {
-            if (SystemCardDragSession.phase
-                    !== SystemCardDragSession.frozenTransferPhase) {
-                frozenGhostFrameGate.stop();
-                frozenGhostFrameGate.frameCount = 0;
-                return;
-            }
-            frozenGhostFrameGate.frameCount = 0;
-            frozenGhostFrameGate.start();
-        }
-    }
-
     CompositorBlurRegion {
         targetWindow: root
         backgroundItem: leftSidebar.blurBackgroundItem
