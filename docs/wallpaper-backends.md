@@ -6,7 +6,7 @@ Clavis 将普通桌面壁纸和 niri overview 背景视为两个独立表面。
 
 ```text
 Quickshell
-├── Bottom: clavis-wallpaper
+├── Background: clavis-wallpaper
 └── Background: clavis-overview-wallpaper
 ```
 
@@ -14,11 +14,14 @@ Quickshell
 
 ```text
 Quickshell
-├── Bottom: clavis-wallpaper（表面常驻，壁纸内容隐藏）
+├── Background: clavis-wallpaper（表面常驻，壁纸内容隐藏）
 └── Background: clavis-overview-wallpaper
 
-awww-daemon --layer bottom --namespace clavis-desktop --no-cache
+awww-daemon --layer background --namespace clavis-desktop --no-cache
 └── 普通桌面壁纸
+
+Bottom
+└── clavis-desktop-cards
 ```
 
 `clavis-wallpaper` 的 PanelWindow 不随桌面后端销毁。切到 awww 时，Clavis
@@ -85,7 +88,7 @@ overview 使用独立壁纸时按以下顺序解析：
 Clavis 只拥有 `clavis-desktop`：
 
 ```text
-awww-daemon --layer bottom --namespace clavis-desktop --no-cache
+awww-daemon --layer background --namespace clavis-desktop --no-cache
 awww query -n clavis-desktop
 awww img -n clavis-desktop -o <output> ...
 awww clear -n clavis-desktop -o <output> ...

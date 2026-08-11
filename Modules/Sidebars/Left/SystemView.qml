@@ -15,10 +15,9 @@ Item {
     readonly property bool isForeground: root.foreground
     readonly property var activeSidebarIds: {
         const ids = SystemCardService.sidebarCardIds.slice();
-        // Keep the source delegate in the sidebar model until the top-level
-        // ghost has finished its short transfer hand-off.  The state has
-        // already moved to Desktop, but destroying the source in the same
-        // turn would invalidate ShaderEffectSource.
+        // Keep the hidden source delegate available only as long as the
+        // global visual ghost needs its ShaderEffectSource.  It is not a
+        // second ownership record and never suppresses the Desktop delegate.
         if (SystemCardDragSession.active
                 && SystemCardDragSession.tileId !== ""
                 && ids.indexOf(SystemCardDragSession.tileId) === -1) {
@@ -206,16 +205,26 @@ Item {
             const canvasWidth = scene ? scene.canvasWidth : 1;
             const canvasHeight = scene ? scene.canvasHeight : 1;
             SystemCardDragSession.freezeGhost();
-            SystemCardService.setContainer(
+            const committed = SystemCardService.setContainer(
                 tileId,
                 "desktop",
                 root.screenName,
                 point.x / Math.max(1, canvasWidth),
                 point.y / Math.max(1, canvasHeight)
             );
+            const card = SystemCardService.card(tileId);
+            if (!committed || !card || !card.enabled
+                    || card.container !== "desktop") {
+                console.warn(
+                    "[SystemCards] desktop transfer rejected", tileId);
+                SystemCardDragSession.cancel();
+                root.resetDragState(false);
+                return;
+            }
+            SystemCardDragSession.markTransferCommitted(tileId);
             root.resetDragState(true);
             WidgetState.leftSidebarOpen = false;
-            transferGhostTimer.restart();
+            SystemCardDragSession.finishTransfer();
             return;
         }
 
@@ -272,6 +281,9 @@ Item {
     }
 
     Component.onDestruction: {
+        if (root.draggingTileId !== ""
+                && !SystemCardDragSession.transferCommitted)
+            SystemCardDragSession.cancel();
         if (root.serviceForegroundAcquired)
             SystemCardService.setSidebarForeground(false);
     }
@@ -293,6 +305,13 @@ Item {
         target: SystemCardService
 
         function onCardStateChanged() {
+            if (root.draggingTileId !== "") {
+                const card = SystemCardService.card(root.draggingTileId);
+                if (!card || !card.enabled) {
+                    root.cancelDrag(root.draggingTileId);
+                    return;
+                }
+            }
             root.applyStoredLayout(true);
         }
     }
@@ -304,13 +323,14 @@ Item {
             if (root.draggingTileId === String(tileId))
                 root.cancelDrag(String(tileId));
         }
-    }
 
-    Timer {
-        id: transferGhostTimer
-        interval: Appearance.animation.expressiveFastSpatial.duration
-        repeat: false
-        onTriggered: SystemCardDragSession.end()
+        function onCanceled() {
+            // A destroyed source item can cancel the global session after
+            // this page has stopped receiving pointer events.  Clear only
+            // local gesture UI; no CardState rollback is performed here.
+            if (root.draggingTileId !== "")
+                root.resetDragState(false);
+        }
     }
 
     Item {

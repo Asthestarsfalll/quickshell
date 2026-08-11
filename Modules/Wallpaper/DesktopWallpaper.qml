@@ -16,7 +16,9 @@ Variants {
         screen: modelData
         color: "transparent"
 
-        WlrLayershell.layer: WlrLayer.Bottom
+        // Normal wallpaper belongs below Bottom-layer desktop cards and
+        // above the compositor backdrop only.
+        WlrLayershell.layer: WlrLayer.Background
         WlrLayershell.namespace: "clavis-wallpaper"
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 

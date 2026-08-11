@@ -406,7 +406,7 @@ TestCase {
     function test_awwwNamespaceLifecycleCommands() {
         compare(JSON.stringify(AwwwCommand.daemon(
             "mock-daemon", "clavis-desktop")), JSON.stringify([
-            "mock-daemon", "--layer", "bottom",
+            "mock-daemon", "--layer", "background",
             "--namespace", "clavis-desktop", "--no-cache"
         ]));
         compare(JSON.stringify(AwwwCommand.query(

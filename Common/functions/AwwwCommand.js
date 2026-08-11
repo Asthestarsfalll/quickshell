@@ -12,7 +12,10 @@ function namespaceArgs(namespaceName) {
 function daemon(commandPath, namespaceName) {
     return [
         String(commandPath || "awww-daemon"),
-        "--layer", "bottom",
+        // Keep awww below Clavis' Bottom-layer DesktopCardHost.  awww
+        // supports both background and bottom; background gives the same
+        // deterministic stack as the Quickshell wallpaper surface.
+        "--layer", "background",
         "--namespace", String(namespaceName || "clavis-desktop"),
         "--no-cache"
     ];

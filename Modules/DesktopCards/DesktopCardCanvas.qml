@@ -64,13 +64,8 @@ Item {
 
     function isActive(id) {
         const tileId = String(id);
-        // During Sidebar -> Desktop hand-off the frozen source delegate is
-        // the only Card instance being painted by the top-level ghost.  Wait
-        // for that session to end before creating the Desktop delegate.
-        if (SystemCardDragSession.active
-                && SystemCardDragSession.frozen
-                && SystemCardDragSession.tileId === tileId)
-            return false;
+        // Ownership is the only source of truth.  A frozen drag ghost is a
+        // visual proxy and must never delay the real DesktopCard delegate.
         return root.desktopIds.indexOf(tileId) !== -1;
     }
 
@@ -117,6 +112,14 @@ Item {
             width: active ? size.width : 0
             height: active ? size.height : 0
             visible: active
+
+            onActiveChanged: {
+                if (active && SystemCardDragSession.transferCommitted
+                        && SystemCardDragSession.tileId === tileId) {
+                    console.log(
+                        "[SystemCards] desktop delegate active", tileId);
+                }
+            }
 
             // The slot moves with the reflow token.  The parent canvas itself
             // has no position animation, so wallpaper parallax remains an

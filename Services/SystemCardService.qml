@@ -100,7 +100,15 @@ Singleton {
             next = CardState.setDesktopMode(
                 next, id, root.globalDesktopLayoutMode);
         }
-        return root.commit(next, id, container === "desktop");
+        const committed = root.commit(next, id, container === "desktop");
+        if (committed && container === "desktop") {
+            console.log(
+                "[SystemCards] transfer",
+                id + " sidebar -> desktop",
+                "screen=" + String(screenName || "")
+            );
+        }
+        return committed;
     }
 
     function setDesktopPosition(cardId, xNorm, yNorm, requestLayout) {

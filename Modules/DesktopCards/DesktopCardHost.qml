@@ -183,6 +183,10 @@ Variants {
         onAnalysisKeyChanged: window.requestAnalysis()
 
         Component.onCompleted: {
+            console.log(
+                "[DesktopCards] host screen="
+                    + String(window.screenKey) + " layer=Bottom"
+            );
             WallpaperSceneService.sceneFor(window.screenKey);
             Qt.callLater(window.requestAnalysis);
         }

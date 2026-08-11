@@ -90,6 +90,18 @@ add_test(
 )
 
 add_test(
+    NAME desktop_card_handoff_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_desktop_card_handoff.sh
+)
+
+add_test(
+    NAME desktop_card_handoff_smoke_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_desktop_card_handoff_smoke.sh
+)
+
+add_test(
     NAME qml_unit_tests
     COMMAND Qt6::qmltestrunner -input ${CLAVIS_SOURCE_ROOT}/tests/qml
 )
