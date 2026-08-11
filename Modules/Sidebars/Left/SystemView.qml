@@ -232,6 +232,11 @@ Item {
             const wallpaperY = Math.max(0, Math.min(
                 Math.max(0, canvasHeight - size.height), point.y));
             SystemCardDragSession.freezeGhost();
+            if (!SystemCardDragSession.prepareVisualHandoff(tileId)) {
+                SystemCardDragSession.cancel();
+                root.resetDragState(false);
+                return;
+            }
             const committed = SystemCardService.setContainer(
                 tileId,
                 "desktop",

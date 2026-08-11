@@ -169,20 +169,15 @@ PanelWindow {
         sourceRect: Qt.rect(0, 0, width, height)
         // Keep the source delegate alive but never paint it twice during the
         // frozen transfer hand-off.
-        hideSource: visible
+        // Keep the sidebar source hidden for the whole ownership interval,
+        // including the small handoff cleanup turn after the ghost itself is
+        // hidden.  This prevents source + DesktopCard from sharing a frame.
+        hideSource: SystemCardDragSession.sourceItem !== null
         live: visible && !SystemCardDragSession.frozen
         smooth: true
-        opacity: 0.96
-        scale: visible ? 1.025 : 1
+        opacity: 1
+        scale: 1
         z: 100
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Appearance.animation.expressiveEffects.duration
-                easing.type: Appearance.animation.expressiveEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-            }
-        }
     }
 
     CompositorBlurRegion {

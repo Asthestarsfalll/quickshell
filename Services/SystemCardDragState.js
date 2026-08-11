@@ -15,6 +15,10 @@ function isFrozen(phase) {
     return value === frozenTransfer || value === finishing;
 }
 
+function isVisualHandoffPending(phase, committed, preparing) {
+    return !!(committed || preparing) && isActive(phase);
+}
+
 function canTransition(fromPhase, toPhase) {
     const from = String(fromPhase || idle);
     const to = String(toPhase || idle);

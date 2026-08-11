@@ -23,6 +23,13 @@ Singleton {
     readonly property bool active: DragState.isActive(root.phase)
     readonly property bool frozen: DragState.isFrozen(root.phase)
     readonly property bool ending: root.phase === root.finishingPhase
+    readonly property bool visualHandoffPending:
+        DragState.isVisualHandoffPending(
+            root.phase, root.transferCommitted, root.transferPreparing)
+    // Set before SystemCardService.setContainer() emits its state change.
+    // This closes the small binding window in which a newly-created desktop
+    // slot could otherwise become visible before the commit flag is written.
+    property bool transferPreparing: false
     property bool transferCommitted: false
 
     property string tileId: ""
@@ -61,7 +68,7 @@ Singleton {
 
     function clearToIdle(reason) {
         const cardId = root.tileId;
-        ghostCleanupTimer.stop();
+        handoffWatchdogTimer.stop();
         // Move to idle before clearing sourceItem.  If the source was
         // destroyed, its automatic null assignment must not recursively
         // interpret this cleanup as a new cancellation.
@@ -72,6 +79,7 @@ Singleton {
         root.pointerY = 0;
         root.offsetX = 0;
         root.offsetY = 0;
+        root.transferPreparing = false;
         root.transferCommitted = false;
         root.sourceWasBound = false;
         if (cardId !== "")
@@ -89,6 +97,7 @@ Singleton {
         root.pointerY = Number(y) || 0;
         root.offsetX = Number(offsetX) || 0;
         root.offsetY = Number(offsetY) || 0;
+        root.transferPreparing = false;
         root.transferCommitted = false;
         root.transition(root.draggingSidebarPhase,
             "begin " + root.tileId);
@@ -121,15 +130,30 @@ Singleton {
             return false;
         if (!root.frozen)
             root.freezeGhost();
+        root.transferPreparing = false;
         root.transferCommitted = true;
         root.transferAccepted(root.tileId);
         console.log("[SystemCards] transfer committed", root.tileId);
         return true;
     }
 
-    // The real DesktopCard is already active before this cleanup starts.
-    // This timer belongs to the singleton, so closing/unloading SystemView
-    // cannot strand the session.  It only removes visual source state.
+    // Establish the visual handoff barrier before changing CardState.  The
+    // desktop slot may be created synchronously by that change, but it must
+    // remain hidden until its Loader has emitted cardPresented().
+    function prepareVisualHandoff(cardId) {
+        const id = String(cardId || "");
+        if (!root.active || id !== root.tileId
+                || root.transferCommitted
+                || root.phase !== root.frozenTransferPhase)
+            return false;
+        root.transferPreparing = true;
+        console.log("[SystemCards] desktop handoff preparing", id);
+        return true;
+    }
+
+    // Enter the finishing phase while the ghost remains the sole visible
+    // owner. The normal path ends when DesktopCardCanvas reports that the
+    // real delegate is ready; the timer below is only an abnormal watchdog.
     function finishTransfer() {
         if (!root.active || !root.transferCommitted)
             return false;
@@ -137,9 +161,20 @@ Singleton {
             root.phase, root.transferCommitted);
         if (root.phase !== nextPhase)
             root.transition(nextPhase,
-                "ghost cleanup scheduled " + root.tileId);
-        ghostCleanupTimer.restart();
+                "desktop handoff waiting " + root.tileId);
+        handoffWatchdogTimer.restart();
         return true;
+    }
+
+    function completeVisualHandoff(cardId) {
+        const id = String(cardId || "");
+        if (!root.visualHandoffPending || id !== root.tileId)
+            return false;
+        console.log("[SystemCards] visual handoff ghost -> desktop", id);
+        // clearToIdle changes the two visual-owner bindings in one QML turn:
+        // the ghost becomes invisible before the DesktopCard waiting binding
+        // can become visible in the next scene render.
+        return root.finishGhost();
     }
 
     function finishGhost() {
@@ -216,15 +251,23 @@ Singleton {
     }
 
     Timer {
-        id: ghostCleanupTimer
+        id: handoffWatchdogTimer
 
-        interval: Appearance.animation.expressiveFastSpatial.duration
+        // This is not part of the successful handoff path. It only prevents
+        // a broken/unavailable Desktop host from leaving the global session
+        // active forever.
+        interval: Math.max(
+            1000,
+            Appearance.animation.expressiveSlowSpatial.duration * 3)
         repeat: false
         onTriggered: {
-            if (root.transferCommitted)
+            if (root.transferCommitted) {
+                console.warn(
+                    "[SystemCards] desktop handoff watchdog", root.tileId);
                 root.finishGhost();
-            else
+            } else {
                 root.cancel();
+            }
         }
     }
 }

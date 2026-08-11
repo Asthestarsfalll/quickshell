@@ -253,7 +253,8 @@ Variants {
         Connections {
             target: cardCanvas
 
-            function onCardPresented() {
+            function onCardPresented(tileId) {
+                SystemCardDragSession.completeVisualHandoff(tileId);
                 Qt.callLater(window.runLayout);
             }
         }

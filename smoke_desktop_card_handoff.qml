@@ -29,6 +29,7 @@ ShellRoot {
         SystemCardDragSession.begin(
             "cpu", root.sourceItem, 100, 120, 20, 30);
         SystemCardDragSession.freezeGhost();
+        SystemCardDragSession.prepareVisualHandoff("cpu");
         SystemCardDragSession.markTransferCommitted("cpu");
         root.sourceItem.destroy();
         root.phase = "committed-source-destroyed";

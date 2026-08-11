@@ -132,12 +132,19 @@ Item {
             readonly property bool positionReady:
                 slot.active && root.scene !== null
                 && root.width > 1 && root.height > 1
+                && cardLoader.item !== null
+            readonly property bool waitingForVisualHandoff:
+                slot.active
+                && SystemCardDragSession.visualHandoffPending
+                && SystemCardDragSession.tileId === slot.tileId
 
             x: target.x
             y: target.y
             width: active ? size.width : 0
             height: active ? size.height : 0
-            visible: active
+            // A committed transfer keeps the ghost as the only visible
+            // owner until this slot has loaded and presented its real card.
+            visible: active && !slot.waitingForVisualHandoff
 
             onActiveChanged: {
                 if (active && SystemCardDragSession.transferCommitted
@@ -168,6 +175,8 @@ Item {
             }
 
             onPositionReadyChanged: Qt.callLater(slot.presentIfReady)
+            onWaitingForVisualHandoffChanged:
+                Qt.callLater(slot.presentIfReady)
 
             Component.onCompleted: {
                 slot.positionInitialized = false;
@@ -222,6 +231,8 @@ Item {
                         targetWallpaperY: cardLoader.targetWallpaperY
                     }
                 }
+
+                onItemChanged: Qt.callLater(slot.presentIfReady)
 
                 Behavior on x {
                     enabled: !(cardLoader.item
