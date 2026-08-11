@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
+import "./DesktopCardPresentation.js" as Presentation
 
 Item {
     id: root
@@ -10,7 +11,8 @@ Item {
     required property string screenName
     property var analysis: null
     property Item hostItem: root
-    signal cardPresented(string tileId)
+    signal delegateReady(string tileId)
+    signal handoffReady(string tileId)
 
     // Exposed properties make the fixed host Region bindings observable when
     // the Repeater creates its ten delegates after the PanelWindow is ready.
@@ -51,6 +53,16 @@ Item {
         return cardRepeater.itemAt(index);
     }
 
+    function startPresentationTransition(tileId) {
+        const id = String(tileId || "");
+        for (let index = 0; index < cardRepeater.count; ++index) {
+            const item = cardRepeater.itemAt(index);
+            if (item && item.tileId === id)
+                return item.startPresentationTransition();
+        }
+        return false;
+    }
+
     readonly property bool allActiveCardsPresented: {
         for (let index = 0; index < cardRepeater.count; index += 1) {
             const item = cardRepeater.itemAt(index);
@@ -61,24 +73,29 @@ Item {
     }
 
     function updateInputSlots() {
-        root.inputSlot0 = cardRepeater.itemAt(0);
-        root.inputSlot1 = cardRepeater.itemAt(1);
-        root.inputSlot2 = cardRepeater.itemAt(2);
-        root.inputSlot3 = cardRepeater.itemAt(3);
-        root.inputSlot4 = cardRepeater.itemAt(4);
-        root.inputSlot5 = cardRepeater.itemAt(5);
-        root.inputSlot6 = cardRepeater.itemAt(6);
-        root.inputSlot7 = cardRepeater.itemAt(7);
-        root.inputSlot8 = cardRepeater.itemAt(8);
-        root.inputSlot9 = cardRepeater.itemAt(9);
+        root.inputSlot0 = root.inputItemAt(0);
+        root.inputSlot1 = root.inputItemAt(1);
+        root.inputSlot2 = root.inputItemAt(2);
+        root.inputSlot3 = root.inputItemAt(3);
+        root.inputSlot4 = root.inputItemAt(4);
+        root.inputSlot5 = root.inputItemAt(5);
+        root.inputSlot6 = root.inputItemAt(6);
+        root.inputSlot7 = root.inputItemAt(7);
+        root.inputSlot8 = root.inputItemAt(8);
+        root.inputSlot9 = root.inputItemAt(9);
         root.timeBlurExclusionItem = null;
         for (let index = 0; index < cardRepeater.count; ++index) {
             const item = cardRepeater.itemAt(index);
             if (item && item.tileId === "time") {
-                root.timeBlurExclusionItem = item;
+                root.timeBlurExclusionItem = item.presentationItem;
                 break;
             }
         }
+    }
+
+    function inputItemAt(index) {
+        const item = cardRepeater.itemAt(index);
+        return item ? item.presentationItem : null;
     }
 
     function isActive(id) {
@@ -104,8 +121,14 @@ Item {
     Repeater {
         id: cardRepeater
 
-        onItemAdded: root.updateInputSlots()
-        onItemRemoved: root.updateInputSlots()
+        onItemAdded: {
+            root.updateInputSlots();
+            Qt.callLater(root.updateInputSlots);
+        }
+        onItemRemoved: {
+            root.updateInputSlots();
+            Qt.callLater(root.updateInputSlots);
+        }
 
         // Ten fixed slots keep the PanelWindow mask stable.  Only the one
         // output that owns a card activates its DesktopCard Loader.
@@ -129,6 +152,13 @@ Item {
                 : ({ x: 0, y: 0 })
             property bool positionInitialized: false
             property bool positionAnimationEnabled: false
+            property real presentationOffsetX: 0
+            property real presentationOffsetY: 0
+            property bool handoffPresentationPrepared: false
+            property bool handoffPinned: false
+            property bool presentationSettling: false
+            property var handoffSourceRect: null
+            readonly property Item presentationItem: presentationLayer
             readonly property bool positionReady:
                 slot.active && root.scene !== null
                 && root.width > 1 && root.height > 1
@@ -153,8 +183,16 @@ Item {
                         "[SystemCards] desktop delegate active", tileId);
                 }
                 if (active) {
+                    handoffFrameGate.stop();
+                    presentationSettleAnimation.stop();
                     slot.positionInitialized = false;
                     slot.positionAnimationEnabled = false;
+                    slot.presentationOffsetX = 0;
+                    slot.presentationOffsetY = 0;
+                    slot.handoffPresentationPrepared = false;
+                    slot.handoffPinned = false;
+                    slot.presentationSettling = false;
+                    slot.handoffSourceRect = null;
                     Qt.callLater(slot.presentIfReady);
                 } else {
                     // An inactive fixed slot may reset to (0, 0), but it is
@@ -162,21 +200,178 @@ Item {
                     // treated as a new presentation at its committed point.
                     slot.positionInitialized = false;
                     slot.positionAnimationEnabled = false;
+                    handoffFrameGate.stop();
+                    presentationSettleAnimation.stop();
+                    slot.presentationOffsetX = 0;
+                    slot.presentationOffsetY = 0;
+                    slot.handoffPresentationPrepared = false;
+                    slot.handoffPinned = false;
+                    slot.presentationSettling = false;
+                    slot.handoffSourceRect = null;
                 }
             }
 
-            function presentIfReady() {
-                if (!slot.active || !slot.positionReady
-                        || slot.positionInitialized)
+            function logicalScreenRect() {
+                const point = slot.mapToItem(root.hostItem, 0, 0);
+                return {
+                    x: point.x,
+                    y: point.y,
+                    width: slot.width,
+                    height: slot.height
+                };
+            }
+
+            function presentedScreenRect() {
+                const point = presentationLayer.mapToItem(
+                    root.hostItem, 0, 0);
+                return {
+                    x: point.x,
+                    y: point.y,
+                    width: presentationLayer.width,
+                    height: presentationLayer.height
+                };
+            }
+
+            function syncPinnedPresentation() {
+                if (!slot.handoffPinned || !slot.handoffSourceRect)
                     return;
-                slot.positionInitialized = true;
-                slot.positionAnimationEnabled = true;
-                root.cardPresented(slot.tileId);
+                const target = slot.logicalScreenRect();
+                const offset = Presentation.offsetForRects(
+                    slot.handoffSourceRect, target);
+                slot.presentationOffsetX = offset.x;
+                slot.presentationOffsetY = offset.y;
+            }
+
+            function prepareHandoffPresentation() {
+                const ghost = SystemCardDragSession.frozenGhostRect;
+                if (!ghost || !ghost.valid)
+                    return false;
+
+                presentationSettleAnimation.stop();
+                slot.handoffSourceRect = {
+                    x: ghost.x,
+                    y: ghost.y,
+                    width: ghost.width,
+                    height: ghost.height
+                };
+                // Loader readiness is not yet visual readiness. Keep the
+                // DesktopCard pinned to the frozen ghost rect until it has
+                // rendered a frame. Any scene/slot movement in that interval
+                // recomputes A-B instead of exposing B as a teleport.
+                slot.handoffPinned = true;
+                slot.syncPinnedPresentation();
+
+                const firstRect = slot.presentedScreenRect();
+                if (!Presentation.rectsWithinTolerance(
+                        firstRect, slot.handoffSourceRect, 1)) {
+                    console.warn(
+                        "[DesktopCards] handoff geometry mismatch",
+                        slot.tileId,
+                        "ghost=" + ghost.x + "," + ghost.y,
+                        "desktop=" + firstRect.x + "," + firstRect.y
+                    );
+                    slot.handoffPinned = false;
+                    slot.handoffSourceRect = null;
+                    return false;
+                }
+
+                slot.handoffPresentationPrepared = true;
+                const target = slot.logicalScreenRect();
+                console.log(
+                    "[DesktopCards] handoff ready",
+                    slot.tileId,
+                    "ghost=" + ghost.x + "," + ghost.y,
+                    "target=" + target.x + "," + target.y,
+                    "offset=" + slot.presentationOffsetX + ","
+                        + slot.presentationOffsetY,
+                    "sceneOffset=" + Number(root.scene.animatedOffsetX)
+                        + "," + Number(root.scene.animatedOffsetY),
+                    "parallax=" + String(
+                        root.scene.manualParallaxActive)
+                );
+                return true;
+            }
+
+            function startPresentationTransition() {
+                if (!slot.active || !slot.handoffPresentationPrepared)
+                    return false;
+                slot.handoffPresentationPrepared = false;
+                slot.presentationSettling = true;
+                // Keep one rendered DesktopCard frame exactly on the frozen
+                // Ghost rect. The pin remains live during that frame, so a
+                // simultaneous scene/slot change cannot invalidate A-B.
+                handoffFrameGate.frameCount = 0;
+                handoffFrameGate.start();
+                return true;
+            }
+
+            function beginCardDrag() {
+                handoffFrameGate.stop();
+                presentationSettleAnimation.stop();
+                slot.presentationSettling = false;
+                slot.handoffPresentationPrepared = false;
+                slot.handoffPinned = false;
+                slot.handoffSourceRect = null;
+                slot.presentationOffsetX = 0;
+                slot.presentationOffsetY = 0;
+            }
+
+            function finishCardDrag() {
+                slot.presentationOffsetX = 0;
+                slot.presentationOffsetY = 0;
+            }
+
+            function cancelCardDrag(screenX, screenY) {
+                const target = slot.logicalScreenRect();
+                handoffFrameGate.stop();
+                presentationSettleAnimation.stop();
+                slot.presentationOffsetX = Number(screenX) - target.x;
+                slot.presentationOffsetY = Number(screenY) - target.y;
+                slot.presentationSettling = true;
+                presentationSettleAnimation.restart();
+            }
+
+            function presentIfReady() {
+                if (!slot.active || !slot.positionReady)
+                    return;
+                if (!slot.positionInitialized) {
+                    slot.positionInitialized = true;
+                    slot.positionAnimationEnabled = true;
+                    root.delegateReady(slot.tileId);
+                }
+                if (slot.waitingForVisualHandoff
+                        && SystemCardDragSession.transferCommitted
+                        && !slot.handoffPresentationPrepared
+                        && slot.prepareHandoffPresentation()) {
+                    root.handoffReady(slot.tileId);
+                }
             }
 
             onPositionReadyChanged: Qt.callLater(slot.presentIfReady)
             onWaitingForVisualHandoffChanged:
                 Qt.callLater(slot.presentIfReady)
+            onXChanged: slot.syncPinnedPresentation()
+            onYChanged: slot.syncPinnedPresentation()
+
+            Connections {
+                target: SystemCardDragSession
+
+                function onTransferCommittedChanged() {
+                    Qt.callLater(slot.presentIfReady);
+                }
+            }
+
+            Connections {
+                target: root
+
+                function onXChanged() {
+                    slot.syncPinnedPresentation();
+                }
+
+                function onYChanged() {
+                    slot.syncPinnedPresentation();
+                }
+            }
 
             Component.onCompleted: {
                 slot.positionInitialized = false;
@@ -190,6 +385,7 @@ Item {
             Behavior on x {
                 enabled: slot.positionAnimationEnabled
                     && slot.positionInitialized && slot.active
+                    && !(cardLoader.item && cardLoader.item.dragging)
                 NumberAnimation {
                     duration: Appearance.animation.desktopCardReflow.duration
                     easing.type: Appearance.animation.desktopCardReflow.type
@@ -200,6 +396,7 @@ Item {
             Behavior on y {
                 enabled: slot.positionAnimationEnabled
                     && slot.positionInitialized && slot.active
+                    && !(cardLoader.item && cardLoader.item.dragging)
                 NumberAnimation {
                     duration: Appearance.animation.desktopCardReflow.duration
                     easing.type: Appearance.animation.desktopCardReflow.type
@@ -208,50 +405,126 @@ Item {
                 }
             }
 
-            Loader {
-                id: cardLoader
+            Item {
+                id: presentationLayer
 
-                property real targetWallpaperX: slot.x
-                property real targetWallpaperY: slot.y
-
-                x: cardLoader.item && cardLoader.item.dragging
-                    ? cardLoader.item.dragX - slot.x : 0
-                y: cardLoader.item && cardLoader.item.dragging
-                    ? cardLoader.item.dragY - slot.y : 0
+                x: slot.presentationOffsetX
+                y: slot.presentationOffsetY
                 width: slot.width
                 height: slot.height
-                active: slot.active
-                sourceComponent: Component {
-                    DesktopCard {
-                        anchors.fill: parent
-                        tileId: slot.tileId
-                        scene: root.scene
-                        hostItem: root.hostItem
-                        targetWallpaperX: cardLoader.targetWallpaperX
-                        targetWallpaperY: cardLoader.targetWallpaperY
+                visible: slot.visible
+
+                Loader {
+                    id: cardLoader
+
+                    property real targetWallpaperX: slot.x
+                    property real targetWallpaperY: slot.y
+
+                    x: cardLoader.item && cardLoader.item.dragging
+                        ? cardLoader.item.dragX - slot.x : 0
+                    y: cardLoader.item && cardLoader.item.dragging
+                        ? cardLoader.item.dragY - slot.y : 0
+                    width: slot.width
+                    height: slot.height
+                    active: slot.active
+                    sourceComponent: Component {
+                        DesktopCard {
+                            anchors.fill: parent
+                            tileId: slot.tileId
+                            scene: root.scene
+                            hostItem: root.hostItem
+                            targetWallpaperX: cardLoader.targetWallpaperX
+                            targetWallpaperY: cardLoader.targetWallpaperY
+                            presentationController: slot
+                        }
+                    }
+
+                    onItemChanged: Qt.callLater(slot.presentIfReady)
+
+                    Behavior on x {
+                        enabled: !(cardLoader.item
+                            && cardLoader.item.dragging)
+                        NumberAnimation {
+                            duration: Appearance.animation.desktopCardReflow.duration
+                            easing.type: Appearance.animation.desktopCardReflow.type
+                            easing.bezierCurve:
+                                Appearance.animation.desktopCardReflow.bezierCurve
+                        }
+                    }
+                    Behavior on y {
+                        enabled: !(cardLoader.item
+                            && cardLoader.item.dragging)
+                        NumberAnimation {
+                            duration: Appearance.animation.desktopCardReflow.duration
+                            easing.type: Appearance.animation.desktopCardReflow.type
+                            easing.bezierCurve:
+                                Appearance.animation.desktopCardReflow.bezierCurve
+                        }
                     }
                 }
+            }
 
-                onItemChanged: Qt.callLater(slot.presentIfReady)
+            ParallelAnimation {
+                id: presentationSettleAnimation
 
-                Behavior on x {
-                    enabled: !(cardLoader.item
-                        && cardLoader.item.dragging)
-                    NumberAnimation {
-                        duration: Appearance.animation.desktopCardReflow.duration
-                        easing.type: Appearance.animation.desktopCardReflow.type
-                        easing.bezierCurve:
-                            Appearance.animation.desktopCardReflow.bezierCurve
-                    }
+                NumberAnimation {
+                    target: slot
+                    property: "presentationOffsetX"
+                    to: 0
+                    duration: Appearance.animation.desktopCardReflow.duration
+                    easing.type: Appearance.animation.desktopCardReflow.type
+                    easing.bezierCurve:
+                        Appearance.animation.desktopCardReflow.bezierCurve
                 }
-                Behavior on y {
-                    enabled: !(cardLoader.item
-                        && cardLoader.item.dragging)
-                    NumberAnimation {
-                        duration: Appearance.animation.desktopCardReflow.duration
-                        easing.type: Appearance.animation.desktopCardReflow.type
-                        easing.bezierCurve:
-                            Appearance.animation.desktopCardReflow.bezierCurve
+                NumberAnimation {
+                    target: slot
+                    property: "presentationOffsetY"
+                    to: 0
+                    duration: Appearance.animation.desktopCardReflow.duration
+                    easing.type: Appearance.animation.desktopCardReflow.type
+                    easing.bezierCurve:
+                        Appearance.animation.desktopCardReflow.bezierCurve
+                }
+
+                onFinished: {
+                    slot.presentationSettling = false;
+                    slot.handoffSourceRect = null;
+                }
+            }
+
+            FrameAnimation {
+                id: handoffFrameGate
+
+                property int frameCount: 0
+
+                onTriggered: {
+                    frameCount += 1;
+                    if (frameCount < 2)
+                        return;
+                    handoffFrameGate.stop();
+                    if (!slot.active || !slot.presentationSettling)
+                        return;
+                    // Capture A-currentB before releasing the pin. Both
+                    // assignments happen in this render turn, so the visible
+                    // rect is unchanged when ownership becomes unpinned.
+                    slot.syncPinnedPresentation();
+                    const firstFrame = slot.presentedScreenRect();
+                    console.log(
+                        "[DesktopCards] first presented frame",
+                        slot.tileId,
+                        "rect=" + firstFrame.x + "," + firstFrame.y,
+                        "target=" + slot.logicalScreenRect().x + ","
+                            + slot.logicalScreenRect().y
+                    );
+                    slot.handoffPinned = false;
+                    if (Math.abs(slot.presentationOffsetX) <= 0.01
+                            && Math.abs(slot.presentationOffsetY) <= 0.01) {
+                        slot.presentationOffsetX = 0;
+                        slot.presentationOffsetY = 0;
+                        slot.presentationSettling = false;
+                        slot.handoffSourceRect = null;
+                    } else {
+                        presentationSettleAnimation.restart();
                     }
                 }
             }

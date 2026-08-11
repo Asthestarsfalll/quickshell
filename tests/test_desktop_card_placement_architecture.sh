@@ -59,6 +59,8 @@ require_text "$canvas" 'property bool positionAnimationEnabled: false'
 require_text "$canvas" 'slot.positionInitialized = true;'
 require_text "$canvas" 'enabled: slot.positionAnimationEnabled'
 require_text "$host" 'allActiveCardsPresented'
+require_text "$canvas" 'property real presentationOffsetX: 0'
+require_text "$canvas" 'property real presentationOffsetY: 0'
 
 # Current position is a normal candidate and cannot carry the old -0.1-scale
 # absolute advantage.

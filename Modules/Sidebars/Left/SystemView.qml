@@ -64,6 +64,7 @@ Item {
     property int targetRow: -1
     property bool dragTargetValid: false
     property bool desktopExtraction: false
+    property var pendingDesktopTransfer: null
 
     function layoutPlacement(layout, tileId) {
         return GridLayout.placementFor(layout, tileId);
@@ -231,32 +232,17 @@ Item {
                 Math.max(0, canvasWidth - size.width), point.x));
             const wallpaperY = Math.max(0, Math.min(
                 Math.max(0, canvasHeight - size.height), point.y));
-            SystemCardDragSession.freezeGhost();
-            if (!SystemCardDragSession.prepareVisualHandoff(tileId)) {
+            root.pendingDesktopTransfer = {
+                tileId: tileId,
+                screenName: root.screenName,
+                xNorm: wallpaperX / Math.max(1, canvasWidth),
+                yNorm: wallpaperY / Math.max(1, canvasHeight)
+            };
+            if (!SystemCardDragSession.freezeGhost()) {
+                root.pendingDesktopTransfer = null;
                 SystemCardDragSession.cancel();
                 root.resetDragState(false);
-                return;
             }
-            const committed = SystemCardService.setContainer(
-                tileId,
-                "desktop",
-                root.screenName,
-                wallpaperX / Math.max(1, canvasWidth),
-                wallpaperY / Math.max(1, canvasHeight)
-            );
-            const card = SystemCardService.card(tileId);
-            if (!committed || !card || !card.enabled
-                    || card.container !== "desktop") {
-                console.warn(
-                    "[SystemCards] desktop transfer rejected", tileId);
-                SystemCardDragSession.cancel();
-                root.resetDragState(false);
-                return;
-            }
-            SystemCardDragSession.markTransferCommitted(tileId);
-            root.resetDragState(true);
-            WidgetState.leftSidebarOpen = false;
-            SystemCardDragSession.finishTransfer();
             return;
         }
 
@@ -271,6 +257,41 @@ Item {
         root.resetDragState(false);
     }
 
+    function commitPendingDesktopTransfer(tileId) {
+        const id = String(tileId);
+        const pending = root.pendingDesktopTransfer;
+        if (!pending || pending.tileId !== id
+                || root.draggingTileId !== id)
+            return;
+
+        root.pendingDesktopTransfer = null;
+        if (!SystemCardDragSession.prepareVisualHandoff(id)) {
+            SystemCardDragSession.cancel();
+            root.resetDragState(false);
+            return;
+        }
+        const committed = SystemCardService.setContainer(
+            id,
+            "desktop",
+            pending.screenName,
+            pending.xNorm,
+            pending.yNorm
+        );
+        const card = SystemCardService.card(id);
+        if (!committed || !card || !card.enabled
+                || card.container !== "desktop") {
+            console.warn(
+                "[SystemCards] desktop transfer rejected", id);
+            SystemCardDragSession.cancel();
+            root.resetDragState(false);
+            return;
+        }
+        SystemCardDragSession.markTransferCommitted(id);
+        root.resetDragState(true);
+        WidgetState.leftSidebarOpen = false;
+        SystemCardDragSession.finishTransfer();
+    }
+
     function cancelDrag(tileId) {
         if (tileId && tileId !== root.draggingTileId)
             return;
@@ -281,6 +302,7 @@ Item {
     function resetDragState(keepSession) {
         if (!keepSession)
             SystemCardDragSession.end();
+        root.pendingDesktopTransfer = null;
         root.draggingTileId = "";
         root.dragSourceItem = null;
         root.previewLayout = [];
@@ -354,6 +376,10 @@ Item {
         function onCancelRequested(tileId) {
             if (root.draggingTileId === String(tileId))
                 root.cancelDrag(String(tileId));
+        }
+
+        function onFrozenGhostPresented(tileId) {
+            root.commitPendingDesktopTransfer(String(tileId));
         }
 
         function onCanceled() {

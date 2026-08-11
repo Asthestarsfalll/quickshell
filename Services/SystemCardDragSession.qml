@@ -38,6 +38,18 @@ Singleton {
     property real pointerY: 0
     property real offsetX: 0
     property real offsetY: 0
+    readonly property var frozenGhostRect: ({
+        x: root.frozenGhostX,
+        y: root.frozenGhostY,
+        width: root.frozenGhostWidth,
+        height: root.frozenGhostHeight,
+        valid: root.frozenGhostRectValid
+    })
+    property real frozenGhostX: 0
+    property real frozenGhostY: 0
+    property real frozenGhostWidth: 0
+    property real frozenGhostHeight: 0
+    property bool frozenGhostRectValid: false
     property bool sourceWasBound: false
 
     signal started(string cardId)
@@ -45,6 +57,7 @@ Singleton {
     signal finished()
     signal canceled()
     signal transferAccepted(string cardId)
+    signal frozenGhostPresented(string cardId)
     signal cancelRequested(string requestedTileId)
 
     function transition(nextPhase, reason) {
@@ -79,6 +92,11 @@ Singleton {
         root.pointerY = 0;
         root.offsetX = 0;
         root.offsetY = 0;
+        root.frozenGhostX = 0;
+        root.frozenGhostY = 0;
+        root.frozenGhostWidth = 0;
+        root.frozenGhostHeight = 0;
+        root.frozenGhostRectValid = false;
         root.transferPreparing = false;
         root.transferCommitted = false;
         root.sourceWasBound = false;
@@ -115,6 +133,21 @@ Singleton {
     function freezeGhost() {
         if (root.phase !== root.draggingSidebarPhase)
             return false;
+        const source = root.sourceItem;
+        root.frozenGhostX = root.pointerX - root.offsetX;
+        root.frozenGhostY = root.pointerY - root.offsetY;
+        root.frozenGhostWidth = source ? Number(source.width) : 0;
+        root.frozenGhostHeight = source ? Number(source.height) : 0;
+        root.frozenGhostRectValid = root.frozenGhostWidth > 0
+            && root.frozenGhostHeight > 0;
+        console.log(
+            "[SystemCards] frozen ghost rect",
+            root.tileId,
+            "x=" + root.frozenGhostX,
+            "y=" + root.frozenGhostY,
+            "size=" + root.frozenGhostWidth + "x"
+                + root.frozenGhostHeight
+        );
         root.transition(root.frozenTransferPhase,
             "ghost frozen " + root.tileId);
         return true;
@@ -139,7 +172,8 @@ Singleton {
 
     // Establish the visual handoff barrier before changing CardState.  The
     // desktop slot may be created synchronously by that change, but it must
-    // remain hidden until its Loader has emitted cardPresented().
+    // remain hidden until its Loader has initialized the presentation rect
+    // and emitted handoffReady.
     function prepareVisualHandoff(cardId) {
         const id = String(cardId || "");
         if (!root.active || id !== root.tileId
@@ -148,6 +182,32 @@ Singleton {
             return false;
         root.transferPreparing = true;
         console.log("[SystemCards] desktop handoff preparing", id);
+        return true;
+    }
+
+    function notifyFrozenGhostPresented() {
+        if (!root.active || root.phase !== root.frozenTransferPhase
+                || root.transferPreparing || root.transferCommitted)
+            return false;
+        console.log(
+            "[SystemCards] frozen ghost presented", root.tileId);
+        root.frozenGhostPresented(root.tileId);
+        return true;
+    }
+
+    function updateFrozenGhostRect(x, y, width, height) {
+        if (!root.active || root.phase !== root.frozenTransferPhase
+                || root.transferPreparing || root.transferCommitted)
+            return false;
+        const nextWidth = Number(width);
+        const nextHeight = Number(height);
+        if (!(nextWidth > 0) || !(nextHeight > 0))
+            return false;
+        root.frozenGhostX = Number(x);
+        root.frozenGhostY = Number(y);
+        root.frozenGhostWidth = nextWidth;
+        root.frozenGhostHeight = nextHeight;
+        root.frozenGhostRectValid = true;
         return true;
     }
 
@@ -168,7 +228,8 @@ Singleton {
 
     function completeVisualHandoff(cardId) {
         const id = String(cardId || "");
-        if (!root.visualHandoffPending || id !== root.tileId)
+        if (!root.transferCommitted || !root.visualHandoffPending
+                || id !== root.tileId)
             return false;
         console.log("[SystemCards] visual handoff ghost -> desktop", id);
         // clearToIdle changes the two visual-owner bindings in one QML turn:
@@ -244,10 +305,17 @@ Singleton {
             return;
 
         console.log("[SystemCards] drag source destroyed", root.tileId);
-        if (root.transferCommitted)
-            root.finishGhost();
-        else
+        if (root.transferCommitted) {
+            // Sidebar teardown must not remove the handoff barrier before the
+            // DesktopCard has consumed frozenGhostRect. The watchdog remains
+            // the abnormal fallback if no desktop host ever becomes ready.
+            console.log(
+                "[SystemCards] source gone; keeping desktop handoff",
+                root.tileId
+            );
+        } else {
             root.cancel();
+        }
     }
 
     Timer {

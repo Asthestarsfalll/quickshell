@@ -15,6 +15,7 @@ Item {
     property bool dragging: false
     property real targetWallpaperX: 0
     property real targetWallpaperY: 0
+    property var presentationController: null
     property real dragX: targetWallpaperX
     property real dragY: targetWallpaperY
     property real dragOffsetX: 0
@@ -90,12 +91,25 @@ Item {
                 const point = dragHandler.hostPoint();
                 const wallpaperPoint = root.scene.screenToWallpaper(
                     point.x, point.y);
+                // A handoff transition may still be settling. Start this drag
+                // from the card's actual visible top-left, then convert that
+                // screen point back into wallpaper space before removing the
+                // transient presentation offset.
+                const visibleTopLeft = root.mapToItem(
+                    root.hostItem, 0, 0);
+                const visualWallpaperPoint = root.scene.screenToWallpaper(
+                    visibleTopLeft.x, visibleTopLeft.y);
+                if (root.presentationController
+                        && typeof root.presentationController
+                            .beginCardDrag === "function") {
+                    root.presentationController.beginCardDrag();
+                }
                 root.dragOffsetX = wallpaperPoint.x
-                    - root.targetWallpaperX;
+                    - visualWallpaperPoint.x;
                 root.dragOffsetY = wallpaperPoint.y
-                    - root.targetWallpaperY;
-                root.dragX = root.targetWallpaperX;
-                root.dragY = root.targetWallpaperY;
+                    - visualWallpaperPoint.y;
+                root.dragX = visualWallpaperPoint.x;
+                root.dragY = visualWallpaperPoint.y;
                 root.dragging = true;
             } else if (started) {
                 started = false;
@@ -106,6 +120,11 @@ Item {
                 SystemCardService.setDesktopPosition(
                     root.tileId, xNorm, yNorm);
                 root.dragging = false;
+                if (root.presentationController
+                        && typeof root.presentationController
+                            .finishCardDrag === "function") {
+                    root.presentationController.finishCardDrag();
+                }
             }
         }
 
@@ -132,8 +151,16 @@ Item {
         }
 
         onCanceled: {
+            const visibleTopLeft = root.mapToItem(
+                root.hostItem, 0, 0);
             started = false;
             root.dragging = false;
+            if (root.presentationController
+                    && typeof root.presentationController
+                        .cancelCardDrag === "function") {
+                root.presentationController.cancelCardDrag(
+                    visibleTopLeft.x, visibleTopLeft.y);
+            }
         }
     }
 
