@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.Services
 import "../Modules/SystemCards/SystemCardCatalog.js" as Catalog
+import "../Modules/SystemCards/SystemCardGeometry.js" as Geometry
 import "../Modules/SystemCards/SystemCardState.js" as CardState
 
 Singleton {
@@ -26,7 +27,7 @@ Singleton {
     property var internalState: CardState.defaultState()
 
     signal cardStateChanged(string cardId)
-    signal desktopLayoutRequested(string focusCardId)
+    signal desktopLayoutRequested()
 
     function card(cardId) {
         return root.cards[String(cardId)] || null;
@@ -46,18 +47,8 @@ Singleton {
         return !!definition && definition.requiresSystemMonitor;
     }
 
-    function desktopSize(cardId, canvasWidth, canvasHeight) {
-        const definition = Catalog.definitionFor(String(cardId));
-        if (!definition)
-            return { width: 280, height: 220 };
-        const safeWidth = Math.max(1, Number(canvasWidth) || 1);
-        const safeHeight = Math.max(1, Number(canvasHeight) || 1);
-        return {
-            width: Math.min(safeWidth, Math.max(180, Math.min(
-                definition.desktopWidth, safeWidth * 0.42))),
-            height: Math.min(safeHeight, Math.max(160, Math.min(
-                definition.desktopHeight, safeHeight * 0.42)))
-        };
+    function cardSize(cardId) {
+        return Geometry.sizeFor(String(cardId));
     }
 
     function persist(nextState) {
@@ -75,7 +66,7 @@ Singleton {
             root.cardStateChanged(String(changedId));
         root.syncMonitorOwnership();
         if (requestLayout)
-            root.desktopLayoutRequested(String(changedId || ""));
+            root.desktopLayoutRequested();
         return true;
     }
 
@@ -89,17 +80,8 @@ Singleton {
 
     function setContainer(cardId, container, screenName, xNorm, yNorm) {
         const id = String(cardId);
-        const before = root.card(id);
-        let next = CardState.setContainer(
+        const next = CardState.setContainer(
             root.internalState, id, container, screenName, xNorm, yNorm);
-        // A card entering Desktop for the first time follows the current
-        // global/default mode.  Returning to Desktop later retains its own
-        // mode, which is the per-card setting users explicitly selected.
-        if (before && before.container !== "desktop"
-                && container === "desktop") {
-            next = CardState.setDesktopMode(
-                next, id, root.globalDesktopLayoutMode);
-        }
         const committed = root.commit(next, id, container === "desktop");
         if (committed && container === "desktop") {
             console.log(
@@ -111,23 +93,13 @@ Singleton {
         return committed;
     }
 
-    function setDesktopPosition(cardId, xNorm, yNorm, requestLayout) {
+    function setDesktopPosition(cardId, xNorm, yNorm) {
         return root.commit(
             CardState.setDesktopPosition(
                 root.internalState, String(cardId), xNorm, yNorm),
             cardId,
-            !!requestLayout
+            false
         );
-    }
-
-    function setDesktopMode(cardId, mode) {
-        const changed = root.commit(
-            CardState.setDesktopMode(
-                root.internalState, String(cardId), mode),
-            cardId,
-            true
-        );
-        return changed;
     }
 
     function setSidebarAnchor(cardId, column, row) {

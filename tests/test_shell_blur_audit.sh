@@ -63,6 +63,22 @@ do
 done
 require_text Modules/Sidebars/SidebarHostWindow.qml \
     'additionalBackgroundItems: ['
+require_text Modules/Sidebars/SidebarHostWindow.qml \
+    'subtractedBackgroundItems: ['
+require_text Modules/Sidebars/SidebarHostWindow.qml \
+    'leftSidebar.timeCardBlurExclusionItem'
+require_text Modules/DesktopCards/DesktopCardHost.qml \
+    'CompositorBlurRegion {'
+require_text Modules/DesktopCards/DesktopCardHost.qml \
+    'backgroundItem: cardCanvas.inputSlot0'
+require_text Modules/DesktopCards/DesktopCardHost.qml \
+    'additionalBackgroundItems: ['
+require_text Modules/DesktopCards/DesktopCardHost.qml \
+    'subtractedBackgroundItems: ['
+require_text Modules/DesktopCards/DesktopCardHost.qml \
+    'cardCanvas.timeBlurExclusionItem'
+require_text Modules/DesktopCards/DesktopCardHost.qml \
+    'radius: Appearance.rounding.extraLarge'
 require_text Modules/ControlCenter/ControlCenterWindow.qml \
     'color: "transparent"'
 require_text Modules/ControlCenter/ControlCenterWindow.qml \

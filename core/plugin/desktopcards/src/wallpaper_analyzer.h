@@ -21,6 +21,8 @@ class WallpaperAnalysisResult : public QObject {
     Q_PROPERTY(int analysisHeight READ analysisHeight CONSTANT)
     Q_PROPERTY(double canvasWidth READ canvasWidth CONSTANT)
     Q_PROPERTY(double canvasHeight READ canvasHeight CONSTANT)
+    Q_PROPERTY(double minBusyScore READ minBusyScore CONSTANT)
+    Q_PROPERTY(double maxBusyScore READ maxBusyScore CONSTANT)
     Q_PROPERTY(QString errorString READ errorString CONSTANT)
 
 public:
@@ -34,6 +36,8 @@ public:
     int analysisHeight() const;
     double canvasWidth() const;
     double canvasHeight() const;
+    double minBusyScore() const;
+    double maxBusyScore() const;
     QString errorString() const;
 
     Q_INVOKABLE double busyScore(

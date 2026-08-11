@@ -9,6 +9,7 @@ Rectangle {
     id: root
 
     readonly property bool dataAvailable: WeatherPlugin.hasValidData
+    property color surfaceColor: Appearance.colors.colSurfaceContainerHigh
     readonly property var currentDetails: {
         // Reading lastUpdated makes this map binding track backend refreshes.
         const revision = WeatherPlugin.lastUpdated;
@@ -87,7 +88,7 @@ Rectangle {
     }
 
     radius: Appearance.rounding.extraLarge
-    color: Appearance.colors.colSurfaceContainerHigh
+    color: root.surfaceColor
     clip: true
     Accessible.name: qsTr("天气，")
         + root.temperatureText() + "，"

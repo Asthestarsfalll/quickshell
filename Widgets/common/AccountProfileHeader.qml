@@ -26,8 +26,8 @@ Rectangle {
 
     signal avatarActivated()
 
-    readonly property color profileSurfaceColor:
-        Appearance.m3colors.m3surfaceContainerHigh
+    property color surfaceColor: Appearance.m3colors.m3surfaceContainerHigh
+    readonly property color profileSurfaceColor: surfaceColor
     readonly property string wallpaperUrl: wallpaperPath !== "" && !colorWallpaper
         ? Paths.fileUrl(wallpaperPath) : ""
 

@@ -42,6 +42,15 @@ Singleton {
             PersonalizationConfig.shellBackgroundOpacity);
     }
 
+    // Sidebar cards deliberately start from an opaque Material surface.  The
+    // compositor-level opacity setting is then the only transparency applied
+    // to that surface, so Niri's blur region and the shell setting keep one
+    // source of truth instead of each card deriving its own alpha from
+    // Appearance.contentTransparency.
+    function opaqueBackgroundColor(baseColor) {
+        return backgroundColor(Appearance.applyAlpha(baseColor, 1));
+    }
+
     function supportsVersion(versionText) {
         const match = String(versionText || "")
             .match(/(?:^|\s)(\d+)\.(\d+)(?:\D|$)/);

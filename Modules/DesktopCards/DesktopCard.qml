@@ -22,10 +22,10 @@ Item {
 
     readonly property var cardState:
         SystemCardService.cards[root.tileId] || null
-    readonly property string placementMode:
-        cardState && cardState.desktop
-            ? cardState.desktop.mode : "free"
-    readonly property bool canDrag: root.active && root.scene !== null
+    readonly property bool canDrag:
+        root.active
+        && root.scene !== null
+        && SystemCardService.globalDesktopLayoutMode === "free"
 
     Accessible.role: Accessible.Pane
     Accessible.name: SystemCardService.cardName(root.tileId)
@@ -39,15 +39,29 @@ Item {
         }
     }
 
+    // Keep the same surface contract used by sidebar tiles.  The first six
+    // cards retain their original component backgrounds.
+    Rectangle {
+        anchors.fill: parent
+        radius: Appearance.rounding.extraLarge
+        visible: cardContent.shellManagedSurface
+        color: BlurService.opaqueBackgroundColor(
+            Appearance.m3colors.m3surfaceContainerHigh)
+    }
+
     SystemCardContent {
+        id: cardContent
+
         anchors.fill: parent
         tileId: root.tileId
         active: true
+        useShellManagedSurface: true
     }
 
     HoverHandler {
-        cursorShape: dragHandler.active
-            ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        cursorShape: !root.canDrag
+            ? Qt.ArrowCursor
+            : dragHandler.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
     }
 
     DragHandler {
@@ -83,9 +97,6 @@ Item {
                 root.dragX = root.targetWallpaperX;
                 root.dragY = root.targetWallpaperY;
                 root.dragging = true;
-                if (root.placementMode !== "free")
-                    SystemCardService.setDesktopMode(
-                        root.tileId, "free");
             } else if (started) {
                 started = false;
                 const xNorm = root.dragX
@@ -93,7 +104,7 @@ Item {
                 const yNorm = root.dragY
                     / Math.max(1, root.scene.canvasHeight);
                 SystemCardService.setDesktopPosition(
-                    root.tileId, xNorm, yNorm, true);
+                    root.tileId, xNorm, yNorm);
                 root.dragging = false;
             }
         }
@@ -141,28 +152,6 @@ Item {
         Material.theme: Material.System
         Material.accent: Appearance.colors.colPrimary
 
-        MenuItem {
-            text: qsTr("自由拖拽")
-            checkable: true
-            checked: root.placementMode === "free"
-            onTriggered: SystemCardService.setDesktopMode(
-                root.tileId, "free")
-        }
-        MenuItem {
-            text: qsTr("最空旷处")
-            checkable: true
-            checked: root.placementMode === "leastBusy"
-            onTriggered: SystemCardService.setDesktopMode(
-                root.tileId, "leastBusy")
-        }
-        MenuItem {
-            text: qsTr("最密集处")
-            checkable: true
-            checked: root.placementMode === "mostBusy"
-            onTriggered: SystemCardService.setDesktopMode(
-                root.tileId, "mostBusy")
-        }
-        MenuSeparator {}
         MenuItem {
             text: qsTr("收回到侧边栏")
             onTriggered: SystemCardService.setContainer(

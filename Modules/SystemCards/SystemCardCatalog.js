@@ -12,8 +12,7 @@ var cardDefinitions = [
         columnSpan: 2,
         rowSpan: 2,
         requiresSystemMonitor: false,
-        desktopWidth: 340,
-        desktopHeight: 250
+        preserveDefaultSurface: true
     },
     {
         id: "battery",
@@ -23,8 +22,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 2,
         requiresSystemMonitor: true,
-        desktopWidth: 220,
-        desktopHeight: 300
+        preserveDefaultSurface: true
     },
     {
         id: "cpu",
@@ -34,8 +32,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        desktopWidth: 280,
-        desktopHeight: 220
+        preserveDefaultSurface: true
     },
     {
         id: "gpu",
@@ -45,8 +42,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        desktopWidth: 280,
-        desktopHeight: 220
+        preserveDefaultSurface: true
     },
     {
         id: "memoryUsed",
@@ -56,8 +52,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        desktopWidth: 280,
-        desktopHeight: 220
+        preserveDefaultSurface: true
     },
     {
         id: "wifi",
@@ -67,8 +62,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: false,
-        desktopWidth: 280,
-        desktopHeight: 220
+        preserveDefaultSurface: true
     },
     {
         id: "network",
@@ -77,9 +71,7 @@ var cardDefinitions = [
         icon: "swap_vert",
         columnSpan: 2,
         rowSpan: 1,
-        requiresSystemMonitor: true,
-        desktopWidth: 360,
-        desktopHeight: 230
+        requiresSystemMonitor: true
     },
     {
         id: "storage",
@@ -88,9 +80,7 @@ var cardDefinitions = [
         icon: "storage",
         columnSpan: 3,
         rowSpan: 1,
-        requiresSystemMonitor: true,
-        desktopWidth: 420,
-        desktopHeight: 230
+        requiresSystemMonitor: true
     },
     {
         id: "calendar",
@@ -99,9 +89,7 @@ var cardDefinitions = [
         icon: "calendar_month",
         columnSpan: 1,
         rowSpan: 1,
-        requiresSystemMonitor: false,
-        desktopWidth: 280,
-        desktopHeight: 220
+        requiresSystemMonitor: false
     },
     {
         id: "weather",
@@ -110,9 +98,7 @@ var cardDefinitions = [
         icon: "cloud",
         columnSpan: 3,
         rowSpan: 1,
-        requiresSystemMonitor: false,
-        desktopWidth: 440,
-        desktopHeight: 280
+        requiresSystemMonitor: false
     }
 ];
 

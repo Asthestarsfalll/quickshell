@@ -4,6 +4,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets.common
 import qs.Modules.SystemCards
+import "../../SystemCards/SystemCardGeometry.js" as CardGeometry
 import "./system"
 import "./system/SystemGridLayout.js" as GridLayout
 
@@ -31,9 +32,9 @@ Item {
     readonly property int gridRows:
         GridLayout.contentRowCount(
             root.committedLayout, root.activeSidebarIds)
-    readonly property real gridGap: Appearance.spacing.small
-    readonly property int gridCellWidth: 152
-    readonly property int gridCellHeight: 160
+    readonly property real gridGap: CardGeometry.cellGap
+    readonly property int gridCellWidth: CardGeometry.baseCellWidth
+    readonly property int gridCellHeight: CardGeometry.baseCellHeight
     readonly property int gridContentWidth:
         root.gridColumns * root.gridCellWidth
             + (root.gridColumns - 1) * root.gridGap
@@ -66,6 +67,21 @@ Item {
 
     function layoutPlacement(layout, tileId) {
         return GridLayout.placementFor(layout, tileId);
+    }
+
+    function cardSize(tileId) {
+        return CardGeometry.sizeFor(String(tileId));
+    }
+
+    readonly property Item timeCardItem: {
+        if (!root.isForeground)
+            return null;
+        for (let index = 0; index < tileRepeater.count; ++index) {
+            const item = tileRepeater.itemAt(index);
+            if (item && item.tileId === "time")
+                return item;
+        }
+        return null;
     }
 
     function displayPlacement(tileId) {
@@ -198,19 +214,30 @@ Item {
         if (root.desktopExtraction) {
             const scene = root.screenName !== ""
                 ? WallpaperSceneService.sceneFor(root.screenName) : null;
+            // The persisted point is the Card's top-left corner, not the
+            // pointer location.  This is the same corner represented by the
+            // top-level ShaderEffectSource ghost.
+            const topLeftX = root.dragPointerX
+                - SystemCardDragSession.offsetX;
+            const topLeftY = root.dragPointerY
+                - SystemCardDragSession.offsetY;
             const point = scene
-                ? scene.screenToWallpaper(root.dragPointerX,
-                    root.dragPointerY)
-                : { x: root.dragPointerX, y: root.dragPointerY };
+                ? scene.screenToWallpaper(topLeftX, topLeftY)
+                : { x: topLeftX, y: topLeftY };
             const canvasWidth = scene ? scene.canvasWidth : 1;
             const canvasHeight = scene ? scene.canvasHeight : 1;
+            const size = root.cardSize(tileId);
+            const wallpaperX = Math.max(0, Math.min(
+                Math.max(0, canvasWidth - size.width), point.x));
+            const wallpaperY = Math.max(0, Math.min(
+                Math.max(0, canvasHeight - size.height), point.y));
             SystemCardDragSession.freezeGhost();
             const committed = SystemCardService.setContainer(
                 tileId,
                 "desktop",
                 root.screenName,
-                point.x / Math.max(1, canvasWidth),
-                point.y / Math.max(1, canvasHeight)
+                wallpaperX / Math.max(1, canvasWidth),
+                wallpaperY / Math.max(1, canvasHeight)
             );
             const card = SystemCardService.card(tileId);
             if (!committed || !card || !card.enabled
@@ -447,17 +474,15 @@ Item {
                         const definition = GridLayout.tileDefinitionFor(
                             root.draggingTileId);
                         return definition
-                            ? definition.columnSpan * dashboard.cellWidth
-                                + (definition.columnSpan - 1) * root.gridGap
-                            : 0;
+                            ? CardGeometry.widthForSpan(
+                                definition.columnSpan) : 0;
                     }
                     height: {
                         const definition = GridLayout.tileDefinitionFor(
                             root.draggingTileId);
                         return definition
-                            ? definition.rowSpan * dashboard.cellHeight
-                                + (definition.rowSpan - 1) * root.gridGap
-                            : 0;
+                            ? CardGeometry.heightForSpan(
+                                definition.rowSpan) : 0;
                     }
                     visible: root.draggingTileId.length > 0
                         && !root.desktopExtraction
@@ -492,6 +517,8 @@ Item {
                 }
 
                 Repeater {
+                    id: tileRepeater
+
                     model: root.tileDefinitions
 
                     delegate: SystemGridTile {
@@ -507,10 +534,8 @@ Item {
                             ? placement.column * dashboard.columnStride : 0
                         y: placement
                             ? placement.row * dashboard.rowStride : 0
-                        width: definition.columnSpan * dashboard.cellWidth
-                            + (definition.columnSpan - 1) * root.gridGap
-                        height: definition.rowSpan * dashboard.cellHeight
-                            + (definition.rowSpan - 1) * root.gridGap
+                        width: root.cardSize(tile.tileId).width
+                        height: root.cardSize(tile.tileId).height
                         active: root.isForeground
                         dragging: root.draggingTileId === tile.tileId
                         z: dragging ? 30 : 1

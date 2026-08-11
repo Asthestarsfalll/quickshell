@@ -55,7 +55,8 @@ Item {
                 implicitWidth: 36
                 implicitHeight: 36
                 radius: Appearance.rounding.full
-                color: Appearance.colors.colLayer2
+                color: BlurService.opaqueBackgroundColor(
+                    Appearance.m3colors.m3surfaceContainer)
 
                 Text {
                     anchors.centerIn: parent

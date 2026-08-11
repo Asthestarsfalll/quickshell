@@ -27,7 +27,8 @@ Rectangle {
 
     implicitHeight: collapsed ? collapsedRow.implicitHeight : 350
     radius: Appearance.rounding.normal
-    color: Appearance.colors.colLayer1
+    color: BlurService.opaqueBackgroundColor(
+        Appearance.m3colors.m3surfaceContainerLow)
     clip: true
     focus: active
 

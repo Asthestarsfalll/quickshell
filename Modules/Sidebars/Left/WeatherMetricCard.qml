@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Common
+import qs.Services
 
 Rectangle {
     id: root
@@ -12,7 +13,8 @@ Rectangle {
     property color accent: Appearance.colors.colSecondary
 
     radius: 24
-    color: Appearance.colors.colLayer1
+    color: BlurService.opaqueBackgroundColor(
+        Appearance.m3colors.m3surfaceContainerLow)
 
     RowLayout {
         anchors.fill: parent

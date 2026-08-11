@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Common
+import qs.Services
 import qs.Modules.SystemCards
 
 Item {
@@ -63,12 +64,23 @@ Item {
         }
     }
 
+    // Only cards opted into the new shell-managed surface receive a backing
+    // rectangle.  The first six cards retain their original backgrounds.
+    Rectangle {
+        anchors.fill: parent
+        radius: Appearance.rounding.extraLarge
+        visible: cardContent.shellManagedSurface
+        color: BlurService.opaqueBackgroundColor(
+            Appearance.m3colors.m3surfaceContainerHigh)
+    }
+
     SystemCardContent {
         id: cardContent
 
         anchors.fill: parent
         tileId: root.tileId
         active: root.active
+        useShellManagedSurface: true
     }
 
     HoverHandler {

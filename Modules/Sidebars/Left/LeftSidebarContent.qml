@@ -26,6 +26,11 @@ Item {
         const loader = viewRepeater.itemAt(2)
         return loader ? loader.item : null
     }
+    readonly property Item systemTimeCardItem: {
+        const loader = viewRepeater.itemAt(1);
+        const systemView = loader ? loader.item : null;
+        return systemView ? systemView.timeCardItem : null;
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -88,7 +93,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: height / 2
-                color: Appearance.colors.colSurfaceContainer
+                color: BlurService.opaqueBackgroundColor(
+                    Appearance.m3colors.m3surfaceContainer)
             }
 
             Rectangle {

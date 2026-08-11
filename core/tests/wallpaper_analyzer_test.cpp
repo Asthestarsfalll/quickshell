@@ -11,6 +11,7 @@ private slots:
     void findsLowAndHighBusyRegions();
     void staleGenerationCannotPublish();
     void invalidWallpaperFallsBackGracefully();
+    void pathologicalCanvasAspectIsBounded();
 };
 
 void WallpaperAnalyzerTest::findsLowAndHighBusyRegions()
@@ -43,6 +44,14 @@ void WallpaperAnalyzerTest::findsLowAndHighBusyRegions()
     QTRY_COMPARE_WITH_TIMEOUT(analyzer.pendingCount(), 0, 5000);
 
     QVERIFY(result->valid());
+    QVERIFY(result->minBusyScore() >= 0.0);
+    QVERIFY(result->maxBusyScore() <= 1.0);
+    QVERIFY2(result->maxBusyScore() > result->minBusyScore(),
+             qPrintable(QStringLiteral("min=%1 max=%2")
+                            .arg(result->minBusyScore())
+                            .arg(result->maxBusyScore())));
+    qInfo().noquote() << "[DesktopCards] analyzer test busy range"
+                      << result->minBusyScore() << result->maxBusyScore();
     const double calm = result->busyScore(0, 0, 110, 120);
     const double busy = result->busyScore(130, 0, 110, 120);
     QVERIFY2(busy > calm,
@@ -95,6 +104,29 @@ void WallpaperAnalyzerTest::invalidWallpaperFallsBackGracefully()
     QCOMPARE(result->canvasWidth(), 1920.0);
     QCOMPARE(result->canvasHeight(), 1080.0);
     QCOMPARE(result->busyScore(0, 0, 100, 100), 0.0);
+}
+
+void WallpaperAnalyzerTest::pathologicalCanvasAspectIsBounded()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString path = directory.filePath(QStringLiteral("wallpaper.png"));
+    QImage image(64, 64, QImage::Format_RGB32);
+    image.fill(Qt::gray);
+    QVERIFY(image.save(path));
+
+    WallpaperAnalyzer analyzer;
+    WallpaperAnalysisResult *result = nullptr;
+    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
+            this, [&](const QString &, int, WallpaperAnalysisResult *value) {
+                result = value;
+            });
+    analyzer.request(QStringLiteral("pathological"), 1, path,
+                     2000000, 1, QStringLiteral("panorama"), 64, 64);
+    QTRY_VERIFY_WITH_TIMEOUT(result != nullptr, 5000);
+    QVERIFY(result->valid());
+    QVERIFY(result->analysisWidth() <= 4096);
+    QVERIFY(result->analysisHeight() <= 540);
 }
 
 QTEST_MAIN(WallpaperAnalyzerTest)

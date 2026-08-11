@@ -5,8 +5,8 @@
 // the same metadata source when they are run directly by qmltestrunner.
 Qt.include("SystemCardCatalog.js");
 
-var schemaVersion = 1;
-var placementModes = ["free", "leastBusy", "mostBusy"];
+var schemaVersion = 2;
+var desktopLayoutModes = ["free", "leastBusy", "mostBusy"];
 
 function isObject(value) {
     return value !== null
@@ -14,8 +14,8 @@ function isObject(value) {
         && !Array.isArray(value);
 }
 
-function validMode(value) {
-    return placementModes.indexOf(String(value || "")) !== -1;
+function validDesktopLayoutMode(value) {
+    return desktopLayoutModes.indexOf(String(value || "")) !== -1;
 }
 
 function clamp01(value, fallback) {
@@ -30,7 +30,7 @@ function integerOr(value, fallback) {
     return isFinite(number) ? Math.round(number) : fallback;
 }
 
-function defaultCard(definition, globalMode) {
+function defaultCard(definition) {
     var anchor = defaultAnchorFor(definition.id);
     return {
         enabled: true,
@@ -42,8 +42,7 @@ function defaultCard(definition, globalMode) {
         },
         desktop: {
             xNorm: 0.5,
-            yNorm: 0.5,
-            mode: validMode(globalMode) ? globalMode : "free"
+            yNorm: 0.5
         }
     };
 }
@@ -56,7 +55,7 @@ function defaultState() {
     };
     all().forEach(function(definition) {
         state.cards[definition.id] = defaultCard(
-            definition, state.globalDesktopLayoutMode);
+            definition);
     });
     return state;
 }
@@ -67,7 +66,7 @@ function copy(value) {
 
 function normalize(raw) {
     var source = isObject(raw) ? raw : {};
-    var globalMode = validMode(source.globalDesktopLayoutMode)
+    var globalMode = validDesktopLayoutMode(source.globalDesktopLayoutMode)
         ? String(source.globalDesktopLayoutMode) : "free";
     var sourceCards = isObject(source.cards) ? source.cards : {};
     var normalized = {
@@ -77,7 +76,7 @@ function normalize(raw) {
     };
 
     all().forEach(function(definition) {
-        var fallback = defaultCard(definition, globalMode);
+        var fallback = defaultCard(definition);
         var rawCard = isObject(sourceCards[definition.id])
             ? sourceCards[definition.id] : {};
         var rawSidebar = isObject(rawCard.sidebar)
@@ -101,9 +100,7 @@ function normalize(raw) {
                 xNorm: clamp01(rawDesktop.xNorm,
                     fallback.desktop.xNorm),
                 yNorm: clamp01(rawDesktop.yNorm,
-                    fallback.desktop.yNorm),
-                mode: validMode(rawDesktop.mode)
-                    ? String(rawDesktop.mode) : globalMode
+                    fallback.desktop.yNorm)
             }
         };
     });
@@ -159,14 +156,6 @@ function setDesktopPosition(state, id, xNorm, yNorm) {
     });
 }
 
-function setDesktopMode(state, id, mode) {
-    return updateCard(state, id, function(next) {
-        if (validMode(mode))
-            next.desktop.mode = String(mode);
-        return next;
-    });
-}
-
 function setSidebarAnchor(state, id, column, row) {
     return updateCard(state, id, function(next) {
         next.sidebar.column = Math.max(0, integerOr(
@@ -179,14 +168,10 @@ function setSidebarAnchor(state, id, column, row) {
 
 function setGlobalMode(state, mode) {
     var normalized = normalize(state);
-    if (!validMode(mode))
+    if (!validDesktopLayoutMode(mode))
         return normalized;
     var next = copy(normalized);
     next.globalDesktopLayoutMode = String(mode);
-    Object.keys(next.cards).forEach(function(id) {
-        if (next.cards[id].container === "desktop")
-            next.cards[id].desktop.mode = String(mode);
-    });
     return next;
 }
 

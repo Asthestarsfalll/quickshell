@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Clavis.DesktopCards
 import qs.Common
 import qs.Services
+import qs.Widgets.common
 import "./DesktopCardLayout.js" as DesktopCardLayout
 
 Variants {
@@ -51,9 +52,12 @@ Variants {
             }
         readonly property string analysisKey:
             scene ? scene.analysisKey : ""
+        readonly property string layoutMode:
+            SystemCardService.globalDesktopLayoutMode
         property var analysis: null
         property int analysisGeneration: 0
-        property string pendingLayoutFocusId: ""
+        property string requestedAnalysisKey: ""
+        property bool automaticLayoutScheduled: false
         readonly property string analysisRequestKey:
             "desktop-cards:" + String(modelData.name)
 
@@ -72,9 +76,14 @@ Variants {
 
         function requestAnalysis() {
             if (!window.scene || window.analysisKey === ""
-                    || window.desktopIds.length === 0)
+                    || window.layoutMode === "free"
+                    || window.desktopIds.length === 0
+                    || !window.scene.analysisGeometryReady)
+                return;
+            if (window.requestedAnalysisKey === window.analysisKey)
                 return;
             window.analysis = null;
+            window.requestedAnalysisKey = window.analysisKey;
             window.analysisGeneration += 1;
             WallpaperAnalyzer.request(
                 window.analysisRequestKey,
@@ -89,38 +98,55 @@ Variants {
             );
         }
 
+        function scheduleAutomaticLayout() {
+            if (window.automaticLayoutScheduled)
+                return;
+            window.automaticLayoutScheduled = true;
+            Qt.callLater(function() {
+                window.automaticLayoutScheduled = false;
+                if (window.layoutMode === "free")
+                    return;
+                window.requestAnalysis();
+                window.runLayout();
+            });
+        }
+
         function cardDescriptors() {
             const result = [];
             window.desktopIds.forEach(function(id) {
                 const state = SystemCardService.card(id);
                 if (!state || !state.desktop)
                     return;
-                const size = SystemCardService.desktopSize(
-                    id, window.scene.canvasWidth, window.scene.canvasHeight);
+                const size = SystemCardService.cardSize(id);
                 result.push({
                     id: id,
                     width: size.width,
                     height: size.height,
                     xNorm: state.desktop.xNorm,
-                    yNorm: state.desktop.yNorm,
-                    mode: state.desktop.mode
+                    yNorm: state.desktop.yNorm
                 });
             });
             return result;
         }
 
         function runLayout() {
-            if (!window.scene || !window.analysis
-                    || window.desktopIds.length === 0)
+            const mode = SystemCardService.globalDesktopLayoutMode;
+            if (!window.scene || window.desktopIds.length === 0
+                    || mode === "free" || !window.analysis
+                    || !window.analysis.valid)
+                return;
+            // Do not let a cached analysis result move a newly transferred
+            // card before its first frame has been presented at the drop
+            // point.  This is a presentation barrier, not a visibility gate.
+            if (!cardCanvas.allActiveCardsPresented)
                 return;
             const placements = DesktopCardLayout.solve(
                 window.cardDescriptors(),
                 window.scene.canvasWidth,
                 window.scene.canvasHeight,
                 window.analysis,
-                window.pendingLayoutFocusId
+                mode
             );
-            window.pendingLayoutFocusId = "";
             SystemCardService.applyDesktopLayout(placements);
         }
 
@@ -135,6 +161,31 @@ Variants {
             Region { item: cardCanvas.inputSlot7 }
             Region { item: cardCanvas.inputSlot8 }
             Region { item: cardCanvas.inputSlot9 }
+        }
+
+        // The desktop host is a separate Bottom-layer surface, so it cannot
+        // inherit SidebarHostWindow's blur region.  Submit only the live card
+        // slots: empty desktop space remains visually and interactively
+        // transparent, while each card participates in the same compositor
+        // blur managed by BlurService.
+        CompositorBlurRegion {
+            targetWindow: window
+            backgroundItem: cardCanvas.inputSlot0
+            additionalBackgroundItems: [
+                cardCanvas.inputSlot1,
+                cardCanvas.inputSlot2,
+                cardCanvas.inputSlot3,
+                cardCanvas.inputSlot4,
+                cardCanvas.inputSlot5,
+                cardCanvas.inputSlot6,
+                cardCanvas.inputSlot7,
+                cardCanvas.inputSlot8,
+                cardCanvas.inputSlot9
+            ]
+            subtractedBackgroundItems: [
+                cardCanvas.timeBlurExclusionItem
+            ]
+            radius: Appearance.rounding.extraLarge
         }
 
         Item {
@@ -162,6 +213,27 @@ Variants {
                     return;
                 }
                 window.analysis = result;
+                if (!result || !result.valid) {
+                    console.warn(
+                        "[DesktopCards] analysis failed path="
+                            + String(window.scene
+                                ? window.scene.sourcePath : "")
+                            + " reason="
+                            + String(result ? result.errorString
+                                : "no-result")
+                    );
+                    return;
+                }
+                console.log(
+                    "[DesktopCards] analysis ready path="
+                        + String(window.scene.sourcePath)
+                        + " size=" + String(result.analysisWidth)
+                        + "x" + String(result.analysisHeight)
+                        + " valid=true minBusy="
+                        + Number(result.minBusyScore).toFixed(4)
+                        + " maxBusy="
+                        + Number(result.maxBusyScore).toFixed(4)
+                );
                 window.runLayout();
             }
         }
@@ -173,14 +245,32 @@ Variants {
                 Qt.callLater(window.runLayout);
             }
 
-            function onDesktopLayoutRequested(focusCardId) {
-                window.pendingLayoutFocusId = String(focusCardId || "");
+            function onDesktopLayoutRequested() {
+                window.scheduleAutomaticLayout();
+            }
+        }
+
+        Connections {
+            target: cardCanvas
+
+            function onCardPresented() {
                 Qt.callLater(window.runLayout);
             }
         }
 
         onDesktopIdsChanged: window.requestAnalysis()
-        onAnalysisKeyChanged: window.requestAnalysis()
+        onAnalysisKeyChanged: {
+            window.requestedAnalysisKey = "";
+            window.requestAnalysis();
+        }
+        onLayoutModeChanged: {
+            if (window.layoutMode === "free") {
+                window.analysis = null;
+                window.requestedAnalysisKey = "";
+                return;
+            }
+            window.scheduleAutomaticLayout();
+        }
 
         Component.onCompleted: {
             console.log(

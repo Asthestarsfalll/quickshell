@@ -11,11 +11,12 @@ Rectangle {
     property var network: ({})
     property var downloadHistory: []
     property var uploadHistory: []
+    property color surfaceColor: Appearance.colors.colSurfaceContainer
     property bool chartActive: visible
     property int updateInterval: 1000
 
     radius: Appearance.rounding.extraLarge
-    color: Appearance.colors.colSurfaceContainer
+    color: root.surfaceColor
     clip: true
     Accessible.name: qsTr("网络，下载 ")
         + Format.bytesPerSecond(

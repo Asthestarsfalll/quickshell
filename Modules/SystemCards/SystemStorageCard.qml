@@ -10,6 +10,7 @@ Rectangle {
     id: root
 
     property var disks: []
+    property color surfaceColor: Appearance.colors.colSurfaceContainer
     property int currentDiskIndex: 0
     property bool selectionInitialized: false
     readonly property var disk:
@@ -57,7 +58,7 @@ Rectangle {
     }
 
     radius: Appearance.rounding.extraLarge
-    color: Appearance.colors.colSurfaceContainer
+    color: root.surfaceColor
     Accessible.name: qsTr("存储 ")
         + String(root.disk.mountPoint || "")
         + "，" + Format.percent(root.disk.usagePercent, 0)

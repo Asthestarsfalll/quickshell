@@ -7,7 +7,7 @@ TestCase {
 
     function test_legacyMissingStateDefaultsEveryCardToSidebar() {
         const state = CardState.normalize({});
-        compare(state.version, 1);
+        compare(state.version, 2);
         compare(Object.keys(state.cards).length, 10);
         compare(CardState.activeSidebarIds(state).length, 10);
         compare(CardState.activeDesktopIds(state).length, 0);
@@ -49,18 +49,32 @@ TestCase {
             true);
     }
 
-    function test_globalModeChangesDesktopCardsOnly() {
-        let state = CardState.normalize({
-            globalDesktopLayoutMode: "free"
+    function test_legacyPerCardModesAreIgnoredInFavorOfGlobalMode() {
+        const state = CardState.normalize({
+            globalDesktopLayoutMode: "leastBusy",
+            cards: {
+                cpu: {
+                    container: "desktop",
+                    screenName: "DP-1",
+                    desktop: { xNorm: 0.21, yNorm: 0.34,
+                        mode: "free" }
+                },
+                gpu: {
+                    container: "desktop",
+                    screenName: "DP-1",
+                    desktop: { xNorm: 0.61, yNorm: 0.72,
+                        mode: "mostBusy" }
+                }
+            }
         });
-        state = CardState.setContainer(state, "cpu", "desktop", "DP-1");
-        state = CardState.setContainer(state, "gpu", "desktop", "DP-1");
-        state = CardState.setGlobalMode(state, "leastBusy");
 
         compare(state.globalDesktopLayoutMode, "leastBusy");
-        compare(state.cards.cpu.desktop.mode, "leastBusy");
-        compare(state.cards.gpu.desktop.mode, "leastBusy");
-        compare(state.cards.time.desktop.mode, "free");
+        verify(!Object.prototype.hasOwnProperty.call(
+            state.cards.cpu.desktop, "mode"));
+        compare(state.cards.cpu.desktop.xNorm, 0.21);
+        compare(state.cards.cpu.desktop.yNorm, 0.34);
+        verify(!Object.prototype.hasOwnProperty.call(
+            state.cards.gpu.desktop, "mode"));
     }
 
     function test_missingOutputUsesDeterministicFallback() {
@@ -77,16 +91,28 @@ TestCase {
         let state = CardState.normalize({});
         state = CardState.setContainer(
             state, "calendar", "desktop", "DP-2", 0.1, 0.9);
-        state = CardState.setDesktopMode(state, "calendar", "mostBusy");
         state = CardState.setEnabled(state, "battery", false);
 
         const encoded = JSON.stringify(CardState.serialize(state));
         const restored = CardState.normalize(JSON.parse(encoded));
-        compare(restored.version, 1);
+        compare(restored.version, 2);
         compare(restored.cards.calendar.container, "desktop");
-        compare(restored.cards.calendar.desktop.mode, "mostBusy");
+        verify(!Object.prototype.hasOwnProperty.call(
+            restored.cards.calendar.desktop, "mode"));
         compare(restored.cards.battery.enabled, false);
         compare(CardState.activeSidebarIds(restored).indexOf("battery"), -1);
+    }
+
+    function test_globalModeChangesOnlyTheSingleGlobalPolicy() {
+        let state = CardState.normalize({});
+        state = CardState.setContainer(state, "cpu", "desktop", "DP-1",
+            0.25, 0.4);
+        const before = JSON.stringify(state.cards.cpu.desktop);
+        state = CardState.setGlobalMode(state, "mostBusy");
+
+        compare(state.globalDesktopLayoutMode, "mostBusy");
+        compare(JSON.stringify(state.cards.cpu.desktop), before);
+        compare(Object.keys(state.cards.cpu.desktop).length, 2);
     }
 
     function test_monitorOwnershipFollowsDesktopCardsNotViewport() {

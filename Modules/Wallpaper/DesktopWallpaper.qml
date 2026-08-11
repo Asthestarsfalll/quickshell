@@ -64,14 +64,10 @@ Variants {
             Binding {
                 when: root.scene !== null
                 target: root.scene
-                property: "imagePixelWidth"
-                value: renderer.imagePixelWidth
-            }
-            Binding {
-                when: root.scene !== null
-                target: root.scene
-                property: "imagePixelHeight"
-                value: renderer.imagePixelHeight
+                property: "imagePixelSize"
+                value: Qt.size(
+                    renderer.imagePixelWidth,
+                    renderer.imagePixelHeight)
             }
 
             WallpaperTransitionSurface {

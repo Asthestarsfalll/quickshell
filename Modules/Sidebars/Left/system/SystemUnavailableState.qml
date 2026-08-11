@@ -4,6 +4,7 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
+import qs.Services
 
 Rectangle {
     id: root
@@ -16,7 +17,8 @@ Rectangle {
     implicitHeight: unavailableLayout.implicitHeight
         + Appearance.spacing.large * 2
     radius: Appearance.rounding.small
-    color: Appearance.colors.colSurfaceContainer
+    color: BlurService.opaqueBackgroundColor(
+        Appearance.m3colors.m3surfaceContainer)
     readonly property color foregroundColor: reconnecting
         ? Appearance.colors.colOnSurface
         : Appearance.colors.colOnSurface

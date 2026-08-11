@@ -33,6 +33,9 @@ Item {
     readonly property var weatherView:
         sidebarContentLoader.item
             ? sidebarContentLoader.item.weatherView : null
+    readonly property Item timeCardBlurExclusionItem:
+        sidebarContentLoader.item
+            ? sidebarContentLoader.item.systemTimeCardItem : null
 
     function beginPresentation() {
         panelPresented = true

@@ -19,6 +19,8 @@ struct WallpaperAnalysisData {
     int analysisHeight = 0;
     double canvasWidth = 1.0;
     double canvasHeight = 1.0;
+    double minBusyScore = 0.0;
+    double maxBusyScore = 0.0;
     QString errorString;
     QVector<double> sum;
     QVector<double> squareSum;
@@ -92,6 +94,13 @@ struct WallpaperAnalysisData {
 };
 
 namespace {
+
+// The wallpaper canvas is a coordinate space and may legitimately be wider
+// than a texture.  The analysis bitmap is not: bounding it prevents a
+// transient or malformed scene aspect ratio from allocating hundreds of
+// megabytes in QImage::scaled().
+constexpr int kMaximumAnalysisWidth = 4096;
+constexpr int kMaximumAnalysisHeight = 540;
 
 QString localPath(const QString &sourcePath)
 {
@@ -198,11 +207,17 @@ QSharedPointer<WallpaperAnalysisData> analyzeImage(
 {
     const int safeCanvasWidth = std::max(1, canvasWidth);
     const int safeCanvasHeight = std::max(1, canvasHeight);
-    const int analysisHeight = std::max(
-        1, std::min(540, safeCanvasHeight));
-    const int analysisWidth = std::max(1, static_cast<int>(std::lround(
-        static_cast<double>(safeCanvasWidth) / safeCanvasHeight
-            * analysisHeight)));
+    const int analysisHeight = std::clamp(
+        safeCanvasHeight, 1, kMaximumAnalysisHeight);
+    const double requestedAnalysisWidth =
+        static_cast<double>(safeCanvasWidth)
+        / static_cast<double>(safeCanvasHeight) * analysisHeight;
+    const int analysisWidth = std::clamp(
+        static_cast<int>(std::lround(std::min(
+            requestedAnalysisWidth,
+            static_cast<double>(kMaximumAnalysisWidth)))),
+        1,
+        kMaximumAnalysisWidth);
     Q_UNUSED(imageWidth);
     Q_UNUSED(imageHeight);
 
@@ -220,11 +235,17 @@ QSharedPointer<WallpaperAnalysisData> analyzeImage(
 
     const QSize sourceSize = reader.size();
     if (sourceSize.isValid()) {
-        const int decodedHeight = std::max(
-            1, std::min(540, sourceSize.height()));
-        const int decodedWidth = std::max(1, static_cast<int>(std::lround(
-            static_cast<double>(sourceSize.width()) / sourceSize.height()
-                * decodedHeight)));
+        const int decodedHeight = std::clamp(
+            sourceSize.height(), 1, kMaximumAnalysisHeight);
+        const double requestedDecodedWidth =
+            static_cast<double>(sourceSize.width())
+            / static_cast<double>(sourceSize.height()) * decodedHeight;
+        const int decodedWidth = std::clamp(
+            static_cast<int>(std::lround(std::min(
+                requestedDecodedWidth,
+                static_cast<double>(kMaximumAnalysisWidth)))),
+            1,
+            kMaximumAnalysisWidth);
         reader.setScaledSize(QSize(decodedWidth, decodedHeight));
     }
     QImage source = reader.read();
@@ -282,6 +303,25 @@ QSharedPointer<WallpaperAnalysisData> analyzeImage(
                 result->squareSum[(y - 1) * stride + x] + rowSquareSum;
             result->edgeSum[current] =
                 result->edgeSum[(y - 1) * stride + x] + rowEdgeSum;
+        }
+    }
+
+    // Expose a compact diagnostic range without retaining another per-pixel
+    // map.  The solver still queries the integral image directly.
+    result->minBusyScore = 1.0;
+    result->maxBusyScore = 0.0;
+    constexpr int diagnosticGrid = 8;
+    for (int row = 0; row < diagnosticGrid; ++row) {
+        for (int column = 0; column < diagnosticGrid; ++column) {
+            const double x = static_cast<double>(column)
+                / diagnosticGrid * result->canvasWidth;
+            const double y = static_cast<double>(row)
+                / diagnosticGrid * result->canvasHeight;
+            const double width = result->canvasWidth / diagnosticGrid;
+            const double height = result->canvasHeight / diagnosticGrid;
+            const double score = result->busyScore(x, y, width, height);
+            result->minBusyScore = std::min(result->minBusyScore, score);
+            result->maxBusyScore = std::max(result->maxBusyScore, score);
         }
     }
     return result;
@@ -376,6 +416,16 @@ double WallpaperAnalysisResult::canvasHeight() const
     return m_data ? m_data->canvasHeight : 0.0;
 }
 
+double WallpaperAnalysisResult::minBusyScore() const
+{
+    return m_data ? m_data->minBusyScore : 0.0;
+}
+
+double WallpaperAnalysisResult::maxBusyScore() const
+{
+    return m_data ? m_data->maxBusyScore : 0.0;
+}
+
 QString WallpaperAnalysisResult::errorString() const
 {
     return m_data ? m_data->errorString : QString();
@@ -390,6 +440,10 @@ double WallpaperAnalysisResult::busyScore(
 WallpaperAnalyzer::WallpaperAnalyzer(QObject *parent)
     : QObject(parent)
 {
+    // Requests are already generation-coalesced.  Serial execution also
+    // avoids multiplying Qt's own image-scaling worker fan-out when screen
+    // geometry and decoded image size settle during shell startup.
+    m_threadPool.setMaxThreadCount(1);
     m_threadPool.setExpiryTimeout(5000);
 }
 

@@ -1,5 +1,7 @@
 .pragma library
 
+var automaticModes = ["leastBusy", "mostBusy"];
+
 function safeNumber(value, fallback) {
     const number = Number(value);
     return isFinite(number) ? number : fallback;
@@ -7,6 +9,10 @@ function safeNumber(value, fallback) {
 
 function clamp(value, minimum, maximum) {
     return Math.max(minimum, Math.min(maximum, value));
+}
+
+function isAutomaticMode(mode) {
+    return automaticModes.indexOf(String(mode || "")) !== -1;
 }
 
 function rectsOverlap(first, second, gap) {
@@ -35,9 +41,9 @@ function normalizedPosition(card) {
 function boundedSize(card, canvasWidth, canvasHeight) {
     return {
         width: Math.max(1, Math.min(
-            safeNumber(card.width, 280), Math.max(1, canvasWidth))),
+            safeNumber(card.width, 1), Math.max(1, canvasWidth))),
         height: Math.max(1, Math.min(
-            safeNumber(card.height, 220), Math.max(1, canvasHeight)))
+            safeNumber(card.height, 1), Math.max(1, canvasHeight)))
     };
 }
 
@@ -73,58 +79,70 @@ function candidatePoints(card, canvasWidth, canvasHeight) {
         points.push(point);
     }
 
+    // The current point remains a normal candidate.  It is only a final
+    // tie-breaker and never receives a score bonus large enough to override
+    // the wallpaper busy signal.
     add(current.xNorm * canvasWidth,
-        current.yNorm * canvasHeight, -100000);
-    add(0, 0, 0);
-    add(maxX, 0, 1);
-    add(0, maxY, 2);
-    add(maxX, maxY, 3);
+        current.yNorm * canvasHeight, 0);
+    add(0, 0, 1);
+    add(maxX, 0, 2);
+    add(0, maxY, 3);
+    add(maxX, maxY, 4);
     add((canvasWidth - size.width) / 2,
-        (canvasHeight - size.height) / 2, 4);
+        (canvasHeight - size.height) / 2, 5);
 
     const step = Math.max(24, Math.min(size.width, size.height) * 0.42);
+    let rank = 10;
     for (let y = 0; y <= maxY + 1; y += step) {
-        for (let x = 0; x <= maxX + 1; x += step)
-            add(x, y, 10 + points.length);
+        for (let x = 0; x <= maxX + 1; x += step) {
+            add(x, y, rank);
+            rank += 1;
+        }
     }
-    points.sort(function(first, second) {
-        return first.rank - second.rank;
-    });
     return points;
 }
 
 function busyScore(analysis, rect) {
-    if (!analysis || typeof analysis.busyScore !== "function")
+    if (!analysis || !analysis.valid
+            || typeof analysis.busyScore !== "function")
         return 0;
     const score = Number(analysis.busyScore(
         rect.x, rect.y, rect.width, rect.height));
-    return isFinite(score) ? score : 0;
+    return isFinite(score) ? clamp(score, 0, 1) : 0;
 }
 
-function candidateCost(card, point, rect, analysis, canvasWidth, canvasHeight) {
-    const current = normalizedPosition(card);
-    const movement = Math.pow(
-        (point.x / Math.max(1, canvasWidth)) - current.xNorm, 2)
-        + Math.pow(
-            (point.y / Math.max(1, canvasHeight)) - current.yNorm, 2);
+function edgePenalty(rect, canvasWidth, canvasHeight) {
     const edgeDistance = Math.min(
         rect.x,
         rect.y,
         canvasWidth - rect.x - rect.width,
         canvasHeight - rect.y - rect.height
     ) / Math.max(1, Math.min(canvasWidth, canvasHeight));
-    const edgePenalty = Math.max(0, 0.08 - edgeDistance) * 0.25;
-    const score = busyScore(analysis, rect);
-    let wallpaperCost = 0;
-    if (card.mode === "leastBusy")
-        wallpaperCost = score;
-    else if (card.mode === "mostBusy")
-        wallpaperCost = -score;
-    return wallpaperCost + movement * 0.035 + edgePenalty
-        + point.rank * 0.000001;
+    // Keep this deliberately subordinate to real wallpaper scores.
+    return Math.max(0, 0.08 - edgeDistance) * 0.02;
 }
 
-function placeCard(card, occupied, canvasWidth, canvasHeight, analysis, gap) {
+function movementPenalty(card, point, canvasWidth, canvasHeight) {
+    const current = normalizedPosition(card);
+    const dx = point.x / Math.max(1, canvasWidth) - current.xNorm;
+    const dy = point.y / Math.max(1, canvasHeight) - current.yNorm;
+    // A tie-breaker only: realistic busy differences such as 0.018 vs 0.07
+    // must always dominate movement preservation.
+    return (dx * dx + dy * dy) * 0.0005;
+}
+
+function candidateCost(card, point, rect, analysis, canvasWidth,
+                      canvasHeight, mode) {
+    const score = busyScore(analysis, rect);
+    const wallpaperCost = mode === "mostBusy" ? -score : score;
+    return wallpaperCost
+        + edgePenalty(rect, canvasWidth, canvasHeight)
+        + movementPenalty(card, point, canvasWidth, canvasHeight)
+        + point.rank * 0.000000001;
+}
+
+function placeCard(card, occupied, canvasWidth, canvasHeight, analysis,
+                   gap, mode) {
     const candidates = candidatePoints(card, canvasWidth, canvasHeight);
     const scored = [];
     for (let index = 0; index < candidates.length; index += 1) {
@@ -136,11 +154,9 @@ function placeCard(card, occupied, canvasWidth, canvasHeight, analysis, gap) {
         scored.push({
             point: point,
             rect: rect,
-            cost: card.mode === "free"
-                ? point.rank
-                : candidateCost(
-                    card, point, rect, analysis,
-                    canvasWidth, canvasHeight)
+            cost: candidateCost(
+                card, point, rect, analysis,
+                canvasWidth, canvasHeight, mode)
         });
     }
 
@@ -150,99 +166,42 @@ function placeCard(card, occupied, canvasWidth, canvasHeight, analysis, gap) {
     if (scored.length > 0)
         return scored[0];
 
-    // A valid wallpaper canvas can become crowded after a user resize.  Keep
-    // the result deterministic and search every integer row/column before
-    // reporting the only possible degraded fallback.
+    // The normal candidate grid is intentionally sparse.  If a large
+    // canonical card leaves only a narrow hole, search that hole
+    // deterministically before giving up.
     const size = boundedSize(card, canvasWidth, canvasHeight);
     const maxX = Math.max(0, canvasWidth - size.width);
     const maxY = Math.max(0, canvasHeight - size.height);
-    const fallbackStep = Math.max(1, Math.floor(Math.min(
-        size.width, size.height) / 4));
+    const fallbackStep = Math.max(1, Math.floor(
+        Math.min(size.width, size.height) / 4));
     for (let y = 0; y <= maxY + 1; y += fallbackStep) {
         for (let x = 0; x <= maxX + 1; x += fallbackStep) {
             const rect = rectAt(card, x, y, canvasWidth, canvasHeight);
             if (!overlapsAny(rect, occupied, gap))
                 return { point: { x: rect.x, y: rect.y }, rect: rect,
-                    cost: 0 };
+                    cost: candidateCost(
+                        card, { x: rect.x, y: rect.y }, rect, analysis,
+                        canvasWidth, canvasHeight, mode) };
         }
     }
     return null;
 }
 
-function solve(cards, canvasWidth, canvasHeight, analysis, focusId) {
+function solve(cards, canvasWidth, canvasHeight, analysis, mode) {
     const safeWidth = Math.max(1, safeNumber(canvasWidth, 1));
     const safeHeight = Math.max(1, safeNumber(canvasHeight, 1));
+    const selectedMode = String(mode || "");
+    if (!isAutomaticMode(selectedMode))
+        return [];
+
     const source = Array.isArray(cards) ? cards.slice() : [];
     const occupied = [];
     const placements = [];
     const gap = 12;
 
-    // A per-card mode change treats the other cards as fixed obstacles.  A
-    // global change or wallpaper reflow leaves focusId empty and runs the
-    // full collision-aware solver below.
-    if (String(focusId || "") !== "") {
-        const focus = source.find(function(card) {
-            return String(card.id) === String(focusId);
-        });
-        if (focus) {
-            const fixed = source.filter(function(card) {
-                return String(card.id) !== String(focusId);
-            });
-            fixed.forEach(function(card) {
-                const current = normalizedPosition(card);
-                const rect = rectAt(
-                    card,
-                    current.xNorm * safeWidth,
-                    current.yNorm * safeHeight,
-                    safeWidth,
-                    safeHeight
-                );
-                occupied.push(rect);
-                placements.push({
-                    id: String(card.id),
-                    xNorm: clamp(rect.x / safeWidth, 0, 1),
-                    yNorm: clamp(rect.y / safeHeight, 0, 1),
-                    rect: rect
-                });
-            });
-            const placedFocus = placeCard(
-                focus, occupied, safeWidth, safeHeight, analysis, gap);
-            if (placedFocus) {
-                placements.push({
-                    id: String(focus.id),
-                    xNorm: clamp(placedFocus.rect.x / safeWidth, 0, 1),
-                    yNorm: clamp(placedFocus.rect.y / safeHeight, 0, 1),
-                    rect: placedFocus.rect
-                });
-                return placements;
-            }
-            // If the current geometry cannot accommodate the focus card,
-            // keep its normalized position rather than moving fixed cards.
-            const current = normalizedPosition(focus);
-            const rect = rectAt(
-                focus,
-                current.xNorm * safeWidth,
-                current.yNorm * safeHeight,
-                safeWidth,
-                safeHeight
-            );
-            placements.push({
-                id: String(focus.id),
-                xNorm: clamp(rect.x / safeWidth, 0, 1),
-                yNorm: clamp(rect.y / safeHeight, 0, 1),
-                rect: rect
-            });
-            return placements;
-        }
-    }
-
-    // Fixed/free cards become obstacles first.  Within each group, larger
-    // cards are placed first so smaller cards can use the remaining holes.
+    // There is one global strategy now.  Larger cards are placed first so
+    // the solver does not strand a wide canonical card in a late small gap.
     source.sort(function(first, second) {
-        const firstFree = first.mode === "free" ? 0 : 1;
-        const secondFree = second.mode === "free" ? 0 : 1;
-        if (firstFree !== secondFree)
-            return firstFree - secondFree;
         const areaDifference = safeNumber(second.width, 0)
             * safeNumber(second.height, 0)
             - safeNumber(first.width, 0) * safeNumber(first.height, 0);
@@ -253,7 +212,8 @@ function solve(cards, canvasWidth, canvasHeight, analysis, focusId) {
 
     source.forEach(function(card) {
         const placed = placeCard(
-            card, occupied, safeWidth, safeHeight, analysis, gap);
+            card, occupied, safeWidth, safeHeight, analysis, gap,
+            selectedMode);
         if (!placed)
             return;
         occupied.push(placed.rect);

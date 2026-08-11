@@ -191,6 +191,9 @@ PanelWindow {
         additionalBackgroundItems: [
             rightSidebar.blurBackgroundItem
         ]
+        subtractedBackgroundItems: [
+            leftSidebar.timeCardBlurExclusionItem
+        ]
     }
 
     Item {

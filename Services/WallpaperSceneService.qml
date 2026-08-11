@@ -88,8 +88,13 @@ Singleton {
             // The renderer supplies the decoded dimensions.  The scene is
             // still usable before the first decode and falls back to the
             // viewport geometry.
-            property real imagePixelWidth: 0
-            property real imagePixelHeight: 0
+            // Keep decoded image dimensions atomic.  Two independent width
+            // and height bindings can expose a transient 960x0 (or 0x540)
+            // size while an Image changes source.  Panorama geometry would
+            // interpret that half-updated value as an enormous canvas.
+            property size imagePixelSize: Qt.size(0, 0)
+            readonly property real imagePixelWidth: imagePixelSize.width
+            readonly property real imagePixelHeight: imagePixelSize.height
             property var outputWorkspaces: []
             property var horizontalColumns: []
             property var activeWorkspace: ({})
@@ -160,6 +165,11 @@ Singleton {
             readonly property real canvasHeight:
                 Math.max(1, canvasGeometry.canvasHeight
                     || parallaxCanvas.scaledHeight)
+            readonly property bool analysisGeometryReady:
+                sourceIsColor
+                || (imagePixelWidth > 1 && imagePixelHeight > 1
+                    && isFinite(canvasWidth) && isFinite(canvasHeight)
+                    && canvasWidth >= 1 && canvasHeight >= 1)
             readonly property real overflowX:
                 Math.max(0, canvasWidth - Math.max(1, screenWidth))
             readonly property real overflowY:
@@ -218,7 +228,8 @@ Singleton {
             property real animatedOffsetX: offsetX
             property real animatedOffsetY: offsetY
             readonly property string analysisKey:
-                sourcePath + "|" + fillModeName + "|"
+                sourcePath + "|revision=" + serviceRevision + "|"
+                + fillModeName + "|"
                 + Math.round(canvasWidth) + "x" + Math.round(canvasHeight)
                 + "|" + Math.round(imagePixelWidth) + "x"
                 + Math.round(imagePixelHeight) + "|"

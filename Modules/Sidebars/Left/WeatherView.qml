@@ -800,7 +800,8 @@ Item {
         default property alias content: contentLayer.data
 
         radius: 26
-        color: Qt.rgba(Appearance.colors.colLayer2.r, Appearance.colors.colLayer2.g, Appearance.colors.colLayer2.b, 0.78)
+        color: BlurService.opaqueBackgroundColor(
+            Appearance.m3colors.m3surfaceContainer)
         border.width: 1
         border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.55)
 

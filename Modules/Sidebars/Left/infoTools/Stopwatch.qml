@@ -113,7 +113,8 @@ Item {
                 width: ListView.view.width
                 implicitHeight: lapRow.implicitHeight + verticalPadding * 2
                 radius: Appearance.rounding.small
-                color: Appearance.colors.colLayer2
+                color: BlurService.opaqueBackgroundColor(
+                    Appearance.m3colors.m3surfaceContainer)
 
                 RowLayout {
                     id: lapRow

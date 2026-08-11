@@ -47,7 +47,8 @@ Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 implicitHeight: taskColumn.implicitHeight
-                color: Appearance.colors.colLayer2
+                color: BlurService.opaqueBackgroundColor(
+                    Appearance.m3colors.m3surfaceContainer)
                 radius: Appearance.rounding.small
 
                 ColumnLayout {

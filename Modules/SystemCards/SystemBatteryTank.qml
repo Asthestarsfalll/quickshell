@@ -9,6 +9,8 @@ Rectangle {
     id: root
 
     property var battery: ({})
+    property color containerColor: Appearance.colors.colSecondaryContainer
+    property color levelColor: Appearance.colors.colSecondary
     readonly property bool present: root.battery.present === true
     readonly property bool valueAvailable:
         root.present && Format.isNumber(root.battery.chargePercent)
@@ -113,7 +115,7 @@ Rectangle {
     }
 
     radius: Appearance.rounding.extraLarge
-    color: Appearance.colors.colSecondaryContainer
+    color: root.containerColor
     Accessible.name: qsTr("电池，")
         + (root.present
             ? Format.percent(root.battery.chargePercent, 0)
@@ -174,7 +176,7 @@ Rectangle {
                 width: root.width
                 height: root.height
                 y: levelClip.height - height
-                color: Appearance.colors.colSecondary
+                color: root.levelColor
 
                 BatteryContents {
                     anchors.fill: parent

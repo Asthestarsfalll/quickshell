@@ -130,7 +130,10 @@ MouseArea {
         anchors.left: parent.left
         anchors.leftMargin: root.xOffset
         width: parent.width
-        color: root.popup ? Appearance.colors.colBackgroundSurfaceContainer : Appearance.colors.colLayer2
+        color: root.popup
+            ? Appearance.colors.colBackgroundSurfaceContainer
+            : BlurService.opaqueBackgroundColor(
+                Appearance.m3colors.m3surfaceContainer)
         radius: Appearance.rounding.normal
         clip: true
         implicitHeight: root.expanded

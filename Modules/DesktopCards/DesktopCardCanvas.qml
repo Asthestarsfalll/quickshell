@@ -10,6 +10,7 @@ Item {
     required property string screenName
     property var analysis: null
     property Item hostItem: root
+    signal cardPresented(string tileId)
 
     // Exposed properties make the fixed host Region bindings observable when
     // the Repeater creates its ten delegates after the PanelWindow is ready.
@@ -23,6 +24,7 @@ Item {
     property Item inputSlot7: null
     property Item inputSlot8: null
     property Item inputSlot9: null
+    property Item timeBlurExclusionItem: null
 
     readonly property var screenNames: {
         const result = [];
@@ -49,6 +51,15 @@ Item {
         return cardRepeater.itemAt(index);
     }
 
+    readonly property bool allActiveCardsPresented: {
+        for (let index = 0; index < cardRepeater.count; index += 1) {
+            const item = cardRepeater.itemAt(index);
+            if (item && item.active && !item.positionInitialized)
+                return false;
+        }
+        return true;
+    }
+
     function updateInputSlots() {
         root.inputSlot0 = cardRepeater.itemAt(0);
         root.inputSlot1 = cardRepeater.itemAt(1);
@@ -60,6 +71,14 @@ Item {
         root.inputSlot7 = cardRepeater.itemAt(7);
         root.inputSlot8 = cardRepeater.itemAt(8);
         root.inputSlot9 = cardRepeater.itemAt(9);
+        root.timeBlurExclusionItem = null;
+        for (let index = 0; index < cardRepeater.count; ++index) {
+            const item = cardRepeater.itemAt(index);
+            if (item && item.tileId === "time") {
+                root.timeBlurExclusionItem = item;
+                break;
+            }
+        }
     }
 
     function isActive(id) {
@@ -70,6 +89,8 @@ Item {
     }
 
     function targetPosition(id, state, size) {
+        if (!root.scene)
+            return { x: 0, y: 0 };
         const point = root.scene.normalizedToWallpaper(
             state.desktop.xNorm, state.desktop.yNorm);
         return {
@@ -101,11 +122,16 @@ Item {
                 root.isActive(slot.tileId)
                     && cardState !== null
                     && cardState.enabled
-            readonly property var size: SystemCardService.desktopSize(
-                slot.tileId, root.width, root.height)
+            readonly property var size: SystemCardService.cardSize(
+                slot.tileId)
             readonly property var target: active
                 ? root.targetPosition(slot.tileId, cardState, size)
                 : ({ x: 0, y: 0 })
+            property bool positionInitialized: false
+            property bool positionAnimationEnabled: false
+            readonly property bool positionReady:
+                slot.active && root.scene !== null
+                && root.width > 1 && root.height > 1
 
             x: target.x
             y: target.y
@@ -119,12 +145,42 @@ Item {
                     console.log(
                         "[SystemCards] desktop delegate active", tileId);
                 }
+                if (active) {
+                    slot.positionInitialized = false;
+                    slot.positionAnimationEnabled = false;
+                    Qt.callLater(slot.presentIfReady);
+                } else {
+                    // An inactive fixed slot may reset to (0, 0), but it is
+                    // invisible and never animates that reset.  Re-entry is
+                    // treated as a new presentation at its committed point.
+                    slot.positionInitialized = false;
+                    slot.positionAnimationEnabled = false;
+                }
+            }
+
+            function presentIfReady() {
+                if (!slot.active || !slot.positionReady
+                        || slot.positionInitialized)
+                    return;
+                slot.positionInitialized = true;
+                slot.positionAnimationEnabled = true;
+                root.cardPresented(slot.tileId);
+            }
+
+            onPositionReadyChanged: Qt.callLater(slot.presentIfReady)
+
+            Component.onCompleted: {
+                slot.positionInitialized = false;
+                slot.positionAnimationEnabled = false;
+                Qt.callLater(slot.presentIfReady);
             }
 
             // The slot moves with the reflow token.  The parent canvas itself
             // has no position animation, so wallpaper parallax remains an
             // exact shared transform instead of acquiring a second lag.
             Behavior on x {
+                enabled: slot.positionAnimationEnabled
+                    && slot.positionInitialized && slot.active
                 NumberAnimation {
                     duration: Appearance.animation.desktopCardReflow.duration
                     easing.type: Appearance.animation.desktopCardReflow.type
@@ -133,6 +189,8 @@ Item {
                 }
             }
             Behavior on y {
+                enabled: slot.positionAnimationEnabled
+                    && slot.positionInitialized && slot.active
                 NumberAnimation {
                     duration: Appearance.animation.desktopCardReflow.duration
                     easing.type: Appearance.animation.desktopCardReflow.type

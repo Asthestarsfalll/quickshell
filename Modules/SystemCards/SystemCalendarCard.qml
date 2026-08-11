@@ -5,6 +5,7 @@ Rectangle {
     id: root
 
     property bool active: true
+    property color surfaceColor: Appearance.colors.colSurfaceContainerHigh
     property date currentDate: new Date()
     readonly property var monthNames: [
         qsTr("一月"), qsTr("二月"), qsTr("三月"), qsTr("四月"),
@@ -30,7 +31,7 @@ Rectangle {
             : ({})
 
     radius: Appearance.rounding.extraLarge
-    color: Appearance.colors.colSurfaceContainerHigh
+    color: root.surfaceColor
     clip: true
     Accessible.name: currentDate.getFullYear()
         + qsTr("年") + (currentDate.getMonth() + 1)

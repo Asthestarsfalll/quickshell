@@ -4,12 +4,25 @@ import qs.Common
 import qs.Services
 import qs.Components
 import "../../Common/functions/SystemFormat.js" as Format
+import "./SystemCardCatalog.js" as CardCatalog
 
 Item {
     id: root
 
     required property string tileId
     property bool active: true
+    // A card may move between the sidebar and desktop without changing its
+    // visual surface contract.  The first six cards retain the original
+    // surface bindings; the remaining cards can opt into the shell-managed
+    // surface introduced by the sidebar background work.
+    property bool useShellManagedSurface: false
+    readonly property var catalogEntry:
+        CardCatalog.definitionFor(root.tileId)
+    readonly property bool preserveDefaultSurface:
+        root.catalogEntry !== null
+        && root.catalogEntry.preserveDefaultSurface === true
+    readonly property bool shellManagedSurface:
+        root.useShellManagedSurface && !root.preserveDefaultSurface
 
     readonly property int chartUpdateInterval: Math.max(
         250,
@@ -31,6 +44,12 @@ Item {
         return Format.isNumber(value)
             ? Math.max(0, Math.min(1, value / 100))
             : -1;
+    }
+
+    function surfaceColor(sidebarBaseColor, defaultColor) {
+        return root.shellManagedSurface
+            ? BlurService.opaqueBackgroundColor(sidebarBaseColor)
+            : defaultColor;
     }
 
     function temperatureBadge(value) {
@@ -115,6 +134,14 @@ Item {
 
         SystemBatteryTank {
             battery: SystemMonitorService.battery
+            containerColor: root.surfaceColor(
+                Appearance.m3colors.m3secondaryContainer,
+                Appearance.colors.colSecondaryContainer)
+            // The battery fill is data visualization, not the card surface;
+            // keep it visible while the surrounding tank is transparent.
+            levelColor: root.surfaceColor(
+                Appearance.m3colors.m3secondary,
+                Appearance.colors.colSecondary)
         }
     }
 
@@ -141,7 +168,9 @@ Item {
             decorationSize: 50
             valueSize: Typography.headlineMedium.pixelSize
             containerColor:
-                Appearance.colors.colPrimaryContainer
+                root.surfaceColor(
+                    Appearance.m3colors.m3primaryContainer,
+                    Appearance.colors.colPrimaryContainer)
             foregroundColor:
                 Appearance.colors.colOnPrimaryContainer
             accentColor: Appearance.colors.colPrimary
@@ -179,7 +208,9 @@ Item {
             decorationSize: 50
             valueSize: Typography.headlineMedium.pixelSize
             containerColor:
-                Appearance.colors.colSecondaryContainer
+                root.surfaceColor(
+                    Appearance.m3colors.m3secondaryContainer,
+                    Appearance.colors.colSecondaryContainer)
             foregroundColor:
                 Appearance.colors.colOnSecondaryContainer
             accentColor: Appearance.colors.colSecondary
@@ -220,7 +251,9 @@ Item {
                     SystemMonitorService.memory.totalBytes
                 )
             shapeId: MaterialShape.Slanted
-            shapeColor: Appearance.colors.colPrimaryContainer
+            shapeColor: root.surfaceColor(
+                Appearance.m3colors.m3primaryContainer,
+                Appearance.colors.colPrimaryContainer)
             liquidColor: Appearance.applyAlpha(
                 Appearance.colors.colTertiary,
                 0.66
@@ -258,7 +291,9 @@ Item {
                     : qsTr("Wi-Fi 未连接")
             shapeId: MaterialShape.Pentagon
             shapeColor:
-                Appearance.colors.colTertiaryContainer
+                root.surfaceColor(
+                    Appearance.m3colors.m3tertiaryContainer,
+                    Appearance.colors.colTertiaryContainer)
             liquidColor: Appearance.applyAlpha(
                 Appearance.colors.colTertiary,
                 0.64
@@ -278,6 +313,9 @@ Item {
                 SystemMonitorService.networkUploadHistory
             chartActive: root.active
             updateInterval: root.chartUpdateInterval
+            surfaceColor: root.surfaceColor(
+                Appearance.m3colors.m3surfaceContainer,
+                Appearance.colors.colSurfaceContainer)
         }
     }
 
@@ -286,6 +324,9 @@ Item {
 
         SystemStorageCard {
             disks: SystemMonitorService.disks
+            surfaceColor: root.surfaceColor(
+                Appearance.m3colors.m3surfaceContainer,
+                Appearance.colors.colSurfaceContainer)
         }
     }
 
@@ -294,12 +335,19 @@ Item {
 
         SystemCalendarCard {
             active: root.active
+            surfaceColor: root.surfaceColor(
+                Appearance.m3colors.m3surfaceContainerHigh,
+                Appearance.colors.colSurfaceContainerHigh)
         }
     }
 
     Component {
         id: weatherComponent
 
-        SystemWeatherCard {}
+        SystemWeatherCard {
+            surfaceColor: root.surfaceColor(
+                Appearance.m3colors.m3surfaceContainerHigh,
+                Appearance.colors.colSurfaceContainerHigh)
+        }
     }
 }
