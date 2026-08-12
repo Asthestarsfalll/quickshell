@@ -45,12 +45,17 @@ Singleton {
         };
     }
 
-    function mapGlobalPoint(screenName, globalX, globalY) {
+    // Map an arbitrary point from an item's local coordinate system into the
+    // one output-local presentation coordinate system. Pointer movement and
+    // the original grab point deliberately share this exact path.
+    function mapItemPoint(screenName, item, localX, localY) {
         const host = root.hostFor(screenName);
-        if (!host)
+        if (!host || !item)
             return null;
-        const point = host.mapFromGlobal(Number(globalX), Number(globalY));
-        return { x: Number(point.x), y: Number(point.y) };
+        const globalPoint = item.mapToGlobal(
+            Number(localX), Number(localY));
+        const localPoint = host.mapFromGlobal(globalPoint);
+        return { x: Number(localPoint.x), y: Number(localPoint.y) };
     }
 
     function mapItemRect(screenName, item) {

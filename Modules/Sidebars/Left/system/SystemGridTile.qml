@@ -11,20 +11,22 @@ Item {
     property bool dragging: false
     property bool motionEnabled: true
     readonly property bool presentationOwned:
-        SystemCardDragSession.active
+        SystemCardDragSession.presentationActive
         && SystemCardDragSession.tileId === root.tileId
     readonly property Item contentItem: cardContent
 
     signal dragStarted(
         string tileId,
         Item sourceItem,
-        real sidebarPointerX,
-        real sidebarPointerY
+        real grabLocalX,
+        real grabLocalY,
+        real pointerLocalX,
+        real pointerLocalY
     )
     signal dragMoved(
         string tileId,
-        real sidebarPointerX,
-        real sidebarPointerY
+        real pointerLocalX,
+        real pointerLocalY
     )
     signal dragFinished(string tileId)
     signal dragCanceled(string tileId)
@@ -115,16 +117,13 @@ Item {
         onActiveChanged: {
             if (active) {
                 started = true;
-                const point = root.mapToItem(
-                    null,
-                    centroid.position.x,
-                    centroid.position.y
-                );
                 root.dragStarted(
                     root.tileId,
                     root,
-                    point.x,
-                    point.y
+                    centroid.pressPosition.x,
+                    centroid.pressPosition.y,
+                    centroid.position.x,
+                    centroid.position.y
                 );
             } else if (started) {
                 started = false;
@@ -135,12 +134,11 @@ Item {
         onCentroidChanged: {
             if (!active)
                 return;
-            const point = root.mapToItem(
-                null,
+            root.dragMoved(
+                root.tileId,
                 centroid.position.x,
                 centroid.position.y
             );
-            root.dragMoved(root.tileId, point.x, point.y);
         }
 
         onCanceled: {

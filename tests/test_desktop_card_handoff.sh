@@ -23,6 +23,7 @@ reject_text() {
 session=Services/SystemCardDragSession.qml
 presentation_service=Services/DesktopPresentationService.qml
 system_view=Modules/Sidebars/Left/SystemView.qml
+grid_tile=Modules/Sidebars/Left/system/SystemGridTile.qml
 sidebar_host=Modules/Sidebars/SidebarHostWindow.qml
 canvas=Modules/DesktopCards/DesktopCardCanvas.qml
 desktop_card=Modules/DesktopCards/DesktopCard.qml
@@ -42,6 +43,11 @@ require_text "$session" 'visualHandoffPending'
 require_text "$session" 'readonly property var presentationGhostRect:'
 require_text "$session" 'property real presentationPointerX: 0'
 require_text "$session" 'property real presentationPointerY: 0'
+require_text "$session" 'readonly property real grabLocalX:'
+require_text "$session" 'readonly property real grabLocalY:'
+require_text "$session" 'readonly property real presentationGrabOffsetX:'
+require_text "$session" 'function promoteToPresentation('
+require_text "$session" 'root.transition(root.draggingSidebarPhase,'
 require_text "$session" 'property string screenName: ""'
 require_text "$session" 'preserving committed desktop handoff'
 reject_text "$session" 'frozenGhostX'
@@ -50,16 +56,31 @@ reject_text "$session" 'Timer {'
 reject_text "$session" 'handoffWatchdogTimer'
 reject_text "$session" 'ghostCleanupTimer.restart()'
 
-# The only cross-window conversion happens when extraction starts. From that
-# point onward the session stores presentation-host-local coordinates.
+# The original source-local grab point is captured once. Promotion and every
+# later pointer move use real item -> global -> presentation-host mapping;
+# there is no cross-window delta approximation.
 require_text "$presentation_service" 'function registerHost(screenName, item)'
-require_text "$presentation_service" 'function mapGlobalPoint('
+require_text "$presentation_service" 'function mapItemPoint('
 require_text "$presentation_service" 'function mapItemRect('
 require_text "$presentation_service" 'host.mapFromGlobal('
 require_text "$system_view" 'DesktopPresentationService.mapItemRect('
-require_text "$system_view" 'DesktopPresentationService.mapGlobalPoint('
-require_text "$system_view" 'root.presentationInitialPointerX'
+require_text "$system_view" 'DesktopPresentationService.mapItemPoint('
+require_text "$system_view" 'SystemCardDragSession.grabLocalX'
+require_text "$system_view" 'SystemCardDragSession.promoteToPresentation('
+require_text "$system_view" 'mappedGrabPoint.x - sourceRect.x'
 require_text "$system_view" 'SystemCardDragSession.hostWidth'
+reject_text "$system_view" 'presentationInitialPointerX'
+reject_text "$system_view" 'presentationInitialPointerY'
+reject_text "$system_view" 'presentationSidebarPointerX'
+reject_text "$system_view" 'presentationSidebarPointerY'
+reject_text "$system_view" 'presentationPoint.x - sourceRect.x'
+reject_text "$system_view" '+ pointerLocalX -'
+reject_text "$system_view" '+ pointerLocalY -'
+require_text "$grid_tile" 'real grabLocalX'
+require_text "$grid_tile" 'real grabLocalY'
+require_text "$grid_tile" 'centroid.pressPosition.x'
+require_text "$grid_tile" 'centroid.position.x'
+require_text "$grid_tile" 'SystemCardDragSession.presentationActive'
 require_text "$system_view" 'Placement.screen'
 reject_text "$system_view" 'screenToWallpaper('
 reject_text "$system_view" 'function outputSize()'

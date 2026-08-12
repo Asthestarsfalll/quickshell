@@ -1,6 +1,7 @@
 .pragma library
 
 var idle = "idle";
+var draggingSidebar = "dragging-sidebar";
 var draggingPresentation = "dragging-presentation";
 var frozenTransfer = "frozen-transfer";
 var finishing = "finishing";
@@ -15,6 +16,13 @@ function isFrozen(phase) {
     return value === frozenTransfer || value === finishing;
 }
 
+function isPresentationActive(phase) {
+    const value = String(phase || idle);
+    return value === draggingPresentation
+        || value === frozenTransfer
+        || value === finishing;
+}
+
 function isVisualHandoffPending(phase, committed, preparing) {
     return !!(committed || preparing) && isActive(phase);
 }
@@ -27,7 +35,9 @@ function canTransition(fromPhase, toPhase) {
     if (to === idle)
         return true;
     if (from === idle)
-        return to === draggingPresentation;
+        return to === draggingSidebar;
+    if (from === draggingSidebar)
+        return to === draggingPresentation || to === canceled;
     if (from === draggingPresentation)
         return to === frozenTransfer || to === canceled;
     if (from === frozenTransfer)

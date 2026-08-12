@@ -62,7 +62,7 @@ Variants {
         readonly property string analysisRequestKey:
             "desktop-cards:" + String(modelData.name)
         readonly property bool ownsPresentationDrag:
-            SystemCardDragSession.active
+            SystemCardDragSession.presentationActive
             && SystemCardDragSession.screenName === window.screenKey
 
         Binding {

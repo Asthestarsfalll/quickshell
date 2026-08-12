@@ -26,11 +26,74 @@ ShellRoot {
         Qt.callLater(Qt.quit);
     }
 
+    function beginPresentation(cardId, source, grabX, grabY,
+                               pointerX, pointerY) {
+        if (!SystemCardDragSession.begin(
+                cardId, source, grabX, grabY)) {
+            root.fail("could not begin " + cardId);
+            return false;
+        }
+        if (SystemCardDragSession.grabLocalX !== grabX
+                || SystemCardDragSession.grabLocalY !== grabY) {
+            root.fail("initial grab point changed for " + cardId);
+            return false;
+        }
+        if (!SystemCardDragSession.promoteToPresentation(
+                "test-output", pointerX, pointerY,
+                grabX, grabY, 200, 160, 1920, 1080)) {
+            root.fail("could not promote " + cardId);
+            return false;
+        }
+        return true;
+    }
+
+    function checkGrabGeometry() {
+        const grabs = [
+            { x: 10.25, y: 10.5 },
+            { x: 100, y: 80 },
+            { x: 189.75, y: 149.5 }
+        ];
+        for (let index = 0; index < grabs.length; ++index) {
+            const grab = grabs[index];
+            root.sourceItem = sourceComponent.createObject(root);
+            if (!root.beginPresentation(
+                    "grab-" + index, root.sourceItem,
+                    grab.x, grab.y, 400.5, 300.25)) {
+                return;
+            }
+            const pointers = [
+                { x: 400.5, y: 300.25 },
+                { x: 500.75, y: 420.5 },
+                { x: 700.125, y: 610.875 }
+            ];
+            for (let pointIndex = 0;
+                    pointIndex < pointers.length; ++pointIndex) {
+                const point = pointers[pointIndex];
+                SystemCardDragSession.update(point.x, point.y);
+                const deltaX = SystemCardDragSession.presentationPointerX
+                    - SystemCardDragSession.ghostX;
+                const deltaY = SystemCardDragSession.presentationPointerY
+                    - SystemCardDragSession.ghostY;
+                if (Math.abs(deltaX - grab.x) > 0.001
+                        || Math.abs(deltaY - grab.y) > 0.001
+                        || SystemCardDragSession.grabLocalX !== grab.x
+                        || SystemCardDragSession.grabLocalY !== grab.y) {
+                    root.fail("grab geometry drifted: "
+                        + JSON.stringify(grab));
+                    return;
+                }
+            }
+            SystemCardDragSession.cancel();
+            root.sourceItem.destroy();
+        }
+        root.beginCommittedSourceCheck();
+    }
+
     function beginCommittedSourceCheck() {
         root.sourceItem = sourceComponent.createObject(root);
-        SystemCardDragSession.begin(
-            "cpu", "test-output", root.sourceItem,
-            100, 120, 20, 30, 200, 160, 1920, 1080);
+        if (!root.beginPresentation(
+                "cpu", root.sourceItem, 20, 30, 100, 120))
+            return;
         SystemCardDragSession.freezeGhost();
         SystemCardDragSession.prepareVisualHandoff("cpu");
         SystemCardDragSession.markTransferCommitted("cpu");
@@ -71,9 +134,9 @@ ShellRoot {
         }
 
         root.sourceItem = sourceComponent.createObject(root);
-        SystemCardDragSession.begin(
-            "battery", "test-output", root.sourceItem,
-            100, 120, 20, 30, 200, 160, 1920, 1080);
+        if (!root.beginPresentation(
+                "battery", root.sourceItem, 20, 30, 100, 120))
+            return;
         SystemCardDragSession.freezeGhost();
         SystemCardDragSession.prepareVisualHandoff("battery");
         SystemCardDragSession.markTransferCommitted("battery");
@@ -138,9 +201,11 @@ ShellRoot {
         }
 
         root.sourceItem = sourceComponent.createObject(root);
-        SystemCardDragSession.begin(
-            "gpu", "test-output", root.sourceItem,
-            0, 0, 0, 0, 200, 160, 1920, 1080);
+        if (!SystemCardDragSession.begin(
+                "gpu", root.sourceItem, 0, 0)) {
+            root.fail("could not begin uncommitted source check");
+            return;
+        }
         root.sourceItem.destroy();
         root.phase = "uncommitted-source-destroyed";
         Qt.callLater(root.checkUncommittedSource);
@@ -157,7 +222,7 @@ ShellRoot {
         Qt.callLater(Qt.quit);
     }
 
-    Component.onCompleted: Qt.callLater(root.beginCommittedSourceCheck)
+    Component.onCompleted: Qt.callLater(root.checkGrabGeometry)
 
     Connections {
         target: SystemCardDragSession

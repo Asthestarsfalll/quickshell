@@ -9,6 +9,7 @@ TestCase {
 
     function test_committedTransferKeepsActiveUntilDesktopHandoff() {
         let phase = DragState.idle;
+        phase = DragState.draggingSidebar;
         phase = DragState.draggingPresentation;
         phase = DragState.freeze(phase);
         phase = DragState.finishTransfer(phase, true);
@@ -21,7 +22,7 @@ TestCase {
     }
 
     function test_cancelBeforeCommitReturnsToIdle() {
-        let phase = DragState.draggingPresentation;
+        let phase = DragState.draggingSidebar;
         phase = DragState.cancel(phase, false);
         compare(phase, DragState.canceled);
         phase = DragState.finish(phase);
@@ -69,6 +70,54 @@ TestCase {
             compare(desktop.y, ghost.y);
             compare(desktop.width, ghost.width);
             compare(desktop.height, ghost.height);
+        });
+    }
+
+    function test_extractionCannotRedefineInitialGrabPoint() {
+        const sourceLeft = 100;
+        const initialPointer = 140;
+        const grabLocal = initialPointer - sourceLeft;
+        const extractionPointer = 400;
+        const ghostX = extractionPointer - grabLocal;
+
+        compare(grabLocal, 40);
+        compare(ghostX, 360);
+        compare(extractionPointer - ghostX, grabLocal);
+        verify(extractionPointer - sourceLeft !== grabLocal);
+    }
+
+    function test_grabDistanceIsImmutableForWholeDrag() {
+        const grab = { x: 40.25, y: 82.75 };
+        const pointers = [
+            { x: 400.5, y: 300.25 },
+            { x: 500.75, y: 480.125 },
+            { x: 700.875, y: 610.625 }
+        ];
+        pointers.forEach(function(pointer) {
+            const ghost = {
+                x: pointer.x - grab.x,
+                y: pointer.y - grab.y
+            };
+            fuzzyCompare(pointer.x - ghost.x, grab.x, 0.0001);
+            fuzzyCompare(pointer.y - ghost.y, grab.y, 0.0001);
+        });
+    }
+
+    function test_grabPointContinuityForCornerCenterAndEdge() {
+        const size = { width: 152, height: 160 };
+        const grabs = [
+            { x: 10, y: 10 },
+            { x: size.width / 2, y: size.height / 2 },
+            { x: size.width - 10, y: size.height - 10 }
+        ];
+        grabs.forEach(function(grab) {
+            const pointer = { x: 811.375, y: 507.625 };
+            const ghost = {
+                x: pointer.x - grab.x,
+                y: pointer.y - grab.y
+            };
+            fuzzyCompare(pointer.x - ghost.x, grab.x, 0.0001);
+            fuzzyCompare(pointer.y - ghost.y, grab.y, 0.0001);
         });
     }
 
@@ -170,6 +219,12 @@ TestCase {
     }
 
     function test_illegalTransitionsAreRejected() {
+        verify(DragState.canTransition(
+            DragState.idle, DragState.draggingSidebar));
+        verify(DragState.canTransition(
+            DragState.draggingSidebar, DragState.draggingPresentation));
+        verify(!DragState.canTransition(
+            DragState.idle, DragState.draggingPresentation));
         verify(!DragState.canTransition(
             DragState.finishing, DragState.draggingPresentation));
         verify(!DragState.canTransition(

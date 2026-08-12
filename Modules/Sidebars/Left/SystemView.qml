@@ -57,12 +57,6 @@ Item {
     property var previewLayout: []
     property string draggingTileId: ""
     property Item dragSourceItem: null
-    property real sidebarGrabOffsetX: 0
-    property real sidebarGrabOffsetY: 0
-    property real presentationSidebarPointerX: 0
-    property real presentationSidebarPointerY: 0
-    property real presentationInitialPointerX: 0
-    property real presentationInitialPointerY: 0
     property int targetColumn: -1
     property int targetRow: -1
     property bool dragTargetValid: false
@@ -129,35 +123,40 @@ Item {
         }
     }
 
-    function beginDrag(tileId, sourceItem,
-                       sidebarPointerX, sidebarPointerY) {
+    function beginDrag(tileId, sourceItem, grabLocalX, grabLocalY,
+                       pointerLocalX, pointerLocalY) {
         if (root.draggingTileId.length > 0)
             root.cancelDrag();
+        if (!SystemCardDragSession.begin(
+                tileId, sourceItem, grabLocalX, grabLocalY)) {
+            return;
+        }
 
         root.draggingTileId = tileId;
         root.dragSourceItem = sourceItem;
-        const sourcePosition = sourceItem.mapToItem(null, 0, 0);
-        root.sidebarGrabOffsetX = sidebarPointerX - sourcePosition.x;
-        root.sidebarGrabOffsetY = sidebarPointerY - sourcePosition.y;
         root.targetColumn = -1;
         root.targetRow = -1;
         root.dragTargetValid = false;
         root.desktopExtraction = false;
         dashboard.forceActiveFocus();
-        root.updateDrag(tileId, sidebarPointerX, sidebarPointerY);
+        root.updateDrag(tileId, pointerLocalX, pointerLocalY);
     }
 
-    function beginPresentationDrag(tileId, sourceItem,
-                                   sidebarPointerX, sidebarPointerY) {
+    function promoteToPresentation(tileId, sourceItem,
+                                   pointerLocalX, pointerLocalY) {
         const geometry = DesktopPresentationService.geometry(root.screenName);
         const sourceRect = DesktopPresentationService.mapItemRect(
             root.screenName, sourceItem);
-        const rootPoint = root.mapFromItem(
-            null, sidebarPointerX, sidebarPointerY);
-        const globalPoint = root.mapToGlobal(rootPoint.x, rootPoint.y);
-        const presentationPoint = DesktopPresentationService.mapGlobalPoint(
-            root.screenName, globalPoint.x, globalPoint.y);
-        if (!geometry || !sourceRect || !presentationPoint) {
+        const mappedGrabPoint = DesktopPresentationService.mapItemPoint(
+            root.screenName,
+            sourceItem,
+            SystemCardDragSession.grabLocalX,
+            SystemCardDragSession.grabLocalY
+        );
+        const presentationPointer = DesktopPresentationService.mapItemPoint(
+            root.screenName, sourceItem, pointerLocalX, pointerLocalY);
+        if (!geometry || !sourceRect || !mappedGrabPoint
+                || !presentationPointer) {
             console.warn(
                 "[SystemCards] presentation host unavailable",
                 root.screenName,
@@ -166,44 +165,44 @@ Item {
             return false;
         }
 
-        root.presentationSidebarPointerX = sidebarPointerX;
-        root.presentationSidebarPointerY = sidebarPointerY;
-        root.presentationInitialPointerX = presentationPoint.x;
-        root.presentationInitialPointerY = presentationPoint.y;
-        SystemCardDragSession.begin(
-            tileId,
+        return SystemCardDragSession.promoteToPresentation(
             root.screenName,
-            sourceItem,
-            presentationPoint.x,
-            presentationPoint.y,
-            presentationPoint.x - sourceRect.x,
-            presentationPoint.y - sourceRect.y,
+            presentationPointer.x,
+            presentationPointer.y,
+            mappedGrabPoint.x - sourceRect.x,
+            mappedGrabPoint.y - sourceRect.y,
             sourceRect.width,
             sourceRect.height,
             geometry.width,
             geometry.height
         );
-        return SystemCardDragSession.active;
     }
 
-    function updateDrag(tileId, sidebarPointerX, sidebarPointerY) {
+    function updateDrag(tileId, pointerLocalX, pointerLocalY) {
         if (tileId !== root.draggingTileId)
             return;
 
         if (root.desktopExtraction) {
-            SystemCardDragSession.update(
-                root.presentationInitialPointerX
-                    + sidebarPointerX - root.presentationSidebarPointerX,
-                root.presentationInitialPointerY
-                    + sidebarPointerY - root.presentationSidebarPointerY
-            );
+            const presentationPointer =
+                DesktopPresentationService.mapItemPoint(
+                    root.screenName,
+                    root.dragSourceItem,
+                    pointerLocalX,
+                    pointerLocalY
+                );
+            if (presentationPointer) {
+                SystemCardDragSession.update(
+                    presentationPointer.x, presentationPointer.y);
+            }
             return;
         }
+        const sidebarPointer = root.dragSourceItem.mapToItem(
+            null, pointerLocalX, pointerLocalY);
         if (!root.sidebarContainsPoint(
-                sidebarPointerX, sidebarPointerY)) {
-            if (!root.beginPresentationDrag(
+                sidebarPointer.x, sidebarPointer.y)) {
+            if (!root.promoteToPresentation(
                     tileId, root.dragSourceItem,
-                    sidebarPointerX, sidebarPointerY)) {
+                    pointerLocalX, pointerLocalY)) {
                 root.cancelDrag(tileId);
                 return;
             }
@@ -216,17 +215,26 @@ Item {
         }
 
         const localPoint = dashboard.mapFromItem(
-            null, sidebarPointerX, sidebarPointerY);
+            root.dragSourceItem, pointerLocalX, pointerLocalY);
+        const sourceOrigin = dashboard.mapFromItem(
+            root.dragSourceItem, 0, 0);
+        const initialGrabPoint = dashboard.mapFromItem(
+            root.dragSourceItem,
+            SystemCardDragSession.grabLocalX,
+            SystemCardDragSession.grabLocalY
+        );
+        const grabVectorX = initialGrabPoint.x - sourceOrigin.x;
+        const grabVectorY = initialGrabPoint.y - sourceOrigin.y;
         const definition = GridLayout.tileDefinitionFor(tileId);
         if (!definition)
             return;
 
         const rawColumn = Math.round(
-            (localPoint.x - root.sidebarGrabOffsetX)
+            (localPoint.x - grabVectorX)
                 / dashboard.columnStride
         );
         const rawRow = Math.round(
-            (localPoint.y - root.sidebarGrabOffsetY)
+            (localPoint.y - grabVectorY)
                 / dashboard.rowStride
         );
         const anchor = GridLayout.clampAnchor(
@@ -338,17 +346,11 @@ Item {
             SystemCardDragSession.end();
         root.draggingTileId = "";
         root.dragSourceItem = null;
-        root.sidebarGrabOffsetX = 0;
-        root.sidebarGrabOffsetY = 0;
         root.previewLayout = [];
         root.dragTargetValid = false;
         root.targetColumn = -1;
         root.targetRow = -1;
         root.desktopExtraction = false;
-        root.presentationSidebarPointerX = 0;
-        root.presentationSidebarPointerY = 0;
-        root.presentationInitialPointerX = 0;
-        root.presentationInitialPointerY = 0;
     }
 
     function syncServiceOwnership() {
@@ -607,15 +609,15 @@ Item {
                         z: dragging ? 30 : 1
 
                         onDragStarted: (
-                            tileId, sourceItem,
-                            sidebarPointerX, sidebarPointerY
+                            tileId, sourceItem, grabLocalX, grabLocalY,
+                            pointerLocalX, pointerLocalY
                         ) => root.beginDrag(
-                            tileId, sourceItem,
-                            sidebarPointerX, sidebarPointerY)
+                            tileId, sourceItem, grabLocalX, grabLocalY,
+                            pointerLocalX, pointerLocalY)
                         onDragMoved: (
-                            tileId, sidebarPointerX, sidebarPointerY
+                            tileId, pointerLocalX, pointerLocalY
                         ) => root.updateDrag(
-                            tileId, sidebarPointerX, sidebarPointerY)
+                            tileId, pointerLocalX, pointerLocalY)
                         onDragFinished: tileId => root.finishDrag(tileId)
                         onDragCanceled: tileId => root.cancelDrag(tileId)
                     }

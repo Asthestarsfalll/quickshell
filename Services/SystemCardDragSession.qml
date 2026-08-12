@@ -11,6 +11,7 @@ Singleton {
     // and `frozen` remain as compatibility/readability aliases for the
     // existing overlay and sidebar bindings.
     readonly property string idlePhase: DragState.idle
+    readonly property string draggingSidebarPhase: DragState.draggingSidebar
     readonly property string draggingPresentationPhase:
         DragState.draggingPresentation
     readonly property string frozenTransferPhase:
@@ -20,6 +21,8 @@ Singleton {
 
     property string phase: root.idlePhase
     readonly property bool active: DragState.isActive(root.phase)
+    readonly property bool presentationActive:
+        DragState.isPresentationActive(root.phase)
     readonly property bool frozen: DragState.isFrozen(root.phase)
     readonly property bool ending: root.phase === root.finishingPhase
     readonly property bool visualHandoffPending:
@@ -34,18 +37,26 @@ Singleton {
     property string tileId: ""
     property string screenName: ""
     property Item sourceItem: null
+    property real _grabLocalX: 0
+    property real _grabLocalY: 0
+    readonly property real grabLocalX: root._grabLocalX
+    readonly property real grabLocalY: root._grabLocalY
     property real presentationPointerX: 0
     property real presentationPointerY: 0
-    property real grabOffsetX: 0
-    property real grabOffsetY: 0
+    property real _presentationGrabOffsetX: 0
+    property real _presentationGrabOffsetY: 0
+    readonly property real presentationGrabOffsetX:
+        root._presentationGrabOffsetX
+    readonly property real presentationGrabOffsetY:
+        root._presentationGrabOffsetY
     property real ghostWidth: 0
     property real ghostHeight: 0
     property real hostWidth: 0
     property real hostHeight: 0
     readonly property real ghostX:
-        root.presentationPointerX - root.grabOffsetX
+        root.presentationPointerX - root.presentationGrabOffsetX
     readonly property real ghostY:
-        root.presentationPointerY - root.grabOffsetY
+        root.presentationPointerY - root.presentationGrabOffsetY
     readonly property var presentationGhostRect: ({
         x: root.ghostX,
         y: root.ghostY,
@@ -87,10 +98,12 @@ Singleton {
         root.tileId = "";
         root.screenName = "";
         root.sourceItem = null;
+        root._grabLocalX = 0;
+        root._grabLocalY = 0;
         root.presentationPointerX = 0;
         root.presentationPointerY = 0;
-        root.grabOffsetX = 0;
-        root.grabOffsetY = 0;
+        root._presentationGrabOffsetX = 0;
+        root._presentationGrabOffsetY = 0;
         root.ghostWidth = 0;
         root.ghostHeight = 0;
         root.hostWidth = 0;
@@ -102,28 +115,46 @@ Singleton {
             console.log("[SystemCards] drag session idle", cardId);
     }
 
-    function begin(cardId, screenName, item, pointerX, pointerY,
-                   grabOffsetX, grabOffsetY, width, height,
-                   hostWidth, hostHeight) {
+    // Begin exactly once, at the real Sidebar drag start. The source-local
+    // grab point is immutable until the gesture ends.
+    function begin(cardId, item, grabLocalX, grabLocalY) {
         if (root.active)
-            root.clearToIdle("replaced");
+            return false;
 
         root.tileId = String(cardId || "");
-        root.screenName = String(screenName || "");
         root.sourceItem = item;
         root.sourceWasBound = item !== null;
+        root._grabLocalX = Number(grabLocalX) || 0;
+        root._grabLocalY = Number(grabLocalY) || 0;
+        root.transferPreparing = false;
+        root.transferCommitted = false;
+        root.transition(root.draggingSidebarPhase,
+            "begin " + root.tileId);
+        return true;
+    }
+
+    // Promote the existing gesture to the presentation host. This maps the
+    // original grab point but never redefines it from the current pointer.
+    function promoteToPresentation(screenName, pointerX, pointerY,
+                                   presentationGrabOffsetX,
+                                   presentationGrabOffsetY,
+                                   width, height, hostWidth, hostHeight) {
+        if (root.phase !== root.draggingSidebarPhase)
+            return false;
+        root.screenName = String(screenName || "");
         root.presentationPointerX = Number(pointerX) || 0;
         root.presentationPointerY = Number(pointerY) || 0;
-        root.grabOffsetX = Number(grabOffsetX) || 0;
-        root.grabOffsetY = Number(grabOffsetY) || 0;
+        root._presentationGrabOffsetX =
+            Number(presentationGrabOffsetX) || 0;
+        root._presentationGrabOffsetY =
+            Number(presentationGrabOffsetY) || 0;
         root.ghostWidth = Math.max(0, Number(width) || 0);
         root.ghostHeight = Math.max(0, Number(height) || 0);
         root.hostWidth = Math.max(1, Number(hostWidth) || 1);
         root.hostHeight = Math.max(1, Number(hostHeight) || 1);
-        root.transferPreparing = false;
-        root.transferCommitted = false;
         root.transition(root.draggingPresentationPhase,
-            "begin " + root.tileId);
+            "promote " + root.tileId);
+        return root.presentationGhostRect.valid;
     }
 
     function update(x, y) {
@@ -138,9 +169,9 @@ Singleton {
             return false;
         if (isFinite(Number(topLeftX)) && isFinite(Number(topLeftY))) {
             root.presentationPointerX = Number(topLeftX)
-                + root.grabOffsetX;
+                + root.presentationGrabOffsetX;
             root.presentationPointerY = Number(topLeftY)
-                + root.grabOffsetY;
+                + root.presentationGrabOffsetY;
         }
         console.log(
             "[SystemCards] presentation ghost frozen",
