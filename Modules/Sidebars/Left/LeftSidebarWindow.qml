@@ -14,8 +14,8 @@ Item {
     // The host window already starts inside layer-shell's usable geometry.
     readonly property int sidebarY: gap
     readonly property real closedSlideOffset: -(sidebarWidth + gap)
-    readonly property int enterDuration: Animations.durations.large
-    readonly property int exitDuration: Animations.durations.large
+    readonly property int enterDuration: Animations.durations.sidebarEnter
+    readonly property int exitDuration: Animations.durations.sidebarExit
     readonly property int qsTargetHeight:
         Math.max(0, height - sidebarY - gap)
     property bool panelPresented: false
@@ -33,9 +33,9 @@ Item {
     readonly property var weatherView:
         sidebarContentLoader.item
             ? sidebarContentLoader.item.weatherView : null
-    readonly property Item timeCardBlurExclusionItem:
+    readonly property var systemCardBlurExclusionItems:
         sidebarContentLoader.item
-            ? sidebarContentLoader.item.systemTimeCardItem : null
+            ? sidebarContentLoader.item.systemCardBlurExclusionItems : []
 
     function beginPresentation() {
         panelPresented = true

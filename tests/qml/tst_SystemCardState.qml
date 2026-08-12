@@ -160,6 +160,21 @@ TestCase {
         compare(JSON.stringify(state.cards.cpu.desktop), before);
     }
 
+    function test_screenAnchorModesAreValidGlobalModes() {
+        const modes = [
+            "screenTopLeft", "screenTopRight", "screenBottomLeft",
+            "screenBottomRight", "screenCenter"
+        ];
+        modes.forEach(function(mode) {
+            verify(CardState.validDesktopLayoutMode(mode));
+            verify(CardState.isScreenLayoutMode(mode));
+            compare(CardState.isWallpaperLayoutMode(mode), false);
+        });
+        verify(CardState.isWallpaperLayoutMode("leastBusy"));
+        verify(CardState.isWallpaperLayoutMode("mostBusy"));
+        verify(CardState.isFreeMode("free"));
+    }
+
     function test_autoToFreeMigrationKeepsTheCapturedScreenPoint() {
         let state = CardState.normalize({
             globalDesktopLayoutMode: "leastBusy"

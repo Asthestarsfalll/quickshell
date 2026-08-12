@@ -97,6 +97,23 @@ StyledFlickable {
                 onValueSelected: value =>
                     SystemCardService.setGlobalDesktopLayoutMode(value)
             }
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [
+                    { value: "screenTopLeft", label: qsTr("左上") },
+                    { value: "screenTopRight", label: qsTr("右上") },
+                    { value: "screenBottomLeft", label: qsTr("左下") },
+                    { value: "screenBottomRight", label: qsTr("右下") },
+                    { value: "screenCenter", label: qsTr("居中") }
+                ]
+                currentValue: SystemCardService.globalDesktopLayoutMode
+                buttonHeight: 40
+                horizontalPadding: 10
+                buttonMinWidth: 0
+                onValueSelected: value =>
+                    SystemCardService.setGlobalDesktopLayoutMode(value)
+            }
         }
     }
 }

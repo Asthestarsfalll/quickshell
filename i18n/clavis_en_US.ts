@@ -6753,6 +6753,11 @@ Windows: </translation>
     <message><source>自由拖拽</source><translation>Free drag</translation></message>
     <message><source>最空旷处</source><translation>Least busy</translation></message>
     <message><source>最密集处</source><translation>Most busy</translation></message>
+    <message><source>左上</source><translation>Top left</translation></message>
+    <message><source>右上</source><translation>Top right</translation></message>
+    <message><source>左下</source><translation>Bottom left</translation></message>
+    <message><source>右下</source><translation>Bottom right</translation></message>
+    <message><source>居中</source><translation>Center</translation></message>
 </context>
 <context>
     <name>DesktopCard</name>

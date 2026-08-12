@@ -13,6 +13,12 @@ Item {
     readonly property bool presentationOwned:
         SystemCardDragSession.presentationActive
         && SystemCardDragSession.tileId === root.tileId
+    readonly property bool excludeHostBlur:
+        root.catalogEntry !== null
+        && root.catalogEntry.excludeHostBlur === true
+    readonly property Item blurExclusionItem:
+        root.active && !root.presentationOwned && root.excludeHostBlur
+            ? root : null
     readonly property Item contentItem: cardContent
 
     signal dragStarted(

@@ -105,18 +105,41 @@ Item {
                 root.dragX = visibleTopLeft.x;
                 root.dragY = visibleTopLeft.y;
                 root.dragging = true;
+                if (root.placementController
+                        && typeof root.placementController
+                            .updateCardDrag === "function") {
+                    root.placementController.updateCardDrag(
+                        root.dragX, root.dragY);
+                }
             } else if (started) {
                 started = false;
                 const bounds = dragHandler.screenBounds();
-                const xNorm = root.dragX / bounds.width;
-                const yNorm = root.dragY / bounds.height;
-                SystemCardService.setDesktopScreenPosition(
-                    root.tileId, xNorm, yNorm, true);
-                root.dragging = false;
+                let positions = [];
                 if (root.placementController
                         && typeof root.placementController
                             .finishCardDrag === "function") {
-                    root.placementController.finishCardDrag();
+                    positions = root.placementController.finishCardDrag(
+                        root.dragX, root.dragY);
+                }
+                if (Array.isArray(positions) && positions.length > 0) {
+                    SystemCardService.setDesktopScreenPositions(
+                        positions,
+                        !SystemCardService.isFreeLayoutMode(
+                            SystemCardService.globalDesktopLayoutMode)
+                    );
+                } else {
+                    const xNorm = root.dragX / bounds.width;
+                    const yNorm = root.dragY / bounds.height;
+                    SystemCardService.setDesktopScreenPosition(
+                        root.tileId, xNorm, yNorm,
+                        !SystemCardService.isFreeLayoutMode(
+                            SystemCardService.globalDesktopLayoutMode));
+                }
+                root.dragging = false;
+                if (root.placementController
+                        && typeof root.placementController
+                            .completeCardDrag === "function") {
+                    root.placementController.completeCardDrag();
                 }
             }
         }
@@ -136,6 +159,12 @@ Item {
                 Math.min(bounds.height - root.height,
                     point.y - root.dragOffsetY)
             );
+            if (root.placementController
+                    && typeof root.placementController
+                        .updateCardDrag === "function") {
+                root.placementController.updateCardDrag(
+                    root.dragX, root.dragY);
+            }
         }
 
         onCanceled: {

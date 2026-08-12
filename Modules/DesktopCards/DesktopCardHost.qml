@@ -55,6 +55,7 @@ Variants {
             scene ? scene.analysisKey : ""
         readonly property string layoutMode:
             SystemCardService.globalDesktopLayoutMode
+        property string lastLayoutMode: ""
         property var analysis: null
         property int analysisGeneration: 0
         property string requestedAnalysisKey: ""
@@ -80,7 +81,8 @@ Variants {
 
         function requestAnalysis() {
             if (!window.scene || window.analysisKey === ""
-                    || window.layoutMode === "free"
+                    || !SystemCardService.isWallpaperLayoutMode(
+                        window.layoutMode)
                     || window.desktopIds.length === 0
                     || !window.scene.analysisGeometryReady)
                 return;
@@ -108,15 +110,22 @@ Variants {
             window.automaticLayoutScheduled = true;
             Qt.callLater(function() {
                 window.automaticLayoutScheduled = false;
-                if (window.layoutMode === "free")
+                if (SystemCardService.isScreenLayoutMode(
+                        window.layoutMode)) {
+                    window.runScreenLayout();
+                    return;
+                }
+                if (!SystemCardService.isWallpaperLayoutMode(
+                        window.layoutMode))
                     return;
                 window.requestAnalysis();
                 window.runLayout();
             });
         }
 
-        function cardDescriptors() {
+        function cardDescriptors(space) {
             const result = [];
+            const coordinateSpace = String(space || "wallpaper");
             window.desktopIds.forEach(function(id) {
                 const state = SystemCardService.card(id);
                 if (!state || !state.desktop)
@@ -126,8 +135,8 @@ Variants {
                     id: id,
                     width: size.width,
                     height: size.height,
-                    xNorm: state.desktop.wallpaper.xNorm,
-                    yNorm: state.desktop.wallpaper.yNorm
+                    xNorm: state.desktop[coordinateSpace].xNorm,
+                    yNorm: state.desktop[coordinateSpace].yNorm
                 });
             });
             return result;
@@ -136,12 +145,15 @@ Variants {
         function runLayout() {
             const mode = SystemCardService.globalDesktopLayoutMode;
             if (!window.scene || window.desktopIds.length === 0
-                    || mode === "free" || !window.analysis)
+                    || !SystemCardService.isWallpaperLayoutMode(mode)
+                    || !window.analysis)
                 return;
             // Do not let a cached analysis result move a newly transferred
             // card before its first frame has been presented at the drop
             // point. This is a handoff barrier, not a visibility gate.
             if (!cardCanvas.allActiveCardsPresented
+                    || cardCanvas.screenTransitionActive
+                    || cardCanvas.anyCardDragging
                     || SystemCardDragSession.visualHandoffPending)
                 return;
             const placements = DesktopCardLayout.solve(
@@ -153,6 +165,30 @@ Variants {
             );
             SystemCardService.applyDesktopLayout(placements);
             cardCanvas.startAutomaticTransitions();
+        }
+
+        function runScreenLayout() {
+            const mode = SystemCardService.globalDesktopLayoutMode;
+            if (!SystemCardService.isScreenLayoutMode(mode)
+                    || window.desktopIds.length === 0
+                    || cardCanvas.screenTransitionActive
+                    || cardCanvas.anyCardDragging
+                    || !cardCanvas.allActiveCardsPresented
+                    || SystemCardDragSession.visualHandoffPending)
+                return;
+            const placements = DesktopCardLayout.solveScreen(
+                window.cardDescriptors("screen"),
+                window.width,
+                window.height,
+                mode
+            );
+            if (placements.length === 0)
+                return;
+            const prepared = cardCanvas.prepareScreenLayoutTransition(
+                placements);
+            SystemCardService.applyDesktopScreenLayout(placements);
+            if (prepared)
+                cardCanvas.startScreenLayoutTransition();
         }
 
         mask: Region {
@@ -188,12 +224,12 @@ Variants {
                 cardCanvas.inputSlot9,
                 presentationGhost
             ]
-            subtractedBackgroundItems: [
-                cardCanvas.timeBlurExclusionItem,
-                window.ownsPresentationDrag
-                    && SystemCardDragSession.tileId === "time"
-                    ? presentationGhost : null
-            ]
+            subtractedBackgroundItems:
+                cardCanvas.systemCardBlurExclusionItems.concat(
+                    window.ownsPresentationDrag
+                        && SystemCardService.cardExcludesHostBlur(
+                            SystemCardDragSession.tileId)
+                        ? [presentationGhost] : [])
             radius: Appearance.rounding.extraLarge
         }
 
@@ -289,7 +325,7 @@ Variants {
             target: SystemCardService
 
             function onCardStateChanged() {
-                Qt.callLater(window.runLayout);
+                Qt.callLater(window.scheduleAutomaticLayout);
             }
 
             function onDesktopLayoutRequested() {
@@ -308,25 +344,47 @@ Variants {
                 if (SystemCardDragSession.completeVisualHandoff(tileId))
                     window.scheduleAutomaticLayout();
             }
+
+            function onScreenTransitionsFinished() {
+                window.scheduleAutomaticLayout();
+            }
         }
 
-        onDesktopIdsChanged: window.requestAnalysis()
+        onDesktopIdsChanged: window.scheduleAutomaticLayout()
         onSceneChanged: {
-            if (window.layoutMode === "free")
-                cardCanvas.promoteCardsToScreen();
+            if (SystemCardService.isWallpaperLayoutMode(
+                    window.layoutMode))
+                window.requestAnalysis();
         }
         onAnalysisKeyChanged: {
-            window.requestedAnalysisKey = "";
-            window.requestAnalysis();
+            if (SystemCardService.isWallpaperLayoutMode(
+                    window.layoutMode)) {
+                window.requestedAnalysisKey = "";
+                window.requestAnalysis();
+            }
         }
         onLayoutModeChanged: {
-            if (window.layoutMode === "free") {
+            const oldMode = window.lastLayoutMode;
+            const wasWallpaper = SystemCardService.isWallpaperLayoutMode(
+                oldMode);
+            const isWallpaper = SystemCardService.isWallpaperLayoutMode(
+                window.layoutMode);
+            if (SystemCardService.isFreeLayoutMode(window.layoutMode)) {
                 window.analysis = null;
                 window.requestedAnalysisKey = "";
                 cardCanvas.promoteCardsToScreen();
-                return;
+            } else if (SystemCardService.isScreenLayoutMode(
+                    window.layoutMode)) {
+                cardCanvas.promoteCardsToScreen();
+                window.scheduleAutomaticLayout();
+            } else if (isWallpaper) {
+                if (!wasWallpaper) {
+                    window.analysis = null;
+                    window.requestedAnalysisKey = "";
+                }
+                window.scheduleAutomaticLayout();
             }
-            window.scheduleAutomaticLayout();
+            window.lastLayoutMode = window.layoutMode;
         }
 
         Component.onCompleted: {
@@ -338,12 +396,12 @@ Variants {
             DesktopPresentationService.registerHost(
                 window.screenKey, viewport);
             Qt.callLater(function() {
-                // Legacy v2 desktop records were wallpaper coordinates. If
-                // the current policy is free, capture their displayed output
-                // position once and migrate them to the new screen space.
-                if (window.layoutMode === "free")
+                window.lastLayoutMode = window.layoutMode;
+                if (SystemCardService.isFreeLayoutMode(window.layoutMode)
+                        || SystemCardService.isScreenLayoutMode(
+                            window.layoutMode))
                     cardCanvas.promoteCardsToScreen();
-                window.requestAnalysis();
+                window.scheduleAutomaticLayout();
             });
         }
 

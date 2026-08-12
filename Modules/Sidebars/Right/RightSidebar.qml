@@ -13,8 +13,8 @@ Item {
     // The host window already starts inside layer-shell's usable geometry.
     readonly property int sidebarY: gap
     readonly property real closedSlideOffset: sidebarWidth + gap
-    readonly property int enterDuration: Animations.durations.large
-    readonly property int exitDuration: Animations.durations.large
+    readonly property int enterDuration: Animations.durations.sidebarEnter
+    readonly property int exitDuration: Animations.durations.sidebarExit
     property bool panelPresented: false
     property bool contentRetained: false
     readonly property bool panelActive:

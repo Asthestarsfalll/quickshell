@@ -108,6 +108,12 @@ add_test(
 )
 
 add_test(
+    NAME desktop_card_layout_feature_architecture_tests
+    COMMAND ${BASH_EXECUTABLE}
+        ${CLAVIS_SOURCE_ROOT}/tests/test_desktop_card_layout_features.sh
+)
+
+add_test(
     NAME qml_unit_tests
     COMMAND Qt6::qmltestrunner -input ${CLAVIS_SOURCE_ROOT}/tests/qml
 )

@@ -149,9 +149,12 @@ require_text "$desktop_card" 'root.placementController.beginCardDrag()'
 
 # Automatic layout consumes wallpaper coordinates and explicitly starts the
 # screen -> wallpaper transition after solving.
-require_text "$desktop_host" 'state.desktop.wallpaper.xNorm'
+require_text "$desktop_host" 'state.desktop[coordinateSpace].xNorm'
 require_text "$desktop_host" 'cardCanvas.startAutomaticTransitions();'
 require_text "$desktop_host" 'cardCanvas.promoteCardsToScreen();'
+require_text "$desktop_host" 'DesktopCardLayout.solveScreen('
+require_text "$desktop_host" 'cardCanvas.prepareScreenLayoutTransition('
+require_text "$desktop_host" 'cardCanvas.startScreenLayoutTransition();'
 require_text "$desktop_host" 'SystemCardDragSession.completeVisualHandoff(tileId)'
 reject_text "$desktop_host" 'startPresentationTransition'
 reject_text "$desktop_host" 'presentationOffset'
@@ -161,6 +164,7 @@ require_text "$state" 'placementSpace'
 require_text "$state" 'screen:'
 require_text "$state" 'wallpaper:'
 require_text "$placement" 'function normalizedPosition('
+require_text "$placement" 'function isScreenLayoutMode('
 
 # Layer ordering remains wallpaper Background < cards Bottom < normal apps.
 require_text "$wallpaper" 'WlrLayershell.layer: WlrLayer.Background'

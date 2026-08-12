@@ -38,6 +38,8 @@ Singleton {
         readonly property int large: 600
         readonly property int extraLarge: 1000
         readonly property int expressiveFastSpatial: 350
+        readonly property int sidebarEnter: expressiveFastSpatial
+        readonly property int sidebarExit: small
         readonly property int expressiveDefaultSpatial: 500
         readonly property int expressiveSlowSpatial: 650
         readonly property int expressiveFastEffects: 150

@@ -4,9 +4,9 @@
 // Include the catalog here so CardState and SystemGridLayout still consume
 // the same metadata source when they are run directly by qmltestrunner.
 Qt.include("SystemCardCatalog.js");
+Qt.include("SystemCardPlacement.js");
 
 var schemaVersion = 3;
-var desktopLayoutModes = ["free", "leastBusy", "mostBusy"];
 var placementSpaces = ["screen", "wallpaper"];
 
 function isObject(value) {

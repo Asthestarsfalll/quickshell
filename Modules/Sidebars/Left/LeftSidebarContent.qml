@@ -26,10 +26,10 @@ Item {
         const loader = viewRepeater.itemAt(2)
         return loader ? loader.item : null
     }
-    readonly property Item systemTimeCardItem: {
+    readonly property var systemCardBlurExclusionItems: {
         const loader = viewRepeater.itemAt(1);
         const systemView = loader ? loader.item : null;
-        return systemView ? systemView.timeCardItem : null;
+        return systemView ? systemView.systemCardBlurExclusionItems : [];
     }
 
     ColumnLayout {

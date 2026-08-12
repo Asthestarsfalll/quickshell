@@ -70,15 +70,14 @@ Item {
         return CardGeometry.sizeFor(String(tileId));
     }
 
-    readonly property Item timeCardItem: {
-        if (!root.isForeground)
-            return null;
+    readonly property var systemCardBlurExclusionItems: {
+        const items = [];
         for (let index = 0; index < tileRepeater.count; ++index) {
             const item = tileRepeater.itemAt(index);
-            if (item && item.tileId === "time")
-                return item;
+            if (item && item.blurExclusionItem)
+                items.push(item.blurExclusionItem);
         }
-        return null;
+        return items;
     }
 
     function displayPlacement(tileId) {

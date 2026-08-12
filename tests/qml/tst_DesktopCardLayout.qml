@@ -108,4 +108,93 @@ TestCase {
         compare(placements.length, cards.length);
         verify(DesktopCardLayout.hasNoOverlap(placements, 12));
     }
+
+    function test_screenAnchorModesPackInsideBoundsWithoutOverlap() {
+        const cards = [
+            canonicalCard("weather", 0.1, 0.1),
+            canonicalCard("storage", 0.2, 0.2),
+            canonicalCard("battery", 0.4, 0.4),
+            canonicalCard("cpu", 0.6, 0.6),
+            canonicalCard("gpu", 0.7, 0.7)
+        ];
+        const modes = [
+            "screenTopLeft", "screenTopRight", "screenBottomLeft",
+            "screenBottomRight", "screenCenter"
+        ];
+        modes.forEach(function(mode) {
+            const placements = DesktopCardLayout.solveScreen(
+                cards, 1600, 1000, mode);
+            compare(placements.length, cards.length);
+            verify(DesktopCardLayout.hasNoOverlap(placements, 12));
+            placements.forEach(function(placement) {
+                verify(placement.rect.x >= 24 - 0.01);
+                verify(placement.rect.y >= 24 - 0.01);
+                verify(placement.rect.x + placement.rect.width
+                    <= 1600 - 24 + 0.01);
+                verify(placement.rect.y + placement.rect.height
+                    <= 1000 - 24 + 0.01);
+            });
+        });
+    }
+
+    function test_screenAnchorModesAreDeterministicAndDistinct() {
+        const cards = [canonicalCard("weather", 0.5, 0.5)];
+        const topLeft = DesktopCardLayout.solveScreen(
+            cards, 1200, 800, "screenTopLeft")[0];
+        const bottomRight = DesktopCardLayout.solveScreen(
+            cards, 1200, 800, "screenBottomRight")[0];
+        const center = DesktopCardLayout.solveScreen(
+            cards, 1200, 800, "screenCenter")[0];
+        const repeat = DesktopCardLayout.solveScreen(
+            cards, 1200, 800, "screenCenter")[0];
+
+        verify(topLeft.rect.x < center.rect.x);
+        verify(topLeft.rect.y < center.rect.y);
+        verify(bottomRight.rect.x > center.rect.x);
+        verify(bottomRight.rect.y > center.rect.y);
+        compare(repeat.xNorm, center.xNorm);
+        compare(repeat.yNorm, center.yNorm);
+    }
+
+    function test_draggedCardIsAuthoritativeDuringCollisionResolution() {
+        const cards = [
+            { id: "cpu", x: 100, y: 100, width: 152, height: 160 },
+            { id: "gpu", x: 100, y: 100, width: 152, height: 160 },
+            { id: "memoryUsed", x: 270, y: 100, width: 152, height: 160 },
+            { id: "wifi", x: 440, y: 100, width: 152, height: 160 }
+        ];
+        const resolved = DesktopCardLayout.resolveDraggedCollision(
+            cards, "cpu",
+            { x: 100, y: 100, width: 152, height: 160 },
+            1000, 700);
+        const dragged = resolved.find(item => item.id === "cpu");
+
+        verify(dragged !== undefined);
+        compare(dragged.x, 100);
+        compare(dragged.y, 100);
+        verify(DesktopCardLayout.hasNoOverlap(resolved, 12));
+    }
+
+    function test_collisionResolutionIsDeterministicAndBounded() {
+        const cards = [
+            { id: "a", x: 0, y: 0, width: 200, height: 180 },
+            { id: "b", x: 0, y: 0, width: 180, height: 160 },
+            { id: "c", x: 0, y: 0, width: 160, height: 140 }
+        ];
+        const first = DesktopCardLayout.resolveDraggedCollision(
+            cards, "a", { x: 20, y: 20, width: 200, height: 180 },
+            1200, 800);
+        const second = DesktopCardLayout.resolveDraggedCollision(
+            cards, "a", { x: 20, y: 20, width: 200, height: 180 },
+            1200, 800);
+
+        compare(JSON.stringify(first), JSON.stringify(second));
+        verify(DesktopCardLayout.hasNoOverlap(first, 12));
+        first.forEach(function(item) {
+            verify(item.x >= -0.01);
+            verify(item.y >= -0.01);
+            verify(item.x + item.width <= 1200 + 0.01);
+            verify(item.y + item.height <= 800 + 0.01);
+        });
+    }
 }

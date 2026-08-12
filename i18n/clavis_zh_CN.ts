@@ -6713,6 +6713,11 @@
     <message><source>自由拖拽</source><translation>自由拖拽</translation></message>
     <message><source>最空旷处</source><translation>最空旷处</translation></message>
     <message><source>最密集处</source><translation>最密集处</translation></message>
+    <message><source>左上</source><translation>左上</translation></message>
+    <message><source>右上</source><translation>右上</translation></message>
+    <message><source>左下</source><translation>左下</translation></message>
+    <message><source>右下</source><translation>右下</translation></message>
+    <message><source>居中</source><translation>居中</translation></message>
 </context>
 <context>
     <name>DesktopCard</name>

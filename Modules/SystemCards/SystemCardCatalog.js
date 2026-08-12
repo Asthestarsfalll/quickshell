@@ -12,7 +12,8 @@ var cardDefinitions = [
         columnSpan: 2,
         rowSpan: 2,
         requiresSystemMonitor: false,
-        preserveDefaultSurface: true
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     },
     {
         id: "battery",
@@ -22,7 +23,8 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 2,
         requiresSystemMonitor: true,
-        preserveDefaultSurface: true
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     },
     {
         id: "cpu",
@@ -32,7 +34,8 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        preserveDefaultSurface: true
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     },
     {
         id: "gpu",
@@ -42,7 +45,8 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        preserveDefaultSurface: true
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     },
     {
         id: "memoryUsed",
@@ -52,7 +56,8 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        preserveDefaultSurface: true
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     },
     {
         id: "wifi",
@@ -62,7 +67,8 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: false,
-        preserveDefaultSurface: true
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     },
     {
         id: "network",

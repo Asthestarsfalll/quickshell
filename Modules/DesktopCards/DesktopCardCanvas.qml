@@ -12,6 +12,7 @@ Item {
     property Item hostItem: root
     signal delegateReady(string tileId)
     signal handoffReady(string tileId)
+    signal screenTransitionsFinished()
 
     // The canvas is always the output-local screen coordinate system. A
     // wallpaper transform is an input to wallpaper-anchored slots; it never
@@ -29,7 +30,9 @@ Item {
     property Item inputSlot7: null
     property Item inputSlot8: null
     property Item inputSlot9: null
-    property Item timeBlurExclusionItem: null
+    property var systemCardBlurExclusionItems: []
+    property var collisionPreviewPositions: ({})
+    property string collisionDraggedId: ""
 
     readonly property var screenNames: {
         const result = [];
@@ -53,6 +56,24 @@ Item {
         return true;
     }
 
+    readonly property bool screenTransitionActive: {
+        for (let index = 0; index < cardRepeater.count; index += 1) {
+            const item = cardRepeater.itemAt(index);
+            if (item && item.active && item.screenTransitionActive)
+                return true;
+        }
+        return false;
+    }
+
+    readonly property bool anyCardDragging: {
+        for (let index = 0; index < cardRepeater.count; index += 1) {
+            const item = cardRepeater.itemAt(index);
+            if (item && item.active && item.dragging)
+                return true;
+        }
+        return false;
+    }
+
     function inputItemAt(index) {
         return cardRepeater.itemAt(index);
     }
@@ -68,13 +89,136 @@ Item {
         root.inputSlot7 = root.inputItemAt(7);
         root.inputSlot8 = root.inputItemAt(8);
         root.inputSlot9 = root.inputItemAt(9);
-        root.timeBlurExclusionItem = null;
+        const exclusions = [];
         for (let index = 0; index < cardRepeater.count; ++index) {
             const item = cardRepeater.itemAt(index);
-            if (item && item.tileId === "time") {
-                root.timeBlurExclusionItem = item;
-                break;
+            if (item && item.active && item.excludeHostBlur)
+                exclusions.push(item);
+        }
+        root.systemCardBlurExclusionItems = exclusions;
+    }
+
+    function currentCollisionCards() {
+        const cards = [];
+        for (let index = 0; index < cardRepeater.count; index += 1) {
+            const item = cardRepeater.itemAt(index);
+            if (!item || !item.active)
+                continue;
+            const rect = item.visualRect();
+            cards.push({
+                id: item.tileId,
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height
+            });
+        }
+        return cards;
+    }
+
+    function beginCollisionPreview(tileId) {
+        root.collisionDraggedId = String(tileId);
+        root.collisionPreviewPositions = ({});
+    }
+
+    function updateCollisionPreview(tileId, x, y) {
+        if (String(tileId) !== root.collisionDraggedId)
+            return;
+        const source = root.currentCollisionCards();
+        const dragged = source.find(item => item.id === String(tileId));
+        if (!dragged)
+            return;
+        const resolved = DesktopCardLayout.resolveDraggedCollision(
+            source,
+            tileId,
+            {
+                x: Number(x),
+                y: Number(y),
+                width: dragged.width,
+                height: dragged.height
+            },
+            root.width,
+            root.height
+        );
+        const preview = {};
+        resolved.forEach(function(item) {
+            if (item.id !== String(tileId))
+                preview[item.id] = { x: item.x, y: item.y };
+        });
+        root.collisionPreviewPositions = preview;
+    }
+
+    function finishCollisionPreview(tileId, x, y) {
+        if (String(tileId) !== root.collisionDraggedId)
+            return [];
+        root.updateCollisionPreview(tileId, x, y);
+        const source = root.currentCollisionCards();
+        const dragged = source.find(item => item.id === String(tileId));
+        if (!dragged)
+            return [];
+        const resolved = DesktopCardLayout.resolveDraggedCollision(
+            source,
+            tileId,
+            {
+                x: Number(x),
+                y: Number(y),
+                width: dragged.width,
+                height: dragged.height
+            },
+            root.width,
+            root.height
+        );
+        return resolved.map(function(item) {
+            return {
+                id: item.id,
+                xNorm: Placement.normalizedPosition(
+                    item.x, item.y, root.width, root.height).xNorm,
+                yNorm: Placement.normalizedPosition(
+                    item.x, item.y, root.width, root.height).yNorm
+            };
+        });
+    }
+
+    function completeCollisionPreview() {
+        root.collisionDraggedId = "";
+        root.collisionPreviewPositions = ({});
+    }
+
+    function prepareScreenLayoutTransition(placements) {
+        if (!Array.isArray(placements))
+            return false;
+        let prepared = false;
+        placements.forEach(function(placement) {
+            let item = null;
+            for (let index = 0; index < cardRepeater.count; index += 1) {
+                const candidate = cardRepeater.itemAt(index);
+                if (candidate && candidate.tileId
+                        === String(placement.id)) {
+                    item = candidate;
+                    break;
+                }
             }
+            if (!item || !item.active)
+                return;
+            const target = Placement.screenPoint(
+                placement.xNorm,
+                placement.yNorm,
+                root.width,
+                root.height,
+                item.size.width,
+                item.size.height
+            );
+            prepared = item.prepareScreenTransition(target.x, target.y)
+                || prepared;
+        });
+        return prepared;
+    }
+
+    function startScreenLayoutTransition() {
+        for (let index = 0; index < cardRepeater.count; index += 1) {
+            const item = cardRepeater.itemAt(index);
+            if (item && item.active && item.screenTransitionActive)
+                item.startScreenTransition();
         }
     }
 
@@ -142,7 +286,8 @@ Item {
     // projection. The slot's target is evaluated every frame, so parallax can
     // continue while the space migration is in progress.
     function startAutomaticTransitions() {
-        if (SystemCardService.globalDesktopLayoutMode === "free")
+        if (!SystemCardService.isWallpaperLayoutMode(
+                SystemCardService.globalDesktopLayoutMode))
             return;
         for (let index = 0; index < cardRepeater.count; ++index) {
             const item = cardRepeater.itemAt(index);
@@ -169,6 +314,8 @@ Item {
                 root.isActive(slot.tileId)
                     && cardState !== null
                     && cardState.enabled
+            readonly property bool excludeHostBlur:
+                SystemCardService.cardExcludesHostBlur(slot.tileId)
             readonly property var size:
                 SystemCardService.cardSize(slot.tileId)
             readonly property string placementSpace:
@@ -189,8 +336,16 @@ Item {
             property real wallpaperTransitionProgress: 0
             property real transitionStartX: 0
             property real transitionStartY: 0
+            property bool screenTransitionActive: false
+            property real screenTransitionProgress: 0
+            property real screenTransitionStartX: 0
+            property real screenTransitionStartY: 0
+            property real screenTransitionTargetX: 0
+            property real screenTransitionTargetY: 0
             readonly property bool dragging:
                 cardLoader.item && cardLoader.item.dragging
+            readonly property var collisionPreviewPosition:
+                root.collisionPreviewPositions[slot.tileId] || null
             readonly property real projectedWallpaperX:
                 slot.layoutWallpaperX
                     + Number(root.scene ? root.scene.animatedOffsetX : 0)
@@ -208,6 +363,13 @@ Item {
             readonly property real visualScreenX:
                 slot.dragging
                     ? cardLoader.item.dragX
+                    : slot.collisionPreviewPosition !== null
+                    ? slot.collisionPreviewPosition.x
+                    : slot.screenTransitionActive
+                    ? Placement.interpolate(
+                        slot.screenTransitionStartX,
+                        slot.screenTransitionTargetX,
+                        slot.screenTransitionProgress)
                     : slot.wallpaperTransitionActive
                     ? Placement.interpolate(
                         slot.transitionStartX,
@@ -219,6 +381,13 @@ Item {
             readonly property real visualScreenY:
                 slot.dragging
                     ? cardLoader.item.dragY
+                    : slot.collisionPreviewPosition !== null
+                    ? slot.collisionPreviewPosition.y
+                    : slot.screenTransitionActive
+                    ? Placement.interpolate(
+                        slot.screenTransitionStartY,
+                        slot.screenTransitionTargetY,
+                        slot.screenTransitionProgress)
                     : slot.wallpaperTransitionActive
                     ? Placement.interpolate(
                         slot.transitionStartY,
@@ -251,6 +420,9 @@ Item {
                 slot.wallpaperTransitionActive = false;
                 wallpaperTransition.stop();
                 slot.wallpaperTransitionProgress = 0;
+                slot.screenTransitionActive = false;
+                screenTransition.stop();
+                slot.screenTransitionProgress = 0;
             }
 
             function beginCardDrag() {
@@ -269,17 +441,57 @@ Item {
                 slot.wallpaperTransitionActive = false;
                 wallpaperTransition.stop();
                 slot.wallpaperTransitionProgress = 0;
+                root.beginCollisionPreview(slot.tileId);
                 return point;
             }
 
-            function finishCardDrag() {
-                // The DesktopCard has already committed the screen point.
-                // Automatic modes are scheduled by that commit and will
-                // perform the explicit screen -> wallpaper migration.
+            function updateCardDrag(x, y) {
+                root.updateCollisionPreview(slot.tileId, x, y);
+            }
+
+            function finishCardDrag(x, y) {
+                return root.finishCollisionPreview(slot.tileId, x, y);
+            }
+
+            function completeCardDrag() {
+                root.completeCollisionPreview();
             }
 
             function cancelCardDrag() {
+                root.completeCollisionPreview();
                 SystemCardService.requestDesktopLayout();
+            }
+
+            function prepareScreenTransition(targetX, targetY) {
+                const currentX = slot.visualScreenX;
+                const currentY = slot.visualScreenY;
+                if (Math.abs(currentX - Number(targetX)) <= 0.5
+                        && Math.abs(currentY - Number(targetY)) <= 0.5) {
+                    slot.screenTransitionActive = false;
+                    return false;
+                }
+                slot.screenTransitionStartX = currentX;
+                slot.screenTransitionStartY = currentY;
+                slot.screenTransitionTargetX = Number(targetX);
+                slot.screenTransitionTargetY = Number(targetY);
+                slot.screenTransitionProgress = 0;
+                slot.screenTransitionActive = true;
+                return true;
+            }
+
+            function startScreenTransition() {
+                if (slot.screenTransitionActive)
+                    screenTransition.restart();
+            }
+
+            function finishScreenTransition() {
+                if (!slot.screenTransitionActive)
+                    return;
+                slot.screenTransitionProgress = 1;
+                slot.screenTransitionActive = false;
+                slot.screenTransitionProgress = 0;
+                if (!root.screenTransitionActive)
+                    root.screenTransitionsFinished();
             }
 
             function beginWallpaperTransition() {
@@ -353,8 +565,11 @@ Item {
 
             onActiveChanged: {
                 wallpaperTransition.stop();
+                screenTransition.stop();
                 slot.wallpaperTransitionActive = false;
                 slot.wallpaperTransitionProgress = 0;
+                slot.screenTransitionActive = false;
+                slot.screenTransitionProgress = 0;
                 slot.handoffReadySent = false;
                 slot.positionInitialized = false;
                 if (active)
@@ -374,6 +589,32 @@ Item {
             }
 
             Component.onCompleted: slot.presentIfReady()
+
+            Behavior on x {
+                enabled: slot.positionInitialized
+                    && slot.active
+                    && !slot.dragging
+                    && slot.collisionPreviewPosition !== null
+                NumberAnimation {
+                    duration: Appearance.animation.desktopCardReflow.duration
+                    easing.type: Appearance.animation.desktopCardReflow.type
+                    easing.bezierCurve:
+                        Appearance.animation.desktopCardReflow.bezierCurve
+                }
+            }
+
+            Behavior on y {
+                enabled: slot.positionInitialized
+                    && slot.active
+                    && !slot.dragging
+                    && slot.collisionPreviewPosition !== null
+                NumberAnimation {
+                    duration: Appearance.animation.desktopCardReflow.duration
+                    easing.type: Appearance.animation.desktopCardReflow.type
+                    easing.bezierCurve:
+                        Appearance.animation.desktopCardReflow.bezierCurve
+                }
+            }
 
             Behavior on layoutWallpaperX {
                 enabled: slot.positionInitialized
@@ -432,6 +673,28 @@ Item {
                     Appearance.animation.desktopCardReflow.bezierCurve
                 onStopped: slot.finishWallpaperTransition()
             }
+
+            NumberAnimation {
+                id: screenTransition
+
+                target: slot
+                property: "screenTransitionProgress"
+                from: 0
+                to: 1
+                duration: Appearance.animation.desktopCardReflow.duration
+                easing.type: Appearance.animation.desktopCardReflow.type
+                easing.bezierCurve:
+                    Appearance.animation.desktopCardReflow.bezierCurve
+                onStopped: slot.finishScreenTransition()
+            }
+        }
+    }
+
+    Connections {
+        target: SystemCardService
+
+        function onCardStateChanged() {
+            Qt.callLater(root.updateInputSlots);
         }
     }
 

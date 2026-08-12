@@ -64,9 +64,11 @@ done
 require_text Modules/Sidebars/SidebarHostWindow.qml \
     'additionalBackgroundItems: ['
 require_text Modules/Sidebars/SidebarHostWindow.qml \
-    'subtractedBackgroundItems: ['
+    'subtractedBackgroundItems: leftSidebar.systemCardBlurExclusionItems'
 require_text Modules/Sidebars/SidebarHostWindow.qml \
-    'leftSidebar.timeCardBlurExclusionItem'
+    'leftSidebar.systemCardBlurExclusionItems'
+reject_text Modules/Sidebars/SidebarHostWindow.qml \
+    'timeCardBlurExclusionItem'
 require_text Modules/DesktopCards/DesktopCardHost.qml \
     'CompositorBlurRegion {'
 require_text Modules/DesktopCards/DesktopCardHost.qml \
@@ -74,9 +76,11 @@ require_text Modules/DesktopCards/DesktopCardHost.qml \
 require_text Modules/DesktopCards/DesktopCardHost.qml \
     'additionalBackgroundItems: ['
 require_text Modules/DesktopCards/DesktopCardHost.qml \
-    'subtractedBackgroundItems: ['
+    'subtractedBackgroundItems:'
 require_text Modules/DesktopCards/DesktopCardHost.qml \
-    'cardCanvas.timeBlurExclusionItem'
+    'cardCanvas.systemCardBlurExclusionItems'
+reject_text Modules/DesktopCards/DesktopCardHost.qml \
+    'tileId === "time"'
 require_text Modules/DesktopCards/DesktopCardHost.qml \
     'radius: Appearance.rounding.extraLarge'
 require_text Modules/ControlCenter/ControlCenterWindow.qml \

@@ -3,6 +3,39 @@
 var screen = "screen";
 var wallpaper = "wallpaper";
 
+var freeMode = "free";
+var screenLayoutModes = [
+    "screenTopLeft",
+    "screenTopRight",
+    "screenBottomLeft",
+    "screenBottomRight",
+    "screenCenter"
+];
+var wallpaperLayoutModes = ["leastBusy", "mostBusy"];
+var desktopLayoutModes = [freeMode]
+    .concat(screenLayoutModes)
+    .concat(wallpaperLayoutModes);
+
+function isFreeMode(mode) {
+    return String(mode || "") === freeMode;
+}
+
+function isScreenLayoutMode(mode) {
+    return screenLayoutModes.indexOf(String(mode || "")) !== -1;
+}
+
+function isWallpaperLayoutMode(mode) {
+    return wallpaperLayoutModes.indexOf(String(mode || "")) !== -1;
+}
+
+function isAutomaticMode(mode) {
+    return isScreenLayoutMode(mode) || isWallpaperLayoutMode(mode);
+}
+
+function placementSpaceForMode(mode) {
+    return isWallpaperLayoutMode(mode) ? wallpaper : screen;
+}
+
 function clamp(value, minimum, maximum) {
     return Math.max(minimum, Math.min(maximum, Number(value) || 0));
 }

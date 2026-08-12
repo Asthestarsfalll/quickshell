@@ -47,6 +47,23 @@ Singleton {
         return !!definition && definition.requiresSystemMonitor;
     }
 
+    function cardExcludesHostBlur(cardId) {
+        const definition = Catalog.definitionFor(String(cardId));
+        return !!definition && definition.excludeHostBlur === true;
+    }
+
+    function isFreeLayoutMode(mode) {
+        return CardState.isFreeMode(mode);
+    }
+
+    function isScreenLayoutMode(mode) {
+        return CardState.isScreenLayoutMode(mode);
+    }
+
+    function isWallpaperLayoutMode(mode) {
+        return CardState.isWallpaperLayoutMode(mode);
+    }
+
     function cardSize(cardId) {
         return Geometry.sizeFor(String(cardId));
     }
@@ -122,7 +139,7 @@ Singleton {
         );
     }
 
-    function setDesktopScreenPositions(positions) {
+    function setDesktopScreenPositions(positions, requestLayout) {
         if (!Array.isArray(positions))
             return false;
         let next = CardState.normalize(root.internalState);
@@ -145,11 +162,12 @@ Singleton {
                 changed = true;
             }
         });
-        return changed && root.commit(next, "", false);
+        return changed && root.commit(next, "", !!requestLayout);
     }
 
     function requestDesktopLayout() {
-        if (root.globalDesktopLayoutMode !== "free")
+        if (CardState.isAutomaticMode(
+                root.globalDesktopLayoutMode))
             root.desktopLayoutRequested();
     }
 
@@ -187,6 +205,10 @@ Singleton {
     function setGlobalDesktopLayoutMode(mode) {
         const next = CardState.setGlobalMode(root.internalState, mode);
         return root.commit(next, "", true);
+    }
+
+    function applyDesktopScreenLayout(placements) {
+        return root.setDesktopScreenPositions(placements, false);
     }
 
     function applyDesktopLayout(placements) {
