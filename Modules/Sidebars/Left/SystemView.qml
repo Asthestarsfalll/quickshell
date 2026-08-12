@@ -290,13 +290,51 @@ Item {
                 root.resetDragState(false);
                 return;
             }
-            const committed = SystemCardService.setContainer(
+
+            // Resolve the drop against the live Desktop host before the
+            // ownership transaction. The incoming card is authoritative at
+            // the drop point; existing Desktop cards are the only cards that
+            // may be displaced. This keeps Sidebar -> Desktop on the same
+            // collision path as a free Desktop drag.
+            const collisionRects =
+                DesktopPresentationService.resolveDropCollision(
+                    root.screenName,
+                    tileId,
+                    screenX,
+                    screenY,
+                    size.width,
+                    size.height
+                );
+            const collisionPositions = [];
+            if (Array.isArray(collisionRects)) {
+                collisionRects.forEach(function(rect) {
+                    if (!rect || typeof rect.id !== "string")
+                        return;
+                    const point = Placement.normalizedPosition(
+                        rect.x, rect.y, output.width, output.height);
+                    collisionPositions.push({
+                        id: rect.id,
+                        xNorm: point.xNorm,
+                        yNorm: point.yNorm
+                    });
+                });
+            }
+            if (collisionPositions.length === 0) {
+                collisionPositions.push({
+                    id: tileId,
+                    xNorm: normalized.xNorm,
+                    yNorm: normalized.yNorm
+                });
+            }
+
+            const committed = SystemCardService.transferToDesktop(
                 tileId,
-                "desktop",
                 root.screenName,
                 normalized.xNorm,
                 normalized.yNorm,
-                Placement.screen
+                collisionPositions,
+                !SystemCardService.isFreeLayoutMode(
+                    SystemCardService.globalDesktopLayoutMode)
             );
             const card = SystemCardService.card(tileId);
             if (!committed || !card || !card.enabled

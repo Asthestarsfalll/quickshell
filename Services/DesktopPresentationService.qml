@@ -76,4 +76,16 @@ Singleton {
                 - Number(localTopLeft.y))
         };
     }
+
+    // DesktopCardHost owns the live screen-space collision geometry. Keep
+    // this bridge here so Sidebar code does not recreate a second placement
+    // model or inspect another Window's local coordinates.
+    function resolveDropCollision(screenName, tileId, x, y, width, height) {
+        const host = root.hostFor(screenName);
+        if (!host || typeof host.resolveDesktopDrop !== "function")
+            return null;
+        return host.resolveDesktopDrop(
+            String(tileId), Number(x), Number(y),
+            Number(width), Number(height));
+    }
 }

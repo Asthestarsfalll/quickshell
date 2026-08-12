@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
+import "./DesktopCardLayout.js" as DesktopCardLayout
 import "../SystemCards/SystemCardPlacement.js" as Placement
 
 Item {
@@ -177,6 +178,42 @@ Item {
                     item.x, item.y, root.width, root.height).yNorm
             };
         });
+    }
+
+    // Resolve an external Sidebar drop against the current visual Desktop
+    // rectangles.  The incoming card is authoritative; only existing cards
+    // may be displaced.  This is deliberately the same resolver used by a
+    // Desktop free drag.
+    function resolveExternalDrop(tileId, x, y, width, height) {
+        const source = root.currentCollisionCards();
+        source.push({
+            id: String(tileId),
+            x: Number(x),
+            y: Number(y),
+            width: Number(width),
+            height: Number(height)
+        });
+        return DesktopCardLayout.resolveDraggedCollision(
+            source,
+            String(tileId),
+            {
+                x: Number(x),
+                y: Number(y),
+                width: Number(width),
+                height: Number(height)
+            },
+            root.width,
+            root.height
+        );
+    }
+
+    function resolveCurrentCollisionLayout(preferredId) {
+        return DesktopCardLayout.resolveAllCollisions(
+            root.currentCollisionCards(),
+            String(preferredId || ""),
+            root.width,
+            root.height
+        );
     }
 
     function completeCollisionPreview() {
@@ -427,17 +464,9 @@ Item {
 
             function beginCardDrag() {
                 const point = slot.captureVisualScreenPosition();
-                // Write the current visible point while the transition is
-                // still active. Turning the transition off afterwards leaves
-                // the screen-space binding at exactly the same point.
-                SystemCardService.setDesktopScreenPosition(
-                    slot.tileId,
-                    Placement.normalizedPosition(
-                        point.x, point.y, root.width, root.height).xNorm,
-                    Placement.normalizedPosition(
-                        point.x, point.y, root.width, root.height).yNorm,
-                    false
-                );
+                // Desktop dragging is enabled only in free mode. It must
+                // not silently change global policy or migrate an automatic
+                // card between coordinate spaces.
                 slot.wallpaperTransitionActive = false;
                 wallpaperTransition.stop();
                 slot.wallpaperTransitionProgress = 0;

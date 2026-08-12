@@ -175,6 +175,62 @@ TestCase {
         verify(DesktopCardLayout.hasNoOverlap(resolved, 12));
     }
 
+    function test_sidebarDropKeepsIncomingCardAndMovesExistingCard() {
+        const cards = [
+            { id: "cpu", x: 420, y: 260, width: 152, height: 160 },
+            { id: "battery", x: 40, y: 40, width: 152, height: 320 }
+        ];
+        const resolved = DesktopCardLayout.resolveDraggedCollision(
+            cards, "battery",
+            { x: 420, y: 260, width: 152, height: 320 },
+            1400, 900);
+        const incoming = resolved.find(item => item.id === "battery");
+        const existing = resolved.find(item => item.id === "cpu");
+
+        verify(incoming !== undefined);
+        verify(existing !== undefined);
+        compare(incoming.x, 420);
+        compare(incoming.y, 260);
+        verify(existing.x !== 420 || existing.y !== 260);
+        verify(DesktopCardLayout.hasNoOverlap(resolved, 12));
+    }
+
+    function test_fullCollisionResolverHandlesCascadingAvoidance() {
+        const cards = [
+            { id: "cpu", x: 300, y: 300, width: 152, height: 160 },
+            { id: "gpu", x: 300, y: 300, width: 152, height: 160 },
+            { id: "memoryUsed", x: 300, y: 300, width: 152, height: 160 },
+            { id: "wifi", x: 300, y: 300, width: 152, height: 160 }
+        ];
+        const resolved = DesktopCardLayout.resolveAllCollisions(
+            cards, "cpu", 1600, 1000);
+
+        compare(resolved.length, cards.length);
+        verify(DesktopCardLayout.hasNoOverlap(resolved, 12));
+        const cpu = resolved.find(item => item.id === "cpu");
+        compare(cpu.x, 300);
+        compare(cpu.y, 300);
+    }
+
+    function test_collisionSearchUsesWholeAvailableCanvas() {
+        const cards = [
+            { id: "cpu", x: 760, y: 420, width: 152, height: 160 },
+            { id: "gpu", x: 760, y: 420, width: 152, height: 160 }
+        ];
+        const resolved = DesktopCardLayout.resolveDraggedCollision(
+            cards, "cpu",
+            { x: 760, y: 420, width: 152, height: 160 },
+            2400, 1400);
+        const gpu = resolved.find(item => item.id === "gpu");
+
+        verify(gpu !== undefined);
+        verify(DesktopCardLayout.hasNoOverlap(resolved, 12));
+        verify(gpu.x !== 760 || gpu.y !== 420);
+        verify(gpu.x >= 0 && gpu.y >= 0);
+        verify(gpu.x + gpu.width <= 2400);
+        verify(gpu.y + gpu.height <= 1400);
+    }
+
     function test_collisionResolutionIsDeterministicAndBounded() {
         const cards = [
             { id: "a", x: 0, y: 0, width: 200, height: 180 },

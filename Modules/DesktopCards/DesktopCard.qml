@@ -21,7 +21,10 @@ Item {
     readonly property var cardState:
         SystemCardService.cards[root.tileId] || null
     readonly property bool canDrag:
-        root.active && root.hostItem !== null
+        root.active
+        && root.hostItem !== null
+        && SystemCardService.isFreeLayoutMode(
+            SystemCardService.globalDesktopLayoutMode)
 
     Accessible.role: Accessible.Pane
     Accessible.name: SystemCardService.cardName(root.tileId)

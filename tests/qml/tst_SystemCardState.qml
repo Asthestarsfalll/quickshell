@@ -198,6 +198,23 @@ TestCase {
         compare(state.cards.cpu.desktop.wallpaper.yNorm, 0.6);
     }
 
+    function test_batchScreenPositionsUsesOneScreenPlacementOperation() {
+        let state = CardState.normalize({});
+        state = CardState.setContainer(
+            state, "cpu", "desktop", "DP-1", 0.1, 0.1, "screen");
+        state = CardState.setContainer(
+            state, "gpu", "desktop", "DP-1", 0.2, 0.2, "wallpaper");
+        state = CardState.setDesktopScreenPositions(state, [
+            { id: "cpu", xNorm: 0.7, yNorm: 0.8 },
+            { id: "gpu", xNorm: 0.3, yNorm: 0.4 }
+        ]);
+
+        compare(state.cards.cpu.desktop.placementSpace, "screen");
+        compare(state.cards.gpu.desktop.placementSpace, "screen");
+        compare(state.cards.cpu.desktop.screen.xNorm, 0.7);
+        compare(state.cards.gpu.desktop.screen.yNorm, 0.4);
+    }
+
     function test_freeToAutomaticMigrationKeepsWallpaperTargetSeparate() {
         let state = CardState.normalize({});
         state = CardState.setContainer(

@@ -211,6 +211,38 @@ function setDesktopScreenPosition(state, id, xNorm, yNorm) {
     });
 }
 
+// Apply a set of screen-space placements as one pure state operation.  The
+// service persists the returned state once, after all cards have been
+// normalized.  This is also used by collision resolution so intermediate
+// overlapping states never become observable or durable.
+function setDesktopScreenPositions(state, positions) {
+    var normalized = normalize(state);
+    var next = copy(normalized);
+    var changed = false;
+    (Array.isArray(positions) ? positions : []).forEach(function(position) {
+        if (!position || typeof position.id !== "string")
+            return;
+        var card = next.cards[position.id];
+        if (!card || card.container !== "desktop")
+            return;
+        var x = Number(position.xNorm);
+        var y = Number(position.yNorm);
+        if (!isFinite(x) || !isFinite(y))
+            return;
+        var nextX = clamp01(x, card.desktop.screen.xNorm);
+        var nextY = clamp01(y, card.desktop.screen.yNorm);
+        if (card.desktop.placementSpace !== "screen"
+                || card.desktop.screen.xNorm !== nextX
+                || card.desktop.screen.yNorm !== nextY) {
+            card.desktop.placementSpace = "screen";
+            card.desktop.screen.xNorm = nextX;
+            card.desktop.screen.yNorm = nextY;
+            changed = true;
+        }
+    });
+    return changed ? normalize(next) : normalized;
+}
+
 function setDesktopWallpaperPosition(state, id, xNorm, yNorm) {
     return updateCard(state, id, function(next) {
         next.desktop.wallpaper.xNorm = clamp01(

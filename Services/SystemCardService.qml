@@ -142,27 +142,39 @@ Singleton {
     function setDesktopScreenPositions(positions, requestLayout) {
         if (!Array.isArray(positions))
             return false;
-        let next = CardState.normalize(root.internalState);
-        let changed = false;
-        positions.forEach(function(position) {
-            if (!position || typeof position.id !== "string")
-                return;
-            const current = next.cards[position.id];
-            if (!current || current.container !== "desktop")
-                return;
-            const x = Number(position.xNorm);
-            const y = Number(position.yNorm);
-            if (!isFinite(x) || !isFinite(y))
-                return;
-            const updated = CardState.setDesktopScreenPosition(
-                next, position.id, x, y);
-            if (JSON.stringify(updated.cards[position.id])
-                    !== JSON.stringify(next.cards[position.id])) {
-                next = updated;
-                changed = true;
-            }
+        const next = CardState.setDesktopScreenPositions(
+            root.internalState, positions);
+        return root.commit(next, "", !!requestLayout);
+    }
+
+    // Commit a Sidebar -> Desktop transfer together with the collision result
+    // in one state transaction.  The transferred card remains the requested
+    // drop point; collision resolution only moves the other cards.
+    function transferToDesktop(cardId, screenName, xNorm, yNorm,
+                               positions, requestLayout) {
+        const id = String(cardId);
+        let next = CardState.setContainer(
+            root.internalState, id, "desktop", String(screenName || ""),
+            xNorm, yNorm, "screen");
+        const batch = Array.isArray(positions) ? positions.slice() : [];
+        let hasTransferredPosition = false;
+        batch.forEach(function(position) {
+            if (position && String(position.id) === id)
+                hasTransferredPosition = true;
         });
-        return changed && root.commit(next, "", !!requestLayout);
+        if (!hasTransferredPosition) {
+            batch.push({ id: id, xNorm: xNorm, yNorm: yNorm });
+        }
+        next = CardState.setDesktopScreenPositions(next, batch);
+        const committed = root.commit(next, id, !!requestLayout);
+        if (committed) {
+            console.log(
+                "[SystemCards] transfer",
+                id + " sidebar -> desktop",
+                "screen=" + String(screenName || "")
+            );
+        }
+        return committed;
     }
 
     function requestDesktopLayout() {

@@ -63,8 +63,26 @@ require_text "$placement" 'var desktopLayoutModes = [freeMode]'
 require_text "$host" 'DesktopCardLayout.solveScreen('
 require_text "$host" 'SystemCardService.isWallpaperLayoutMode('
 reject_text "$host" 'window.layoutMode === "free"'
+require_text "$host" 'function scheduleDesktopLayout(reason, priorityId)'
+require_text "$host" 'function reconcileDesktopLayout(reason)'
+require_text "$host" 'window.runScreenLayout();'
+require_text "$host" 'window.runWallpaperLayout();'
+reject_text "$host" 'Qt.callLater(window.runLayout)'
+require_text "$host" 'function runFreeCollisionLayout()'
 require_text "$canvas" 'function prepareScreenLayoutTransition('
 require_text "$canvas" 'function updateCollisionPreview('
+require_text "$canvas" 'function resolveExternalDrop('
+require_text "$canvas" 'function resolveCurrentCollisionLayout('
+require_text Modules/DesktopCards/DesktopCardLayout.js \
+    'function resolveAllCollisions('
+reject_text Modules/DesktopCards/DesktopCardLayout.js 'radius <= 8'
+require_text "$system_view" \
+    'DesktopPresentationService.resolveDropCollision('
+require_text "$service" 'function transferToDesktop('
+require_text Modules/DesktopCards/DesktopCard.qml \
+    'SystemCardService.isFreeLayoutMode('
+require_text Modules/DesktopCards/DesktopCard.qml \
+    'enabled: root.canDrag'
 require_text "$service" 'function setDesktopScreenPositions(positions, requestLayout)'
 
 echo "desktop card layout feature architecture tests passed"

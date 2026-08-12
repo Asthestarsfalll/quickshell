@@ -195,20 +195,10 @@ function placeWallpaperCard(card, occupied, canvasWidth, canvasHeight,
             }
         }
     }
-    // If the canvas cannot fit the remaining card even at zero gap, keep a
-    // stable bounded target instead of dropping the card from the result.
-    const fallbackPoint = candidates.length > 0
-        ? candidates[0] : { x: 0, y: 0, rank: 0 };
-    const fallbackRect = rectAt(
-        card, fallbackPoint.x, fallbackPoint.y,
-        canvasWidth, canvasHeight, 0);
-    return {
-        point: fallbackPoint,
-        rect: fallbackRect,
-        cost: candidateCost(
-            card, fallbackPoint, fallbackRect, analysis,
-            canvasWidth, canvasHeight, mode)
-    };
+    // Let the caller retry with a smaller gap before using the final
+    // deterministic collision fallback. Never silently return an overlapping
+    // candidate merely because the preferred grid was exhausted.
+    return null;
 }
 
 function sortedCards(cards) {
@@ -224,6 +214,27 @@ function sortedCards(cards) {
     return source;
 }
 
+function solveWallpaperWithGap(cards, canvasWidth, canvasHeight, analysis,
+                               mode, gap) {
+    const occupied = [];
+    const placements = [];
+    sortedCards(cards).forEach(function(card) {
+        const placed = placeWallpaperCard(
+            card, occupied, canvasWidth, canvasHeight, analysis,
+            gap, mode);
+        if (!placed)
+            return;
+        occupied.push(placed.rect);
+        placements.push({
+            id: String(card.id),
+            xNorm: clamp(placed.rect.x / canvasWidth, 0, 1),
+            yNorm: clamp(placed.rect.y / canvasHeight, 0, 1),
+            rect: placed.rect
+        });
+    });
+    return placements;
+}
+
 function solve(cards, canvasWidth, canvasHeight, analysis, mode) {
     const safeWidth = Math.max(1, safeNumber(canvasWidth, 1));
     const safeHeight = Math.max(1, safeNumber(canvasHeight, 1));
@@ -231,22 +242,20 @@ function solve(cards, canvasWidth, canvasHeight, analysis, mode) {
     if (!isWallpaperLayoutMode(selectedMode))
         return [];
 
-    const occupied = [];
-    const placements = [];
-    sortedCards(cards).forEach(function(card) {
-        const placed = placeWallpaperCard(
-            card, occupied, safeWidth, safeHeight, analysis,
-            desktopCardGap, selectedMode);
-        if (!placed)
-            return;
-        occupied.push(placed.rect);
-        placements.push({
-            id: String(card.id),
-            xNorm: clamp(placed.rect.x / safeWidth, 0, 1),
-            yNorm: clamp(placed.rect.y / safeHeight, 0, 1),
-            rect: placed.rect
-        });
-    });
+    let placements = solveWallpaperWithGap(
+        cards, safeWidth, safeHeight, analysis,
+        selectedMode, desktopCardGap);
+    if (placements.length !== (Array.isArray(cards) ? cards.length : 0)
+            || !hasNoOverlap(placements, desktopCardGap)) {
+        placements = solveWallpaperWithGap(
+            cards, safeWidth, safeHeight, analysis,
+            selectedMode, 0);
+    }
+    if (placements.length !== (Array.isArray(cards) ? cards.length : 0)
+            || !hasNoOverlap(placements, 0)) {
+        return deterministicPackedPlacements(
+            cards, placements, safeWidth, safeHeight, 0);
+    }
     return placements;
 }
 
@@ -355,17 +364,9 @@ function placeScreenCard(card, occupied, canvasWidth, canvasHeight, mode,
     });
     if (scored.length > 0)
         return scored[0];
-    const fallback = anchorPoint(mode, card, canvasWidth, canvasHeight);
-    const fallbackRect = rectAt(
-        card, fallback.x, fallback.y, canvasWidth, canvasHeight,
-        desktopCardEdgeInset);
-    // A very small output may be mathematically over capacity. Preserve a
-    // deterministic bounded delegate rather than omitting an active card.
-    return {
-        point: fallback,
-        rect: fallbackRect,
-        cost: 0
-    };
+    // Let solveScreen retry with zero gap. If the output is genuinely over
+    // capacity, the deterministic fallback is applied after both attempts.
+    return null;
 }
 
 function solveScreenWithGap(cards, canvasWidth, canvasHeight, mode, gap) {
@@ -395,11 +396,17 @@ function solveScreen(cards, canvasWidth, canvasHeight, mode) {
         return [];
     let placements = solveScreenWithGap(
         cards, safeWidth, safeHeight, selectedMode, desktopCardGap);
-    if (placements.length !== (Array.isArray(cards) ? cards.length : 0)) {
+    if (placements.length !== (Array.isArray(cards) ? cards.length : 0)
+            || !hasNoOverlap(placements, desktopCardGap)) {
         // Very small outputs may not have room for the preferred gap. Keep
         // the layout deterministic and prioritize non-overlap over spacing.
         placements = solveScreenWithGap(
             cards, safeWidth, safeHeight, selectedMode, 0);
+    }
+    if (placements.length !== (Array.isArray(cards) ? cards.length : 0)
+            || !hasNoOverlap(placements, 0)) {
+        placements = deterministicPackedPlacements(
+            cards, placements, safeWidth, safeHeight, 0);
     }
     return placements;
 }
@@ -410,59 +417,179 @@ function movementDistance(first, second) {
     return dx * dx + dy * dy;
 }
 
-function avoidanceCandidates(card, canvasWidth, canvasHeight) {
+function uniqueCoordinate(values, value, maximum) {
+    const bounded = clamp(Number(value) || 0, 0,
+        Math.max(0, maximum));
+    const normalized = Math.round(bounded * 1000) / 1000;
+    if (values.some(function(existing) {
+        return Math.abs(existing - normalized) < 0.001;
+    })) {
+        return;
+    }
+    values.push(normalized);
+}
+
+function avoidanceCandidates(card, occupied, canvasWidth, canvasHeight,
+                             gap) {
     const size = boundedSize(card, canvasWidth, canvasHeight);
     const current = rectAt(
         card, card.x, card.y, canvasWidth, canvasHeight, 0);
-    const maxX = Math.max(current.x, canvasWidth - size.width);
-    const maxY = Math.max(current.y, canvasHeight - size.height);
-    const points = [{ x: current.x, y: current.y, rank: 0 }];
-    const step = Math.max(18, Math.min(size.width, size.height) * 0.35);
-    for (let radius = 1; radius <= 8; radius += 1) {
-        points.push(
-            { x: current.x - radius * step, y: current.y, rank: radius },
-            { x: current.x + radius * step, y: current.y, rank: radius },
-            { x: current.x, y: current.y - radius * step, rank: radius },
-            { x: current.x, y: current.y + radius * step, rank: radius },
-            { x: current.x - radius * step,
-                y: current.y - radius * step, rank: radius },
-            { x: current.x + radius * step,
-                y: current.y + radius * step, rank: radius },
-            { x: current.x - radius * step,
-                y: current.y + radius * step, rank: radius },
-            { x: current.x + radius * step,
-                y: current.y - radius * step, rank: radius }
-        );
-    }
-    points.push(
-        { x: 0, y: 0, rank: 20 },
-        { x: maxX, y: 0, rank: 21 },
-        { x: 0, y: maxY, rank: 22 },
-        { x: maxX, y: maxY, rank: 23 }
-    );
+    const maxX = Math.max(0, canvasWidth - size.width);
+    const maxY = Math.max(0, canvasHeight - size.height);
+    const padding = Math.max(0, Number(gap) || 0);
+    const xValues = [];
+    const yValues = [];
+
+    uniqueCoordinate(xValues, current.x, maxX);
+    uniqueCoordinate(xValues, 0, maxX);
+    uniqueCoordinate(xValues, maxX, maxX);
+    uniqueCoordinate(yValues, current.y, maxY);
+    uniqueCoordinate(yValues, 0, maxY);
+    uniqueCoordinate(yValues, maxY, maxY);
+
+    // A free rectangle can be slid until an edge touches either the output
+    // boundary or an occupied edge. Enumerating these boundaries is a
+    // complete small candidate set for the normal case and avoids the old
+    // fixed-radius search that could silently leave an overlap.
+    (Array.isArray(occupied) ? occupied : []).forEach(function(rect) {
+        uniqueCoordinate(xValues,
+            rect.x - size.width - padding, maxX);
+        uniqueCoordinate(xValues,
+            rect.x + rect.width + padding, maxX);
+        uniqueCoordinate(yValues,
+            rect.y - size.height - padding, maxY);
+        uniqueCoordinate(yValues,
+            rect.y + rect.height + padding, maxY);
+    });
+
+    const points = [];
+    xValues.forEach(function(x) {
+        yValues.forEach(function(y) {
+            points.push({
+                x: x,
+                y: y,
+                rank: Math.abs(x - current.x) + Math.abs(y - current.y)
+            });
+        });
+    });
     return points;
+}
+
+function exhaustiveGridPosition(card, occupied, canvasWidth, canvasHeight,
+                                gap) {
+    const size = boundedSize(card, canvasWidth, canvasHeight);
+    const maxX = Math.max(0, canvasWidth - size.width);
+    const maxY = Math.max(0, canvasHeight - size.height);
+    const step = 4;
+    let best = null;
+    for (let y = 0; y <= maxY + 0.001; y += step) {
+        for (let x = 0; x <= maxX + 0.001; x += step) {
+            const rect = rectAt(
+                card, x, y, canvasWidth, canvasHeight, 0);
+            if (overlapsAny(rect, occupied, gap))
+                continue;
+            const candidate = {
+                rect: rect,
+                cost: movementDistance(rect, card) + x + y
+            };
+            if (!best || candidate.cost < best.cost)
+                best = candidate;
+        }
+    }
+    return best ? best.rect : null;
 }
 
 function nearestFreePosition(card, occupied, canvasWidth, canvasHeight,
                              gap) {
     const candidates = avoidanceCandidates(
-        card, canvasWidth, canvasHeight);
+        card, occupied, canvasWidth, canvasHeight, gap);
     const scored = [];
-    candidates.forEach(function(point) {
-        const rect = rectAt(
-            card, point.x, point.y, canvasWidth, canvasHeight, 0);
-        if (overlapsAny(rect, occupied, gap))
-            return;
-        scored.push({
-            rect: rect,
-            cost: movementDistance(rect, card)
-                + point.rank * 0.000001
+    function collect(points) {
+        points.forEach(function(point) {
+            const rect = rectAt(
+                card, point.x, point.y, canvasWidth, canvasHeight, 0);
+            if (overlapsAny(rect, occupied, gap))
+                return;
+            scored.push({
+                rect: rect,
+                cost: movementDistance(rect, card)
+                    + point.rank * 0.000001
+            });
         });
-    });
+    }
+    collect(candidates);
+    if (scored.length === 0) {
+        const exhaustive = exhaustiveGridPosition(
+            card, occupied, canvasWidth, canvasHeight, gap);
+        if (exhaustive)
+            scored.push({
+                rect: exhaustive,
+                cost: movementDistance(exhaustive, card)
+            });
+    }
     scored.sort(function(first, second) {
         return first.cost - second.cost;
     });
     return scored.length > 0 ? scored[0].rect : null;
+}
+
+function collisionOrder(cards, preferredId) {
+    const preferred = String(preferredId || "");
+    const source = Array.isArray(cards) ? cards.slice() : [];
+    source.sort(function(first, second) {
+        const firstId = String(first.id);
+        const secondId = String(second.id);
+        if (firstId === preferred && secondId !== preferred)
+            return -1;
+        if (secondId === preferred && firstId !== preferred)
+            return 1;
+        const areaDifference = safeNumber(second.width, 0)
+            * safeNumber(second.height, 0)
+            - safeNumber(first.width, 0) * safeNumber(first.height, 0);
+        if (areaDifference !== 0)
+            return areaDifference;
+        return firstId.localeCompare(secondId);
+    });
+    return source;
+}
+
+// Resolve a complete set of desired screen-space rectangles in deterministic
+// order. The preferred card is placed first and is therefore authoritative;
+// every later card is an avoider. The result is runtime geometry and never
+// writes persistence by itself.
+function resolveAllCollisions(cards, preferredId, canvasWidth, canvasHeight,
+                             gap) {
+    const collisionGap = gap === undefined
+        ? desktopCardGap : Math.max(0, Number(gap) || 0);
+    const source = collisionOrder(cards, preferredId);
+    const occupied = [];
+    const result = [];
+    source.forEach(function(card) {
+        const original = rectAt(
+            card, card.x, card.y, canvasWidth, canvasHeight, 0);
+        let resolved = original;
+        if (overlapsAny(original, occupied, collisionGap)) {
+            resolved = nearestFreePosition(
+                { id: card.id, x: original.x, y: original.y,
+                    width: original.width, height: original.height },
+                occupied, canvasWidth, canvasHeight, collisionGap
+            ) || (collisionGap > 0 ? nearestFreePosition(
+                { id: card.id, x: original.x, y: original.y,
+                    width: original.width, height: original.height },
+                occupied, canvasWidth, canvasHeight, 0
+            ) : null) || original;
+        }
+        occupied.push(resolved);
+        result.push({
+            id: String(card.id),
+            x: resolved.x,
+            y: resolved.y,
+            width: resolved.width,
+            height: resolved.height,
+            rect: resolved
+        });
+    });
+    return result;
 }
 
 // The dragged card is authoritative. Every other card is an avoider. The
@@ -471,68 +598,54 @@ function nearestFreePosition(card, occupied, canvasWidth, canvasHeight,
 function resolveDraggedCollision(cards, draggedId, draggedRect,
                                  canvasWidth, canvasHeight) {
     const source = Array.isArray(cards) ? cards.slice() : [];
-    const positions = {};
-    source.forEach(function(card) {
-        const rect = rectAt(
-            card, card.x, card.y, canvasWidth, canvasHeight,
-            0);
-        positions[String(card.id)] = rect;
-    });
     const id = String(draggedId || "");
-    if (!positions[id])
+    const dragged = source.find(function(card) {
+        return String(card.id) === id;
+    });
+    if (!dragged)
         return [];
-    positions[id] = rectAt(
-        { id: id, width: draggedRect.width, height: draggedRect.height },
-        draggedRect.x, draggedRect.y, canvasWidth, canvasHeight,
-        0);
+    const desired = source.map(function(card) {
+        if (String(card.id) === id) {
+            return {
+                id: id,
+                x: Number(draggedRect.x),
+                y: Number(draggedRect.y),
+                width: Number(draggedRect.width),
+                height: Number(draggedRect.height)
+            };
+        }
+        return card;
+    });
+    return resolveAllCollisions(
+        desired, id, canvasWidth, canvasHeight, desktopCardGap);
+}
 
-    const queue = [id];
-    const maxIterations = Math.max(1, source.length * source.length * 4);
-    let iterations = 0;
-    while (queue.length > 0 && iterations < maxIterations) {
-        const sourceId = queue.shift();
-        const sourceRect = positions[sourceId];
-        source.forEach(function(card) {
-            const otherId = String(card.id);
-            if (otherId === id || otherId === sourceId)
-                return;
-            const other = positions[otherId];
-            if (!rectsOverlap(sourceRect, other, desktopCardGap))
-                return;
-
-            const occupied = [];
-            Object.keys(positions).forEach(function(occupiedId) {
-                if (occupiedId !== otherId)
-                    occupied.push(positions[occupiedId]);
-            });
-            const moved = nearestFreePosition(
-                { id: otherId, width: other.width, height: other.height,
-                    x: other.x, y: other.y },
-                occupied, canvasWidth, canvasHeight, desktopCardGap)
-                || nearestFreePosition(
-                    { id: otherId, width: other.width, height: other.height,
-                        x: other.x, y: other.y },
-                    occupied, canvasWidth, canvasHeight, 0);
-            if (!moved)
-                return;
-            if (Math.abs(moved.x - other.x) < 0.01
-                    && Math.abs(moved.y - other.y) < 0.01)
-                return;
-            positions[otherId] = moved;
-            queue.push(otherId);
-            iterations += 1;
-        });
-    }
-
-    return Object.keys(positions).sort().map(function(cardId) {
-        const rect = positions[cardId];
+function deterministicPackedPlacements(cards, existing, canvasWidth,
+                                        canvasHeight, gap) {
+    const byId = {};
+    (Array.isArray(existing) ? existing : []).forEach(function(placement) {
+        const rect = placement.rect || placement;
+        byId[String(placement.id)] = rect;
+    });
+    const desired = (Array.isArray(cards) ? cards : []).map(function(card) {
+        const rect = byId[String(card.id)];
+        const fallback = normalizedPosition(card);
         return {
-            id: cardId,
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height,
-            rect: rect
+            id: String(card.id),
+            x: rect ? rect.x : fallback.xNorm * canvasWidth,
+            y: rect ? rect.y : fallback.yNorm * canvasHeight,
+            width: card.width,
+            height: card.height
+        };
+    });
+    const resolved = resolveAllCollisions(
+        desired, "", canvasWidth, canvasHeight, gap);
+    return resolved.map(function(rect) {
+        return {
+            id: rect.id,
+            xNorm: clamp(rect.x / Math.max(1, canvasWidth), 0, 1),
+            yNorm: clamp(rect.y / Math.max(1, canvasHeight), 0, 1),
+            rect: rect.rect
         };
     });
 }

@@ -7,6 +7,7 @@ import qs.Services
 import qs.Widgets.common
 import qs.Modules.SystemCards
 import "./DesktopCardLayout.js" as DesktopCardLayout
+import "../SystemCards/SystemCardPlacement.js" as Placement
 
 Variants {
     id: variants
@@ -59,7 +60,9 @@ Variants {
         property var analysis: null
         property int analysisGeneration: 0
         property string requestedAnalysisKey: ""
-        property bool automaticLayoutScheduled: false
+        property bool layoutScheduled: false
+        property string layoutRequestReason: ""
+        property string layoutPriorityId: ""
         readonly property string analysisRequestKey:
             "desktop-cards:" + String(modelData.name)
         readonly property bool ownsPresentationDrag:
@@ -104,23 +107,84 @@ Variants {
             );
         }
 
-        function scheduleAutomaticLayout() {
-            if (window.automaticLayoutScheduled)
+        function scheduleDesktopLayout(reason, priorityId) {
+            window.layoutRequestReason = String(
+                reason || "state-changed");
+            if (priorityId !== undefined && priorityId !== null)
+                window.layoutPriorityId = String(priorityId || "");
+            if (window.layoutScheduled)
                 return;
-            window.automaticLayoutScheduled = true;
+            window.layoutScheduled = true;
             Qt.callLater(function() {
-                window.automaticLayoutScheduled = false;
-                if (SystemCardService.isScreenLayoutMode(
-                        window.layoutMode)) {
-                    window.runScreenLayout();
-                    return;
-                }
-                if (!SystemCardService.isWallpaperLayoutMode(
-                        window.layoutMode))
-                    return;
-                window.requestAnalysis();
-                window.runLayout();
+                window.layoutScheduled = false;
+                const requestReason = window.layoutRequestReason;
+                window.layoutRequestReason = "";
+                window.reconcileDesktopLayout(requestReason);
             });
+        }
+
+        function layoutBlocked() {
+            return !cardCanvas.allActiveCardsPresented
+                || cardCanvas.screenTransitionActive
+                || cardCanvas.anyCardDragging
+                || SystemCardDragSession.visualHandoffPending;
+        }
+
+        function normalizedScreenPlacements(rects) {
+            return (Array.isArray(rects) ? rects : []).map(function(rect) {
+                const point = Placement.normalizedPosition(
+                    rect.x, rect.y, window.width, window.height);
+                return {
+                    id: String(rect.id),
+                    xNorm: point.xNorm,
+                    yNorm: point.yNorm
+                };
+            });
+        }
+
+        function runFreeCollisionLayout() {
+            if (window.desktopIds.length === 0)
+                return true;
+            if (window.layoutBlocked())
+                return false;
+            const resolved = cardCanvas.resolveCurrentCollisionLayout(
+                window.layoutPriorityId);
+            if (!Array.isArray(resolved)
+                    || resolved.length !== window.desktopIds.length)
+                return false;
+            if (!DesktopCardLayout.hasNoOverlap(resolved, 0)) {
+                console.warn(
+                    "[DesktopCards] free collision fallback still overlaps",
+                    window.screenKey
+                );
+            }
+            const placements = window.normalizedScreenPlacements(resolved);
+            const prepared = cardCanvas.prepareScreenLayoutTransition(
+                placements);
+            SystemCardService.applyDesktopScreenLayout(placements);
+            if (prepared)
+                cardCanvas.startScreenLayoutTransition();
+            window.layoutPriorityId = "";
+            return true;
+        }
+
+        function reconcileDesktopLayout(reason) {
+            const mode = SystemCardService.globalDesktopLayoutMode;
+            if (SystemCardService.isFreeLayoutMode(mode)) {
+                window.analysis = null;
+                window.requestedAnalysisKey = "";
+                window.runFreeCollisionLayout();
+                return;
+            }
+            window.layoutPriorityId = "";
+            if (SystemCardService.isScreenLayoutMode(mode)) {
+                window.runScreenLayout();
+                return;
+            }
+            if (SystemCardService.isWallpaperLayoutMode(mode)) {
+                window.requestAnalysis();
+                window.runWallpaperLayout();
+            }
         }
 
         function cardDescriptors(space) {
@@ -142,7 +206,7 @@ Variants {
             return result;
         }
 
-        function runLayout() {
+        function runWallpaperLayout() {
             const mode = SystemCardService.globalDesktopLayoutMode;
             if (!window.scene || window.desktopIds.length === 0
                     || !SystemCardService.isWallpaperLayoutMode(mode)
@@ -151,11 +215,9 @@ Variants {
             // Do not let a cached analysis result move a newly transferred
             // card before its first frame has been presented at the drop
             // point. This is a handoff barrier, not a visibility gate.
-            if (!cardCanvas.allActiveCardsPresented
-                    || cardCanvas.screenTransitionActive
-                    || cardCanvas.anyCardDragging
-                    || SystemCardDragSession.visualHandoffPending)
+            if (window.layoutBlocked()) {
                 return;
+            }
             const placements = DesktopCardLayout.solve(
                 window.cardDescriptors(),
                 window.scene.canvasWidth,
@@ -163,6 +225,13 @@ Variants {
                 window.analysis,
                 mode
             );
+            if (!DesktopCardLayout.hasNoOverlap(placements, 0)) {
+                console.warn(
+                    "[DesktopCards] wallpaper solver produced overlap",
+                    mode,
+                    window.screenKey
+                );
+            }
             SystemCardService.applyDesktopLayout(placements);
             cardCanvas.startAutomaticTransitions();
         }
@@ -171,11 +240,9 @@ Variants {
             const mode = SystemCardService.globalDesktopLayoutMode;
             if (!SystemCardService.isScreenLayoutMode(mode)
                     || window.desktopIds.length === 0
-                    || cardCanvas.screenTransitionActive
-                    || cardCanvas.anyCardDragging
-                    || !cardCanvas.allActiveCardsPresented
-                    || SystemCardDragSession.visualHandoffPending)
+                    || window.layoutBlocked()) {
                 return;
+            }
             const placements = DesktopCardLayout.solveScreen(
                 window.cardDescriptors("screen"),
                 window.width,
@@ -184,6 +251,13 @@ Variants {
             );
             if (placements.length === 0)
                 return;
+            if (!DesktopCardLayout.hasNoOverlap(placements, 0)) {
+                console.warn(
+                    "[DesktopCards] screen solver produced overlap",
+                    mode,
+                    window.screenKey
+                );
+            }
             const prepared = cardCanvas.prepareScreenLayoutTransition(
                 placements);
             SystemCardService.applyDesktopScreenLayout(placements);
@@ -238,6 +312,11 @@ Variants {
 
             anchors.fill: parent
             clip: true
+
+            function resolveDesktopDrop(tileId, x, y, width, height) {
+                return cardCanvas.resolveExternalDrop(
+                    tileId, x, y, width, height);
+            }
 
             DesktopCardCanvas {
                 id: cardCanvas
@@ -304,7 +383,7 @@ Variants {
                     // busy map and still supplies a deterministic,
                     // collision-free wallpaper placement. Analysis failure
                     // must not leave an automatic card in screen space.
-                    window.runLayout();
+                    window.scheduleDesktopLayout("analysis-failed");
                     return;
                 }
                 console.log(
@@ -317,19 +396,20 @@ Variants {
                         + " maxBusy="
                         + Number(result.maxBusyScore).toFixed(4)
                 );
-                window.runLayout();
+                window.scheduleDesktopLayout("analysis-ready");
             }
         }
 
         Connections {
             target: SystemCardService
 
-            function onCardStateChanged() {
-                Qt.callLater(window.scheduleAutomaticLayout);
+            function onCardStateChanged(cardId) {
+                window.scheduleDesktopLayout(
+                    "card-state-changed", cardId);
             }
 
             function onDesktopLayoutRequested() {
-                window.scheduleAutomaticLayout();
+                window.scheduleDesktopLayout("layout-requested");
             }
         }
 
@@ -337,31 +417,73 @@ Variants {
             target: cardCanvas
 
             function onDelegateReady() {
-                Qt.callLater(window.runLayout);
+                window.scheduleDesktopLayout("delegate-ready");
             }
 
             function onHandoffReady(tileId) {
                 if (SystemCardDragSession.completeVisualHandoff(tileId))
-                    window.scheduleAutomaticLayout();
+                    window.scheduleDesktopLayout("handoff-complete");
             }
 
             function onScreenTransitionsFinished() {
-                window.scheduleAutomaticLayout();
+                window.scheduleDesktopLayout("screen-transition-finished");
+            }
+
+            function onAllActiveCardsPresentedChanged() {
+                if (cardCanvas.allActiveCardsPresented)
+                    window.scheduleDesktopLayout("delegates-presented");
+            }
+
+            function onAnyCardDraggingChanged() {
+                if (!cardCanvas.anyCardDragging)
+                    window.scheduleDesktopLayout("drag-finished");
+            }
+
+            function onScreenTransitionActiveChanged() {
+                if (!cardCanvas.screenTransitionActive)
+                    window.scheduleDesktopLayout("transition-unblocked");
             }
         }
 
-        onDesktopIdsChanged: window.scheduleAutomaticLayout()
-        onSceneChanged: {
-            if (SystemCardService.isWallpaperLayoutMode(
-                    window.layoutMode))
-                window.requestAnalysis();
+        Connections {
+            target: SystemCardDragSession
+
+            function onVisualHandoffPendingChanged() {
+                if (!SystemCardDragSession.visualHandoffPending)
+                    window.scheduleDesktopLayout("handoff-unblocked");
+            }
         }
+
+        Connections {
+            target: window.scene
+
+            function onAnalysisGeometryReadyChanged() {
+                window.scheduleDesktopLayout("analysis-geometry-ready");
+            }
+
+            function onCanvasWidthChanged() {
+                window.scheduleDesktopLayout("wallpaper-geometry-changed");
+            }
+
+            function onCanvasHeightChanged() {
+                window.scheduleDesktopLayout("wallpaper-geometry-changed");
+            }
+        }
+
+        onDesktopIdsChanged:
+            window.scheduleDesktopLayout("desktop-cards-changed")
+        onWidthChanged:
+            window.scheduleDesktopLayout("screen-geometry-changed")
+        onHeightChanged:
+            window.scheduleDesktopLayout("screen-geometry-changed")
+        onSceneChanged:
+            window.scheduleDesktopLayout("scene-changed")
         onAnalysisKeyChanged: {
             if (SystemCardService.isWallpaperLayoutMode(
                     window.layoutMode)) {
                 window.requestedAnalysisKey = "";
-                window.requestAnalysis();
             }
+            window.scheduleDesktopLayout("wallpaper-changed");
         }
         onLayoutModeChanged: {
             const oldMode = window.lastLayoutMode;
@@ -376,15 +498,14 @@ Variants {
             } else if (SystemCardService.isScreenLayoutMode(
                     window.layoutMode)) {
                 cardCanvas.promoteCardsToScreen();
-                window.scheduleAutomaticLayout();
             } else if (isWallpaper) {
                 if (!wasWallpaper) {
                     window.analysis = null;
                     window.requestedAnalysisKey = "";
                 }
-                window.scheduleAutomaticLayout();
             }
             window.lastLayoutMode = window.layoutMode;
+            window.scheduleDesktopLayout("mode-changed");
         }
 
         Component.onCompleted: {
@@ -401,7 +522,7 @@ Variants {
                         || SystemCardService.isScreenLayoutMode(
                             window.layoutMode))
                     cardCanvas.promoteCardsToScreen();
-                window.scheduleAutomaticLayout();
+                window.scheduleDesktopLayout("host-ready");
             });
         }
 
