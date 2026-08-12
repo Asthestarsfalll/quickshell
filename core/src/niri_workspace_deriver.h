@@ -6,7 +6,6 @@
 
 namespace NiriWorkspaceDeriver {
 
-void recomputeWindowCounts(QList<NiriWorkspace> &workspaces,
-                           const QList<NiriWindow> &windows);
+void recomputeWindowCounts(QList<NiriWorkspace> &workspaces, const QList<NiriWindow> &windows);
 
 }

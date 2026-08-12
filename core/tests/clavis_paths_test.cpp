@@ -8,7 +8,7 @@
 class ClavisPathsTest : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void honorsXdgAndExplicitOverrides();
     void usesPathKeyFallback();
     void rejectsUnsafeProfileNamesByFallingBack();
@@ -35,14 +35,13 @@ void ClavisPathsTest::honorsXdgAndExplicitOverrides()
     qputenv("XDG_CACHE_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("cache"))));
     qputenv("XDG_RUNTIME_DIR", QFile::encodeName(QDir(root).filePath(QStringLiteral("runtime"))));
     qputenv("CLAVIS_PROFILE", "test-profile");
-    qputenv("CLAVIS_PROFILE_CONFIG_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("profile-config"))));
+    qputenv("CLAVIS_PROFILE_CONFIG_HOME",
+            QFile::encodeName(QDir(root).filePath(QStringLiteral("profile-config"))));
     qputenv("CLAVIS_PROFILE_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("profile"))));
     qputenv("CLAVIS_GENERATED_HOME", QFile::encodeName(QDir(root).filePath(QStringLiteral("generated"))));
     qputenv("CLAVIS_KEY", QFile::encodeName(QDir(root).filePath(QStringLiteral("system-bin/key"))));
 
-    QCOMPARE(
-        qgetenv("XDG_CONFIG_HOME"),
-        QFile::encodeName(QDir(root).filePath(QStringLiteral("config"))));
+    QCOMPARE(qgetenv("XDG_CONFIG_HOME"), QFile::encodeName(QDir(root).filePath(QStringLiteral("config"))));
 
     const auto paths = Clavis::Runtime::ClavisPaths::fromEnvironment();
     QCOMPARE(paths.configHome(), QDir(root).filePath(QStringLiteral("config/clavis")));
@@ -77,9 +76,7 @@ void ClavisPathsTest::rejectsUnsafeProfileNamesByFallingBack()
     QVERIFY(paths.profileHome().endsWith(QStringLiteral("/profiles/default")));
 
     qputenv("CLAVIS_PROFILE", "bad\\name");
-    QCOMPARE(
-        Clavis::Runtime::ClavisPaths::fromEnvironment().profileName(),
-        QStringLiteral("default"));
+    QCOMPARE(Clavis::Runtime::ClavisPaths::fromEnvironment().profileName(), QStringLiteral("default"));
 }
 
 QTEST_MAIN(ClavisPathsTest)

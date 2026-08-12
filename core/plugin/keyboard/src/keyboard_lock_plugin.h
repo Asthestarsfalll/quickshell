@@ -12,7 +12,7 @@ class KeyboardLockState : public QObject {
     Q_PROPERTY(bool numLock READ numLock NOTIFY lockStateChanged)
     Q_PROPERTY(bool capsLock READ capsLock NOTIFY lockStateChanged)
 
-public:
+  public:
     explicit KeyboardLockState(QObject *parent = nullptr);
 
     bool numLock() const;
@@ -20,10 +20,10 @@ public:
 
     Q_INVOKABLE void refresh();
 
-signals:
+  signals:
     void lockStateChanged();
 
-private:
+  private:
     static bool readAnyLedState(const QString &suffix);
     void setStates(bool numLock, bool capsLock);
 

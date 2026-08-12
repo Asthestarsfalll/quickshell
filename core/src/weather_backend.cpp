@@ -11,29 +11,36 @@
 #include <QtMath>
 
 namespace {
-double variantDouble(const QVariant &value, double fallback = qQNaN()) {
+double variantDouble(const QVariant &value, double fallback = qQNaN())
+{
     bool ok = false;
     const double number = value.toDouble(&ok);
     return ok ? number : fallback;
 }
 
-double numberAt(const QJsonObject &object, const QString &key, int index, double fallback = 0.0) {
+double numberAt(const QJsonObject &object, const QString &key, int index, double fallback = 0.0)
+{
     const auto array = object.value(key).toArray();
-    if (index < 0 || index >= array.size() || array.at(index).isNull()) return fallback;
+    if (index < 0 || index >= array.size() || array.at(index).isNull())
+        return fallback;
     return array.at(index).toDouble();
 }
 
-int intAt(const QJsonObject &object, const QString &key, int index, int fallback = 0) {
+int intAt(const QJsonObject &object, const QString &key, int index, int fallback = 0)
+{
     return qRound(numberAt(object, key, index, fallback));
 }
 
-qint64 timeAt(const QJsonObject &object, int index) {
+qint64 timeAt(const QJsonObject &object, int index)
+{
     const auto array = object.value("time").toArray();
-    if (index < 0 || index >= array.size()) return 0;
+    if (index < 0 || index >= array.size())
+        return 0;
     return array.at(index).toVariant().toLongLong();
 }
 
-QVariantMap airAt(const QJsonObject &hourly, int index) {
+QVariantMap airAt(const QJsonObject &hourly, int index)
+{
     QVariantMap air;
     air["pm10"] = numberAt(hourly, "pm10", index, qQNaN());
     air["pm25"] = numberAt(hourly, "pm2_5", index, qQNaN());
@@ -43,15 +50,14 @@ QVariantMap airAt(const QJsonObject &hourly, int index) {
     air["ozone"] = numberAt(hourly, "ozone", index, qQNaN());
     return air;
 }
-}
+} // namespace
 
-WeatherBackend::WeatherBackend(QObject *parent)
-    : QObject(parent),
-      m_cachePath(WeatherCache::defaultPath())
+WeatherBackend::WeatherBackend(QObject *parent) : QObject(parent), m_cachePath(WeatherCache::defaultPath())
 {
     loadSettings();
     m_snapshot = WeatherCache::load(m_cachePath);
-    if (m_snapshot.valid) emit snapshotChanged();
+    if (m_snapshot.valid)
+        emit snapshotChanged();
 
     connect(&m_forecastTimer, &QTimer::timeout, this, &WeatherBackend::refresh);
     connect(&m_airTimer, &QTimer::timeout, this, &WeatherBackend::refresh);
@@ -59,8 +65,10 @@ WeatherBackend::WeatherBackend(QObject *parent)
     QTimer::singleShot(0, this, &WeatherBackend::refresh);
 }
 
-void WeatherBackend::refresh() {
-    if (m_loading) return;
+void WeatherBackend::refresh()
+{
+    if (m_loading)
+        return;
     setLoading(true);
     if (m_hasManualLocation) {
         startFetch(m_manualLocation);
@@ -78,7 +86,8 @@ void WeatherBackend::refresh() {
     });
 }
 
-void WeatherBackend::setManualLocation(double latitude, double longitude, const QString &name) {
+void WeatherBackend::setManualLocation(double latitude, double longitude, const QString &name)
+{
     m_manualLocation.latitude = latitude;
     m_manualLocation.longitude = longitude;
     m_manualLocation.name = name.isEmpty() ? QStringLiteral("Manual location") : name;
@@ -87,35 +96,46 @@ void WeatherBackend::setManualLocation(double latitude, double longitude, const 
     refresh();
 }
 
-void WeatherBackend::clearManualLocation() {
+void WeatherBackend::clearManualLocation()
+{
     m_hasManualLocation = false;
     saveSettings();
     refresh();
 }
 
-void WeatherBackend::setLoading(bool loading) {
-    if (m_loading == loading) return;
+void WeatherBackend::setLoading(bool loading)
+{
+    if (m_loading == loading)
+        return;
     m_loading = loading;
     emit loadingChanged();
 }
 
-void WeatherBackend::startFetch(const WeatherLocation &location) {
-    m_client.requestForecast(location.latitude, location.longitude, [this, location](bool forecastOk, const QJsonObject &forecast, const QString &forecastError) {
-        if (!forecastOk) {
-            m_snapshot.status = m_snapshot.valid ? "stale" : "error";
-            m_snapshot.errorMessage = forecastError;
-            setLoading(false);
-            emit snapshotChanged();
-            return;
-        }
-        m_client.requestAirQuality(location.latitude, location.longitude, [this, location, forecast](bool airOk, const QJsonObject &air, const QString &airError) {
-            applyForecast(location, forecast, airOk ? air : QJsonObject(), airOk ? QString() : airError);
-            setLoading(false);
+void WeatherBackend::startFetch(const WeatherLocation &location)
+{
+    m_client.requestForecast(
+        location.latitude, location.longitude,
+        [this, location](bool forecastOk, const QJsonObject &forecast, const QString &forecastError) {
+            if (!forecastOk) {
+                m_snapshot.status = m_snapshot.valid ? "stale" : "error";
+                m_snapshot.errorMessage = forecastError;
+                setLoading(false);
+                emit snapshotChanged();
+                return;
+            }
+            m_client.requestAirQuality(
+                location.latitude, location.longitude,
+                [this, location, forecast](bool airOk, const QJsonObject &air, const QString &airError) {
+                    applyForecast(location, forecast, airOk ? air : QJsonObject(),
+                                  airOk ? QString() : airError);
+                    setLoading(false);
+                });
         });
-    });
 }
 
-void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonObject &forecast, const QJsonObject &airQuality, const QString &partialError) {
+void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonObject &forecast,
+                                   const QJsonObject &airQuality, const QString &partialError)
+{
     WeatherSnapshot next;
     next.valid = true;
     next.status = partialError.isEmpty() ? "fresh" : "partial";
@@ -179,7 +199,8 @@ void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonO
         item["cloudCover"] = numberAt(hourly, "cloud_cover", i);
         item["visibilityM"] = numberAt(hourly, "visibility", i);
         allHourly.append(item);
-        if (time >= windowStart && time <= windowEnd) next.hourly.append(item);
+        if (time >= windowStart && time <= windowEnd)
+            next.hourly.append(item);
     }
 
     const QJsonObject daily = forecast.value("daily").toObject();
@@ -221,11 +242,15 @@ void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonO
     QVariantMap todayDaily;
     for (const auto &day : allDaily) {
         const QDate date = QDate::fromString(day.value("date").toString(), Qt::ISODate);
-        if (date == today) todayDaily = day;
-        if (date >= today) next.daily.append(day);
-        if (date >= trendStart && date <= trendEnd) next.dailyTrend.append(day);
+        if (date == today)
+            todayDaily = day;
+        if (date >= today)
+            next.daily.append(day);
+        if (date >= trendStart && date <= trendEnd)
+            next.dailyTrend.append(day);
     }
-    if (todayDaily.isEmpty() && !next.daily.isEmpty()) todayDaily = next.daily.first();
+    if (todayDaily.isEmpty() && !next.daily.isEmpty())
+        todayDaily = next.daily.first();
     if (!next.hourly.isEmpty() && !todayDaily.isEmpty()) {
         next.current = WeatherCalculator::completeCurrent(next.current, next.hourly.first(), todayDaily);
     }
@@ -235,7 +260,8 @@ void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonO
     int added = 0;
     for (int i = 0; i < minutelyCount && added < 8; ++i) {
         const qint64 time = timeAt(minutely, i);
-        if (time < now - 15 * 60) continue;
+        if (time < now - 15 * 60)
+            continue;
         QVariantMap item;
         item["time"] = time;
         item["minuteInterval"] = 15;
@@ -256,22 +282,29 @@ void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonO
     }
     for (auto &hour : next.hourly) {
         const auto air = airByTime.value(hour.value("time").toLongLong());
-        if (!air.isEmpty()) hour["airQuality"] = air;
+        if (!air.isEmpty())
+            hour["airQuality"] = air;
     }
     auto applyDailyAir = [&dailyAir](QList<QVariantMap> &days) {
         for (auto &day : days) {
             const auto values = dailyAir.value(day.value("date").toString());
-            if (values.isEmpty()) continue;
+            if (values.isEmpty())
+                continue;
             QVariantMap avgAir;
-            QStringList airKeys{"pm10", "pm25", "carbonMonoxide", "nitrogenDioxide", "sulphurDioxide", "ozone"};
+            QStringList airKeys{"pm10",           "pm25", "carbonMonoxide", "nitrogenDioxide",
+                                "sulphurDioxide", "ozone"};
             for (const auto &key : airKeys) {
                 double total = 0.0;
                 int count = 0;
                 for (const auto &value : values) {
                     const double n = variantDouble(value.value(key));
-                    if (!qIsNaN(n)) { total += n; ++count; }
+                    if (!qIsNaN(n)) {
+                        total += n;
+                        ++count;
+                    }
                 }
-                if (count > 0) avgAir[key] = total / count;
+                if (count > 0)
+                    avgAir[key] = total / count;
             }
             day["airQuality"] = avgAir;
         }
@@ -288,12 +321,14 @@ void WeatherBackend::applyForecast(const WeatherLocation &location, const QJsonO
     emit snapshotChanged();
 }
 
-void WeatherBackend::scheduleTimers() {
+void WeatherBackend::scheduleTimers()
+{
     m_forecastTimer.start(30 * 60 * 1000);
     m_airTimer.start(60 * 60 * 1000);
 }
 
-void WeatherBackend::loadSettings() {
+void WeatherBackend::loadSettings()
+{
     QSettings settings("Clavis", "Weather");
     m_hasManualLocation = settings.value("manual/enabled", false).toBool();
     m_manualLocation.latitude = settings.value("manual/latitude", 0.0).toDouble();
@@ -301,7 +336,8 @@ void WeatherBackend::loadSettings() {
     m_manualLocation.name = settings.value("manual/name", "Manual location").toString();
 }
 
-void WeatherBackend::saveSettings() {
+void WeatherBackend::saveSettings()
+{
     QSettings settings("Clavis", "Weather");
     settings.setValue("manual/enabled", m_hasManualLocation);
     settings.setValue("manual/latitude", m_manualLocation.latitude);

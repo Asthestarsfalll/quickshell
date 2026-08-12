@@ -2,16 +2,14 @@
 
 #include <QDateTime>
 
-AudioLevelProvider::AudioLevelProvider(QObject *parent)
-    : QObject(parent)
+AudioLevelProvider::AudioLevelProvider(QObject *parent) : QObject(parent)
 {
     m_timer.setInterval(33);
     m_timer.setTimerType(Qt::PreciseTimer);
     connect(&m_timer, &QTimer::timeout, this, &AudioLevelProvider::poll);
     m_visualTimer.setInterval(160);
     m_visualTimer.setTimerType(Qt::PreciseTimer);
-    connect(&m_visualTimer, &QTimer::timeout,
-            this, &AudioLevelProvider::commitVisualSample);
+    connect(&m_visualTimer, &QTimer::timeout, this, &AudioLevelProvider::commitVisualSample);
 }
 
 AudioLevelProvider::~AudioLevelProvider()
@@ -66,9 +64,8 @@ QString AudioLevelProvider::errorString() const { return QString::fromStdString(
 void AudioLevelProvider::poll()
 {
     const AudioLevelSnapshot next = m_collector.snapshot();
-    if (next.timestampMs == m_snapshot.timestampMs
-        && next.available == m_snapshot.available
-        && next.error == m_snapshot.error) {
+    if (next.timestampMs == m_snapshot.timestampMs && next.available == m_snapshot.available &&
+        next.error == m_snapshot.error) {
         return;
     }
     m_snapshot = next;
@@ -90,9 +87,7 @@ void AudioLevelProvider::restart()
     m_visualTimer.stop();
     m_collector.stop();
     m_snapshot = {};
-    m_visualAnalyzer.reset(
-        m_captureSink ? AudioVisualSource::System
-                      : AudioVisualSource::Microphone);
+    m_visualAnalyzer.reset(m_captureSink ? AudioVisualSource::System : AudioVisualSource::Microphone);
     m_visualTimestampMs = 0;
     m_visualAmplitude = 0.0;
     emit valuesChanged();

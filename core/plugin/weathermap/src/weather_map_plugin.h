@@ -20,7 +20,7 @@ class WeatherMapPlugin : public QObject {
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY statusChanged)
     Q_PROPERTY(QString mapTilerStatus READ mapTilerStatus NOTIFY mapTilerStatusChanged)
 
-public:
+  public:
     explicit WeatherMapPlugin(QObject *parent = nullptr);
 
     bool active() const;
@@ -35,22 +35,15 @@ public:
     QString mapTilerStatus() const;
 
     Q_INVOKABLE void beginViewport(int generation);
-    Q_INVOKABLE QVariantMap requestTile(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        bool forceRefresh
-    );
+    Q_INVOKABLE QVariantMap requestTile(const QString &kind, const QString &layer, int zoom, int x, int y,
+                                        int generation, bool forceRefresh);
     Q_INVOKABLE QVariantMap storeApiKey(const QString &apiKey);
     Q_INVOKABLE QVariantMap clearApiKey();
     Q_INVOKABLE QVariantMap storeMapTilerApiKey(const QString &apiKey);
     Q_INVOKABLE QVariantMap clearMapTilerApiKey();
     Q_INVOKABLE void reloadCredentials();
 
-signals:
+  signals:
     void activeChanged();
     void apiConfiguredChanged();
     void mapTilerConfiguredChanged();
@@ -59,40 +52,15 @@ signals:
     void apiKeyChanged();
     void mapTilerApiKeyChanged();
     void mapTilerStatusChanged();
-    void credentialOperationFinished(
-        const QString &operation,
-        bool success,
-        const QString &message
-    );
+    void credentialOperationFinished(const QString &operation, bool success, const QString &message);
     void busyChanged();
     void statusChanged();
-    void tileReady(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        const QString &localUrl,
-        bool stale
-    );
-    void tileFailed(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        const QString &errorCode
-    );
-    void tileActivity(
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        bool hasSignal
-    );
-private:
+    void tileReady(const QString &kind, const QString &layer, int zoom, int x, int y, int generation,
+                   const QString &localUrl, bool stale);
+    void tileFailed(const QString &kind, const QString &layer, int zoom, int x, int y, int generation,
+                    const QString &errorCode);
+    void tileActivity(const QString &layer, int zoom, int x, int y, int generation, bool hasSignal);
+
+  private:
     WeatherMapProvider m_provider;
 };

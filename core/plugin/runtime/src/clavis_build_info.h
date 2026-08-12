@@ -12,7 +12,7 @@ class ClavisBuildInfo : public QObject {
     Q_PROPERTY(QString commit READ commit CONSTANT)
     Q_PROPERTY(QString buildTime READ buildTime CONSTANT)
 
-public:
+  public:
     explicit ClavisBuildInfo(QObject *parent = nullptr);
 
     QString release() const;

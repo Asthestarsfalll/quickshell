@@ -91,8 +91,7 @@ NiriIconLookup::DesktopEntry NiriIconLookup::findDesktopEntry(const QString &app
         appDirs << dataHome + QStringLiteral("/applications");
 
     const QString xdgDataDirs = QProcessEnvironment::systemEnvironment().value(
-        QStringLiteral("XDG_DATA_DIRS"),
-        QStringLiteral("/usr/local/share:/usr/share"));
+        QStringLiteral("XDG_DATA_DIRS"), QStringLiteral("/usr/local/share:/usr/share"));
     for (const QString &dir : xdgDataDirs.split(':', Qt::SkipEmptyParts))
         appDirs << dir + QStringLiteral("/applications");
 
@@ -144,7 +143,8 @@ NiriIconLookup::DesktopEntry NiriIconLookup::findDesktopEntry(const QString &app
     return best;
 }
 
-NiriIconLookup::DesktopEntry NiriIconLookup::parseDesktopFile(const QString &path, const QString &entryId) const
+NiriIconLookup::DesktopEntry NiriIconLookup::parseDesktopFile(const QString &path,
+                                                              const QString &entryId) const
 {
     DesktopEntry entry;
     entry.id = entryId;
@@ -203,9 +203,10 @@ QString NiriIconLookup::findIconFile(const QString &iconName)
         return path;
     }
 
-    const QStringList names = iconName.contains('.')
-        ? QStringList{iconName}
-        : QStringList{iconName + QStringLiteral(".svg"), iconName + QStringLiteral(".png"), iconName + QStringLiteral(".xpm")};
+    const QStringList names = iconName.contains('.') ? QStringList{iconName}
+                                                     : QStringList{iconName + QStringLiteral(".svg"),
+                                                                   iconName + QStringLiteral(".png"),
+                                                                   iconName + QStringLiteral(".xpm")};
 
     QStringList roots;
     const QString dataHome = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
@@ -214,8 +215,7 @@ QString NiriIconLookup::findIconFile(const QString &iconName)
     roots << QDir::homePath() + QStringLiteral("/.icons");
 
     const QString xdgDataDirs = QProcessEnvironment::systemEnvironment().value(
-        QStringLiteral("XDG_DATA_DIRS"),
-        QStringLiteral("/usr/local/share:/usr/share"));
+        QStringLiteral("XDG_DATA_DIRS"), QStringLiteral("/usr/local/share:/usr/share"));
     for (const QString &dir : xdgDataDirs.split(':', Qt::SkipEmptyParts))
         roots << dir + QStringLiteral("/icons");
     roots << QStringLiteral("/usr/share/pixmaps");

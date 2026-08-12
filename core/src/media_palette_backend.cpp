@@ -41,20 +41,11 @@ struct Candidate {
     double score = 0.0;
 };
 
-double clamp01(double value)
-{
-    return std::clamp(value, 0.0, 1.0);
-}
+double clamp01(double value) { return std::clamp(value, 0.0, 1.0); }
 
-double radiansToDegrees(double radians)
-{
-    return radians * 180.0 / kPi;
-}
+double radiansToDegrees(double radians) { return radians * 180.0 / kPi; }
 
-double degreesToRadians(double degrees)
-{
-    return degrees * kPi / 180.0;
-}
+double degreesToRadians(double degrees) { return degrees * kPi / 180.0; }
 
 double normalizeDegrees(double degrees)
 {
@@ -81,8 +72,8 @@ QImage loadImage(const QString &artUrl)
     if (url.isValid() && url.isLocalFile())
         return QImage(url.toLocalFile());
 
-    if (source.startsWith(QStringLiteral("qrc:"), Qt::CaseInsensitive)
-        || source.startsWith(QStringLiteral(":/"))) {
+    if (source.startsWith(QStringLiteral("qrc:"), Qt::CaseInsensitive) ||
+        source.startsWith(QStringLiteral(":/"))) {
         return QImage(source);
     }
 
@@ -121,28 +112,23 @@ Oklab colorToOklab(const QColor &color)
     const double mRoot = std::cbrt(m);
     const double sRoot = std::cbrt(s);
 
-    return {
-        0.2104542553 * lRoot + 0.7936177850 * mRoot - 0.0040720468 * sRoot,
-        1.9779984951 * lRoot - 2.4285922050 * mRoot + 0.4505937099 * sRoot,
-        0.0259040371 * lRoot + 0.7827717662 * mRoot - 0.8086757660 * sRoot
-    };
+    return {0.2104542553 * lRoot + 0.7936177850 * mRoot - 0.0040720468 * sRoot,
+            1.9779984951 * lRoot - 2.4285922050 * mRoot + 0.4505937099 * sRoot,
+            0.0259040371 * lRoot + 0.7827717662 * mRoot - 0.8086757660 * sRoot};
 }
 
 Oklch oklabToOklch(const Oklab &lab)
 {
     const double chroma = std::sqrt(lab.a * lab.a + lab.b * lab.b);
-    const double hue = chroma <= 0.000001 ? 0.0 : normalizeDegrees(radiansToDegrees(std::atan2(lab.b, lab.a)));
-    return { lab.l, chroma, hue };
+    const double hue =
+        chroma <= 0.000001 ? 0.0 : normalizeDegrees(radiansToDegrees(std::atan2(lab.b, lab.a)));
+    return {lab.l, chroma, hue};
 }
 
 Oklab oklchToOklab(const Oklch &lch)
 {
     const double hueRadians = degreesToRadians(lch.h);
-    return {
-        lch.l,
-        lch.c * std::cos(hueRadians),
-        lch.c * std::sin(hueRadians)
-    };
+    return {lch.l, lch.c * std::cos(hueRadians), lch.c * std::sin(hueRadians)};
 }
 
 QColor oklabToColor(const Oklab &lab)
@@ -159,25 +145,17 @@ QColor oklabToColor(const Oklab &lab)
     const double g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
     const double b = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
 
-    return QColor::fromRgbF(
-        clamp01(linearToSrgb(r)),
-        clamp01(linearToSrgb(g)),
-        clamp01(linearToSrgb(b)),
-        1.0
-    );
+    return QColor::fromRgbF(clamp01(linearToSrgb(r)), clamp01(linearToSrgb(g)), clamp01(linearToSrgb(b)),
+                            1.0);
 }
 
-QColor oklchToColor(const Oklch &lch)
-{
-    return oklabToColor(oklchToOklab(lch));
-}
+QColor oklchToColor(const Oklch &lch) { return oklabToColor(oklchToOklab(lch)); }
 
 double relativeLuminance(const QColor &color)
 {
     const QColor rgb = color.toRgb();
-    return 0.2126 * srgbToLinear(rgb.redF())
-        + 0.7152 * srgbToLinear(rgb.greenF())
-        + 0.0722 * srgbToLinear(rgb.blueF());
+    return 0.2126 * srgbToLinear(rgb.redF()) + 0.7152 * srgbToLinear(rgb.greenF()) +
+           0.0722 * srgbToLinear(rgb.blueF());
 }
 
 double contrastRatio(const QColor &a, const QColor &b)
@@ -232,12 +210,8 @@ MediaPalette paletteFromCandidates(const std::vector<Candidate> &candidates, con
 
 std::vector<Candidate> collectCandidates(const QImage &input)
 {
-    QImage image = input.scaled(
-        kSampleSize,
-        kSampleSize,
-        Qt::IgnoreAspectRatio,
-        Qt::SmoothTransformation
-    ).convertToFormat(QImage::Format_ARGB32);
+    QImage image = input.scaled(kSampleSize, kSampleSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                       .convertToFormat(QImage::Format_ARGB32);
 
     QHash<int, Bin> bins;
     int totalOpaque = 0;
@@ -269,19 +243,16 @@ std::vector<Candidate> collectCandidates(const QImage &input)
         if (bin.count <= 0)
             continue;
 
-        const QColor color(
-            static_cast<int>(bin.red / static_cast<quint64>(bin.count)),
-            static_cast<int>(bin.green / static_cast<quint64>(bin.count)),
-            static_cast<int>(bin.blue / static_cast<quint64>(bin.count))
-        );
+        const QColor color(static_cast<int>(bin.red / static_cast<quint64>(bin.count)),
+                           static_cast<int>(bin.green / static_cast<quint64>(bin.count)),
+                           static_cast<int>(bin.blue / static_cast<quint64>(bin.count)));
         const Oklch lch = oklabToOklch(colorToOklab(color));
 
         if (lch.c < kMinOklchChroma || lch.l < 0.12 || lch.l > 0.94)
             continue;
 
-        const double proportion = totalOpaque > 0
-            ? static_cast<double>(bin.count) / static_cast<double>(totalOpaque)
-            : 0.0;
+        const double proportion =
+            totalOpaque > 0 ? static_cast<double>(bin.count) / static_cast<double>(totalOpaque) : 0.0;
         const double lightnessScore = 1.0 - std::min(std::abs(lch.l - 0.58) / 0.42, 1.0);
         const double chromaScore = std::min(lch.c / 0.24, 1.0);
         const double presencePenalty = proportion < 0.002 ? 0.65 : 1.0;
@@ -291,17 +262,13 @@ std::vector<Candidate> collectCandidates(const QImage &input)
         candidate.oklch = lch;
         candidate.count = bin.count;
         candidate.proportion = proportion;
-        candidate.score = (
-            std::sqrt(proportion) * 70.0
-            + chromaScore * 34.0
-            + lightnessScore * 10.0
-        ) * presencePenalty;
+        candidate.score =
+            (std::sqrt(proportion) * 70.0 + chromaScore * 34.0 + lightnessScore * 10.0) * presencePenalty;
         candidates.push_back(candidate);
     }
 
-    std::sort(candidates.begin(), candidates.end(), [](const Candidate &a, const Candidate &b) {
-        return a.score > b.score;
-    });
+    std::sort(candidates.begin(), candidates.end(),
+              [](const Candidate &a, const Candidate &b) { return a.score > b.score; });
 
     return candidates;
 }

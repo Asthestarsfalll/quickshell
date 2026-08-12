@@ -5,8 +5,7 @@
 #include <QJsonObject>
 #include <QProcessEnvironment>
 
-NiriIpcClient::NiriIpcClient(QObject *parent)
-    : QObject(parent)
+NiriIpcClient::NiriIpcClient(QObject *parent) : QObject(parent)
 {
     connect(&m_eventSocket, &QLocalSocket::readyRead, this, &NiriIpcClient::onEventReadyRead);
     connect(&m_eventSocket, &QLocalSocket::connected, this, &NiriIpcClient::connectedChanged);
@@ -22,15 +21,9 @@ NiriIpcClient::~NiriIpcClient()
     m_requestSocket.abort();
 }
 
-QString NiriIpcClient::socketPath() const
-{
-    return m_socketPath;
-}
+QString NiriIpcClient::socketPath() const { return m_socketPath; }
 
-bool NiriIpcClient::isConnected() const
-{
-    return m_eventSocket.state() == QLocalSocket::ConnectedState;
-}
+bool NiriIpcClient::isConnected() const { return m_eventSocket.state() == QLocalSocket::ConnectedState; }
 
 bool NiriIpcClient::connectToNiri()
 {
@@ -45,7 +38,8 @@ bool NiriIpcClient::connectToNiri()
 
     m_eventSocket.connectToServer(m_socketPath);
     if (!m_eventSocket.waitForConnected(1000)) {
-        emit errorOccurred(QStringLiteral("Failed to connect Niri event socket: %1").arg(m_eventSocket.errorString()));
+        emit errorOccurred(
+            QStringLiteral("Failed to connect Niri event socket: %1").arg(m_eventSocket.errorString()));
         return false;
     }
 
@@ -137,7 +131,8 @@ void NiriIpcClient::onEventReadyRead()
         QJsonParseError parseError;
         const QJsonDocument doc = QJsonDocument::fromJson(line, &parseError);
         if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
-            emit errorOccurred(QStringLiteral("Failed to parse Niri event: %1").arg(parseError.errorString()));
+            emit errorOccurred(
+                QStringLiteral("Failed to parse Niri event: %1").arg(parseError.errorString()));
             continue;
         }
 
@@ -175,7 +170,8 @@ bool NiriIpcClient::ensureRequestSocket()
     m_requestSocket.abort();
     m_requestSocket.connectToServer(m_socketPath);
     if (!m_requestSocket.waitForConnected(1000)) {
-        emit errorOccurred(QStringLiteral("Failed to connect Niri request socket: %1").arg(m_requestSocket.errorString()));
+        emit errorOccurred(
+            QStringLiteral("Failed to connect Niri request socket: %1").arg(m_requestSocket.errorString()));
         return false;
     }
     return true;

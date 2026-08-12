@@ -1,9 +1,6 @@
 #include "niri_window_model.h"
 
-NiriWindowModel::NiriWindowModel(QObject *parent)
-    : QAbstractListModel(parent)
-{
-}
+NiriWindowModel::NiriWindowModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int NiriWindowModel::rowCount(const QModelIndex &parent) const
 {
@@ -76,10 +73,7 @@ void NiriWindowModel::setWindows(const QList<NiriWindow> &windows)
         emit countChanged();
 }
 
-const QList<NiriWindow> &NiriWindowModel::windows() const
-{
-    return m_windows;
-}
+const QList<NiriWindow> &NiriWindowModel::windows() const { return m_windows; }
 
 QVariantMap NiriWindowModel::windowById(quint64 id) const
 {

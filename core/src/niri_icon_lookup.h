@@ -4,7 +4,7 @@
 #include <QString>
 
 class NiriIconLookup {
-public:
+  public:
     struct IconInfo {
         QString appId;
         QString appName;
@@ -13,7 +13,7 @@ public:
 
     IconInfo resolve(const QString &appId);
 
-private:
+  private:
     struct DesktopEntry {
         QString id;
         QString name;

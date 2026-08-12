@@ -8,7 +8,7 @@ class NiriWindowModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
-public:
+  public:
     enum Role {
         IdRole = Qt::UserRole + 1,
         TitleRole,
@@ -36,10 +36,10 @@ public:
     QVariantList windowsForWorkspace(quint64 workspaceId) const;
     QVariantList allWindows() const;
 
-signals:
+  signals:
     void countChanged();
 
-private:
+  private:
     QVariantMap toMap(const NiriWindow &window) const;
 
     QList<NiriWindow> m_windows;

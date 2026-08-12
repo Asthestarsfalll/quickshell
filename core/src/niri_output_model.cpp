@@ -1,9 +1,6 @@
 #include "niri_output_model.h"
 
-NiriOutputModel::NiriOutputModel(QObject *parent)
-    : QAbstractListModel(parent)
-{
-}
+NiriOutputModel::NiriOutputModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int NiriOutputModel::rowCount(const QModelIndex &parent) const
 {
@@ -85,10 +82,7 @@ void NiriOutputModel::setOutputs(const QList<NiriOutput> &outputs)
         emit countChanged();
 }
 
-const QList<NiriOutput> &NiriOutputModel::outputs() const
-{
-    return m_outputs;
-}
+const QList<NiriOutput> &NiriOutputModel::outputs() const { return m_outputs; }
 
 QVariantMap NiriOutputModel::outputByName(const QString &name) const
 {

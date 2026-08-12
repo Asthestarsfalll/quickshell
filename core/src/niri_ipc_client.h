@@ -7,7 +7,7 @@
 class NiriIpcClient : public QObject {
     Q_OBJECT
 
-public:
+  public:
     explicit NiriIpcClient(QObject *parent = nullptr);
     ~NiriIpcClient() override;
 
@@ -18,16 +18,16 @@ public:
     void disconnectFromNiri();
     QJsonValue sendRequest(const QJsonValue &request, bool *ok = nullptr);
 
-signals:
+  signals:
     void connectedChanged();
     void eventReceived(const QJsonObject &event);
     void errorOccurred(const QString &message);
 
-private slots:
+  private slots:
     void onEventReadyRead();
     void onSocketError(QLocalSocket::LocalSocketError error);
 
-private:
+  private:
     bool ensureRequestSocket();
 
     QString m_socketPath;

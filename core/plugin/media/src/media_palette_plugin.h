@@ -14,7 +14,7 @@ class MediaPalettePlugin : public QObject {
     Q_PROPERTY(QColor onPrimary READ onPrimary NOTIFY paletteChanged)
     Q_PROPERTY(QColor track READ track NOTIFY paletteChanged)
 
-public:
+  public:
     explicit MediaPalettePlugin(QObject *parent = nullptr);
     ~MediaPalettePlugin() override = default;
 
@@ -24,10 +24,10 @@ public:
 
     Q_INVOKABLE void extract(const QString &artUrl, const QColor &fallback);
 
-signals:
+  signals:
     void paletteChanged();
 
-private:
+  private:
     bool applyPalette(const QColor &primary, const QColor &onPrimary, const QColor &track);
 
     QString m_lastArtUrl;

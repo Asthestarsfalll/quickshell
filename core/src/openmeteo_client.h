@@ -14,7 +14,7 @@ struct WeatherLocation {
 class OpenMeteoClient : public QObject {
     Q_OBJECT
 
-public:
+  public:
     explicit OpenMeteoClient(QObject *parent = nullptr);
 
     using LocationCallback = std::function<void(bool, const WeatherLocation &, const QString &)>;
@@ -24,7 +24,7 @@ public:
     void requestForecast(double latitude, double longitude, JsonCallback callback);
     void requestAirQuality(double latitude, double longitude, JsonCallback callback);
 
-private:
+  private:
     QNetworkAccessManager m_manager;
     void getJson(const QUrl &url, JsonCallback callback);
 };

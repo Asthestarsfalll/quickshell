@@ -13,7 +13,7 @@ class I18nManager : public QObject {
     Q_PROPERTY(QString language READ language NOTIFY languageChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
 
-public:
+  public:
     explicit I18nManager(QObject *parent = nullptr);
     ~I18nManager() override;
 
@@ -22,11 +22,11 @@ public:
 
     Q_INVOKABLE bool setLanguage(const QString &language);
 
-signals:
+  signals:
     void languageChanged();
     void lastErrorChanged();
 
-private:
+  private:
     static QString normalizeLanguage(const QString &language);
     void setLastError(const QString &message);
 

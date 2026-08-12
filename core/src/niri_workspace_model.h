@@ -8,7 +8,7 @@ class NiriWorkspaceModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
-public:
+  public:
     enum Role {
         IdRole = Qt::UserRole + 1,
         IndexRole,
@@ -35,10 +35,10 @@ public:
     QVariantMap workspaceById(quint64 id) const;
     QVariantList workspacesForOutput(const QString &output) const;
 
-signals:
+  signals:
     void countChanged();
 
-private:
+  private:
     QVariantMap toMap(const NiriWorkspace &workspace) const;
 
     QList<NiriWorkspace> m_workspaces;

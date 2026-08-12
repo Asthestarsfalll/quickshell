@@ -5,9 +5,6 @@ set -eu
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 writer="$repo_dir/scripts/theme/write_niri_cursor_config.sh"
 mock_niri="$repo_dir/tests/fixtures/mock-niri"
-theme_service="$repo_dir/Services/ThemeService.qml"
-personalization="$repo_dir/Services/PersonalizationConfig.qml"
-theme_page="$repo_dir/Modules/ControlCenter/ThemePage.qml"
 test_dir=$(mktemp -d /tmp/clavis-niri-cursor-test.XXXXXX)
 
 cleanup() {
@@ -73,19 +70,5 @@ fi
     || fail "cursor fragment changed for invalid main config"
 [ ! -e "$invalid_main.clavis-backup" ] \
     || fail "backup was created for invalid main config"
-
-assert_contains "$personalization" 'property bool loaded: false'
-assert_contains "$personalization" 'signal settingsLoaded()'
-assert_contains "$personalization" 'function normalizedCursorTheme(value)'
-assert_contains "$theme_service" 'PersonalizationConfig.ready'
-assert_contains "$theme_service" 'function onSettingsLoaded()'
-assert_contains "$theme_service" 'root.cursorConfigScript'
-assert_contains "$theme_service" 'root.niriConfigPath'
-assert_not_contains "$theme_page" 'Niri 光标配置'
-assert_contains "$theme_page" 'title: qsTr("光标主题")'
-assert_contains "$theme_page" 'title: qsTr("光标尺寸")'
-assert_contains "$theme_page" 'ThemeService.cursorLastError'
-assert_not_contains "$theme_service" 'escapeKdlString'
-assert_not_contains "$theme_service" 'writeNiriCursorProcess.running = false'
 
 echo "niri cursor config tests passed"

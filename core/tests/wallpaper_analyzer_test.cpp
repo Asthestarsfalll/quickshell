@@ -7,7 +7,7 @@
 class WallpaperAnalyzerTest final : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void findsLowAndHighBusyRegions();
     void staleGenerationCannotPublish();
     void invalidWallpaperFallsBackGracefully();
@@ -33,30 +33,24 @@ void WallpaperAnalyzerTest::findsLowAndHighBusyRegions()
 
     WallpaperAnalyzer analyzer;
     WallpaperAnalysisResult *result = nullptr;
-    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
-            this, [&](const QString &, int, WallpaperAnalysisResult *value) {
-                result = value;
-            });
+    connect(&analyzer, &WallpaperAnalyzer::analysisReady, this,
+            [&](const QString &, int, WallpaperAnalysisResult *value) { result = value; });
 
-    analyzer.request(QStringLiteral("busy-test"), 1, path,
-                    240, 120, QStringLiteral("Stretch"), 240, 120);
+    analyzer.request(QStringLiteral("busy-test"), 1, path, 240, 120, QStringLiteral("Stretch"), 240, 120);
     QTRY_VERIFY_WITH_TIMEOUT(result != nullptr, 5000);
     QTRY_COMPARE_WITH_TIMEOUT(analyzer.pendingCount(), 0, 5000);
 
     QVERIFY(result->valid());
     QVERIFY(result->minBusyScore() >= 0.0);
     QVERIFY(result->maxBusyScore() <= 1.0);
-    QVERIFY2(result->maxBusyScore() > result->minBusyScore(),
-             qPrintable(QStringLiteral("min=%1 max=%2")
-                            .arg(result->minBusyScore())
-                            .arg(result->maxBusyScore())));
-    qInfo().noquote() << "[DesktopCards] analyzer test busy range"
-                      << result->minBusyScore() << result->maxBusyScore();
+    QVERIFY2(
+        result->maxBusyScore() > result->minBusyScore(),
+        qPrintable(QStringLiteral("min=%1 max=%2").arg(result->minBusyScore()).arg(result->maxBusyScore())));
+    qInfo().noquote() << "[DesktopCards] analyzer test busy range" << result->minBusyScore()
+                      << result->maxBusyScore();
     const double calm = result->busyScore(0, 0, 110, 120);
     const double busy = result->busyScore(130, 0, 110, 120);
-    QVERIFY2(busy > calm,
-             qPrintable(QStringLiteral("busy=%1 calm=%2")
-                            .arg(busy).arg(calm)));
+    QVERIFY2(busy > calm, qPrintable(QStringLiteral("busy=%1 calm=%2").arg(busy).arg(calm)));
 }
 
 void WallpaperAnalyzerTest::staleGenerationCannotPublish()
@@ -71,16 +65,12 @@ void WallpaperAnalyzerTest::staleGenerationCannotPublish()
 
     WallpaperAnalyzer analyzer;
     QList<int> generations;
-    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
-            this, [&](const QString &, int generation,
-                      WallpaperAnalysisResult *) {
-                generations.append(generation);
-            });
+    connect(
+        &analyzer, &WallpaperAnalyzer::analysisReady, this,
+        [&](const QString &, int generation, WallpaperAnalysisResult *) { generations.append(generation); });
 
-    analyzer.request(QStringLiteral("same-request"), 1, path,
-                    320, 180, QStringLiteral("Stretch"), 320, 180);
-    analyzer.request(QStringLiteral("same-request"), 2, path,
-                    320, 180, QStringLiteral("Stretch"), 320, 180);
+    analyzer.request(QStringLiteral("same-request"), 1, path, 320, 180, QStringLiteral("Stretch"), 320, 180);
+    analyzer.request(QStringLiteral("same-request"), 2, path, 320, 180, QStringLiteral("Stretch"), 320, 180);
 
     QTRY_VERIFY_WITH_TIMEOUT(generations.contains(2), 5000);
     QTRY_COMPARE_WITH_TIMEOUT(analyzer.pendingCount(), 0, 5000);
@@ -91,14 +81,11 @@ void WallpaperAnalyzerTest::invalidWallpaperFallsBackGracefully()
 {
     WallpaperAnalyzer analyzer;
     WallpaperAnalysisResult *result = nullptr;
-    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
-            this, [&](const QString &, int, WallpaperAnalysisResult *value) {
-                result = value;
-            });
+    connect(&analyzer, &WallpaperAnalyzer::analysisReady, this,
+            [&](const QString &, int, WallpaperAnalysisResult *value) { result = value; });
 
-    analyzer.request(QStringLiteral("invalid-test"), 1,
-                    QStringLiteral("/path/that/does/not/exist.png"),
-                    1920, 1080, QStringLiteral("Fill"), 0, 0);
+    analyzer.request(QStringLiteral("invalid-test"), 1, QStringLiteral("/path/that/does/not/exist.png"), 1920,
+                     1080, QStringLiteral("Fill"), 0, 0);
     QTRY_VERIFY_WITH_TIMEOUT(result != nullptr, 5000);
     QVERIFY(!result->valid());
     QCOMPARE(result->canvasWidth(), 1920.0);
@@ -117,12 +104,9 @@ void WallpaperAnalyzerTest::pathologicalCanvasAspectIsBounded()
 
     WallpaperAnalyzer analyzer;
     WallpaperAnalysisResult *result = nullptr;
-    connect(&analyzer, &WallpaperAnalyzer::analysisReady,
-            this, [&](const QString &, int, WallpaperAnalysisResult *value) {
-                result = value;
-            });
-    analyzer.request(QStringLiteral("pathological"), 1, path,
-                     2000000, 1, QStringLiteral("panorama"), 64, 64);
+    connect(&analyzer, &WallpaperAnalyzer::analysisReady, this,
+            [&](const QString &, int, WallpaperAnalysisResult *value) { result = value; });
+    analyzer.request(QStringLiteral("pathological"), 1, path, 2000000, 1, QStringLiteral("panorama"), 64, 64);
     QTRY_VERIFY_WITH_TIMEOUT(result != nullptr, 5000);
     QVERIFY(result->valid());
     QVERIFY(result->analysisWidth() <= 4096);

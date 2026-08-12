@@ -8,7 +8,7 @@ class NiriOutputModel : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
-public:
+  public:
     enum Role {
         NameRole = Qt::UserRole + 1,
         MakeRole,
@@ -37,10 +37,10 @@ public:
     const QList<NiriOutput> &outputs() const;
     QVariantMap outputByName(const QString &name) const;
 
-signals:
+  signals:
     void countChanged();
 
-private:
+  private:
     QVariantMap toMap(const NiriOutput &output) const;
 
     QList<NiriOutput> m_outputs;

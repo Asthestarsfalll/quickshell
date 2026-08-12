@@ -1,9 +1,6 @@
 #include "niri_workspace_model.h"
 
-NiriWorkspaceModel::NiriWorkspaceModel(QObject *parent)
-    : QAbstractListModel(parent)
-{
-}
+NiriWorkspaceModel::NiriWorkspaceModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int NiriWorkspaceModel::rowCount(const QModelIndex &parent) const
 {
@@ -82,20 +79,21 @@ void NiriWorkspaceModel::setWorkspaces(const QList<NiriWorkspace> &workspaces)
         for (int i = 0; i < workspaces.count(); ++i) {
             m_workspaces[i] = workspaces.at(i);
             const QModelIndex modelIndex = index(i);
-            emit dataChanged(modelIndex, modelIndex, {
-                IdRole,
-                IndexRole,
-                NameRole,
-                OutputRole,
-                IsActiveRole,
-                IsFocusedRole,
-                IsUrgentRole,
-                ActiveWindowIdRole,
-                WindowCountRole,
-                TiledWindowCountRole,
-                TiledColumnCountRole,
-                IconsRole,
-            });
+            emit dataChanged(modelIndex, modelIndex,
+                             {
+                                 IdRole,
+                                 IndexRole,
+                                 NameRole,
+                                 OutputRole,
+                                 IsActiveRole,
+                                 IsFocusedRole,
+                                 IsUrgentRole,
+                                 ActiveWindowIdRole,
+                                 WindowCountRole,
+                                 TiledWindowCountRole,
+                                 TiledColumnCountRole,
+                                 IconsRole,
+                             });
         }
         return;
     }
@@ -108,10 +106,7 @@ void NiriWorkspaceModel::setWorkspaces(const QList<NiriWorkspace> &workspaces)
         emit countChanged();
 }
 
-const QList<NiriWorkspace> &NiriWorkspaceModel::workspaces() const
-{
-    return m_workspaces;
-}
+const QList<NiriWorkspace> &NiriWorkspaceModel::workspaces() const { return m_workspaces; }
 
 QVariantMap NiriWorkspaceModel::workspaceById(quint64 id) const
 {

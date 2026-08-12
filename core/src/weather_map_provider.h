@@ -23,7 +23,7 @@ class WeatherMapProvider : public QObject {
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY statusChanged)
     Q_PROPERTY(QString mapTilerStatus READ mapTilerStatus NOTIFY mapTilerStatusChanged)
 
-public:
+  public:
     explicit WeatherMapProvider(QObject *parent = nullptr);
 
     bool active() const;
@@ -38,22 +38,15 @@ public:
     QString mapTilerStatus() const;
 
     void beginViewport(int generation);
-    QVariantMap requestTile(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        bool forceRefresh
-    );
+    QVariantMap requestTile(const QString &kind, const QString &layer, int zoom, int x, int y, int generation,
+                            bool forceRefresh);
     QVariantMap storeApiKey(const QString &apiKey);
     QVariantMap clearApiKey();
     QVariantMap storeMapTilerApiKey(const QString &apiKey);
     QVariantMap clearMapTilerApiKey();
     void reloadCredentials();
 
-signals:
+  signals:
     void activeChanged();
     void apiConfiguredChanged();
     void mapTilerConfiguredChanged();
@@ -62,41 +55,16 @@ signals:
     void apiKeyChanged();
     void mapTilerApiKeyChanged();
     void mapTilerStatusChanged();
-    void credentialOperationFinished(
-        const QString &operation,
-        bool success,
-        const QString &message
-    );
+    void credentialOperationFinished(const QString &operation, bool success, const QString &message);
     void busyChanged();
     void statusChanged();
-    void tileReady(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        const QString &localUrl,
-        bool stale
-    );
-    void tileFailed(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        const QString &errorCode
-    );
-    void tileActivity(
-        const QString &layer,
-        int zoom,
-        int x,
-        int y,
-        int generation,
-        bool hasSignal
-    );
-private:
+    void tileReady(const QString &kind, const QString &layer, int zoom, int x, int y, int generation,
+                   const QString &localUrl, bool stale);
+    void tileFailed(const QString &kind, const QString &layer, int zoom, int x, int y, int generation,
+                    const QString &errorCode);
+    void tileActivity(const QString &layer, int zoom, int x, int y, int generation, bool hasSignal);
+
+  private:
     struct TileSubscriber {
         QString kind;
         QString layer;
@@ -145,28 +113,10 @@ private:
     static QString normalizedLayer(const QString &layer);
     static bool validApiKey(const QString &apiKey);
 
-    QString tileCachePath(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y
-    ) const;
+    QString tileCachePath(const QString &kind, const QString &layer, int zoom, int x, int y) const;
     QString localFileUrl(const QString &path) const;
-    QString taskKey(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y
-    ) const;
-    QUrl remoteTileUrl(
-        const QString &kind,
-        const QString &layer,
-        int zoom,
-        int x,
-        int y
-    ) const;
+    QString taskKey(const QString &kind, const QString &layer, int zoom, int x, int y) const;
+    QUrl remoteTileUrl(const QString &kind, const QString &layer, int zoom, int x, int y) const;
 
     bool cacheIsFresh(const TileTask &task) const;
     QVariantMap cacheResult(const TileTask &task, bool stale) const;
@@ -181,10 +131,7 @@ private:
     void loadMapTilerApiKey(bool forceRefresh);
     void finishCredentialOperation();
     void replaceApiKey(const QByteArray &apiKey, bool forceRefresh = false);
-    void replaceMapTilerApiKey(
-        const QByteArray &apiKey,
-        bool forceRefresh = false
-    );
+    void replaceMapTilerApiKey(const QByteArray &apiKey, bool forceRefresh = false);
     void cancelWeatherRequests();
     void cancelBaseRequests();
     void setCredentialsReady(bool ready);
@@ -194,20 +141,10 @@ private:
     void setStatus(const QString &status, const QString &message = {});
 
     QVariantMap readMetadata(const QString &cachePath) const;
-    void writeMetadata(
-        const QString &cachePath,
-        QNetworkReply *reply,
-        bool keepExistingValidators = false
-    );
+    void writeMetadata(const QString &cachePath, QNetworkReply *reply, bool keepExistingValidators = false);
     bool writeTileAtomically(const QString &path, const QByteArray &body) const;
     bool responseIsImage(QNetworkReply *reply, const QByteArray &body) const;
-    bool weatherTileHasSignal(
-        const QString &layer,
-        const QByteArray &body
-    ) const;
+    bool weatherTileHasSignal(const QString &layer, const QByteArray &body) const;
     bool cachedWeatherTileHasSignal(const TileTask &task) const;
-    void writeWeatherMetadata(
-        const QString &cachePath,
-        bool hasSignal
-    ) const;
+    void writeWeatherMetadata(const QString &cachePath, bool hasSignal) const;
 };

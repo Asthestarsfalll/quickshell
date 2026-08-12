@@ -10,7 +10,7 @@ struct MediaPalette {
 };
 
 class MediaPaletteBackend {
-public:
+  public:
     static MediaPalette extract(const QString &artUrl, const QColor &fallback);
     static MediaPalette fallbackPalette(const QColor &fallback);
 };

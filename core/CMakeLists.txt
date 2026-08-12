@@ -36,6 +36,7 @@ configure_file(
 if(NOT DEFINED CLAVIS_QML_BUILD_DIR)
     set(CLAVIS_QML_BUILD_DIR "${CMAKE_BINARY_DIR}/qml")
 endif()
+set(QT_QML_OUTPUT_DIRECTORY "${CLAVIS_QML_BUILD_DIR}")
 if(NOT DEFINED CLAVIS_QML_INSTALL_DIR)
     set(CLAVIS_QML_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/qt6/qml")
 endif()
@@ -52,6 +53,10 @@ if(NOT Cava_FOUND)
     pkg_check_modules(Cava IMPORTED_TARGET cava REQUIRED)
 endif()
 qt_standard_project_setup(REQUIRES 6.5)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
 # Base reusable logic
 add_subdirectory(src)

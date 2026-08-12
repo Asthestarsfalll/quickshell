@@ -5,11 +5,8 @@
 #include <algorithm>
 #include <QDebug>
 
-CavaProvider::CavaProvider(QObject* parent)
-    : QObject(parent)
-    , m_values(m_bars, 0.0)
-    , m_input(AudioCollector::ChunkSize, 0.0)
-    , m_output(m_bars, 0.0)
+CavaProvider::CavaProvider(QObject *parent)
+    : QObject(parent), m_values(m_bars, 0.0), m_input(AudioCollector::ChunkSize, 0.0), m_output(m_bars, 0.0)
 {
     m_timer.setInterval(static_cast<int>(AudioCollector::ChunkSize * 1000.0 / AudioCollector::SampleRate));
     m_timer.setTimerType(Qt::PreciseTimer);
@@ -68,7 +65,8 @@ void CavaProvider::process()
     if (!m_active || !m_plan || m_bars <= 0)
         return;
 
-    const int count = static_cast<int>(AudioCollector::instance().readChunk(m_input.data(), AudioCollector::ChunkSize));
+    const int count =
+        static_cast<int>(AudioCollector::instance().readChunk(m_input.data(), AudioCollector::ChunkSize));
     cava_execute(m_input.data(), count, m_output.data(), m_plan);
 
     QVector<double> next(m_bars, 0.0);

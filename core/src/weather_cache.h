@@ -5,7 +5,7 @@
 #include <QString>
 
 class WeatherCache {
-public:
+  public:
     static WeatherSnapshot load(const QString &path);
     static bool save(const QString &path, const WeatherSnapshot &snapshot);
     static QString defaultPath();

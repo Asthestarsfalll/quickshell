@@ -24,17 +24,12 @@ long long nowMs()
         .count();
 }
 
-double clamp01(double value)
-{
-    return std::clamp(value, 0.0, 1.0);
-}
+double clamp01(double value) { return std::clamp(value, 0.0, 1.0); }
 
 void handleStopTimer(void *data, uint64_t)
 {
     auto *state = static_cast<PipewireLevelState *>(data);
-    if (state->stopRequested
-        && state->stopRequested->load(std::memory_order_acquire)
-        && state->loop) {
+    if (state->stopRequested && state->stopRequested->load(std::memory_order_acquire) && state->loop) {
         pw_main_loop_quit(state->loop);
     }
 }
@@ -50,39 +45,31 @@ void handleLevelProcess(void *data)
         return;
 
     const spa_buffer *spaBuffer = buffer->buffer;
-    if (spaBuffer->n_datas > 0 && spaBuffer->datas[0].data
-        && spaBuffer->datas[0].chunk) {
+    if (spaBuffer->n_datas > 0 && spaBuffer->datas[0].data && spaBuffer->datas[0].chunk) {
         const spa_data &dataBuffer = spaBuffer->datas[0];
         const spa_chunk *chunk = dataBuffer.chunk;
         if (chunk->offset < dataBuffer.maxsize) {
-            const uint32_t byteCount =
-                std::min(chunk->size, dataBuffer.maxsize - chunk->offset);
-            const auto *bytes =
-                static_cast<const uint8_t *>(dataBuffer.data) + chunk->offset;
+            const uint32_t byteCount = std::min(chunk->size, dataBuffer.maxsize - chunk->offset);
+            const auto *bytes = static_cast<const uint8_t *>(dataBuffer.data) + chunk->offset;
             const auto *samples = reinterpret_cast<const int16_t *>(bytes);
-            state->collector->consume(
-                samples,
-                static_cast<unsigned int>(byteCount / sizeof(int16_t)));
+            state->collector->consume(samples, static_cast<unsigned int>(byteCount / sizeof(int16_t)));
         }
     }
 
     pw_stream_queue_buffer(state->stream, buffer);
 }
 
-void handleLevelStateChanged(void *data, pw_stream_state,
-                             pw_stream_state state, const char *message)
+void handleLevelStateChanged(void *data, pw_stream_state, pw_stream_state state, const char *message)
 {
     auto *pwState = static_cast<PipewireLevelState *>(data);
     if (!pwState->collector)
         return;
 
-    if (state == PW_STREAM_STATE_STREAMING
-        || state == PW_STREAM_STATE_PAUSED) {
+    if (state == PW_STREAM_STATE_STREAMING || state == PW_STREAM_STATE_PAUSED) {
         pwState->collector->setAvailable(true);
     } else if (state == PW_STREAM_STATE_ERROR) {
-        pwState->collector->setAvailable(
-            false, message ? std::string(message)
-                           : std::string("PipeWire audio level stream failed"));
+        pwState->collector->setAvailable(false, message ? std::string(message)
+                                                        : std::string("PipeWire audio level stream failed"));
         if (pwState->loop)
             pw_main_loop_quit(pwState->loop);
     }
@@ -92,10 +79,7 @@ void handleLevelStateChanged(void *data, pw_stream_state,
 
 AudioLevelCollector::AudioLevelCollector() = default;
 
-AudioLevelCollector::~AudioLevelCollector()
-{
-    stop();
-}
+AudioLevelCollector::~AudioLevelCollector() { stop(); }
 
 void AudioLevelCollector::start(const std::string &targetNode, bool captureSink)
 {
@@ -156,24 +140,19 @@ void AudioLevelCollector::run()
     }
 
     timespec timerInterval = {0, 25 * SPA_NSEC_PER_MSEC};
-    state.timer =
-        pw_loop_add_timer(pw_main_loop_get_loop(state.loop), handleStopTimer, &state);
+    state.timer = pw_loop_add_timer(pw_main_loop_get_loop(state.loop), handleStopTimer, &state);
     if (!state.timer) {
         setAvailable(false, "Unable to create the PipeWire stop timer");
         pw_main_loop_destroy(state.loop);
         pw_deinit();
         return;
     }
-    pw_loop_update_timer(pw_main_loop_get_loop(state.loop), state.timer,
-                         &timerInterval, &timerInterval, false);
+    pw_loop_update_timer(pw_main_loop_get_loop(state.loop), state.timer, &timerInterval, &timerInterval,
+                         false);
 
-    auto *props = pw_properties_new(
-        PW_KEY_MEDIA_TYPE, "Audio",
-        PW_KEY_MEDIA_CATEGORY, "Capture",
-        PW_KEY_MEDIA_ROLE, "Production",
-        PW_KEY_TARGET_OBJECT, targetNode.c_str(),
-        PW_KEY_NODE_NAME, "clavis-shell-audio-level",
-        nullptr);
+    auto *props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Capture",
+                                    PW_KEY_MEDIA_ROLE, "Production", PW_KEY_TARGET_OBJECT, targetNode.c_str(),
+                                    PW_KEY_NODE_NAME, "clavis-shell-audio-level", nullptr);
     pw_properties_set(props, PW_KEY_NODE_PASSIVE, "true");
     pw_properties_set(props, PW_KEY_NODE_VIRTUAL, "true");
     pw_properties_set(props, PW_KEY_STREAM_DONT_REMIX, "false");
@@ -195,9 +174,8 @@ void AudioLevelCollector::run()
     events.version = PW_VERSION_STREAM_EVENTS;
     events.state_changed = handleLevelStateChanged;
     events.process = handleLevelProcess;
-    state.stream = pw_stream_new_simple(
-        pw_main_loop_get_loop(state.loop), "clavis-shell-audio-level",
-        props, &events, &state);
+    state.stream = pw_stream_new_simple(pw_main_loop_get_loop(state.loop), "clavis-shell-audio-level", props,
+                                        &events, &state);
     if (!state.stream) {
         setAvailable(false, "Unable to create the PipeWire audio level stream");
         pw_main_loop_destroy(state.loop);
@@ -205,12 +183,11 @@ void AudioLevelCollector::run()
         return;
     }
 
-    const int result = pw_stream_connect(
-        state.stream, PW_DIRECTION_INPUT, PW_ID_ANY,
-        static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT
-                                     | PW_STREAM_FLAG_MAP_BUFFERS
-                                     | PW_STREAM_FLAG_RT_PROCESS),
-        params, 1);
+    const int result = pw_stream_connect(state.stream, PW_DIRECTION_INPUT, PW_ID_ANY,
+                                         static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT |
+                                                                      PW_STREAM_FLAG_MAP_BUFFERS |
+                                                                      PW_STREAM_FLAG_RT_PROCESS),
+                                         params, 1);
     if (result < 0) {
         setAvailable(false, "Unable to connect the PipeWire audio level stream");
         pw_stream_destroy(state.stream);
@@ -245,24 +222,19 @@ void AudioLevelCollector::consume(const int16_t *samples, unsigned int count)
     double squareSum = 0.0;
     double peak = 0.0;
     for (unsigned int index = 0; index < count; ++index) {
-        const double sample =
-            static_cast<double>(samples[index]) / 32768.0;
+        const double sample = static_cast<double>(samples[index]) / 32768.0;
         squareSum += sample * sample;
         peak = std::max(peak, std::abs(sample));
     }
     const double rms = std::sqrt(squareSum / static_cast<double>(count));
     constexpr double gate = 0.006;
-    const double rmsMapped =
-        std::pow(clamp01((rms - gate) / (0.25 - gate)), 0.45);
-    const double peakMapped =
-        std::pow(clamp01((peak - gate) / (0.90 - gate)), 0.55);
+    const double rmsMapped = std::pow(clamp01((rms - gate) / (0.25 - gate)), 0.45);
+    const double peakMapped = std::pow(clamp01((peak - gate) / (0.90 - gate)), 0.55);
     const double target = clamp01(std::max(rmsMapped, peakMapped * 0.72));
 
     std::scoped_lock lock(m_mutex);
-    const double alpha =
-        target > m_snapshot.normalizedAmplitude ? 0.58 : 0.16;
-    m_snapshot.normalizedAmplitude +=
-        (target - m_snapshot.normalizedAmplitude) * alpha;
+    const double alpha = target > m_snapshot.normalizedAmplitude ? 0.58 : 0.16;
+    m_snapshot.normalizedAmplitude += (target - m_snapshot.normalizedAmplitude) * alpha;
     m_snapshot.rms = rms;
     m_snapshot.peak = peak;
     m_snapshot.timestampMs = nowMs();

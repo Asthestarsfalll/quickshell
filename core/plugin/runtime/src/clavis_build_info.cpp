@@ -2,22 +2,10 @@
 
 #include "clavis_release.h"
 
-ClavisBuildInfo::ClavisBuildInfo(QObject *parent)
-    : QObject(parent)
-{
-}
+ClavisBuildInfo::ClavisBuildInfo(QObject *parent) : QObject(parent) {}
 
-QString ClavisBuildInfo::release() const
-{
-    return QStringLiteral(CLAVIS_RELEASE);
-}
+QString ClavisBuildInfo::release() const { return QStringLiteral(CLAVIS_RELEASE); }
 
-QString ClavisBuildInfo::commit() const
-{
-    return QStringLiteral(CLAVIS_COMMIT);
-}
+QString ClavisBuildInfo::commit() const { return QStringLiteral(CLAVIS_COMMIT); }
 
-QString ClavisBuildInfo::buildTime() const
-{
-    return QStringLiteral(CLAVIS_BUILD_TIME);
-}
+QString ClavisBuildInfo::buildTime() const { return QStringLiteral(CLAVIS_BUILD_TIME); }

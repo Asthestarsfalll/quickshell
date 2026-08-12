@@ -38,12 +38,12 @@ class WeatherPlugin : public QObject {
     Q_PROPERTY(double currentVisibilityM READ currentVisibilityM NOTIFY dataChanged)
     Q_PROPERTY(QVariantMap currentAirQuality READ currentAirQuality NOTIFY dataChanged)
 
-    Q_PROPERTY(WeatherListModel* hourlyForecast READ hourlyForecast CONSTANT)
-    Q_PROPERTY(WeatherListModel* dailyForecast READ dailyForecast CONSTANT)
-    Q_PROPERTY(WeatherListModel* dailyTrendForecast READ dailyTrendForecast CONSTANT)
-    Q_PROPERTY(WeatherListModel* minutelyForecast READ minutelyForecast CONSTANT)
+    Q_PROPERTY(WeatherListModel *hourlyForecast READ hourlyForecast CONSTANT)
+    Q_PROPERTY(WeatherListModel *dailyForecast READ dailyForecast CONSTANT)
+    Q_PROPERTY(WeatherListModel *dailyTrendForecast READ dailyTrendForecast CONSTANT)
+    Q_PROPERTY(WeatherListModel *minutelyForecast READ minutelyForecast CONSTANT)
 
-public:
+  public:
     explicit WeatherPlugin(QObject *parent = nullptr);
 
     bool loading() const;
@@ -73,21 +73,21 @@ public:
     double currentVisibilityM() const;
     QVariantMap currentAirQuality() const;
 
-    WeatherListModel* hourlyForecast();
-    WeatherListModel* dailyForecast();
-    WeatherListModel* dailyTrendForecast();
-    WeatherListModel* minutelyForecast();
+    WeatherListModel *hourlyForecast();
+    WeatherListModel *dailyForecast();
+    WeatherListModel *dailyTrendForecast();
+    WeatherListModel *minutelyForecast();
 
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void setManualLocation(double latitude, double longitude, const QString &name);
     Q_INVOKABLE void clearManualLocation();
     Q_INVOKABLE QVariantMap current() const;
 
-signals:
+  signals:
     void dataChanged();
     void loadingChanged();
 
-private:
+  private:
     WeatherBackend m_backend;
     WeatherListModel m_hourly;
     WeatherListModel m_daily;

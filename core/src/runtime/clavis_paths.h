@@ -6,7 +6,7 @@
 namespace Clavis::Runtime {
 
 class ClavisPaths {
-public:
+  public:
     static ClavisPaths fromEnvironment();
 
     QString home() const;
@@ -22,11 +22,9 @@ public:
     QString generatedHome() const;
     QString stableKey() const;
 
-private:
+  private:
     static QString cleanAbsolute(const QString &value);
-    static QString environmentPath(const char *overrideName,
-                                   const char *xdgName,
-                                   const QString &fallback,
+    static QString environmentPath(const char *overrideName, const char *xdgName, const QString &fallback,
                                    const QString &suffix);
 
     QString m_home;

@@ -7,8 +7,7 @@
 #include <QTimer>
 #include <algorithm>
 
-NiriPlugin::NiriPlugin(QObject *parent)
-    : QObject(parent)
+NiriPlugin::NiriPlugin(QObject *parent) : QObject(parent)
 {
     connect(&m_client, &NiriIpcClient::connectedChanged, this, &NiriPlugin::connectedChanged);
     connect(&m_client, &NiriIpcClient::eventReceived, this, &NiriPlugin::handleEvent);
@@ -82,15 +81,9 @@ QVariantMap NiriPlugin::activeWorkspaceForOutput(const QString &outputName) cons
     return {};
 }
 
-QVariantMap NiriPlugin::workspaceById(quint64 id) const
-{
-    return m_workspaceModel.workspaceById(id);
-}
+QVariantMap NiriPlugin::workspaceById(quint64 id) const { return m_workspaceModel.workspaceById(id); }
 
-QVariantMap NiriPlugin::windowById(quint64 id) const
-{
-    return m_windowModel.windowById(id);
-}
+QVariantMap NiriPlugin::windowById(quint64 id) const { return m_windowModel.windowById(id); }
 
 QVariantList NiriPlugin::workspaceIcons(quint64 workspaceId, bool groupApps) const
 {
@@ -107,10 +100,8 @@ QVariantList NiriPlugin::searchWindows(const QString &query) const
     const QString needle = query.trimmed().toLower();
     QVariantList result;
     for (const NiriWindow &window : m_windows) {
-        if (needle.isEmpty() ||
-            window.title.toLower().contains(needle) ||
-            window.appId.toLower().contains(needle) ||
-            window.appName.toLower().contains(needle)) {
+        if (needle.isEmpty() || window.title.toLower().contains(needle) ||
+            window.appId.toLower().contains(needle) || window.appName.toLower().contains(needle)) {
             result.append(windowToMap(window));
         }
     }
@@ -119,27 +110,35 @@ QVariantList NiriPlugin::searchWindows(const QString &query) const
 
 bool NiriPlugin::focusWorkspaceByIndex(int index)
 {
-    return sendAction({{QStringLiteral("FocusWorkspace"), QJsonObject{{QStringLiteral("reference"), QJsonObject{{QStringLiteral("Index"), index}}}}}});
+    return sendAction(
+        {{QStringLiteral("FocusWorkspace"),
+          QJsonObject{{QStringLiteral("reference"), QJsonObject{{QStringLiteral("Index"), index}}}}}});
 }
 
 bool NiriPlugin::focusWorkspaceById(quint64 id)
 {
-    return sendAction({{QStringLiteral("FocusWorkspace"), QJsonObject{{QStringLiteral("reference"), QJsonObject{{QStringLiteral("Id"), QJsonValue::fromVariant(id)}}}}}});
+    return sendAction({{QStringLiteral("FocusWorkspace"),
+                        QJsonObject{{QStringLiteral("reference"),
+                                     QJsonObject{{QStringLiteral("Id"), QJsonValue::fromVariant(id)}}}}}});
 }
 
 bool NiriPlugin::focusWorkspaceByName(const QString &name)
 {
-    return sendAction({{QStringLiteral("FocusWorkspace"), QJsonObject{{QStringLiteral("reference"), QJsonObject{{QStringLiteral("Name"), name}}}}}});
+    return sendAction(
+        {{QStringLiteral("FocusWorkspace"),
+          QJsonObject{{QStringLiteral("reference"), QJsonObject{{QStringLiteral("Name"), name}}}}}});
 }
 
 bool NiriPlugin::focusWindow(quint64 id)
 {
-    return sendAction({{QStringLiteral("FocusWindow"), QJsonObject{{QStringLiteral("id"), QJsonValue::fromVariant(id)}}}});
+    return sendAction(
+        {{QStringLiteral("FocusWindow"), QJsonObject{{QStringLiteral("id"), QJsonValue::fromVariant(id)}}}});
 }
 
 bool NiriPlugin::closeWindow(quint64 id)
 {
-    return sendAction({{QStringLiteral("CloseWindow"), QJsonObject{{QStringLiteral("id"), QJsonValue::fromVariant(id)}}}});
+    return sendAction(
+        {{QStringLiteral("CloseWindow"), QJsonObject{{QStringLiteral("id"), QJsonValue::fromVariant(id)}}}});
 }
 
 bool NiriPlugin::closeFocusedWindow()
@@ -147,10 +146,7 @@ bool NiriPlugin::closeFocusedWindow()
     return sendAction({{QStringLiteral("CloseWindow"), QJsonObject{{QStringLiteral("id"), QJsonValue()}}}});
 }
 
-bool NiriPlugin::toggleOverview()
-{
-    return sendAction({{QStringLiteral("ToggleOverview"), QJsonObject{}}});
-}
+bool NiriPlugin::toggleOverview() { return sendAction({{QStringLiteral("ToggleOverview"), QJsonObject{}}}); }
 
 bool NiriPlugin::focusColumnLeft()
 {
@@ -174,20 +170,25 @@ bool NiriPlugin::focusWorkspaceDown()
 
 bool NiriPlugin::moveWorkspaceToIndex(int workspaceIndex, int targetIndex)
 {
-    return sendAction({{QStringLiteral("MoveWorkspaceToIndex"), QJsonObject{
-        {QStringLiteral("index"), targetIndex},
-        {QStringLiteral("reference"), QJsonObject{{QStringLiteral("Index"), workspaceIndex}}},
-    }}});
+    return sendAction(
+        {{QStringLiteral("MoveWorkspaceToIndex"),
+          QJsonObject{
+              {QStringLiteral("index"), targetIndex},
+              {QStringLiteral("reference"), QJsonObject{{QStringLiteral("Index"), workspaceIndex}}},
+          }}});
 }
 
 bool NiriPlugin::setWorkspaceName(const QString &name)
 {
-    return sendAction({{QStringLiteral("SetWorkspaceName"), QJsonObject{{QStringLiteral("name"), name}, {QStringLiteral("workspace"), QJsonValue()}}}});
+    return sendAction(
+        {{QStringLiteral("SetWorkspaceName"),
+          QJsonObject{{QStringLiteral("name"), name}, {QStringLiteral("workspace"), QJsonValue()}}}});
 }
 
 bool NiriPlugin::unsetWorkspaceName()
 {
-    return sendAction({{QStringLiteral("UnsetWorkspaceName"), QJsonObject{{QStringLiteral("workspace"), QJsonValue()}}}});
+    return sendAction(
+        {{QStringLiteral("UnsetWorkspaceName"), QJsonObject{{QStringLiteral("workspace"), QJsonValue()}}}});
 }
 
 bool NiriPlugin::powerOffMonitors()
@@ -202,12 +203,14 @@ bool NiriPlugin::powerOnMonitors()
 
 bool NiriPlugin::cycleKeyboardLayout()
 {
-    return sendAction({{QStringLiteral("SwitchLayout"), QJsonObject{{QStringLiteral("layout"), QStringLiteral("Next")}}}});
+    return sendAction(
+        {{QStringLiteral("SwitchLayout"), QJsonObject{{QStringLiteral("layout"), QStringLiteral("Next")}}}});
 }
 
 bool NiriPlugin::doScreenTransition(int delayMs)
 {
-    return sendAction({{QStringLiteral("DoScreenTransition"), QJsonObject{{QStringLiteral("delay_ms"), delayMs}}}});
+    return sendAction(
+        {{QStringLiteral("DoScreenTransition"), QJsonObject{{QStringLiteral("delay_ms"), delayMs}}}});
 }
 
 void NiriPlugin::handleEvent(const QJsonObject &event)
@@ -251,8 +254,7 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
         const QJsonObject data = event.value(type).toObject();
         const quint64 workspaceId = data.value(QStringLiteral("workspace_id")).toInteger();
         const QJsonValue activeWindowId = data.value(QStringLiteral("active_window_id"));
-        const quint64 activeId =
-            activeWindowId.isNull() ? 0 : activeWindowId.toInteger();
+        const quint64 activeId = activeWindowId.isNull() ? 0 : activeWindowId.toInteger();
         for (NiriWorkspace &workspace : m_workspaces) {
             if (workspace.id == workspaceId)
                 workspace.activeWindowId = activeId;
@@ -278,10 +280,10 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
             m_windows.append(parseWindow(value.toObject()));
         windowChanged = true;
     } else if (type == QStringLiteral("WindowOpenedOrChanged")) {
-        const NiriWindow window = parseWindow(event.value(type).toObject().value(QStringLiteral("window")).toObject());
-        auto it = std::find_if(m_windows.begin(), m_windows.end(), [window](const NiriWindow &candidate) {
-            return candidate.id == window.id;
-        });
+        const NiriWindow window =
+            parseWindow(event.value(type).toObject().value(QStringLiteral("window")).toObject());
+        auto it = std::find_if(m_windows.begin(), m_windows.end(),
+                               [window](const NiriWindow &candidate) { return candidate.id == window.id; });
         if (it == m_windows.end())
             m_windows.append(window);
         else
@@ -289,9 +291,9 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
         windowChanged = true;
     } else if (type == QStringLiteral("WindowClosed")) {
         const quint64 id = event.value(type).toObject().value(QStringLiteral("id")).toInteger();
-        m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(), [id](const NiriWindow &window) {
-            return window.id == id;
-        }), m_windows.end());
+        m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
+                                       [id](const NiriWindow &window) { return window.id == id; }),
+                        m_windows.end());
         windowChanged = true;
     } else if (type == QStringLiteral("WindowFocusChanged")) {
         const QJsonValue value = event.value(type).toObject().value(QStringLiteral("id"));
@@ -325,7 +327,8 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
             if (change.size() < 2)
                 continue;
             const quint64 id = change.at(0).toInteger();
-            const QJsonArray pos = change.at(1).toObject().value(QStringLiteral("pos_in_scrolling_layout")).toArray();
+            const QJsonArray pos =
+                change.at(1).toObject().value(QStringLiteral("pos_in_scrolling_layout")).toArray();
             for (NiriWindow &window : m_windows) {
                 if (window.id == id) {
                     window.layoutColumn = pos.size() > 0 ? pos.at(0).toInt(999999) : 999999;
@@ -345,7 +348,8 @@ void NiriPlugin::handleEvent(const QJsonObject &event)
         m_inOverview = event.value(type).toObject().value(QStringLiteral("is_open")).toBool();
         emit overviewChanged();
     } else if (type == QStringLiteral("KeyboardLayoutsChanged")) {
-        const QJsonObject layouts = event.value(type).toObject().value(QStringLiteral("keyboard_layouts")).toObject();
+        const QJsonObject layouts =
+            event.value(type).toObject().value(QStringLiteral("keyboard_layouts")).toObject();
         m_keyboardLayoutNames.clear();
         for (const QJsonValue &name : layouts.value(QStringLiteral("names")).toArray())
             m_keyboardLayoutNames.append(name.toString());
@@ -385,13 +389,19 @@ NiriWindow NiriPlugin::parseWindow(const QJsonObject &object)
     window.id = object.value(QStringLiteral("id")).toInteger();
     window.title = object.value(QStringLiteral("title")).toString(QStringLiteral("Unknown"));
     window.appId = object.value(QStringLiteral("app_id")).toString(QStringLiteral("unknown"));
-    window.pid = object.value(QStringLiteral("pid")).isNull() ? -1 : object.value(QStringLiteral("pid")).toInteger(-1);
-    window.workspaceId = object.value(QStringLiteral("workspace_id")).isNull() ? 0 : object.value(QStringLiteral("workspace_id")).toInteger();
+    window.pid =
+        object.value(QStringLiteral("pid")).isNull() ? -1 : object.value(QStringLiteral("pid")).toInteger(-1);
+    window.workspaceId = object.value(QStringLiteral("workspace_id")).isNull()
+                             ? 0
+                             : object.value(QStringLiteral("workspace_id")).toInteger();
     window.isFocused = object.value(QStringLiteral("is_focused")).toBool();
     window.isFloating = object.value(QStringLiteral("is_floating")).toBool();
     window.isUrgent = object.value(QStringLiteral("is_urgent")).toBool();
 
-    const QJsonArray pos = object.value(QStringLiteral("layout")).toObject().value(QStringLiteral("pos_in_scrolling_layout")).toArray();
+    const QJsonArray pos = object.value(QStringLiteral("layout"))
+                               .toObject()
+                               .value(QStringLiteral("pos_in_scrolling_layout"))
+                               .toArray();
     window.layoutColumn = pos.size() > 0 ? pos.at(0).toInt(999999) : 999999;
     window.layoutRow = pos.size() > 1 ? pos.at(1).toInt(999999) : 999999;
 
@@ -431,11 +441,11 @@ NiriOutput NiriPlugin::parseOutput(const QString &name, const QJsonObject &objec
     }
     if (currentMode >= 0 && currentMode < modes.size()) {
         const QJsonObject mode = modes.at(currentMode).toObject();
-        output.currentMode = QStringLiteral("%1x%2@%3")
-            .arg(mode.value(QStringLiteral("width")).toInt())
-            .arg(mode.value(QStringLiteral("height")).toInt())
-            .arg(mode.value(QStringLiteral("refresh_rate")).toDouble() / 1000.0,
-                 0, 'f', 3);
+        output.currentMode =
+            QStringLiteral("%1x%2@%3")
+                .arg(mode.value(QStringLiteral("width")).toInt())
+                .arg(mode.value(QStringLiteral("height")).toInt())
+                .arg(mode.value(QStringLiteral("refresh_rate")).toDouble() / 1000.0, 0, 'f', 3);
     }
     return output;
 }
@@ -525,7 +535,8 @@ void NiriPlugin::recomputeDerivedState()
         QVariantList icons;
         for (auto appIt = wsIt.value().begin(); appIt != wsIt.value().end(); ++appIt) {
             const NiriWindow &window = appIt.value();
-            icons.append(makeWorkspaceIcon(window, countsByApp.value(wsIt.key()).value(appIt.key()), window.isFocused));
+            icons.append(makeWorkspaceIcon(window, countsByApp.value(wsIt.key()).value(appIt.key()),
+                                           window.isFocused));
         }
         iconsByWorkspace[wsIt.key()] = icons;
     }
@@ -569,23 +580,24 @@ void NiriPlugin::sortWindows()
     for (const NiriWorkspace &workspace : m_workspaces)
         workspacesById.insert(workspace.id, workspace);
 
-    std::sort(m_windows.begin(), m_windows.end(), [outputsByName, workspacesById](const NiriWindow &a, const NiriWindow &b) {
-        const NiriWorkspace aw = workspacesById.value(a.workspaceId);
-        const NiriWorkspace bw = workspacesById.value(b.workspaceId);
-        const NiriOutput ao = outputsByName.value(aw.output);
-        const NiriOutput bo = outputsByName.value(bw.output);
-        if (ao.logicalX != bo.logicalX)
-            return ao.logicalX < bo.logicalX;
-        if (ao.logicalY != bo.logicalY)
-            return ao.logicalY < bo.logicalY;
-        if (aw.index != bw.index)
-            return aw.index < bw.index;
-        if (a.layoutColumn != b.layoutColumn)
-            return a.layoutColumn < b.layoutColumn;
-        if (a.layoutRow != b.layoutRow)
-            return a.layoutRow < b.layoutRow;
-        return a.id < b.id;
-    });
+    std::sort(m_windows.begin(), m_windows.end(),
+              [outputsByName, workspacesById](const NiriWindow &a, const NiriWindow &b) {
+                  const NiriWorkspace aw = workspacesById.value(a.workspaceId);
+                  const NiriWorkspace bw = workspacesById.value(b.workspaceId);
+                  const NiriOutput ao = outputsByName.value(aw.output);
+                  const NiriOutput bo = outputsByName.value(bw.output);
+                  if (ao.logicalX != bo.logicalX)
+                      return ao.logicalX < bo.logicalX;
+                  if (ao.logicalY != bo.logicalY)
+                      return ao.logicalY < bo.logicalY;
+                  if (aw.index != bw.index)
+                      return aw.index < bw.index;
+                  if (a.layoutColumn != b.layoutColumn)
+                      return a.layoutColumn < b.layoutColumn;
+                  if (a.layoutRow != b.layoutRow)
+                      return a.layoutRow < b.layoutRow;
+                  return a.id < b.id;
+              });
 }
 
 bool NiriPlugin::sendAction(const QJsonObject &action)

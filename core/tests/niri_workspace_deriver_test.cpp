@@ -6,9 +6,8 @@
 class NiriWorkspaceDeriverTest : public QObject {
     Q_OBJECT
 
-private:
-    static NiriWindow window(quint64 id, bool floating, int column,
-                             quint64 workspaceId = 1)
+  private:
+    static NiriWindow window(quint64 id, bool floating, int column, quint64 workspaceId = 1)
     {
         NiriWindow result;
         result.id = id;
@@ -26,7 +25,7 @@ private:
         return workspaces.first();
     }
 
-private slots:
+  private slots:
     void oneTiledTwoFloating()
     {
         const NiriWorkspace workspace = derive({
@@ -89,8 +88,7 @@ private slots:
             window(4, false, 1, 2),
         };
 
-        NiriWorkspaceDeriver::recomputeWindowCounts(
-            workspaces, windows);
+        NiriWorkspaceDeriver::recomputeWindowCounts(workspaces, windows);
         QCOMPARE(workspaces[0].windowCount, 3);
         QCOMPARE(workspaces[0].tiledWindowCount, 2);
         QCOMPARE(workspaces[0].tiledColumnCount, 2);
@@ -99,8 +97,7 @@ private slots:
         QCOMPARE(workspaces[1].tiledColumnCount, 1);
 
         windows[2].workspaceId = 2;
-        NiriWorkspaceDeriver::recomputeWindowCounts(
-            workspaces, windows);
+        NiriWorkspaceDeriver::recomputeWindowCounts(workspaces, windows);
         QCOMPARE(workspaces[0].windowCount, 2);
         QCOMPARE(workspaces[0].tiledWindowCount, 2);
         QCOMPARE(workspaces[0].tiledColumnCount, 2);
@@ -153,26 +150,19 @@ private slots:
         NiriWorkspaceModel model;
         model.setWorkspaces({workspace});
 
-        QCOMPARE(model.roleNames().value(
-            NiriWorkspaceModel::TiledWindowCountRole),
-            QByteArray("tiledWindowCount"));
-        QCOMPARE(model.roleNames().value(
-            NiriWorkspaceModel::TiledColumnCountRole),
-            QByteArray("tiledColumnCount"));
-        QCOMPARE(model.data(model.index(0),
-            NiriWorkspaceModel::TiledWindowCountRole).toInt(), 3);
-        QCOMPARE(model.data(model.index(0),
-            NiriWorkspaceModel::TiledColumnCountRole).toInt(), 2);
+        QCOMPARE(model.roleNames().value(NiriWorkspaceModel::TiledWindowCountRole),
+                 QByteArray("tiledWindowCount"));
+        QCOMPARE(model.roleNames().value(NiriWorkspaceModel::TiledColumnCountRole),
+                 QByteArray("tiledColumnCount"));
+        QCOMPARE(model.data(model.index(0), NiriWorkspaceModel::TiledWindowCountRole).toInt(), 3);
+        QCOMPARE(model.data(model.index(0), NiriWorkspaceModel::TiledColumnCountRole).toInt(), 2);
 
-        const QVariantList outputWorkspaces =
-            model.workspacesForOutput(QStringLiteral("DP-1"));
+        const QVariantList outputWorkspaces = model.workspacesForOutput(QStringLiteral("DP-1"));
         QCOMPARE(outputWorkspaces.size(), 1);
         const QVariantMap map = outputWorkspaces.first().toMap();
         QCOMPARE(map.value(QStringLiteral("windowCount")).toInt(), 5);
-        QCOMPARE(
-            map.value(QStringLiteral("tiledWindowCount")).toInt(), 3);
-        QCOMPARE(
-            map.value(QStringLiteral("tiledColumnCount")).toInt(), 2);
+        QCOMPARE(map.value(QStringLiteral("tiledWindowCount")).toInt(), 3);
+        QCOMPARE(map.value(QStringLiteral("tiledColumnCount")).toInt(), 2);
     }
 };
 

@@ -20,12 +20,10 @@
 #include <utility>
 
 class ScopedEnvironment final {
-public:
+  public:
     explicit ScopedEnvironment(const char *name)
-        : m_name(name), m_wasSet(qEnvironmentVariableIsSet(name)),
-          m_value(qgetenv(name))
-    {
-    }
+        : m_name(name), m_wasSet(qEnvironmentVariableIsSet(name)), m_value(qgetenv(name))
+    {}
 
     ~ScopedEnvironment()
     {
@@ -35,14 +33,14 @@ public:
             qunsetenv(m_name.constData());
     }
 
-private:
+  private:
     QByteArray m_name;
     bool m_wasSet;
     QByteArray m_value;
 };
 
 class FixtureReply final : public QNetworkReply {
-public:
+  public:
     FixtureReply(const QNetworkRequest &request, bool *aborted, QObject *parent)
         : QNetworkReply(parent), m_aborted(aborted)
     {
@@ -82,7 +80,7 @@ public:
     bool completed() const { return m_completed; }
     bool aborted() const { return m_abortedState; }
 
-protected:
+  protected:
     qint64 readData(char *data, qint64 maxlen) override
     {
         if (m_offset >= m_body.size())
@@ -93,7 +91,7 @@ protected:
         return count;
     }
 
-private:
+  private:
     QByteArray m_body;
     qint64 m_offset = 0;
     bool *m_aborted = nullptr;
@@ -102,7 +100,7 @@ private:
 };
 
 class FixtureNetworkAccessManager final : public QNetworkAccessManager {
-public:
+  public:
     using Responder = std::function<QByteArray(const QUrl &, int)>;
     using StatusResponder = std::function<int(const QUrl &, int)>;
     using ErrorResponder = std::function<QNetworkReply::NetworkError(const QUrl &, int)>;
@@ -114,21 +112,16 @@ public:
         return QByteArrayLiteral(R"({"syncedLyrics":"[00:01.00]Injected"})");
     };
     StatusResponder statusResponder = [](const QUrl &, int) { return 200; };
-    ErrorResponder errorResponder = [](const QUrl &, int) {
-        return QNetworkReply::NoError;
-    };
+    ErrorResponder errorResponder = [](const QUrl &, int) { return QNetworkReply::NoError; };
 
     FixtureReply *replyAt(int index) const
     {
         return index >= 0 && index < m_replies.size() ? m_replies.at(index) : nullptr;
     }
 
-    const QNetworkRequest &requestAt(int index) const
-    {
-        return m_requests.at(index);
-    }
+    const QNetworkRequest &requestAt(int index) const { return m_requests.at(index); }
 
-protected:
+  protected:
     QNetworkReply *createRequest(Operation operation, const QNetworkRequest &request,
                                  QIODevice *outgoingData = nullptr) override
     {
@@ -136,9 +129,7 @@ protected:
         Q_UNUSED(outgoingData)
         ++requests;
         m_requests.append(request);
-        auto *reply = new FixtureReply(request,
-                                       requests == 1 ? &firstRequestAborted : nullptr,
-                                       this);
+        auto *reply = new FixtureReply(request, requests == 1 ? &firstRequestAborted : nullptr, this);
         m_replies.append(reply);
         if (autoFinish) {
             QTimer::singleShot(0, reply, [this, reply]() {
@@ -151,7 +142,7 @@ protected:
         return reply;
     }
 
-private:
+  private:
     QList<FixtureReply *> m_replies;
     QList<QNetworkRequest> m_requests;
 };
@@ -159,7 +150,7 @@ private:
 class LyricsTest : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void parsesNormalAndMillisecondTimestamps();
     void parsesMultipleTimestampsWithSharedText();
     void parsesSortingOffsetAndPlainLyrics();
@@ -181,9 +172,7 @@ private slots:
 
 namespace {
 
-void configureTemporaryPaths(const QString &root,
-                             ScopedEnvironment &cacheHome,
-                             ScopedEnvironment &dataHome,
+void configureTemporaryPaths(const QString &root, ScopedEnvironment &cacheHome, ScopedEnvironment &dataHome,
                              ScopedEnvironment &localDirectory)
 {
     Q_UNUSED(cacheHome)
@@ -218,8 +207,8 @@ QByteArray lrclibResponse(const QString &id, const QString &lyrics)
 void LyricsTest::parsesNormalAndMillisecondTimestamps()
 {
     Lyrics lyrics;
-    const QVariantList lines = lyrics.parseLrc(
-        QStringLiteral("[1:02]minute\n[00:03.1]tenths\n[00:04.125]milliseconds\n"));
+    const QVariantList lines =
+        lyrics.parseLrc(QStringLiteral("[1:02]minute\n[00:03.1]tenths\n[00:04.125]milliseconds\n"));
     QCOMPARE(lines.size(), 3);
     QCOMPARE(lines.at(0).toMap().value(QStringLiteral("time")).toDouble(), 3.1);
     QCOMPARE(lines.at(1).toMap().value(QStringLiteral("time")).toDouble(), 4.125);
@@ -229,8 +218,8 @@ void LyricsTest::parsesNormalAndMillisecondTimestamps()
 void LyricsTest::parsesMultipleTimestampsWithSharedText()
 {
     Lyrics lyrics;
-    const QVariantList lines = lyrics.parseLrc(
-        QStringLiteral("[00:10.00][00:02.50]second\n[00:01.00]first\n"));
+    const QVariantList lines =
+        lyrics.parseLrc(QStringLiteral("[00:10.00][00:02.50]second\n[00:01.00]first\n"));
     QCOMPARE(lines.size(), 3);
     QCOMPARE(lines.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("first"));
     QCOMPARE(lines.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("second"));
@@ -242,8 +231,8 @@ void LyricsTest::parsesMultipleTimestampsWithSharedText()
 void LyricsTest::parsesSortingOffsetAndPlainLyrics()
 {
     Lyrics lyrics;
-    const QVariantList lines = lyrics.parseLrc(
-        QStringLiteral("[offset:500]\n[00:01.20]hello\nplain line\n[ti:title]\n"), -200.0);
+    const QVariantList lines =
+        lyrics.parseLrc(QStringLiteral("[offset:500]\n[00:01.20]hello\nplain line\n[ti:title]\n"), -200.0);
     QCOMPARE(lines.size(), 2);
     QCOMPARE(lines.at(0).toMap().value(QStringLiteral("time")).toDouble(), 1.5);
     QCOMPARE(lines.at(1).toMap().value(QStringLiteral("time")).toDouble(), -1.0);
@@ -253,8 +242,8 @@ void LyricsTest::parsesSortingOffsetAndPlainLyrics()
 void LyricsTest::ignoresMalformedLrcMetadata()
 {
     Lyrics lyrics;
-    const QVariantList lines = lyrics.parseLrc(
-        QStringLiteral("[00:xx]broken\n[ar:artist]\n[00:02]valid\n[bad:tag]plain\n"));
+    const QVariantList lines =
+        lyrics.parseLrc(QStringLiteral("[00:xx]broken\n[ar:artist]\n[00:02]valid\n[bad:tag]plain\n"));
     QCOMPARE(lines.size(), 2);
     QCOMPARE(lines.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("valid"));
     QCOMPARE(lines.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("[bad:tag]plain"));
@@ -287,8 +276,8 @@ void LyricsTest::localLyricsUseReadableFilename()
     ScopedEnvironment localDirectory("CLAVIS_LYRICS_DIR");
     configureTemporaryPaths(temporary.path(), cacheHome, dataHome, localDirectory);
 
-    const QString path = QDir(temporary.path() + QStringLiteral("/local"))
-                             .filePath(QStringLiteral("Artist - Title.lrc"));
+    const QString path =
+        QDir(temporary.path() + QStringLiteral("/local")).filePath(QStringLiteral("Artist - Title.lrc"));
     QFile local(path);
     QVERIFY(local.open(QIODevice::WriteOnly));
     local.write("[00:01.00]local line\n");
@@ -344,7 +333,8 @@ void LyricsTest::cacheUsesProviderIdentityAndDuration()
     FixtureNetworkAccessManager differentDurationManager;
     Lyrics differentDuration;
     differentDuration.setNetworkAccessManager(&differentDurationManager);
-    differentDuration.setTrack(QStringLiteral("artist"), QStringLiteral("title"), QStringLiteral("album"), 121.0);
+    differentDuration.setTrack(QStringLiteral("artist"), QStringLiteral("title"), QStringLiteral("album"),
+                               121.0);
     waitForRequests(differentDurationManager, 1);
 }
 
@@ -427,14 +417,17 @@ void LyricsTest::missingMetadataDoesNotRejectCandidates()
                     {QStringLiteral("artists"), artists},
                 };
                 if (!candidateAlbum.isEmpty())
-                    song.insert(QStringLiteral("album"), QJsonObject{{QStringLiteral("name"), candidateAlbum}});
+                    song.insert(QStringLiteral("album"),
+                                QJsonObject{{QStringLiteral("name"), candidateAlbum}});
                 if (candidateDuration > 0.0)
                     song.insert(QStringLiteral("dt"), candidateDuration * 1000.0);
                 return QJsonDocument(QJsonObject{
-                    {QStringLiteral("result"), QJsonObject{
-                        {QStringLiteral("songs"), QJsonArray{song}},
-                    }},
-                }).toJson(QJsonDocument::Compact);
+                                         {QStringLiteral("result"),
+                                          QJsonObject{
+                                              {QStringLiteral("songs"), QJsonArray{song}},
+                                          }},
+                                     })
+                    .toJson(QJsonDocument::Compact);
             }
 
             return QByteArrayLiteral(R"({"lrc":{"lyric":"[00:01.00]metadata match"}})");
@@ -451,10 +444,10 @@ void LyricsTest::missingMetadataDoesNotRejectCandidates()
     };
 
     QVERIFY(verify({}, {}, 0.0, {}, {}, 0.0));
-    QVERIFY(verify(QStringLiteral("artist"), QStringLiteral("album"), 120.0,
-                   QStringLiteral("artist"), {}, 120.0));
-    QVERIFY(verify(QStringLiteral("artist"), {}, 120.0,
-                   QStringLiteral("artist"), QStringLiteral("album"), 0.0));
+    QVERIFY(verify(QStringLiteral("artist"), QStringLiteral("album"), 120.0, QStringLiteral("artist"), {},
+                   120.0));
+    QVERIFY(
+        verify(QStringLiteral("artist"), {}, 120.0, QStringLiteral("artist"), QStringLiteral("album"), 0.0));
 }
 
 void LyricsTest::fallsBackToNetEaseWithScoring()
@@ -531,9 +524,7 @@ void LyricsTest::netEaseTransportFailureIsError()
     configureTemporaryPaths(temporary.path(), cacheHome, dataHome, localDirectory);
 
     FixtureNetworkAccessManager manager;
-    manager.errorResponder = [](const QUrl &, int) {
-        return QNetworkReply::HostNotFoundError;
-    };
+    manager.errorResponder = [](const QUrl &, int) { return QNetworkReply::HostNotFoundError; };
 
     Lyrics lyrics;
     lyrics.setNetworkAccessManager(&manager);
@@ -589,9 +580,7 @@ void LyricsTest::reportsEmptyAndErrorStates()
     QVERIFY(!emptyLyrics.hasLyrics());
 
     FixtureNetworkAccessManager errorManager;
-    errorManager.responder = [](const QUrl &, int) {
-        return QByteArrayLiteral("not json");
-    };
+    errorManager.responder = [](const QUrl &, int) { return QByteArrayLiteral("not json"); };
     Lyrics errorLyrics;
     errorLyrics.setNetworkAccessManager(&errorManager);
     errorLyrics.setTrack(QStringLiteral("artist"), QStringLiteral("broken"));

@@ -5,7 +5,7 @@
 class AudioVisualAnalyzerTest : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void appliesMicrophoneNoiseGate();
     void microphoneSilenceHasNoReleaseTail();
     void preservesSystemTransients();

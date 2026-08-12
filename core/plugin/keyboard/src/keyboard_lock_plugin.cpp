@@ -4,8 +4,7 @@
 #include <QFile>
 #include <QTextStream>
 
-KeyboardLockState::KeyboardLockState(QObject *parent)
-    : QObject(parent)
+KeyboardLockState::KeyboardLockState(QObject *parent) : QObject(parent)
 {
     m_pollTimer.setInterval(1000);
     m_pollTimer.setTimerType(Qt::CoarseTimer);
@@ -19,10 +18,7 @@ bool KeyboardLockState::capsLock() const { return m_capsLock; }
 
 void KeyboardLockState::refresh()
 {
-    setStates(
-        readAnyLedState(QStringLiteral("::numlock")),
-        readAnyLedState(QStringLiteral("::capslock"))
-    );
+    setStates(readAnyLedState(QStringLiteral("::numlock")), readAnyLedState(QStringLiteral("::capslock")));
 }
 
 bool KeyboardLockState::readAnyLedState(const QString &suffix)

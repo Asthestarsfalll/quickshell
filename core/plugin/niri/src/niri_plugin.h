@@ -20,16 +20,16 @@ class NiriPlugin : public QObject {
     Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
     Q_PROPERTY(QString socketPath READ socketPath NOTIFY connectedChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY errorChanged)
-    Q_PROPERTY(NiriWorkspaceModel* workspaces READ workspaces CONSTANT)
-    Q_PROPERTY(NiriWindowModel* windows READ windows CONSTANT)
-    Q_PROPERTY(NiriOutputModel* outputs READ outputs CONSTANT)
+    Q_PROPERTY(NiriWorkspaceModel *workspaces READ workspaces CONSTANT)
+    Q_PROPERTY(NiriWindowModel *windows READ windows CONSTANT)
+    Q_PROPERTY(NiriOutputModel *outputs READ outputs CONSTANT)
     Q_PROPERTY(QVariantMap focusedWindow READ focusedWindow NOTIFY focusedWindowChanged)
     Q_PROPERTY(QVariantMap focusedWorkspace READ focusedWorkspace NOTIFY focusedWorkspaceChanged)
     Q_PROPERTY(QString currentOutput READ currentOutput NOTIFY focusedWorkspaceChanged)
     Q_PROPERTY(bool inOverview READ inOverview NOTIFY overviewChanged)
     Q_PROPERTY(QStringList keyboardLayoutNames READ keyboardLayoutNames NOTIFY keyboardLayoutChanged)
     Q_PROPERTY(QString currentKeyboardLayoutName READ currentKeyboardLayoutName NOTIFY keyboardLayoutChanged)
-public:
+  public:
     explicit NiriPlugin(QObject *parent = nullptr);
     ~NiriPlugin() override;
 
@@ -74,7 +74,7 @@ public:
     Q_INVOKABLE bool cycleKeyboardLayout();
     Q_INVOKABLE bool doScreenTransition(int delayMs = 0);
 
-signals:
+  signals:
     void connectedChanged();
     void errorChanged();
     void workspacesChanged();
@@ -86,10 +86,10 @@ signals:
     void keyboardLayoutChanged();
     void configLoaded(bool failed, const QString &error);
 
-private slots:
+  private slots:
     void handleEvent(const QJsonObject &event);
 
-private:
+  private:
     NiriWorkspace parseWorkspace(const QJsonObject &object) const;
     NiriWindow parseWindow(const QJsonObject &object);
     NiriOutput parseOutput(const QString &name, const QJsonObject &object) const;

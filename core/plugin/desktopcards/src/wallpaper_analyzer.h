@@ -25,11 +25,9 @@ class WallpaperAnalysisResult : public QObject {
     Q_PROPERTY(double maxBusyScore READ maxBusyScore CONSTANT)
     Q_PROPERTY(QString errorString READ errorString CONSTANT)
 
-public:
-    explicit WallpaperAnalysisResult(
-        const QSharedPointer<const WallpaperAnalysisData> &data,
-        QObject *parent = nullptr
-    );
+  public:
+    explicit WallpaperAnalysisResult(const QSharedPointer<const WallpaperAnalysisData> &data,
+                                     QObject *parent = nullptr);
 
     bool valid() const;
     int analysisWidth() const;
@@ -40,14 +38,9 @@ public:
     double maxBusyScore() const;
     QString errorString() const;
 
-    Q_INVOKABLE double busyScore(
-        double x,
-        double y,
-        double width,
-        double height
-    ) const;
+    Q_INVOKABLE double busyScore(double x, double y, double width, double height) const;
 
-private:
+  private:
     QSharedPointer<const WallpaperAnalysisData> m_data;
 };
 
@@ -58,50 +51,33 @@ class WallpaperAnalyzer : public QObject {
 
     Q_PROPERTY(int pendingCount READ pendingCount NOTIFY pendingCountChanged)
 
-public:
+  public:
     explicit WallpaperAnalyzer(QObject *parent = nullptr);
     ~WallpaperAnalyzer() override;
 
     int pendingCount() const;
 
-    Q_INVOKABLE void request(
-        const QString &requestKey,
-        int generation,
-        const QString &sourcePath,
-        int canvasWidth,
-        int canvasHeight,
-        const QString &fillMode,
-        int imageWidth,
-        int imageHeight
-    );
+    Q_INVOKABLE void request(const QString &requestKey, int generation, const QString &sourcePath,
+                             int canvasWidth, int canvasHeight, const QString &fillMode, int imageWidth,
+                             int imageHeight);
 
-signals:
+  signals:
     void pendingCountChanged();
-    void analysisReady(
-        const QString &requestKey,
-        int generation,
-        WallpaperAnalysisResult *result
-    );
+    void analysisReady(const QString &requestKey, int generation, WallpaperAnalysisResult *result);
 
-private:
+  private:
     struct AnalysisWaiter {
         QString requestKey;
         int generation = 0;
     };
 
-    QString cacheKey(
-        const QString &sourcePath,
-        int canvasWidth,
-        int canvasHeight,
-        const QString &fillMode,
-        int imageWidth,
-        int imageHeight
-    ) const;
-public:
-    void finish(const QString &key,
-                const QSharedPointer<const WallpaperAnalysisData> &data);
+    QString cacheKey(const QString &sourcePath, int canvasWidth, int canvasHeight, const QString &fillMode,
+                     int imageWidth, int imageHeight) const;
 
-private:
+  public:
+    void finish(const QString &key, const QSharedPointer<const WallpaperAnalysisData> &data);
+
+  private:
     mutable QMutex m_mutex;
     QThreadPool m_threadPool;
     QHash<QString, QSharedPointer<const WallpaperAnalysisData>> m_cache;

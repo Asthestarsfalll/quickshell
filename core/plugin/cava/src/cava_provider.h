@@ -15,8 +15,8 @@ class CavaProvider : public QObject {
     Q_PROPERTY(int bars READ bars WRITE setBars NOTIFY barsChanged)
     Q_PROPERTY(QVector<double> values READ values NOTIFY valuesChanged)
 
-public:
-    explicit CavaProvider(QObject* parent = nullptr);
+  public:
+    explicit CavaProvider(QObject *parent = nullptr);
     ~CavaProvider() override;
 
     bool active() const;
@@ -29,23 +29,23 @@ public:
 
     QVector<double> values() const;
 
-signals:
+  signals:
     void activeChanged();
     void availableChanged();
     void barsChanged();
     void valuesChanged();
 
-private slots:
+  private slots:
     void process();
 
-private:
+  private:
     bool m_active = false;
     bool m_available = false;
     int m_bars = 45;
     QVector<double> m_values;
     QVector<double> m_input;
     QVector<double> m_output;
-    cava_plan* m_plan = nullptr;
+    cava_plan *m_plan = nullptr;
     QTimer m_timer;
 
     void rebuildCava();

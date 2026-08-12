@@ -5,8 +5,7 @@
 
 namespace NiriWorkspaceDeriver {
 
-void recomputeWindowCounts(QList<NiriWorkspace> &workspaces,
-                           const QList<NiriWindow> &windows)
+void recomputeWindowCounts(QList<NiriWorkspace> &workspaces, const QList<NiriWindow> &windows)
 {
     QHash<quint64, int> windowCounts;
     QHash<quint64, int> tiledWindowCounts;
@@ -24,11 +23,9 @@ void recomputeWindowCounts(QList<NiriWorkspace> &workspaces,
 
     for (NiriWorkspace &workspace : workspaces) {
         workspace.windowCount = windowCounts.value(workspace.id);
-        workspace.tiledWindowCount =
-            tiledWindowCounts.value(workspace.id);
-        workspace.tiledColumnCount =
-            tiledColumns.value(workspace.id).size();
+        workspace.tiledWindowCount = tiledWindowCounts.value(workspace.id);
+        workspace.tiledColumnCount = tiledColumns.value(workspace.id).size();
     }
 }
 
-}
+} // namespace NiriWorkspaceDeriver

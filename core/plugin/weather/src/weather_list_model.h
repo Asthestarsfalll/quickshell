@@ -6,7 +6,7 @@
 class WeatherListModel : public QAbstractListModel {
     Q_OBJECT
 
-public:
+  public:
     explicit WeatherListModel(QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -18,7 +18,7 @@ public:
 
     void setItems(const QList<QVariantMap> &items);
 
-private:
+  private:
     QList<QVariantMap> m_items;
     QHash<int, QByteArray> m_roles;
 };

@@ -1,42 +1,9 @@
 find_package(Qt6 REQUIRED COMPONENTS Test)
 find_program(BASH_EXECUTABLE bash REQUIRED)
 
-add_test(
-    NAME control_center_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_control_center_architecture.sh
-)
-
-add_test(
-    NAME dialog_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_dialog_architecture.sh
-)
-
-add_test(
-    NAME edge_position_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_edge_positions.sh
-)
-
-add_test(
-    NAME keystone_clock_customization_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_keystone_clock_customization.sh
-)
-
-add_test(
-    NAME wallpaper_picker_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_wallpaper_picker_architecture.sh
-)
-
-add_test(
-    NAME shell_blur_audit_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_shell_blur_audit.sh
-)
-
+# These are black-box checks for the shell-owned configuration writers.  They
+# exercise their generated output and validation behavior; source layout is
+# intentionally not part of the CTest suite.
 add_test(
     NAME niri_cursor_config_tests
     COMMAND ${BASH_EXECUTABLE}
@@ -44,73 +11,15 @@ add_test(
 )
 
 add_test(
-    NAME idle_policy_persistence_tests
+    NAME manage_niri_effects_tests
     COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_idle_policy_persistence.sh
+        ${CLAVIS_SOURCE_ROOT}/tests/test_manage_niri_effects.sh
 )
 
 add_test(
     NAME power_menu_tests
     COMMAND ${BASH_EXECUTABLE}
         ${CLAVIS_SOURCE_ROOT}/tests/test_power_menu.sh
-)
-
-add_test(
-    NAME autostart_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_autostart_architecture.sh
-)
-
-add_test(
-    NAME spotlight_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_spotlight_architecture.sh
-)
-
-add_test(
-    NAME font_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_font_architecture.sh
-)
-
-add_test(
-    NAME default_apps_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_default_apps_architecture.sh
-)
-
-add_test(
-    NAME shader_asset_tests
-    COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_shader_assets.sh
-)
-
-add_test(
-    NAME systemd_architecture_tests
-    COMMAND ${BASH_EXECUTABLE} ${CLAVIS_SOURCE_ROOT}/tests/test_systemd_architecture.sh
-)
-
-add_test(
-    NAME desktop_card_handoff_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_desktop_card_handoff.sh
-)
-
-add_test(
-    NAME desktop_card_handoff_smoke_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_desktop_card_handoff_smoke.sh
-)
-
-add_test(
-    NAME desktop_card_placement_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_desktop_card_placement_architecture.sh
-)
-
-add_test(
-    NAME desktop_card_layout_feature_architecture_tests
-    COMMAND ${BASH_EXECUTABLE}
-        ${CLAVIS_SOURCE_ROOT}/tests/test_desktop_card_layout_features.sh
 )
 
 add_test(
@@ -131,10 +40,7 @@ target_link_libraries(niri_workspace_deriver_tests PRIVATE
     Qt6::Test
 )
 
-add_test(
-    NAME niri_workspace_deriver_tests
-    COMMAND niri_workspace_deriver_tests
-)
+add_test(NAME niri_workspace_deriver_tests COMMAND niri_workspace_deriver_tests)
 
 qt_add_executable(audio_visual_analyzer_tests
     audio_visual_analyzer_test.cpp

@@ -9,10 +9,10 @@
 class WeatherBackend : public QObject {
     Q_OBJECT
 
-public:
+  public:
     explicit WeatherBackend(QObject *parent = nullptr);
 
-    const WeatherSnapshot& snapshot() const { return m_snapshot; }
+    const WeatherSnapshot &snapshot() const { return m_snapshot; }
     bool loading() const { return m_loading; }
     bool hasManualLocation() const { return m_hasManualLocation; }
 
@@ -20,11 +20,11 @@ public:
     Q_INVOKABLE void setManualLocation(double latitude, double longitude, const QString &name);
     Q_INVOKABLE void clearManualLocation();
 
-signals:
+  signals:
     void snapshotChanged();
     void loadingChanged();
 
-private:
+  private:
     OpenMeteoClient m_client;
     WeatherSnapshot m_snapshot;
     QTimer m_forecastTimer;
@@ -36,7 +36,8 @@ private:
 
     void setLoading(bool loading);
     void startFetch(const WeatherLocation &location);
-    void applyForecast(const WeatherLocation &location, const QJsonObject &forecast, const QJsonObject &airQuality, const QString &partialError);
+    void applyForecast(const WeatherLocation &location, const QJsonObject &forecast,
+                       const QJsonObject &airQuality, const QString &partialError);
     void scheduleTimers();
     void loadSettings();
     void saveSettings();

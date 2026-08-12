@@ -19,19 +19,20 @@ using RoundedPolygon::Shapes;
 
 namespace {
 
-constexpr int kMaterialShapeCount =
-    static_cast<int>(MaterialShapes::ShapeType::Heart) + 1;
+constexpr int kMaterialShapeCount = static_cast<int>(MaterialShapes::ShapeType::Heart) + 1;
 
-void verifyFiniteCubics(const std::vector<RoundedPolygon::Cubic>& cubics) {
+void verifyFiniteCubics(const std::vector<RoundedPolygon::Cubic> &cubics)
+{
     QVERIFY(!cubics.empty());
-    for (const auto& cubic : cubics) {
+    for (const auto &cubic : cubics) {
         for (const float coordinate : cubic.points()) {
             QVERIFY(std::isfinite(coordinate));
         }
     }
 }
 
-void verifyUsableShape(const RoundedPolygonShape& shape) {
+void verifyUsableShape(const RoundedPolygonShape &shape)
+{
     verifyFiniteCubics(shape.cubics());
 
     const auto bounds = shape.calculateBounds(false);
@@ -47,14 +48,15 @@ void verifyUsableShape(const RoundedPolygonShape& shape) {
 class M3ShapesTest : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void everyMaterialPresetIsValid();
     void everyMaterialPresetMorphsFromCircle();
     void customFactoriesProduceUsableGeometry();
     void qmlModuleLoadsAndCreatesMaterialShape();
 };
 
-void M3ShapesTest::everyMaterialPresetIsValid() {
+void M3ShapesTest::everyMaterialPresetIsValid()
+{
     for (int value = 0; value < kMaterialShapeCount; ++value) {
         const auto type = static_cast<MaterialShapes::ShapeType>(value);
         const auto shape = MaterialShapes::getShape(type);
@@ -70,12 +72,12 @@ void M3ShapesTest::everyMaterialPresetIsValid() {
     }
 }
 
-void M3ShapesTest::everyMaterialPresetMorphsFromCircle() {
+void M3ShapesTest::everyMaterialPresetMorphsFromCircle()
+{
     const auto circle = MaterialShapes::circle();
 
     for (int value = 0; value < kMaterialShapeCount; ++value) {
-        const auto target = MaterialShapes::getShape(
-            static_cast<MaterialShapes::ShapeType>(value));
+        const auto target = MaterialShapes::getShape(static_cast<MaterialShapes::ShapeType>(value));
         const Morph morph(circle, target);
 
         for (const float progress : std::array{0.0f, 0.5f, 1.0f}) {
@@ -84,16 +86,16 @@ void M3ShapesTest::everyMaterialPresetMorphsFromCircle() {
     }
 }
 
-void M3ShapesTest::customFactoriesProduceUsableGeometry() {
+void M3ShapesTest::customFactoriesProduceUsableGeometry()
+{
     verifyUsableShape(Shapes::circle(12).normalized());
-    verifyUsableShape(Shapes::rectangle(2.0f, 1.0f,
-        RoundedPolygon::CornerRounding(0.2f, 0.5f)).normalized());
-    verifyUsableShape(Shapes::star(7, 1.0f, 0.45f,
-        RoundedPolygon::CornerRounding(0.08f, 0.4f)).normalized());
+    verifyUsableShape(Shapes::rectangle(2.0f, 1.0f, RoundedPolygon::CornerRounding(0.2f, 0.5f)).normalized());
+    verifyUsableShape(Shapes::star(7, 1.0f, 0.45f, RoundedPolygon::CornerRounding(0.08f, 0.4f)).normalized());
     verifyUsableShape(Shapes::pill(2.0f, 1.0f, 0.5f).normalized());
 }
 
-void M3ShapesTest::qmlModuleLoadsAndCreatesMaterialShape() {
+void M3ShapesTest::qmlModuleLoadsAndCreatesMaterialShape()
+{
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral(M3SHAPES_IMPORT_PATH));
 
@@ -112,7 +114,7 @@ void M3ShapesTest::qmlModuleLoadsAndCreatesMaterialShape() {
             color: "#ff6750a4"
         }
     )QML",
-        QUrl(QStringLiteral("inline:m3shapes-smoke.qml")));
+                      QUrl(QStringLiteral("inline:m3shapes-smoke.qml")));
 
     if (component.status() == QQmlComponent::Loading) {
         QSignalSpy statusChanged(&component, &QQmlComponent::statusChanged);
@@ -121,7 +123,7 @@ void M3ShapesTest::qmlModuleLoadsAndCreatesMaterialShape() {
 
     QScopedPointer<QObject> object(component.create());
     QVERIFY2(object, qPrintable(component.errorString()));
-    auto* item = qobject_cast<QQuickItem*>(object.data());
+    auto *item = qobject_cast<QQuickItem *>(object.data());
     QVERIFY(item);
     QCOMPARE(item->width(), 120.0);
     QCOMPARE(item->height(), 80.0);

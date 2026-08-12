@@ -21,10 +21,7 @@ constexpr AnalysisProfile kMicrophoneProfile{
     0.70, 0.20, 0.10, -50.0, -10.0, 0.95,
 };
 
-double clamp01(double value)
-{
-    return std::clamp(value, 0.0, 1.0);
-}
+double clamp01(double value) { return std::clamp(value, 0.0, 1.0); }
 
 double percentile(std::vector<double> values, double quantile)
 {
@@ -32,8 +29,7 @@ double percentile(std::vector<double> values, double quantile)
         return 0.0;
 
     std::sort(values.begin(), values.end());
-    const double position =
-        static_cast<double>(values.size() - 1) * quantile;
+    const double position = static_cast<double>(values.size() - 1) * quantile;
     const auto lower = static_cast<std::size_t>(std::floor(position));
     const auto upper = static_cast<std::size_t>(std::ceil(position));
     if (lower == upper)
@@ -48,9 +44,8 @@ double mapEnergy(double value, const AnalysisProfile &profile)
     const double decibels = 20.0 * std::log10(linear);
     if (decibels <= profile.noiseFloorDb)
         return 0.0;
-    const double normalized = clamp01(
-        (decibels - profile.noiseFloorDb)
-        / (profile.ceilingDb - profile.noiseFloorDb));
+    const double normalized =
+        clamp01((decibels - profile.noiseFloorDb) / (profile.ceilingDb - profile.noiseFloorDb));
     return std::pow(normalized, profile.gamma);
 }
 
@@ -61,17 +56,13 @@ double softCompressPeak(double value)
     if (mapped <= knee)
         return mapped;
     const double progress = (mapped - knee) / (1.0 - knee);
-    const double curve =
-        (1.0 - std::exp(-2.2 * progress)) / (1.0 - std::exp(-2.2));
+    const double curve = (1.0 - std::exp(-2.2 * progress)) / (1.0 - std::exp(-2.2));
     return knee + (0.92 - knee) * curve;
 }
 
 } // namespace
 
-AudioVisualAnalyzer::AudioVisualAnalyzer(AudioVisualSource source)
-    : m_source(source)
-{
-}
+AudioVisualAnalyzer::AudioVisualAnalyzer(AudioVisualSource source) : m_source(source) {}
 
 void AudioVisualAnalyzer::reset(AudioVisualSource source)
 {
@@ -107,24 +98,18 @@ double AudioVisualAnalyzer::summarizeWindow()
     double squareSum = 0.0;
     for (const double value : m_windowRms)
         squareSum += value * value;
-    const double windowRms =
-        std::sqrt(squareSum / static_cast<double>(m_windowRms.size()));
+    const double windowRms = std::sqrt(squareSum / static_cast<double>(m_windowRms.size()));
     const double windowP90 = percentile(m_windowRms, 0.90);
-    const double windowPeak = m_windowPeaks.empty()
-        ? 0.0
-        : *std::max_element(m_windowPeaks.begin(), m_windowPeaks.end());
+    const double windowPeak =
+        m_windowPeaks.empty() ? 0.0 : *std::max_element(m_windowPeaks.begin(), m_windowPeaks.end());
     const AnalysisProfile &profile =
-        m_source == AudioVisualSource::System
-        ? kSystemProfile
-        : kMicrophoneProfile;
+        m_source == AudioVisualSource::System ? kSystemProfile : kMicrophoneProfile;
 
     const double mappedRms = mapEnergy(windowRms, profile);
     const double mappedP90 = mapEnergy(windowP90, profile);
-    const double mappedPeak =
-        softCompressPeak(mapEnergy(windowPeak, profile));
+    const double mappedPeak = softCompressPeak(mapEnergy(windowPeak, profile));
     m_windowRms.clear();
     m_windowPeaks.clear();
-    return clamp01(mappedRms * profile.rmsWeight
-                   + mappedP90 * profile.p90Weight
-                   + mappedPeak * profile.peakWeight);
+    return clamp01(mappedRms * profile.rmsWeight + mappedP90 * profile.p90Weight +
+                   mappedPeak * profile.peakWeight);
 }

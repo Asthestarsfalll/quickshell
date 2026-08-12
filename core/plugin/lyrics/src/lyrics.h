@@ -33,7 +33,7 @@ class Lyrics : public QObject {
     Q_PROPERTY(double trackDuration READ trackDuration NOTIFY trackChanged)
     Q_PROPERTY(QString trackPlayerId READ trackPlayerId NOTIFY trackChanged)
 
-public:
+  public:
     explicit Lyrics(QObject *parent = nullptr);
 
     // Tests and embedders may provide a deterministic HTTP transport before
@@ -58,9 +58,8 @@ public:
     double trackDuration() const { return m_duration; }
     QString trackPlayerId() const { return m_playerId; }
 
-    Q_INVOKABLE void setTrack(const QString &artist, const QString &title,
-                              const QString &album = {}, double duration = 0.0,
-                              const QString &playerId = {});
+    Q_INVOKABLE void setTrack(const QString &artist, const QString &title, const QString &album = {},
+                              double duration = 0.0, const QString &playerId = {});
     Q_INVOKABLE void clearTrack();
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void requestCandidates();
@@ -69,7 +68,7 @@ public:
     Q_INVOKABLE int indexForTime(double positionSeconds) const;
     Q_INVOKABLE double timeForIndex(int index) const;
 
-signals:
+  signals:
     void statusChanged();
     void loadingChanged();
     void hasLyricsChanged();
@@ -82,7 +81,7 @@ signals:
     void offsetMsChanged();
     void trackChanged();
 
-private:
+  private:
     enum class ReplyKind {
         LrclibTrack,
         LrclibSearch,
@@ -163,9 +162,8 @@ private:
 
     bool loadLocalLyrics(quint64 generation);
     bool loadCachedLyrics(quint64 generation);
-    bool acceptRawLyrics(const QString &provider, const QString &synced,
-                         const QString &plain, const QVariantMap &candidate,
-                         quint64 generation, bool writeCache);
+    bool acceptRawLyrics(const QString &provider, const QString &synced, const QString &plain,
+                         const QVariantMap &candidate, quint64 generation, bool writeCache);
     void finishEmpty(const QString &message = {});
     void finishError(const QString &message);
     void rebuildTimelineFromSource();
@@ -187,8 +185,7 @@ private:
     QVariantList parseLrclibCandidates(const QJsonDocument &document) const;
     QVariantList parseNetEaseCandidates(const QJsonDocument &document) const;
 
-    void cacheLyrics(const QString &provider, const QString &id,
-                     const QString &synced, const QString &plain,
+    void cacheLyrics(const QString &provider, const QString &id, const QString &synced, const QString &plain,
                      const QVariantMap &candidate);
     QString cacheDirectory() const;
     QString cacheIndexPath() const;

@@ -2,27 +2,17 @@
 
 #include "media_palette_backend.h"
 
-MediaPalettePlugin::MediaPalettePlugin(QObject *parent)
-    : QObject(parent)
+MediaPalettePlugin::MediaPalettePlugin(QObject *parent) : QObject(parent)
 {
     const MediaPalette palette = MediaPaletteBackend::fallbackPalette(QColor(QStringLiteral("#88d0ec")));
     applyPalette(palette.primary, palette.onPrimary, palette.track);
 }
 
-QColor MediaPalettePlugin::primary() const
-{
-    return m_primary;
-}
+QColor MediaPalettePlugin::primary() const { return m_primary; }
 
-QColor MediaPalettePlugin::onPrimary() const
-{
-    return m_onPrimary;
-}
+QColor MediaPalettePlugin::onPrimary() const { return m_onPrimary; }
 
-QColor MediaPalettePlugin::track() const
-{
-    return m_track;
-}
+QColor MediaPalettePlugin::track() const { return m_track; }
 
 void MediaPalettePlugin::extract(const QString &artUrl, const QColor &fallback)
 {
@@ -42,9 +32,7 @@ void MediaPalettePlugin::extract(const QString &artUrl, const QColor &fallback)
 
 bool MediaPalettePlugin::applyPalette(const QColor &primary, const QColor &onPrimary, const QColor &track)
 {
-    if (m_primary == primary
-        && m_onPrimary == onPrimary
-        && m_track == track) {
+    if (m_primary == primary && m_onPrimary == onPrimary && m_track == track) {
         return false;
     }
 

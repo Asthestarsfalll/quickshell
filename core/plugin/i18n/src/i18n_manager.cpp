@@ -3,10 +3,7 @@
 #include <QCoreApplication>
 #include <QQmlEngine>
 
-I18nManager::I18nManager(QObject *parent)
-    : QObject(parent)
-{
-}
+I18nManager::I18nManager(QObject *parent) : QObject(parent) {}
 
 I18nManager::~I18nManager()
 {
@@ -14,15 +11,9 @@ I18nManager::~I18nManager()
         QCoreApplication::removeTranslator(&m_translator);
 }
 
-QString I18nManager::language() const
-{
-    return m_language;
-}
+QString I18nManager::language() const { return m_language; }
 
-QString I18nManager::lastError() const
-{
-    return m_lastError;
-}
+QString I18nManager::lastError() const { return m_lastError; }
 
 QString I18nManager::normalizeLanguage(const QString &language)
 {
@@ -30,10 +21,8 @@ QString I18nManager::normalizeLanguage(const QString &language)
     const QString lower = normalized.toLower();
     if (lower.startsWith(QStringLiteral("en")))
         return QStringLiteral("en_US");
-    if (lower == QStringLiteral("zh_tw")
-            || lower == QStringLiteral("zh_hk")
-            || lower == QStringLiteral("zh_mo")
-            || lower.contains(QStringLiteral("hant"))) {
+    if (lower == QStringLiteral("zh_tw") || lower == QStringLiteral("zh_hk") ||
+        lower == QStringLiteral("zh_mo") || lower.contains(QStringLiteral("hant"))) {
         return QStringLiteral("zh_TW");
     }
     return QStringLiteral("zh_CN");
