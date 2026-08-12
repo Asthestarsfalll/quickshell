@@ -1212,24 +1212,6 @@
     </message>
 </context>
 <context>
-    <name>DashboardMediaCard</name>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/DashboardMediaCard.qml" line="19" />
-        <source>没有媒体</source>
-        <translation>没有媒体</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/DashboardMediaCard.qml" line="21" />
-        <source>未知专辑</source>
-        <translation>未知专辑</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/DashboardMediaCard.qml" line="23" />
-        <source>未知艺术家</source>
-        <translation>未知艺术家</translation>
-    </message>
-</context>
-<context>
     <name>DashboardWeatherCard</name>
     <message>
         <location filename="../Modules/Keystone/DashboardContent/DashboardWeatherCard.qml" line="52" />
@@ -3195,54 +3177,6 @@
         <location filename="../Modules/RegionSelector/RegionSelectionWindow.qml" line="226" />
         <source>拖拽选择区域  ·  Esc 取消</source>
         <translation>拖拽选择区域  ·  Esc 取消</translation>
-    </message>
-</context>
-<context>
-    <name>ScheduleWidget</name>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="13" />
-        <source>周一</source>
-        <translation>周一</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="13" />
-        <source>周二</source>
-        <translation>周二</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="13" />
-        <source>周三</source>
-        <translation>周三</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="13" />
-        <source>周四</source>
-        <translation>周四</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="14" />
-        <source>周五</source>
-        <translation>周五</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="14" />
-        <source>周六</source>
-        <translation>周六</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="14" />
-        <source>周日</source>
-        <translation>周日</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="55" />
-        <source>课表 JSON 解析错误:</source>
-        <translation>课表 JSON 解析错误:</translation>
-    </message>
-    <message>
-        <location filename="../Modules/Keystone/DashboardContent/ScheduleWidget.qml" line="69" />
-        <source>时间</source>
-        <translation>时间</translation>
     </message>
 </context>
 <context>

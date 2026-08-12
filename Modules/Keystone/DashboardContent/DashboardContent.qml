@@ -5,13 +5,11 @@ import QtQuick.Layouts
 Item {
     id: root
 
+    property var screen: null
+    readonly property var holeGlassItems: holeCardCarousel.blurBackgroundItems
+
     signal closeRequested()
     signal avatarEditRequested()
-
-    property var player: null
-    property var screen: null
-    readonly property var holeGlassItems:
-        holeCardCarousel.blurBackgroundItems
 
     implicitWidth: 860
     implicitHeight: 520
@@ -38,6 +36,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
             }
+
         }
 
         Item {
@@ -46,14 +45,17 @@ Item {
 
             HoleCardCarousel {
                 id: holeCardCarousel
+
                 width: 340
                 anchors.left: parent.left
                 anchors.leftMargin: 30
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                player: root.player
                 screen: root.screen
             }
+
         }
+
     }
+
 }

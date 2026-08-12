@@ -17,33 +17,18 @@ Item {
     property real dragY: 0
     property real dragOffsetX: 0
     property real dragOffsetY: 0
-
-    readonly property var cardState:
-        SystemCardService.cards[root.tileId] || null
-    readonly property bool canDrag:
-        root.active
-        && root.hostItem !== null
-        && SystemCardService.isFreeLayoutMode(
-            SystemCardService.globalDesktopLayoutMode)
+    readonly property var cardState: SystemCardService.cards[root.tileId] || null
+    readonly property bool canDrag: root.active && root.hostItem !== null && SystemCardService.isFreeLayoutMode(SystemCardService.globalDesktopLayoutMode)
 
     Accessible.role: Accessible.Pane
     Accessible.name: SystemCardService.cardName(root.tileId)
-
     scale: root.dragging ? 1.025 : 1
-    Behavior on scale {
-        NumberAnimation {
-            duration: Appearance.animation.expressiveEffects.duration
-            easing.type: Appearance.animation.expressiveEffects.type
-            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-        }
-    }
 
     Rectangle {
         anchors.fill: parent
         radius: Appearance.rounding.extraLarge
         visible: cardContent.shellManagedSurface
-        color: BlurService.opaqueBackgroundColor(
-            Appearance.m3colors.m3surfaceContainerHigh)
+        color: BlurService.opaqueBackgroundColor(Appearance.m3colors.m3surfaceContainerHigh)
     }
 
     SystemCardContent {
@@ -53,50 +38,39 @@ Item {
         tileId: root.tileId
         active: true
         useShellManagedSurface: true
+        desktopPresentation: true
     }
 
     HoverHandler {
-        cursorShape: !root.canDrag
-            ? Qt.ArrowCursor
-            : dragHandler.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        cursorShape: !root.canDrag ? Qt.ArrowCursor : dragHandler.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
     }
 
     DragHandler {
         id: dragHandler
 
-        target: null
-        enabled: root.canDrag
-        acceptedButtons: Qt.LeftButton
-        grabPermissions:
-            PointerHandler.CanTakeOverFromAnything
-            | PointerHandler.ApprovesTakeOverByAnything
-
         property bool started: false
 
         function hostPoint() {
-            return root.mapToItem(
-                root.hostItem,
-                centroid.position.x,
-                centroid.position.y
-            );
+            return root.mapToItem(root.hostItem, centroid.position.x, centroid.position.y);
         }
 
         function screenBounds() {
             return {
-                width: Math.max(1, Number(root.hostItem.width) || 1),
-                height: Math.max(1, Number(root.hostItem.height) || 1)
+                "width": Math.max(1, Number(root.hostItem.width) || 1),
+                "height": Math.max(1, Number(root.hostItem.height) || 1)
             };
         }
 
+        target: null
+        enabled: root.canDrag
+        acceptedButtons: Qt.LeftButton
+        grabPermissions: PointerHandler.CanTakeOverFromAnything | PointerHandler.ApprovesTakeOverByAnything
         onActiveChanged: {
             if (active) {
                 started = true;
                 const point = dragHandler.hostPoint();
-                const visibleTopLeft = root.mapToItem(
-                    root.hostItem, 0, 0);
-                if (root.placementController
-                        && typeof root.placementController
-                            .beginCardDrag === "function") {
+                const visibleTopLeft = root.mapToItem(root.hostItem, 0, 0);
+                if (root.placementController && typeof root.placementController.beginCardDrag === "function") {
                     const presented = root.placementController.beginCardDrag();
                     if (presented) {
                         visibleTopLeft.x = Number(presented.x);
@@ -108,79 +82,48 @@ Item {
                 root.dragX = visibleTopLeft.x;
                 root.dragY = visibleTopLeft.y;
                 root.dragging = true;
-                if (root.placementController
-                        && typeof root.placementController
-                            .updateCardDrag === "function") {
-                    root.placementController.updateCardDrag(
-                        root.dragX, root.dragY);
-                }
+                if (root.placementController && typeof root.placementController.updateCardDrag === "function")
+                    root.placementController.updateCardDrag(root.dragX, root.dragY);
+
             } else if (started) {
                 started = false;
                 const bounds = dragHandler.screenBounds();
                 let positions = [];
-                if (root.placementController
-                        && typeof root.placementController
-                            .finishCardDrag === "function") {
-                    positions = root.placementController.finishCardDrag(
-                        root.dragX, root.dragY);
-                }
+                if (root.placementController && typeof root.placementController.finishCardDrag === "function")
+                    positions = root.placementController.finishCardDrag(root.dragX, root.dragY);
+
                 if (Array.isArray(positions) && positions.length > 0) {
-                    SystemCardService.setDesktopScreenPositions(
-                        positions,
-                        !SystemCardService.isFreeLayoutMode(
-                            SystemCardService.globalDesktopLayoutMode)
-                    );
+                    SystemCardService.setDesktopScreenPositions(positions, !SystemCardService.isFreeLayoutMode(SystemCardService.globalDesktopLayoutMode));
                 } else {
                     const xNorm = root.dragX / bounds.width;
                     const yNorm = root.dragY / bounds.height;
-                    SystemCardService.setDesktopScreenPosition(
-                        root.tileId, xNorm, yNorm,
-                        !SystemCardService.isFreeLayoutMode(
-                            SystemCardService.globalDesktopLayoutMode));
+                    SystemCardService.setDesktopScreenPosition(root.tileId, xNorm, yNorm, !SystemCardService.isFreeLayoutMode(SystemCardService.globalDesktopLayoutMode));
                 }
                 root.dragging = false;
-                if (root.placementController
-                        && typeof root.placementController
-                            .completeCardDrag === "function") {
+                if (root.placementController && typeof root.placementController.completeCardDrag === "function")
                     root.placementController.completeCardDrag();
-                }
+
             }
         }
-
         onCentroidChanged: {
             if (!active)
-                return;
+                return ;
+
             const point = dragHandler.hostPoint();
             const bounds = dragHandler.screenBounds();
-            root.dragX = Math.max(
-                0,
-                Math.min(bounds.width - root.width,
-                    point.x - root.dragOffsetX)
-            );
-            root.dragY = Math.max(
-                0,
-                Math.min(bounds.height - root.height,
-                    point.y - root.dragOffsetY)
-            );
-            if (root.placementController
-                    && typeof root.placementController
-                        .updateCardDrag === "function") {
-                root.placementController.updateCardDrag(
-                    root.dragX, root.dragY);
-            }
-        }
+            root.dragX = Math.max(0, Math.min(bounds.width - root.width, point.x - root.dragOffsetX));
+            root.dragY = Math.max(0, Math.min(bounds.height - root.height, point.y - root.dragOffsetY));
+            if (root.placementController && typeof root.placementController.updateCardDrag === "function")
+                root.placementController.updateCardDrag(root.dragX, root.dragY);
 
+        }
         onCanceled: {
-            const visibleTopLeft = root.mapToItem(
-                root.hostItem, 0, 0);
+            const visibleTopLeft = root.mapToItem(root.hostItem, 0, 0);
             started = false;
             root.dragging = false;
-            if (root.placementController
-                    && typeof root.placementController
-                        .cancelCardDrag === "function") {
-                root.placementController.cancelCardDrag(
-                    visibleTopLeft.x, visibleTopLeft.y);
-            }
+            if (root.placementController && typeof root.placementController.cancelCardDrag === "function")
+                root.placementController.cancelCardDrag(visibleTopLeft.x, visibleTopLeft.y);
+
         }
     }
 
@@ -201,8 +144,18 @@ Item {
 
         MenuItem {
             text: qsTr("收回到侧边栏")
-            onTriggered: SystemCardService.setContainer(
-                root.tileId, "sidebar", "")
+            onTriggered: SystemCardService.setContainer(root.tileId, "sidebar", "")
         }
+
     }
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: Appearance.animation.expressiveEffects.duration
+            easing.type: Appearance.animation.expressiveEffects.type
+            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+        }
+
+    }
+
 }

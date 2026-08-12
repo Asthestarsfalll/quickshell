@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import qs.Common
 import qs.Components
-
 import qs.Modules.Keystone.DashboardContent
 import qs.Modules.Keystone.Media
 import qs.Modules.Keystone.WallpaperContent
@@ -11,15 +10,18 @@ import qs.Modules.Keystone.WeatherContent
 
 Item {
     id: root
-    signal closeRequested()
-    signal avatarEditRequested()
-    
+
     property var player: null
     property var screen: null
     property int currentIndex: 0
-    readonly property var dashboardGlassItems:
-        dashboardContent.holeGlassItems
-    
+    readonly property var dashboardGlassItems: dashboardContent.holeGlassItems
+
+    signal closeRequested()
+    signal avatarEditRequested()
+
+    implicitWidth: currentIndex === 0 ? 860 : currentIndex === 2 ? 960 : currentIndex === 3 ? 960 : 760
+    implicitHeight: 80 + 20 + (currentIndex === 0 ? 520 : currentIndex === 1 ? 480 : currentIndex === 2 ? 300 : 570)
+
     Shortcut {
         sequence: "Tab"
         onActivated: root.currentIndex = (root.currentIndex + 1) % 4
@@ -29,21 +31,10 @@ Item {
         sequence: "Shift+Tab"
         onActivated: root.currentIndex = (root.currentIndex + 3) % 4
     }
-    
-    implicitWidth: currentIndex === 0 ? 860 :
-                   currentIndex === 2 ? 960 :
-                   currentIndex === 3 ? 960 :
-                   760
-    
-    implicitHeight: 80 + 20 + (
-        currentIndex === 0 ? 520 : 
-        currentIndex === 1 ? 480 : 
-        currentIndex === 2 ? 300 :
-        570
-    )
 
     RowLayout {
         id: tabBar
+
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -51,40 +42,77 @@ Item {
         anchors.margins: 10
         spacing: 15
 
-        component TabBtn : Item {
+        TabBtn {
+            icon: "dashboard"
+            title: qsTr("仪表板")
+            index: 0
+        }
+
+        TabBtn {
+            icon: "queue_music"
+            title: qsTr("媒体")
+            index: 1
+        }
+
+        TabBtn {
+            icon: "wallpaper"
+            title: qsTr("壁纸")
+            index: 2
+        }
+
+        TabBtn {
+            icon: "sunny"
+            title: qsTr("天气")
+            index: 3
+        }
+
+        component TabBtn: Item {
             property string icon: ""
             property string title: ""
             property int index: 0
             property bool active: root.currentIndex === index
-            
+
             Layout.fillWidth: true
             Layout.fillHeight: true
 
             Column {
                 anchors.centerIn: parent
                 spacing: 6
+
                 MaterialSymbol {
                     text: parent.parent.icon
                     iconSize: 22
                     fill: parent.parent.active ? 1 : 0
-                    color: parent.parent.active
-                           ? Appearance.colors.colOnLayer0
-                           : Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
+                    color: parent.parent.active ? Appearance.colors.colOnLayer0 : Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.5)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    Behavior on color { ColorAnimation { duration: 200 } }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 200
+                        }
+
+                    }
+
                 }
+
                 Text {
                     text: parent.parent.title
                     font.pixelSize: 13
                     font.bold: parent.parent.active
-                    color: parent.parent.active
-                           ? Appearance.colors.colOnLayer0
-                           : Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
+                    color: parent.parent.active ? Appearance.colors.colOnLayer0 : Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.5)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    Behavior on color { ColorAnimation { duration: 200 } }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 200
+                        }
+
+                    }
+
                 }
+
             }
-            
+
             Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -92,9 +120,23 @@ Item {
                 height: 3
                 radius: 1.5
                 color: Appearance.colors.colPrimary
-                opacity: parent.active ? 1.0 : 0.0
-                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
-                Behavior on opacity { NumberAnimation { duration: 200 } }
+                opacity: parent.active ? 1 : 0
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutBack
+                    }
+
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 200
+                    }
+
+                }
+
             }
 
             MouseArea {
@@ -102,12 +144,9 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.currentIndex = parent.index
             }
+
         }
 
-        TabBtn { icon: "dashboard"; title: qsTr("仪表板"); index: 0 }
-        TabBtn { icon: "queue_music"; title: qsTr("媒体"); index: 1 }
-        TabBtn { icon: "wallpaper"; title: qsTr("壁纸"); index: 2 }
-        TabBtn { icon: "sunny"; title: qsTr("天气"); index: 3 }
     }
 
     Item {
@@ -115,19 +154,26 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.topMargin: 10 
+        anchors.topMargin: 10
 
         DashboardContent {
             id: dashboardContent
+
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            player: root.player
             screen: root.screen
             visible: root.currentIndex === 0
             opacity: visible ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 300 } }
             onCloseRequested: root.closeRequested()
             onAvatarEditRequested: root.avatarEditRequested()
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                }
+
+            }
+
         }
 
         Media {
@@ -136,19 +182,33 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: root.currentIndex === 1
             opacity: visible ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 300 } }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                }
+
+            }
+
         }
 
         WallpaperContent {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width * 0.95 
+            width: parent.width * 0.95
             height: 300
             screen: root.screen
             visible: root.currentIndex === 2
             opacity: visible ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 300 } }
             onWallpaperChanged: root.closeRequested()
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                }
+
+            }
+
         }
 
         WeatherContent {
@@ -157,7 +217,16 @@ Item {
             active: root.currentIndex === 3 && root.visible
             visible: root.currentIndex === 3
             opacity: visible ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 300 } }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                }
+
+            }
+
         }
+
     }
+
 }

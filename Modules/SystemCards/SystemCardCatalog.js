@@ -1,6 +1,6 @@
 .pragma library
 
-// This is the single source of truth for the ten system cards.  Layout
+// This is the single source of truth for every system card. Layout
 // algorithms consume the metadata from here; they do not maintain a second
 // list of cards of their own.
 var cardDefinitions = [
@@ -105,6 +105,17 @@ var cardDefinitions = [
         columnSpan: 3,
         rowSpan: 1,
         requiresSystemMonitor: false
+    },
+    {
+        id: "media",
+        nameKey: "媒体",
+        name: qsTr("媒体"),
+        icon: "music_note",
+        columnSpan: 2,
+        rowSpan: 2,
+        requiresSystemMonitor: false,
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     }
 ];
 
@@ -118,7 +129,8 @@ var defaultAnchors = {
     network: { column: 1, row: 3 },
     storage: { column: 0, row: 4 },
     calendar: { column: 0, row: 5 },
-    weather: { column: 0, row: 6 }
+    weather: { column: 0, row: 6 },
+    media: { column: 0, row: 7 }
 };
 
 function cloneDefinition(definition) {

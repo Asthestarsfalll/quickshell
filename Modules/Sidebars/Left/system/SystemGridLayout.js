@@ -3,8 +3,8 @@
 Qt.include("../../../SystemCards/SystemCardCatalog.js");
 
 var columnCount = 3;
-var rowCount = 7;
-// v6 was the all-ten-card layout.  v7 deliberately stores only the active
+var rowCount = 9;
+// v6 stored the original fixed-card layout. v7 deliberately stores only the active
 // sidebar subset; cards on Desktop are represented by SystemCardState.
 var schemaVersion = 7;
 var legacySchemaVersion = 6;

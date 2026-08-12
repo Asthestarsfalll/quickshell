@@ -5,24 +5,12 @@ import qs.Services
 Item {
     id: root
 
-    clip: true
-
     property int currentIndex: 0
-    property var player: null
     property var screen: null
-    readonly property int cardCount: 4
+    readonly property int cardCount: 2
     readonly property real switchThreshold: width * 0.2
-    readonly property real glassAlpha:
-        BlurService.enabled
-            ? Math.min(PersonalizationConfig.shellBackgroundOpacity, 0.68)
-            : 1.0
-    readonly property var blurBackgroundItems: [
-        scheduleCard.glassBackgroundItem,
-        mediaCard.glassBackgroundItem,
-        weatherCard.glassBackgroundItem,
-        quickSettingsPage.glassBackgroundItem
-    ]
-
+    readonly property real glassAlpha: BlurService.enabled ? Math.min(PersonalizationConfig.shellBackgroundOpacity, 0.68) : 1
+    readonly property var blurBackgroundItems: [weatherCard.glassBackgroundItem, quickSettingsPage.glassBackgroundItem]
     property real cardOffset: 0
     property real wheelRemainder: 0
     property bool wheelUsesPixels: false
@@ -37,6 +25,7 @@ Item {
         let delta = wrappedIndex(index - currentIndex);
         if (delta > cardCount / 2)
             delta -= cardCount;
+
         return delta;
     }
 
@@ -46,16 +35,17 @@ Item {
 
     function queueStep(direction) {
         if (direction === 0)
-            return;
+            return ;
 
         pendingSteps += direction;
         if (!settleAnimation.running && !carouselInput.dragActive)
             startQueuedStep();
+
     }
 
     function startQueuedStep() {
         if (pendingSteps === 0 || settleAnimation.running || carouselInput.dragActive)
-            return;
+            return ;
 
         const direction = pendingSteps > 0 ? 1 : -1;
         pendingSteps -= direction;
@@ -64,13 +54,11 @@ Item {
 
     function animateTo(targetOffset, direction) {
         transitionDirection = direction;
-
         if (Math.abs(cardOffset - targetOffset) < 0.5) {
             cardOffset = targetOffset;
             finishTransition();
-            return;
+            return ;
         }
-
         settleAnimation.from = cardOffset;
         settleAnimation.to = targetOffset;
         settleAnimation.start();
@@ -95,73 +83,29 @@ Item {
         Qt.callLater(startQueuedStep);
     }
 
-    component CarouselCard: Item {
-        id: cardRoot
-
-        default property alias content: innerContainer.data
-        property real contentMargin: 14
-        readonly property Item glassBackgroundItem: glassBackground
-
-        Rectangle {
-            id: glassBackground
-
-            anchors.fill: parent
-            anchors.margins: 10
-            radius: 20
-            color: Appearance.applyAlpha(
-                Appearance.colors.colLayer0, root.glassAlpha)
-        }
-
-        Item {
-            id: innerContainer
-
-            anchors.fill: parent
-            anchors.margins: 10 + cardRoot.contentMargin
-        }
-    }
-
-    CarouselCard {
-        id: scheduleCard
-        width: root.width
-        height: root.height
-        x: root.cardX(0)
-
-        ScheduleWidget {
-            anchors.fill: parent
-        }
-    }
-
-    CarouselCard {
-        id: mediaCard
-        width: root.width
-        height: root.height
-        x: root.cardX(1)
-
-        DashboardMediaCard {
-            anchors.fill: parent
-            player: root.player
-            active: root.visible && root.currentIndex === 1
-        }
-    }
+    clip: true
 
     CarouselCard {
         id: weatherCard
+
         width: root.width
         height: root.height
-        x: root.cardX(2)
+        x: root.cardX(0)
         contentMargin: 0
 
         DashboardWeatherCard {
             anchors.fill: parent
-            active: root.visible && root.currentIndex === 2
+            active: root.visible && root.currentIndex === 0
         }
+
     }
 
     CarouselCard {
         id: quickSettingsPage
+
         width: root.width
         height: root.height
-        x: root.cardX(3)
+        x: root.cardX(1)
         contentMargin: 0
 
         DashboardQuickSettingsCard {
@@ -170,6 +114,7 @@ Item {
             anchors.fill: parent
             screen: root.screen
         }
+
     }
 
     NumberAnimation {
@@ -186,73 +131,89 @@ Item {
     MouseArea {
         id: carouselInput
 
-        anchors.fill: parent
-        acceptedButtons: Qt.MiddleButton
-        preventStealing: true
-
         property bool dragActive: false
         property real pressX: 0
 
-        onPressed: mouse => {
+        anchors.fill: parent
+        acceptedButtons: Qt.MiddleButton
+        preventStealing: true
+        onPressed: (mouse) => {
             dragActive = !settleAnimation.running;
             pressX = mouse.x;
             mouse.accepted = true;
         }
-
-        onPositionChanged: mouse => {
+        onPositionChanged: (mouse) => {
             if (!dragActive)
-                return;
+                return ;
 
             const delta = mouse.x - pressX;
             root.cardOffset = Math.max(-root.width, Math.min(delta, root.width));
         }
-
-        onReleased: mouse => {
+        onReleased: (mouse) => {
             if (dragActive)
                 root.finishDrag();
+
             dragActive = false;
             mouse.accepted = true;
         }
-
         onCanceled: {
             if (dragActive)
                 root.animateTo(0, 0);
+
             dragActive = false;
         }
-
-        onWheel: event => {
-            if (root.currentIndex === 3) {
+        onWheel: (event) => {
+            if (root.currentIndex === 1) {
                 const point = quickSettingsCard.mapFromItem(root, event.x, event.y);
                 if (quickSettingsCard.capturesWheelAt(point.x, point.y)) {
                     event.accepted = false;
-                    return;
+                    return ;
                 }
             }
-
-            const angleDelta = event.angleDelta.y !== 0
-                               ? event.angleDelta.y
-                               : event.angleDelta.x;
+            const angleDelta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
             const usesPixels = angleDelta === 0;
-            const delta = usesPixels
-                          ? (event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x)
-                          : angleDelta;
+            const delta = usesPixels ? (event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x) : angleDelta;
             const threshold = usesPixels ? 48 : 120;
-
             if (delta === 0)
-                return;
+                return ;
 
             if (root.wheelUsesPixels !== usesPixels || root.wheelRemainder * delta < 0)
                 root.wheelRemainder = 0;
+
             root.wheelUsesPixels = usesPixels;
             root.wheelRemainder += delta;
-
             while (Math.abs(root.wheelRemainder) >= threshold) {
                 const wheelDirection = root.wheelRemainder > 0 ? 1 : -1;
                 root.wheelRemainder -= wheelDirection * threshold;
                 root.queueStep(wheelDirection > 0 ? -1 : 1);
             }
-
             event.accepted = true;
         }
     }
+
+    component CarouselCard: Item {
+        id: cardRoot
+
+        default property alias content: innerContainer.data
+        property real contentMargin: 14
+        readonly property Item glassBackgroundItem: glassBackground
+
+        Rectangle {
+            id: glassBackground
+
+            anchors.fill: parent
+            anchors.margins: 10
+            radius: 20
+            color: Appearance.applyAlpha(Appearance.colors.colLayer0, root.glassAlpha)
+        }
+
+        Item {
+            id: innerContainer
+
+            anchors.fill: parent
+            anchors.margins: 10 + cardRoot.contentMargin
+        }
+
+    }
+
 }
