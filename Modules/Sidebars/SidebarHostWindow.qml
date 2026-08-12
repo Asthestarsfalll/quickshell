@@ -149,37 +149,6 @@ PanelWindow {
         panelScreen: root.screen
     }
 
-    // A sidebar card keeps its source delegate alive for the duration of the
-    // pointer grab, while this top-level ghost is allowed to cross the whole
-    // panel surface.  No MIME/Wayland DnD is involved.
-    ShaderEffectSource {
-        id: systemCardDragGhost
-
-        x: SystemCardDragSession.pointerX
-            - SystemCardDragSession.offsetX
-        y: SystemCardDragSession.pointerY
-            - SystemCardDragSession.offsetY
-        width: SystemCardDragSession.sourceItem
-            ? SystemCardDragSession.sourceItem.width : 0
-        height: SystemCardDragSession.sourceItem
-            ? SystemCardDragSession.sourceItem.height : 0
-        visible: SystemCardDragSession.active
-            && SystemCardDragSession.sourceItem !== null
-        sourceItem: SystemCardDragSession.sourceItem
-        sourceRect: Qt.rect(0, 0, width, height)
-        // Keep the source delegate alive but never paint it twice during the
-        // frozen transfer hand-off.
-        // Keep the sidebar source hidden for the whole ownership interval,
-        // including the small handoff cleanup turn after the ghost itself is
-        // hidden.  This prevents source + DesktopCard from sharing a frame.
-        hideSource: SystemCardDragSession.sourceItem !== null
-        live: visible && !SystemCardDragSession.frozen
-        smooth: true
-        opacity: 1
-        scale: 1
-        z: 100
-    }
-
     CompositorBlurRegion {
         targetWindow: root
         backgroundItem: leftSidebar.blurBackgroundItem

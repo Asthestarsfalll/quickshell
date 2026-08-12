@@ -309,7 +309,7 @@ Item {
             }
 
             function prepareHandoff() {
-                const ghost = SystemCardDragSession.frozenGhostRect;
+                const ghost = SystemCardDragSession.presentationGhostRect;
                 if (!ghost || !ghost.valid
                         || slot.placementSpace !== Placement.screen)
                     return false;

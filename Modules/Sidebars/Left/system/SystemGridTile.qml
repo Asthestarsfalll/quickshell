@@ -10,15 +10,22 @@ Item {
     property bool active: true
     property bool dragging: false
     property bool motionEnabled: true
+    readonly property bool presentationOwned:
+        SystemCardDragSession.active
+        && SystemCardDragSession.tileId === root.tileId
     readonly property Item contentItem: cardContent
 
     signal dragStarted(
         string tileId,
         Item sourceItem,
-        real pointerX,
-        real pointerY
+        real sidebarPointerX,
+        real sidebarPointerY
     )
-    signal dragMoved(string tileId, real pointerX, real pointerY)
+    signal dragMoved(
+        string tileId,
+        real sidebarPointerX,
+        real sidebarPointerY
+    )
     signal dragFinished(string tileId)
     signal dragCanceled(string tileId)
 
@@ -68,8 +75,8 @@ Item {
     // rectangle.  The first six cards retain their original backgrounds.
     Rectangle {
         anchors.fill: parent
+        visible: !root.presentationOwned && cardContent.shellManagedSurface
         radius: Appearance.rounding.extraLarge
-        visible: cardContent.shellManagedSurface
         color: BlurService.opaqueBackgroundColor(
             Appearance.m3colors.m3surfaceContainerHigh)
     }
@@ -79,7 +86,11 @@ Item {
 
         anchors.fill: parent
         tileId: root.tileId
-        active: root.active
+        // Once extraction starts the presentation-host proxy becomes the
+        // only active sidebar-side renderer. Keep this delegate allocated so
+        // Grid state remains stable, but do not run a second Card content.
+        active: root.active && !root.presentationOwned
+        visible: !root.presentationOwned
         useShellManagedSurface: true
     }
 

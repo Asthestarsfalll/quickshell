@@ -21,7 +21,9 @@ reject_text() {
 }
 
 session=Services/SystemCardDragSession.qml
+presentation_service=Services/DesktopPresentationService.qml
 system_view=Modules/Sidebars/Left/SystemView.qml
+sidebar_host=Modules/Sidebars/SidebarHostWindow.qml
 canvas=Modules/DesktopCards/DesktopCardCanvas.qml
 desktop_card=Modules/DesktopCards/DesktopCard.qml
 desktop_host=Modules/DesktopCards/DesktopCardHost.qml
@@ -37,21 +39,62 @@ require_text "$session" 'function completeVisualHandoff(cardId)'
 require_text "$session" 'function prepareVisualHandoff(cardId)'
 require_text "$session" 'function requestVisualHandoffCheck(cardId)'
 require_text "$session" 'visualHandoffPending'
-require_text "$session" 'readonly property var frozenGhostRect:'
+require_text "$session" 'readonly property var presentationGhostRect:'
+require_text "$session" 'property real presentationPointerX: 0'
+require_text "$session" 'property real presentationPointerY: 0'
+require_text "$session" 'property string screenName: ""'
 require_text "$session" 'preserving committed desktop handoff'
+reject_text "$session" 'frozenGhostX'
+reject_text "$session" 'frozenGhostRect'
 reject_text "$session" 'Timer {'
 reject_text "$session" 'handoffWatchdogTimer'
 reject_text "$session" 'ghostCleanupTimer.restart()'
 
-# Every user drop is screen-space. A source teardown cannot clear a committed
-# session before the DesktopCard consumes the frozen screen rect.
+# The only cross-window conversion happens when extraction starts. From that
+# point onward the session stores presentation-host-local coordinates.
+require_text "$presentation_service" 'function registerHost(screenName, item)'
+require_text "$presentation_service" 'function mapGlobalPoint('
+require_text "$presentation_service" 'function mapItemRect('
+require_text "$presentation_service" 'host.mapFromGlobal('
+require_text "$system_view" 'DesktopPresentationService.mapItemRect('
+require_text "$system_view" 'DesktopPresentationService.mapGlobalPoint('
+require_text "$system_view" 'root.presentationInitialPointerX'
+require_text "$system_view" 'SystemCardDragSession.hostWidth'
 require_text "$system_view" 'Placement.screen'
 reject_text "$system_view" 'screenToWallpaper('
+reject_text "$system_view" 'function outputSize()'
 require_text "$system_view" 'SystemCardService.setContainer('
-require_text "$system_view" 'SystemCardDragSession.freezeGhost()'
+require_text "$system_view" 'SystemCardDragSession.freezeGhost(screenX, screenY)'
 require_text "$system_view" 'SystemCardDragSession.markTransferCommitted(tileId)'
 require_text "$system_view" 'SystemCardDragSession.requestVisualHandoffCheck(tileId);'
 reject_text "$system_view" 'pendingDesktopTransfer'
+
+# SidebarHostWindow contains only the sidebar UI and pointer grab. Both the
+# ghost and DesktopCards are rendered by DesktopCardHost's one Bottom-layer
+# Ignore surface.
+reject_text "$sidebar_host" 'systemCardDragGhost'
+reject_text "$sidebar_host" 'ShaderEffectSource {'
+require_text "$desktop_host" 'id: presentationGhost'
+require_text "$desktop_host" 'DesktopPresentationService.registerHost('
+require_text "$desktop_host" 'DesktopPresentationService.unregisterHost('
+require_text "$desktop_host" 'WlrLayershell.layer: WlrLayer.Bottom'
+require_text "$desktop_host" 'WlrLayershell.exclusionMode: ExclusionMode.Ignore'
+require_text "$desktop_host" 'exclusiveZone: 0'
+require_text "$desktop_host" 'id: viewport'
+require_text "$desktop_host" 'id: cardCanvas'
+require_text "$desktop_host" 'Region { item: cardCanvas.inputSlot0 }'
+reject_text "$desktop_host" 'item: viewport'
+require_text "$sidebar_host" 'WlrLayershell.layer: WlrLayer.Top'
+require_text "$sidebar_host" 'WlrLayershell.exclusionMode: ExclusionMode.Normal'
+
+presentation_scene=$(sed -n '/id: viewport/,/^        Connections {/p' \
+    "$desktop_host")
+printf '%s\n' "$presentation_scene" \
+    | grep -Fq -- 'id: cardCanvas' \
+    || fail "DesktopCardCanvas is not inside the presentation viewport"
+printf '%s\n' "$presentation_scene" \
+    | grep -Fq -- 'id: presentationGhost' \
+    || fail "DragGhost is not inside the presentation viewport"
 
 # The Canvas is fixed to output-local screen coordinates. Coordinate space is
 # selected by state, not inferred from wallpaper mode in every binding.

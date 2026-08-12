@@ -1,7 +1,7 @@
 .pragma library
 
 var idle = "idle";
-var draggingSidebar = "dragging-sidebar";
+var draggingPresentation = "dragging-presentation";
 var frozenTransfer = "frozen-transfer";
 var finishing = "finishing";
 var canceled = "canceled";
@@ -27,8 +27,8 @@ function canTransition(fromPhase, toPhase) {
     if (to === idle)
         return true;
     if (from === idle)
-        return to === draggingSidebar;
-    if (from === draggingSidebar)
+        return to === draggingPresentation;
+    if (from === draggingPresentation)
         return to === frozenTransfer || to === canceled;
     if (from === frozenTransfer)
         return to === finishing || to === canceled;
@@ -41,14 +41,14 @@ function canTransition(fromPhase, toPhase) {
 
 function freeze(phase) {
     const value = String(phase || idle);
-    return value === draggingSidebar ? frozenTransfer : value;
+    return value === draggingPresentation ? frozenTransfer : value;
 }
 
 function finishTransfer(phase, committed) {
     const value = String(phase || idle);
     if (!committed || !isActive(value))
         return value;
-    return value === frozenTransfer || value === draggingSidebar
+    return value === frozenTransfer || value === draggingPresentation
         ? finishing : value;
 }
 

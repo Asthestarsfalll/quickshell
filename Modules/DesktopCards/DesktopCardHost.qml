@@ -5,6 +5,7 @@ import Clavis.DesktopCards
 import qs.Common
 import qs.Services
 import qs.Widgets.common
+import qs.Modules.SystemCards
 import "./DesktopCardLayout.js" as DesktopCardLayout
 
 Variants {
@@ -60,6 +61,9 @@ Variants {
         property bool automaticLayoutScheduled: false
         readonly property string analysisRequestKey:
             "desktop-cards:" + String(modelData.name)
+        readonly property bool ownsPresentationDrag:
+            SystemCardDragSession.active
+            && SystemCardDragSession.screenName === window.screenKey
 
         Binding {
             when: window.scene !== null
@@ -181,10 +185,14 @@ Variants {
                 cardCanvas.inputSlot6,
                 cardCanvas.inputSlot7,
                 cardCanvas.inputSlot8,
-                cardCanvas.inputSlot9
+                cardCanvas.inputSlot9,
+                presentationGhost
             ]
             subtractedBackgroundItems: [
-                cardCanvas.timeBlurExclusionItem
+                cardCanvas.timeBlurExclusionItem,
+                window.ownsPresentationDrag
+                    && SystemCardDragSession.tileId === "time"
+                    ? presentationGhost : null
             ]
             radius: Appearance.rounding.extraLarge
         }
@@ -202,6 +210,39 @@ Variants {
                 scene: window.scene
                 screenName: modelData.name
                 hostItem: viewport
+            }
+
+            // The drag proxy and every DesktopCard are siblings in this
+            // output-local Bottom-layer surface. The proxy is a visual
+            // renderer for the one logical CardState, not a cloned model.
+            Item {
+                id: presentationGhost
+
+                x: SystemCardDragSession.ghostX
+                y: SystemCardDragSession.ghostY
+                width: window.ownsPresentationDrag
+                    ? SystemCardDragSession.ghostWidth : 0
+                height: window.ownsPresentationDrag
+                    ? SystemCardDragSession.ghostHeight : 0
+                visible: window.ownsPresentationDrag
+                z: 100
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Appearance.rounding.extraLarge
+                    visible: ghostContent.shellManagedSurface
+                    color: BlurService.opaqueBackgroundColor(
+                        Appearance.m3colors.m3surfaceContainerHigh)
+                }
+
+                SystemCardContent {
+                    id: ghostContent
+
+                    anchors.fill: parent
+                    tileId: SystemCardDragSession.tileId
+                    active: presentationGhost.visible
+                    useShellManagedSurface: true
+                }
             }
         }
 
@@ -294,6 +335,8 @@ Variants {
                     + String(window.screenKey) + " layer=Bottom"
             );
             WallpaperSceneService.sceneFor(window.screenKey);
+            DesktopPresentationService.registerHost(
+                window.screenKey, viewport);
             Qt.callLater(function() {
                 // Legacy v2 desktop records were wallpaper coordinates. If
                 // the current policy is free, capture their displayed output
@@ -303,5 +346,8 @@ Variants {
                 window.requestAnalysis();
             });
         }
+
+        Component.onDestruction: DesktopPresentationService.unregisterHost(
+            window.screenKey, viewport)
     }
 }

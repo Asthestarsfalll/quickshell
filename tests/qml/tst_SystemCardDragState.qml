@@ -9,7 +9,7 @@ TestCase {
 
     function test_committedTransferKeepsActiveUntilDesktopHandoff() {
         let phase = DragState.idle;
-        phase = DragState.draggingSidebar;
+        phase = DragState.draggingPresentation;
         phase = DragState.freeze(phase);
         phase = DragState.finishTransfer(phase, true);
         compare(phase, DragState.finishing);
@@ -21,7 +21,7 @@ TestCase {
     }
 
     function test_cancelBeforeCommitReturnsToIdle() {
-        let phase = DragState.draggingSidebar;
+        let phase = DragState.draggingPresentation;
         phase = DragState.cancel(phase, false);
         compare(phase, DragState.canceled);
         phase = DragState.finish(phase);
@@ -95,6 +95,45 @@ TestCase {
         compare(afterParallax.y, free.y);
     }
 
+    function test_freePlacementUsesOnlyPresentationHostGeometry() {
+        const hostWidth = 1920;
+        const hostHeight = 1080;
+        const drop = { x: 713.5, y: 402.25 };
+        const normalized = Placement.normalizedPosition(
+            drop.x, drop.y, hostWidth, hostHeight);
+
+        // Sidebar usable origins intentionally differ. They are not inputs to
+        // either persistence or restoration once the presentation host owns
+        // the drag.
+        const sidebarOrigins = [
+            { x: 48, y: 0 },
+            { x: 0, y: 36 },
+            { x: 0, y: 0 },
+            { x: 0, y: 64 }
+        ];
+        sidebarOrigins.forEach(function(unusedOrigin) {
+            const restored = Placement.screenPoint(
+                normalized.xNorm, normalized.yNorm,
+                hostWidth, hostHeight, 152, 160);
+            compare(restored.x, drop.x);
+            compare(restored.y, drop.y);
+            verify(unusedOrigin.x >= 0 && unusedOrigin.y >= 0);
+        });
+    }
+
+    function test_sameHostGhostAndDesktopRectAreContinuous() {
+        const host = { width: 2560, height: 1440 };
+        const ghost = { x: 1120.25, y: 610.5, width: 312, height: 160 };
+        const normalized = Placement.normalizedPosition(
+            ghost.x, ghost.y, host.width, host.height);
+        const desktop = Placement.screenPoint(
+            normalized.xNorm, normalized.yNorm,
+            host.width, host.height, ghost.width, ghost.height);
+
+        verify(Math.abs(desktop.x - ghost.x) <= 1);
+        verify(Math.abs(desktop.y - ghost.y) <= 1);
+    }
+
     function test_wallpaperProjectionUsesCurrentSceneOffset() {
         const wallpaper = Placement.wallpaperPoint(
             0.5, 0.4, 2000, 1000, 152, 160);
@@ -125,14 +164,14 @@ TestCase {
             secondTarget.y);
     }
 
-    function test_sidebarReorderCanFinishWithoutTransfer() {
-        compare(DragState.finish(DragState.draggingSidebar),
+    function test_uncommittedPresentationCanFinishWithoutTransfer() {
+        compare(DragState.finish(DragState.draggingPresentation),
             DragState.idle);
     }
 
     function test_illegalTransitionsAreRejected() {
         verify(!DragState.canTransition(
-            DragState.finishing, DragState.draggingSidebar));
+            DragState.finishing, DragState.draggingPresentation));
         verify(!DragState.canTransition(
             DragState.canceled, DragState.frozenTransfer));
         verify(DragState.canTransition(

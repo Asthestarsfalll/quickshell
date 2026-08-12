@@ -11,8 +11,8 @@ Singleton {
     // and `frozen` remain as compatibility/readability aliases for the
     // existing overlay and sidebar bindings.
     readonly property string idlePhase: DragState.idle
-    readonly property string draggingSidebarPhase:
-        DragState.draggingSidebar
+    readonly property string draggingPresentationPhase:
+        DragState.draggingPresentation
     readonly property string frozenTransferPhase:
         DragState.frozenTransfer
     readonly property string finishingPhase: DragState.finishing
@@ -32,30 +32,30 @@ Singleton {
     property bool transferCommitted: false
 
     property string tileId: ""
+    property string screenName: ""
     property Item sourceItem: null
-    property real pointerX: 0
-    property real pointerY: 0
-    property real offsetX: 0
-    property real offsetY: 0
-    readonly property var frozenGhostRect: ({
-        x: root.frozenGhostX,
-        y: root.frozenGhostY,
-        width: root.frozenGhostWidth,
-        height: root.frozenGhostHeight,
-        valid: root.frozenGhostRectValid
+    property real presentationPointerX: 0
+    property real presentationPointerY: 0
+    property real grabOffsetX: 0
+    property real grabOffsetY: 0
+    property real ghostWidth: 0
+    property real ghostHeight: 0
+    property real hostWidth: 0
+    property real hostHeight: 0
+    readonly property real ghostX:
+        root.presentationPointerX - root.grabOffsetX
+    readonly property real ghostY:
+        root.presentationPointerY - root.grabOffsetY
+    readonly property var presentationGhostRect: ({
+        x: root.ghostX,
+        y: root.ghostY,
+        width: root.ghostWidth,
+        height: root.ghostHeight,
+        valid: root.ghostWidth > 0 && root.ghostHeight > 0
     })
-    property real frozenGhostX: 0
-    property real frozenGhostY: 0
-    property real frozenGhostWidth: 0
-    property real frozenGhostHeight: 0
-    property bool frozenGhostRectValid: false
     property bool sourceWasBound: false
 
-    signal started(string cardId)
-    signal moved(real x, real y)
-    signal finished()
     signal canceled()
-    signal transferAccepted(string cardId)
     signal handoffCheckRequested(string cardId)
     signal cancelRequested(string requestedTileId)
 
@@ -85,16 +85,16 @@ Singleton {
         // interpret this cleanup as a new cancellation.
         root.transition(root.idlePhase, reason || "reset");
         root.tileId = "";
+        root.screenName = "";
         root.sourceItem = null;
-        root.pointerX = 0;
-        root.pointerY = 0;
-        root.offsetX = 0;
-        root.offsetY = 0;
-        root.frozenGhostX = 0;
-        root.frozenGhostY = 0;
-        root.frozenGhostWidth = 0;
-        root.frozenGhostHeight = 0;
-        root.frozenGhostRectValid = false;
+        root.presentationPointerX = 0;
+        root.presentationPointerY = 0;
+        root.grabOffsetX = 0;
+        root.grabOffsetY = 0;
+        root.ghostWidth = 0;
+        root.ghostHeight = 0;
+        root.hostWidth = 0;
+        root.hostHeight = 0;
         root.transferPreparing = false;
         root.transferCommitted = false;
         root.sourceWasBound = false;
@@ -102,53 +102,57 @@ Singleton {
             console.log("[SystemCards] drag session idle", cardId);
     }
 
-    function begin(cardId, item, x, y, offsetX, offsetY) {
+    function begin(cardId, screenName, item, pointerX, pointerY,
+                   grabOffsetX, grabOffsetY, width, height,
+                   hostWidth, hostHeight) {
         if (root.active)
             root.clearToIdle("replaced");
 
         root.tileId = String(cardId || "");
+        root.screenName = String(screenName || "");
         root.sourceItem = item;
         root.sourceWasBound = item !== null;
-        root.pointerX = Number(x) || 0;
-        root.pointerY = Number(y) || 0;
-        root.offsetX = Number(offsetX) || 0;
-        root.offsetY = Number(offsetY) || 0;
+        root.presentationPointerX = Number(pointerX) || 0;
+        root.presentationPointerY = Number(pointerY) || 0;
+        root.grabOffsetX = Number(grabOffsetX) || 0;
+        root.grabOffsetY = Number(grabOffsetY) || 0;
+        root.ghostWidth = Math.max(0, Number(width) || 0);
+        root.ghostHeight = Math.max(0, Number(height) || 0);
+        root.hostWidth = Math.max(1, Number(hostWidth) || 1);
+        root.hostHeight = Math.max(1, Number(hostHeight) || 1);
         root.transferPreparing = false;
         root.transferCommitted = false;
-        root.transition(root.draggingSidebarPhase,
+        root.transition(root.draggingPresentationPhase,
             "begin " + root.tileId);
-        root.started(root.tileId);
     }
 
     function update(x, y) {
-        if (!root.active || root.phase !== root.draggingSidebarPhase)
+        if (!root.active || root.phase !== root.draggingPresentationPhase)
             return;
-        root.pointerX = Number(x) || 0;
-        root.pointerY = Number(y) || 0;
-        root.moved(root.pointerX, root.pointerY);
+        root.presentationPointerX = Number(x) || 0;
+        root.presentationPointerY = Number(y) || 0;
     }
 
-    function freezeGhost() {
-        if (root.phase !== root.draggingSidebarPhase)
+    function freezeGhost(topLeftX, topLeftY) {
+        if (root.phase !== root.draggingPresentationPhase)
             return false;
-        const source = root.sourceItem;
-        root.frozenGhostX = root.pointerX - root.offsetX;
-        root.frozenGhostY = root.pointerY - root.offsetY;
-        root.frozenGhostWidth = source ? Number(source.width) : 0;
-        root.frozenGhostHeight = source ? Number(source.height) : 0;
-        root.frozenGhostRectValid = root.frozenGhostWidth > 0
-            && root.frozenGhostHeight > 0;
+        if (isFinite(Number(topLeftX)) && isFinite(Number(topLeftY))) {
+            root.presentationPointerX = Number(topLeftX)
+                + root.grabOffsetX;
+            root.presentationPointerY = Number(topLeftY)
+                + root.grabOffsetY;
+        }
         console.log(
-            "[SystemCards] frozen ghost rect",
+            "[SystemCards] presentation ghost frozen",
             root.tileId,
-            "x=" + root.frozenGhostX,
-            "y=" + root.frozenGhostY,
-            "size=" + root.frozenGhostWidth + "x"
-                + root.frozenGhostHeight
+            "screen=" + root.screenName,
+            "x=" + root.ghostX,
+            "y=" + root.ghostY,
+            "size=" + root.ghostWidth + "x" + root.ghostHeight
         );
         root.transition(root.frozenTransferPhase,
             "ghost frozen " + root.tileId);
-        return true;
+        return root.presentationGhostRect.valid;
     }
 
     // This is called only after SystemCardService has synchronously committed
@@ -166,7 +170,6 @@ Singleton {
         // committed flag becomes visible to QML bindings.
         root.transferCommitted = true;
         root.transferPreparing = false;
-        root.transferAccepted(id);
         console.log("[SystemCards] transfer committed", id);
         return true;
     }
@@ -202,7 +205,7 @@ Singleton {
 
     // Enter the finishing phase while the visual handoff barrier remains
     // active. The sidebar source may disappear before DesktopCardCanvas has
-    // consumed the frozen rect; that teardown must not end this phase.
+    // consumed the presentation rect; that teardown must not end this phase.
     function finishTransfer() {
         if (!root.active || !root.transferCommitted)
             return false;
@@ -232,7 +235,6 @@ Singleton {
         if (root.transferCommitted)
             console.log("[SystemCards] drag ghost finished", root.tileId);
         root.clearToIdle("ghost finished");
-        root.finished();
         return true;
     }
 
@@ -296,8 +298,9 @@ Singleton {
         if (root.transferCommitted) {
             // Once ownership is committed, the sidebar source lifetime is no
             // longer authoritative. The DesktopCard still has to consume the
-            // frozen geometry and complete the visual handoff. In particular,
-            // do not clear the phase, tileId, commit flag, or frozen rect here.
+            // presentation geometry and complete the visual handoff. In
+            // particular, do not clear the phase, tileId, commit flag, or
+            // presentation rect here.
             // sourceItem destruction is not handoff completion.
             console.log(
                 "[SystemCards] preserving committed desktop handoff",

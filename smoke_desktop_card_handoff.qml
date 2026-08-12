@@ -29,14 +29,15 @@ ShellRoot {
     function beginCommittedSourceCheck() {
         root.sourceItem = sourceComponent.createObject(root);
         SystemCardDragSession.begin(
-            "cpu", root.sourceItem, 100, 120, 20, 30);
+            "cpu", "test-output", root.sourceItem,
+            100, 120, 20, 30, 200, 160, 1920, 1080);
         SystemCardDragSession.freezeGhost();
         SystemCardDragSession.prepareVisualHandoff("cpu");
         SystemCardDragSession.markTransferCommitted("cpu");
-        const rect = SystemCardDragSession.frozenGhostRect;
+        const rect = SystemCardDragSession.presentationGhostRect;
         if (!rect.valid || rect.x !== 80 || rect.y !== 90
                 || rect.width !== 200 || rect.height !== 160) {
-            root.fail("frozen ghost rect was not captured exactly: "
+            root.fail("presentation ghost rect was not captured exactly: "
                 + JSON.stringify(rect));
             return;
         }
@@ -71,12 +72,14 @@ ShellRoot {
 
         root.sourceItem = sourceComponent.createObject(root);
         SystemCardDragSession.begin(
-            "battery", root.sourceItem, 100, 120, 20, 30);
+            "battery", "test-output", root.sourceItem,
+            100, 120, 20, 30, 200, 160, 1920, 1080);
         SystemCardDragSession.freezeGhost();
         SystemCardDragSession.prepareVisualHandoff("battery");
         SystemCardDragSession.markTransferCommitted("battery");
         SystemCardDragSession.finishTransfer();
-        root.committedSourceRect = SystemCardDragSession.frozenGhostRect;
+        root.committedSourceRect =
+            SystemCardDragSession.presentationGhostRect;
         root.sourceItem.destroy();
         root.phase = "committed-source-destroyed";
         Qt.callLater(root.checkCommittedSourceDestroyed);
@@ -98,12 +101,12 @@ ShellRoot {
             return;
         }
 
-        const rect = SystemCardDragSession.frozenGhostRect;
+        const rect = SystemCardDragSession.presentationGhostRect;
         const before = root.committedSourceRect;
         if (!rect.valid || !before || rect.x !== before.x
                 || rect.y !== before.y || rect.width !== before.width
                 || rect.height !== before.height) {
-            root.fail("frozen ghost rect did not survive source destruction: "
+            root.fail("presentation rect did not survive source destruction: "
                 + JSON.stringify(rect));
             return;
         }
@@ -136,7 +139,8 @@ ShellRoot {
 
         root.sourceItem = sourceComponent.createObject(root);
         SystemCardDragSession.begin(
-            "gpu", root.sourceItem, 0, 0, 0, 0);
+            "gpu", "test-output", root.sourceItem,
+            0, 0, 0, 0, 200, 160, 1920, 1080);
         root.sourceItem.destroy();
         root.phase = "uncommitted-source-destroyed";
         Qt.callLater(root.checkUncommittedSource);
