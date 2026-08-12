@@ -9,6 +9,7 @@ ShellRoot {
 
     property Item sourceItem: null
     property string phase: "normal-handoff"
+    property var committedSourceRect: null
 
     Component {
         id: sourceComponent
@@ -63,6 +64,8 @@ ShellRoot {
         SystemCardDragSession.freezeGhost();
         SystemCardDragSession.prepareVisualHandoff("battery");
         SystemCardDragSession.markTransferCommitted("battery");
+        SystemCardDragSession.finishTransfer();
+        root.committedSourceRect = SystemCardDragSession.frozenGhostRect;
         root.sourceItem.destroy();
         root.phase = "committed-source-destroyed";
         Qt.callLater(root.checkCommittedSourceDestroyed);
@@ -70,9 +73,48 @@ ShellRoot {
 
     function checkCommittedSourceDestroyed() {
         if (SystemCardDragSession.phase
+                === SystemCardDragSession.idlePhase) {
+            root.fail("committed source destruction cleared handoff");
+            return;
+        }
+        if (!SystemCardDragSession.transferCommitted
+                || !SystemCardDragSession.visualHandoffPending) {
+            root.fail("committed source destruction cleared transfer state");
+            return;
+        }
+        if (SystemCardDragSession.tileId !== "battery") {
+            root.fail("committed source destruction cleared tile id");
+            return;
+        }
+
+        const rect = SystemCardDragSession.frozenGhostRect;
+        const before = root.committedSourceRect;
+        if (!rect.valid || !before || rect.x !== before.x
+                || rect.y !== before.y || rect.width !== before.width
+                || rect.height !== before.height) {
+            root.fail("frozen ghost rect did not survive source destruction: "
+                + JSON.stringify(rect));
+            return;
+        }
+
+        if (!SystemCardDragSession.completeVisualHandoff("battery")) {
+            root.fail("DesktopCard could not complete post-destruction handoff");
+            return;
+        }
+        root.phase = "committed-handoff-complete";
+        Qt.callLater(root.checkCommittedHandoffComplete);
+    }
+
+    function checkCommittedHandoffComplete() {
+        if (SystemCardDragSession.phase
                 !== SystemCardDragSession.idlePhase) {
-            root.fail("destroyed committed source stranded session: "
+            root.fail("handoff completion did not return to idle: "
                 + SystemCardDragSession.phase);
+            return;
+        }
+        if (SystemCardDragSession.visualHandoffPending
+                || SystemCardDragSession.transferCommitted) {
+            root.fail("handoff completion left transfer state behind");
             return;
         }
 

@@ -182,9 +182,9 @@ Singleton {
         return true;
     }
 
-    // Enter the finishing phase while the ghost remains the sole visible
-    // owner. DesktopCardCanvas ends it as soon as its projected presentation
-    // rect has been initialized to the frozen ghost rect.
+    // Enter the finishing phase while the visual handoff barrier remains
+    // active. The sidebar source may disappear before DesktopCardCanvas has
+    // consumed the frozen rect; that teardown must not end this phase.
     function finishTransfer() {
         if (!root.active || !root.transferCommitted)
             return false;
@@ -276,10 +276,15 @@ Singleton {
 
         console.log("[SystemCards] drag source destroyed", root.tileId);
         if (root.transferCommitted) {
-            // Ownership is already committed and the visual proxy no longer
-            // exists. Clear only the gesture barrier; Desktop ownership is
-            // never rolled back.
-            root.finishGhost();
+            // Once ownership is committed, the sidebar source lifetime is no
+            // longer authoritative. The DesktopCard still has to consume the
+            // frozen geometry and complete the visual handoff. In particular,
+            // do not clear the phase, tileId, commit flag, or frozen rect here.
+            // sourceItem destruction is not handoff completion.
+            console.log(
+                "[SystemCards] preserving committed desktop handoff",
+                root.tileId
+            );
         } else {
             root.cancel();
         }

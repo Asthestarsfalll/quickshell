@@ -36,6 +36,11 @@ require_text "$session" 'function prepareVisualHandoff(cardId)'
 require_text "$session" 'visualHandoffPending'
 require_text "$session" 'readonly property var frozenGhostRect:'
 require_text "$session" 'if (!root.transferCommitted || !root.visualHandoffPending'
+require_text "$session" 'preserving committed desktop handoff'
+source_change_block=$(sed -n '/onSourceItemChanged:/,/^    }/p' "$session")
+if printf '%s\n' "$source_change_block" | grep -Fq 'root.finishGhost'; then
+    fail "committed source teardown must not finish the visual handoff"
+fi
 reject_text "$session" 'Timer {'
 reject_text "$session" 'handoffWatchdogTimer'
 reject_text "$session" 'ghostCleanupTimer.restart()'
