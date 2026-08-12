@@ -46,6 +46,12 @@ blur_count=$(grep -c 'excludeHostBlur: true' "$catalog")
 [ "$blur_count" -eq 6 ] || fail "expected six transparent host blur metadata entries"
 require_text "$system_view" 'systemCardBlurExclusionItems'
 require_text "$left_content" 'systemCardBlurExclusionItems'
+require_text Modules/Sidebars/Left/system/SystemGridTile.qml \
+    'import "../../../SystemCards/SystemCardCatalog.js" as CardCatalog'
+require_text Modules/Sidebars/Left/system/SystemGridTile.qml \
+    'CardCatalog.definitionFor(root.tileId)'
+require_text Modules/Sidebars/Left/system/SystemGridTile.qml \
+    'root.catalogEntry !== undefined'
 require_text "$sidebar_host" 'leftSidebar.systemCardBlurExclusionItems'
 require_text "$canvas" 'systemCardBlurExclusionItems'
 require_text "$host" 'SystemCardService.cardExcludesHostBlur('
