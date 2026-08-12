@@ -4,7 +4,9 @@ import qs.Common
 import qs.Services
 import qs.Widgets.common
 import qs.Modules.SystemCards
+import Quickshell
 import "../../SystemCards/SystemCardGeometry.js" as CardGeometry
+import "../../SystemCards/SystemCardPlacement.js" as Placement
 import "./system"
 import "./system/SystemGridLayout.js" as GridLayout
 
@@ -71,6 +73,21 @@ Item {
 
     function cardSize(tileId) {
         return CardGeometry.sizeFor(String(tileId));
+    }
+
+    function outputSize() {
+        for (let index = 0; index < Quickshell.screens.length; ++index) {
+            const output = Quickshell.screens[index];
+            if (output && String(output.name) === root.screenName)
+                return {
+                    width: Math.max(1, Number(output.width) || 1),
+                    height: Math.max(1, Number(output.height) || 1)
+                };
+        }
+        return {
+            width: Math.max(1, Number(root.width) || 1),
+            height: Math.max(1, Number(root.height) || 1)
+        };
     }
 
     readonly property Item timeCardItem: {
@@ -212,25 +229,21 @@ Item {
             return;
 
         if (root.desktopExtraction) {
-            const scene = root.screenName !== ""
-                ? WallpaperSceneService.sceneFor(root.screenName) : null;
-            // The persisted point is the Card's top-left corner, not the
-            // pointer location.  This is the same corner represented by the
-            // top-level ShaderEffectSource ghost.
+            // Every user drag commits the top-left corner in the output-local
+            // screen coordinate system. The ghost and DesktopCard therefore
+            // share the same geometry without touching wallpaper transforms.
             const topLeftX = root.dragPointerX
                 - SystemCardDragSession.offsetX;
             const topLeftY = root.dragPointerY
                 - SystemCardDragSession.offsetY;
-            const point = scene
-                ? scene.screenToWallpaper(topLeftX, topLeftY)
-                : { x: topLeftX, y: topLeftY };
-            const canvasWidth = scene ? scene.canvasWidth : 1;
-            const canvasHeight = scene ? scene.canvasHeight : 1;
+            const output = root.outputSize();
             const size = root.cardSize(tileId);
-            const wallpaperX = Math.max(0, Math.min(
-                Math.max(0, canvasWidth - size.width), point.x));
-            const wallpaperY = Math.max(0, Math.min(
-                Math.max(0, canvasHeight - size.height), point.y));
+            const screenX = Math.max(0, Math.min(
+                Math.max(0, output.width - size.width), topLeftX));
+            const screenY = Math.max(0, Math.min(
+                Math.max(0, output.height - size.height), topLeftY));
+            const normalized = Placement.normalizedPosition(
+                screenX, screenY, output.width, output.height);
             if (!SystemCardDragSession.freezeGhost()) {
                 SystemCardDragSession.cancel();
                 root.resetDragState(false);
@@ -245,8 +258,9 @@ Item {
                 tileId,
                 "desktop",
                 root.screenName,
-                wallpaperX / Math.max(1, canvasWidth),
-                wallpaperY / Math.max(1, canvasHeight)
+                normalized.xNorm,
+                normalized.yNorm,
+                Placement.screen
             );
             const card = SystemCardService.card(tileId);
             if (!committed || !card || !card.enabled
@@ -257,7 +271,14 @@ Item {
                 root.resetDragState(false);
                 return;
             }
-            SystemCardDragSession.markTransferCommitted(tileId);
+            if (!SystemCardDragSession.markTransferCommitted(tileId)) {
+                console.warn(
+                    "[SystemCards] desktop transfer commit failed", tileId);
+                SystemCardDragSession.cancel();
+                root.resetDragState(false);
+                return;
+            }
+            SystemCardDragSession.requestVisualHandoffCheck(tileId);
             root.resetDragState(true);
             WidgetState.leftSidebarOpen = false;
             SystemCardDragSession.finishTransfer();

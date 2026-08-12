@@ -56,6 +56,7 @@ Singleton {
     signal finished()
     signal canceled()
     signal transferAccepted(string cardId)
+    signal handoffCheckRequested(string cardId)
     signal cancelRequested(string requestedTileId)
 
     function transition(nextPhase, reason) {
@@ -160,17 +161,34 @@ Singleton {
             return false;
         if (!root.frozen)
             root.freezeGhost();
-        root.transferPreparing = false;
+        // Keep the visual barrier continuously asserted. Setting preparing
+        // false first creates a transient pending=false state before the
+        // committed flag becomes visible to QML bindings.
         root.transferCommitted = true;
-        root.transferAccepted(root.tileId);
-        console.log("[SystemCards] transfer committed", root.tileId);
+        root.transferPreparing = false;
+        root.transferAccepted(id);
+        console.log("[SystemCards] transfer committed", id);
+        return true;
+    }
+
+    // Request the DesktopCard readiness check only after markTransferCommitted
+    // has returned to its caller. Completing the handoff from an
+    // onTransferCommittedChanged handler mutates the same properties while Qt
+    // is still evaluating their bindings and can leave the desktop delegate
+    // permanently hidden behind a stale waiting=true value.
+    function requestVisualHandoffCheck(cardId) {
+        const id = String(cardId || "");
+        if (!root.transferCommitted || !root.visualHandoffPending
+                || id !== root.tileId)
+            return false;
+        root.handoffCheckRequested(id);
         return true;
     }
 
     // Establish the visual handoff barrier before changing CardState.  The
     // desktop slot may be created synchronously by that change, but it must
-    // remain hidden until its Loader has initialized the presentation rect
-    // and emitted handoffReady.
+    // remain hidden until its Loader has initialized the screen rect and
+    // emitted handoffReady.
     function prepareVisualHandoff(cardId) {
         const id = String(cardId || "");
         if (!root.active || id !== root.tileId

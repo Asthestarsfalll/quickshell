@@ -78,10 +78,12 @@ Singleton {
         );
     }
 
-    function setContainer(cardId, container, screenName, xNorm, yNorm) {
+    function setContainer(cardId, container, screenName, xNorm, yNorm,
+                          placementSpace) {
         const id = String(cardId);
         const next = CardState.setContainer(
-            root.internalState, id, container, screenName, xNorm, yNorm);
+            root.internalState, id, container, screenName, xNorm, yNorm,
+            placementSpace);
         const committed = root.commit(next, id, container === "desktop");
         if (committed && container === "desktop") {
             console.log(
@@ -93,13 +95,62 @@ Singleton {
         return committed;
     }
 
-    function setDesktopPosition(cardId, xNorm, yNorm) {
+    function setDesktopScreenPosition(cardId, xNorm, yNorm, requestLayout) {
         return root.commit(
-            CardState.setDesktopPosition(
+            CardState.setDesktopScreenPosition(
+                root.internalState, String(cardId), xNorm, yNorm),
+            cardId,
+            !!requestLayout
+        );
+    }
+
+    function setDesktopWallpaperPosition(cardId, xNorm, yNorm) {
+        return root.commit(
+            CardState.setDesktopWallpaperPosition(
                 root.internalState, String(cardId), xNorm, yNorm),
             cardId,
             false
         );
+    }
+
+    function setPlacementSpace(cardId, placementSpace) {
+        return root.commit(
+            CardState.setPlacementSpace(
+                root.internalState, String(cardId), placementSpace),
+            cardId,
+            false
+        );
+    }
+
+    function setDesktopScreenPositions(positions) {
+        if (!Array.isArray(positions))
+            return false;
+        let next = CardState.normalize(root.internalState);
+        let changed = false;
+        positions.forEach(function(position) {
+            if (!position || typeof position.id !== "string")
+                return;
+            const current = next.cards[position.id];
+            if (!current || current.container !== "desktop")
+                return;
+            const x = Number(position.xNorm);
+            const y = Number(position.yNorm);
+            if (!isFinite(x) || !isFinite(y))
+                return;
+            const updated = CardState.setDesktopScreenPosition(
+                next, position.id, x, y);
+            if (JSON.stringify(updated.cards[position.id])
+                    !== JSON.stringify(next.cards[position.id])) {
+                next = updated;
+                changed = true;
+            }
+        });
+        return changed && root.commit(next, "", false);
+    }
+
+    function requestDesktopLayout() {
+        if (root.globalDesktopLayoutMode !== "free")
+            root.desktopLayoutRequested();
     }
 
     function setSidebarAnchor(cardId, column, row) {
@@ -153,9 +204,10 @@ Singleton {
             const y = Math.max(0, Math.min(1, Number(placement.yNorm)));
             if (!isFinite(x) || !isFinite(y))
                 return;
-            if (Math.abs(current.desktop.xNorm - x) > 0.00001
-                    || Math.abs(current.desktop.yNorm - y) > 0.00001) {
-                next = CardState.setDesktopPosition(
+            if (Math.abs(current.desktop.wallpaper.xNorm - x) > 0.00001
+                    || Math.abs(current.desktop.wallpaper.yNorm - y)
+                        > 0.00001) {
+                next = CardState.setDesktopWallpaperPosition(
                     next, placement.id, x, y);
                 changed = true;
             }

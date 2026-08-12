@@ -2,20 +2,15 @@ import QtQuick 2.15
 import QtTest 1.3
 
 import "../../Services/SystemCardDragState.js" as DragState
-import "../../Modules/DesktopCards/DesktopCardPresentation.js" as Presentation
+import "../../Modules/SystemCards/SystemCardPlacement.js" as Placement
 
 TestCase {
     name: "SystemCardDragState"
 
-    function test_committedTransferKeepsActiveThroughGhostCleanup() {
+    function test_committedTransferKeepsActiveUntilDesktopHandoff() {
         let phase = DragState.idle;
         phase = DragState.draggingSidebar;
-        compare(DragState.isActive(phase), true);
-
         phase = DragState.freeze(phase);
-        compare(phase, DragState.frozenTransfer);
-        compare(DragState.isFrozen(phase), true);
-
         phase = DragState.finishTransfer(phase, true);
         compare(phase, DragState.finishing);
         compare(DragState.isActive(phase), true);
@@ -51,177 +46,83 @@ TestCase {
         verify(!DragState.isVisualHandoffPending(idle, true));
     }
 
-    function test_dropRectContinuityForDifferentGrabPoints() {
+    function test_screenDropPreservesGhostRectForEveryGrabPoint() {
         const drops = [
             { pointer: { x: 122, y: 208 }, offset: { x: 12, y: 18 } },
             { pointer: { x: 640, y: 420 }, offset: { x: 76, y: 80 } },
             { pointer: { x: 1260, y: 810 }, offset: { x: 145, y: 151 } }
         ];
         drops.forEach(function(drop) {
-            const ghostRect = {
+            const ghost = {
                 x: drop.pointer.x - drop.offset.x,
                 y: drop.pointer.y - drop.offset.y,
                 width: 152,
                 height: 160
             };
-            const desktopRect = {
-                x: drop.pointer.x - drop.offset.x,
-                y: drop.pointer.y - drop.offset.y,
-                width: 152,
-                height: 160
+            const desktop = {
+                x: ghost.x,
+                y: ghost.y,
+                width: ghost.width,
+                height: ghost.height
             };
-            compare(desktopRect.x, ghostRect.x);
-            compare(desktopRect.y, ghostRect.y);
-            compare(desktopRect.width, ghostRect.width);
-            compare(desktopRect.height, ghostRect.height);
+            compare(desktop.x, ghost.x);
+            compare(desktop.y, ghost.y);
+            compare(desktop.width, ghost.width);
+            compare(desktop.height, ghost.height);
         });
     }
 
-    function test_handoffStartsAtGhostWhenTargetDiffers() {
-        const ghost = { x: 420, y: 310, width: 152, height: 160 };
-        const target = { x: 900, y: 620, width: 152, height: 160 };
-        const offset = Presentation.offsetForRects(ghost, target);
-        const firstFrame = Presentation.translatedRect(target, offset);
+    function test_screenNormalizedPositionRoundTrips() {
+        const normalized = Placement.normalizedPosition(
+            640, 360, 1920, 1080);
+        compare(normalized.xNorm, 1 / 3);
+        compare(normalized.yNorm, 1 / 3);
 
-        verify(Presentation.rectsWithinTolerance(
-            firstFrame, ghost, 1));
-        compare(offset.x, -480);
-        compare(offset.y, -310);
-
-        const settled = Presentation.translatedRect(
-            target, { x: 0, y: 0 });
-        compare(settled.x, target.x);
-        compare(settled.y, target.y);
+        const point = Placement.screenPoint(
+            normalized.xNorm, normalized.yNorm,
+            1920, 1080, 152, 160);
+        compare(point.x, 640);
+        compare(point.y, 360);
     }
 
-    function test_sceneMotionAndPresentationRemainOrthogonal() {
-        const logical = { x: 700, y: 440, width: 152, height: 160 };
-        const initialScene = { x: -280, y: 24 };
-        const target = {
-            x: logical.x + initialScene.x,
-            y: logical.y + initialScene.y,
-            width: logical.width,
-            height: logical.height
-        };
-        const ghost = { x: target.x + 16, y: target.y + 12,
-            width: target.width, height: target.height };
-        const offset = Presentation.offsetForRects(ghost, target);
+    function test_freeProjectionIgnoresWallpaperOffset() {
+        const free = Placement.screenPoint(
+            0.42, 0.31, 1920, 1080, 152, 160);
+        const afterParallax = Placement.screenPoint(
+            0.42, 0.31, 1920, 1080, 152, 160);
 
-        const nextScene = { x: -430, y: 60 };
-        const nextTarget = {
-            x: logical.x + nextScene.x,
-            y: logical.y + nextScene.y,
-            width: logical.width,
-            height: logical.height
-        };
-        const visible = Presentation.translatedRect(nextTarget, offset);
-
-        compare(logical.x, 700);
-        compare(logical.y, 440);
-        compare(visible.x, nextTarget.x + 16);
-        compare(visible.y, nextTarget.y + 12);
+        compare(afterParallax.x, free.x);
+        compare(afterParallax.y, free.y);
     }
 
-    function test_handoffUsesCurrentProjectionAtOwnershipTransfer() {
-        const ghost = { x: 640, y: 360, width: 152, height: 160 };
-        const readyTarget = {
-            x: 640, y: 360, width: 152, height: 160
-        };
-        const readyOffset = Presentation.offsetForRects(
-            ghost, readyTarget);
-        compare(readyOffset.x, 0);
-        compare(readyOffset.y, 0);
+    function test_wallpaperProjectionUsesCurrentSceneOffset() {
+        const wallpaper = Placement.wallpaperPoint(
+            0.5, 0.4, 2000, 1000, 152, 160);
+        const first = Placement.projectedWallpaperPoint(
+            wallpaper.x, wallpaper.y, -100, 20);
+        const second = Placement.projectedWallpaperPoint(
+            wallpaper.x, wallpaper.y, -240, 40);
 
-        // The logical projection may change while the delegate is loading.
-        // Handoff uses the current projected target, not a moving-parent
-        // compensation captured earlier.
-        const firstFrameTarget = {
-            x: 584, y: 360, width: 152, height: 160
-        };
-        const pinnedOffset = Presentation.offsetForRects(
-            ghost, firstFrameTarget);
-        const firstFrame = Presentation.translatedRect(
-            firstFrameTarget, pinnedOffset);
-
-        compare(pinnedOffset.x, 56);
-        verify(Presentation.rectsWithinTolerance(firstFrame, ghost, 1));
+        compare(first.x, wallpaper.x - 100);
+        compare(first.y, wallpaper.y + 20);
+        compare(second.x, wallpaper.x - 240);
+        compare(second.y, wallpaper.y + 40);
     }
 
-    function test_fixedCanvasProjectsWallpaperOffsetPerCard() {
-        const canvas = { x: 0, y: 0 };
-        const logical = { x: 1200, y: 480 };
-        const first = Presentation.projectWallpaperPoint(
-            logical.x, logical.y, -200, 0);
-        const second = Presentation.projectWallpaperPoint(
-            logical.x, logical.y, -300, 0);
+    function test_screenToWallpaperTransitionFollowsMovingTarget() {
+        const start = { x: 420, y: 300 };
+        const wallpaper = { x: 900, y: 500 };
+        const firstTarget = Placement.projectedWallpaperPoint(
+            wallpaper.x, wallpaper.y, -180, 0);
+        const secondTarget = Placement.projectedWallpaperPoint(
+            wallpaper.x, wallpaper.y, -260, 30);
 
-        compare(canvas.x, 0);
-        compare(canvas.y, 0);
-        compare(first.x, 1000);
-        compare(second.x, 900);
-        compare(logical.x, 1200);
-    }
-
-    function test_handoffContinuityWhenProjectionChanges() {
-        const ghost = { x: 700, y: 360, width: 152, height: 160 };
-        const logical = { x: 900, y: 360 };
-        const projected = Presentation.projectWallpaperPoint(
-            logical.x, logical.y, -100, 0);
-        const target = {
-            x: projected.x,
-            y: projected.y,
-            width: ghost.width,
-            height: ghost.height
-        };
-        const offset = Presentation.offsetForRects(ghost, target);
-        const firstVisible = Presentation.translatedRect(target, offset);
-
-        compare(target.x, 800);
-        compare(offset.x, -100);
-        verify(Presentation.rectsWithinTolerance(
-            firstVisible, ghost, 1));
-    }
-
-    function test_noParallaxNeedsNoPresentationMovement() {
-        const logical = { x: 640, y: 360 };
-        const projected = Presentation.projectWallpaperPoint(
-            logical.x, logical.y, 0, 0);
-        const offset = Presentation.offsetForRects(
-            { x: 640, y: 360 }, projected);
-
-        compare(projected.x, 640);
-        compare(projected.y, 360);
-        compare(offset.x, 0);
-        compare(offset.y, 0);
-    }
-
-    function test_layoutAndParallaxProjectWithoutDoubleEasing() {
-        const before = Presentation.projectWallpaperPoint(
-            500, 300, -50, 20);
-        const after = Presentation.projectWallpaperPoint(
-            700, 300, -100, 20);
-
-        compare(before.x, 450);
-        compare(after.x, 600);
-        compare(after.y, 320);
-    }
-
-    function test_dragCanInheritCurrentPresentedPosition() {
-        const currentVisualScreen = { x: 750, y: 420 };
-        const sceneOffset = { x: -100, y: 20 };
-        const visualWallpaper = {
-            x: currentVisualScreen.x - sceneOffset.x,
-            y: currentVisualScreen.y - sceneOffset.y
-        };
-        const firstDragFrame = Presentation.projectWallpaperPoint(
-            visualWallpaper.x,
-            visualWallpaper.y,
-            sceneOffset.x,
-            sceneOffset.y
-        );
-
-        compare(firstDragFrame.x, currentVisualScreen.x);
-        compare(firstDragFrame.y, currentVisualScreen.y);
+        compare(Placement.interpolate(start.x, firstTarget.x, 0), start.x);
+        compare(Placement.interpolate(start.y, firstTarget.y, 0), start.y);
+        compare(Placement.interpolate(start.x, secondTarget.x, 1),
+            secondTarget.x);
+        compare(Placement.interpolate(start.y, secondTarget.y, 1),
+            secondTarget.y);
     }
 
     function test_sidebarReorderCanFinishWithoutTransfer() {

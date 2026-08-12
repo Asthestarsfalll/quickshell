@@ -10,6 +10,7 @@ ShellRoot {
     property Item sourceItem: null
     property string phase: "normal-handoff"
     property var committedSourceRect: null
+    property int handoffCheckCount: 0
 
     Component {
         id: sourceComponent
@@ -39,14 +40,24 @@ ShellRoot {
                 + JSON.stringify(rect));
             return;
         }
-        if (!SystemCardDragSession.completeVisualHandoff("cpu")) {
-            root.fail("ready delegate did not complete handoff");
+        if (SystemCardDragSession.phase
+                === SystemCardDragSession.idlePhase) {
+            root.fail("commit synchronously cleared the handoff barrier");
+            return;
+        }
+        if (!SystemCardDragSession.requestVisualHandoffCheck("cpu")) {
+            root.fail("could not request the ready delegate check");
             return;
         }
         Qt.callLater(root.checkCommittedSource);
     }
 
     function checkCommittedSource() {
+        if (root.handoffCheckCount !== 1) {
+            root.fail("normal handoff check count was "
+                + root.handoffCheckCount);
+            return;
+        }
         if (SystemCardDragSession.phase
                 !== SystemCardDragSession.idlePhase) {
             root.fail("committed source did not clean up: "
@@ -97,8 +108,8 @@ ShellRoot {
             return;
         }
 
-        if (!SystemCardDragSession.completeVisualHandoff("battery")) {
-            root.fail("DesktopCard could not complete post-destruction handoff");
+        if (!SystemCardDragSession.requestVisualHandoffCheck("battery")) {
+            root.fail("post-destruction handoff check was not requested");
             return;
         }
         root.phase = "committed-handoff-complete";
@@ -106,6 +117,11 @@ ShellRoot {
     }
 
     function checkCommittedHandoffComplete() {
+        if (root.handoffCheckCount !== 2) {
+            root.fail("post-destruction handoff check count was "
+                + root.handoffCheckCount);
+            return;
+        }
         if (SystemCardDragSession.phase
                 !== SystemCardDragSession.idlePhase) {
             root.fail("handoff completion did not return to idle: "
@@ -138,6 +154,16 @@ ShellRoot {
     }
 
     Component.onCompleted: Qt.callLater(root.beginCommittedSourceCheck)
+
+    Connections {
+        target: SystemCardDragSession
+
+        function onHandoffCheckRequested(tileId) {
+            root.handoffCheckCount += 1;
+            if (!SystemCardDragSession.completeVisualHandoff(tileId))
+                root.fail("ready delegate did not complete " + tileId);
+        }
+    }
 
     Timer {
         interval: 5000

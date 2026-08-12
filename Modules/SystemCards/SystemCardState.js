@@ -5,8 +5,9 @@
 // the same metadata source when they are run directly by qmltestrunner.
 Qt.include("SystemCardCatalog.js");
 
-var schemaVersion = 2;
+var schemaVersion = 3;
 var desktopLayoutModes = ["free", "leastBusy", "mostBusy"];
+var placementSpaces = ["screen", "wallpaper"];
 
 function isObject(value) {
     return value !== null
@@ -16,6 +17,10 @@ function isObject(value) {
 
 function validDesktopLayoutMode(value) {
     return desktopLayoutModes.indexOf(String(value || "")) !== -1;
+}
+
+function validPlacementSpace(value) {
+    return placementSpaces.indexOf(String(value || "")) !== -1;
 }
 
 function clamp01(value, fallback) {
@@ -30,6 +35,14 @@ function integerOr(value, fallback) {
     return isFinite(number) ? Math.round(number) : fallback;
 }
 
+function coordinate(raw, fallback) {
+    var source = isObject(raw) ? raw : {};
+    return {
+        xNorm: clamp01(source.xNorm, fallback.xNorm),
+        yNorm: clamp01(source.yNorm, fallback.yNorm)
+    };
+}
+
 function defaultCard(definition) {
     var anchor = defaultAnchorFor(definition.id);
     return {
@@ -41,8 +54,15 @@ function defaultCard(definition) {
             row: anchor.row
         },
         desktop: {
-            xNorm: 0.5,
-            yNorm: 0.5
+            placementSpace: "screen",
+            screen: {
+                xNorm: 0.5,
+                yNorm: 0.5
+            },
+            wallpaper: {
+                xNorm: 0.5,
+                yNorm: 0.5
+            }
         }
     };
 }
@@ -54,8 +74,7 @@ function defaultState() {
         cards: {}
     };
     all().forEach(function(definition) {
-        state.cards[definition.id] = defaultCard(
-            definition);
+        state.cards[definition.id] = defaultCard(definition);
     });
     return state;
 }
@@ -83,6 +102,31 @@ function normalize(raw) {
             ? rawCard.sidebar : {};
         var rawDesktop = isObject(rawCard.desktop)
             ? rawCard.desktop : {};
+
+        // Versions 1/2 stored desktop.xNorm/yNorm in wallpaper space. Keep
+        // that meaning during migration instead of silently interpreting old
+        // values as screen coordinates. A current v3 document with missing
+        // nested coordinates is treated the same way as a malformed legacy
+        // desktop record and safely falls back to wallpaper space.
+        var legacyWallpaper = {
+            xNorm: clamp01(rawDesktop.xNorm,
+                fallback.desktop.wallpaper.xNorm),
+            yNorm: clamp01(rawDesktop.yNorm,
+                fallback.desktop.wallpaper.yNorm)
+        };
+        var rawScreen = isObject(rawDesktop.screen)
+            ? coordinate(rawDesktop.screen, fallback.desktop.screen)
+            : { xNorm: fallback.desktop.screen.xNorm,
+                yNorm: fallback.desktop.screen.yNorm };
+        var rawWallpaper = isObject(rawDesktop.wallpaper)
+            ? coordinate(rawDesktop.wallpaper, legacyWallpaper)
+            : legacyWallpaper;
+        var hasExplicitSpace = validPlacementSpace(
+            rawDesktop.placementSpace);
+        var space = hasExplicitSpace
+            ? String(rawDesktop.placementSpace)
+            : (rawCard.container === "desktop" ? "wallpaper" : "screen");
+
         normalized.cards[definition.id] = {
             enabled: typeof rawCard.enabled === "boolean"
                 ? rawCard.enabled : fallback.enabled,
@@ -97,10 +141,9 @@ function normalize(raw) {
                     rawSidebar.row, fallback.sidebar.row))
             },
             desktop: {
-                xNorm: clamp01(rawDesktop.xNorm,
-                    fallback.desktop.xNorm),
-                yNorm: clamp01(rawDesktop.yNorm,
-                    fallback.desktop.yNorm)
+                placementSpace: space,
+                screen: rawScreen,
+                wallpaper: rawWallpaper
             }
         };
     });
@@ -135,23 +178,53 @@ function setEnabled(state, id, enabled) {
     });
 }
 
-function setContainer(state, id, container, screenName, xNorm, yNorm) {
+function setContainer(state, id, container, screenName, xNorm, yNorm,
+                      placementSpace) {
     return updateCard(state, id, function(next) {
         next.container = container === "desktop" ? "desktop" : "sidebar";
         if (typeof screenName === "string")
             next.screenName = screenName;
-        if (isFinite(Number(xNorm)))
-            next.desktop.xNorm = clamp01(xNorm, next.desktop.xNorm);
-        if (isFinite(Number(yNorm)))
-            next.desktop.yNorm = clamp01(yNorm, next.desktop.yNorm);
+        if (next.container !== "desktop")
+            return next;
+
+        var space = validPlacementSpace(placementSpace)
+            ? String(placementSpace) : "screen";
+        next.desktop.placementSpace = space;
+        if (isFinite(Number(xNorm)) && isFinite(Number(yNorm))) {
+            var target = space === "wallpaper"
+                ? next.desktop.wallpaper : next.desktop.screen;
+            target.xNorm = clamp01(xNorm, target.xNorm);
+            target.yNorm = clamp01(yNorm, target.yNorm);
+        }
         return next;
     });
 }
 
-function setDesktopPosition(state, id, xNorm, yNorm) {
+function setDesktopScreenPosition(state, id, xNorm, yNorm) {
     return updateCard(state, id, function(next) {
-        next.desktop.xNorm = clamp01(xNorm, next.desktop.xNorm);
-        next.desktop.yNorm = clamp01(yNorm, next.desktop.yNorm);
+        next.desktop.placementSpace = "screen";
+        next.desktop.screen.xNorm = clamp01(
+            xNorm, next.desktop.screen.xNorm);
+        next.desktop.screen.yNorm = clamp01(
+            yNorm, next.desktop.screen.yNorm);
+        return next;
+    });
+}
+
+function setDesktopWallpaperPosition(state, id, xNorm, yNorm) {
+    return updateCard(state, id, function(next) {
+        next.desktop.wallpaper.xNorm = clamp01(
+            xNorm, next.desktop.wallpaper.xNorm);
+        next.desktop.wallpaper.yNorm = clamp01(
+            yNorm, next.desktop.wallpaper.yNorm);
+        return next;
+    });
+}
+
+function setPlacementSpace(state, id, placementSpace) {
+    return updateCard(state, id, function(next) {
+        if (validPlacementSpace(placementSpace))
+            next.desktop.placementSpace = String(placementSpace);
         return next;
     });
 }

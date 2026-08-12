@@ -42,24 +42,31 @@ require_text "$canvas" 'SystemCardService.cardSize('
 require_text "$host" 'SystemCardService.cardSize(id)'
 
 # The desktop policy is global; per-card mode and focus solving are gone.
-require_text "$state" 'var schemaVersion = 2;'
+require_text "$state" 'var schemaVersion = 3;'
 reject_text "$state" 'setDesktopMode'
 reject_text "$service" 'setDesktopMode'
 reject_text "$desktop_card" 'placementMode'
 reject_text "$desktop_card" '最空旷处'
 reject_text "$desktop_card" '最密集处'
-require_text "$desktop_card" 'globalDesktopLayoutMode === "free"'
-require_text "$host" 'mode === "free"'
 reject_text "$host" 'pendingLayoutFocusId'
 
-# First presentation has a disabled position Behavior and an explicit
-# presentation barrier before automatic reflow is allowed.
+# Desktop coordinates are explicit: screen placement is independent from
+# wallpaper placement and automatic modes migrate between them explicitly.
 require_text "$canvas" 'property bool positionInitialized: false'
 require_text "$canvas" 'slot.positionInitialized = true;'
-require_text "$canvas" 'enabled: slot.positionInitialized && slot.active'
+require_text "$canvas" 'readonly property string placementSpace:'
+require_text "$canvas" 'readonly property var screenTarget:'
+require_text "$canvas" 'readonly property var wallpaperTarget:'
+require_text "$canvas" 'function beginWallpaperTransition()'
+require_text "$canvas" 'function promoteCardsToScreen()'
 require_text "$host" 'allActiveCardsPresented'
-require_text "$canvas" 'property real presentationOffsetX: 0'
-require_text "$canvas" 'property real presentationOffsetY: 0'
+require_text "$host" 'state.desktop.wallpaper.xNorm'
+require_text "$service" 'setDesktopScreenPositions(positions)'
+require_text "$service" 'setDesktopWallpaperPosition(cardId, xNorm, yNorm)'
+require_text "$state" 'screen:'
+require_text "$state" 'wallpaper:'
+reject_text "$canvas" 'presentationOffsetX'
+reject_text "$canvas" 'presentationOffsetY'
 
 # Current position is a normal candidate and cannot carry the old -0.1-scale
 # absolute advantage.

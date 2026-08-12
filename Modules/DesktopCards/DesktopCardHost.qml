@@ -122,8 +122,8 @@ Variants {
                     id: id,
                     width: size.width,
                     height: size.height,
-                    xNorm: state.desktop.xNorm,
-                    yNorm: state.desktop.yNorm
+                    xNorm: state.desktop.wallpaper.xNorm,
+                    yNorm: state.desktop.wallpaper.yNorm
                 });
             });
             return result;
@@ -132,13 +132,13 @@ Variants {
         function runLayout() {
             const mode = SystemCardService.globalDesktopLayoutMode;
             if (!window.scene || window.desktopIds.length === 0
-                    || mode === "free" || !window.analysis
-                    || !window.analysis.valid)
+                    || mode === "free" || !window.analysis)
                 return;
             // Do not let a cached analysis result move a newly transferred
             // card before its first frame has been presented at the drop
-            // point.  This is a presentation barrier, not a visibility gate.
-            if (!cardCanvas.allActiveCardsPresented)
+            // point. This is a handoff barrier, not a visibility gate.
+            if (!cardCanvas.allActiveCardsPresented
+                    || SystemCardDragSession.visualHandoffPending)
                 return;
             const placements = DesktopCardLayout.solve(
                 window.cardDescriptors(),
@@ -148,6 +148,7 @@ Variants {
                 mode
             );
             SystemCardService.applyDesktopLayout(placements);
+            cardCanvas.startAutomaticTransitions();
         }
 
         mask: Region {
@@ -212,7 +213,7 @@ Variants {
                         || generation !== window.analysisGeneration) {
                     return;
                 }
-                window.analysis = result;
+                window.analysis = result || ({ valid: false });
                 if (!result || !result.valid) {
                     console.warn(
                         "[DesktopCards] analysis failed path="
@@ -220,8 +221,13 @@ Variants {
                                 ? window.scene.sourcePath : "")
                             + " reason="
                             + String(result ? result.errorString
-                                : "no-result")
+                            : "no-result")
                     );
+                    // The solver treats an invalid analysis as a uniform
+                    // busy map and still supplies a deterministic,
+                    // collision-free wallpaper placement. Analysis failure
+                    // must not leave an automatic card in screen space.
+                    window.runLayout();
                     return;
                 }
                 console.log(
@@ -259,12 +265,15 @@ Variants {
 
             function onHandoffReady(tileId) {
                 if (SystemCardDragSession.completeVisualHandoff(tileId))
-                    cardCanvas.startPresentationTransition(tileId);
-                Qt.callLater(window.runLayout);
+                    window.scheduleAutomaticLayout();
             }
         }
 
         onDesktopIdsChanged: window.requestAnalysis()
+        onSceneChanged: {
+            if (window.layoutMode === "free")
+                cardCanvas.promoteCardsToScreen();
+        }
         onAnalysisKeyChanged: {
             window.requestedAnalysisKey = "";
             window.requestAnalysis();
@@ -273,6 +282,7 @@ Variants {
             if (window.layoutMode === "free") {
                 window.analysis = null;
                 window.requestedAnalysisKey = "";
+                cardCanvas.promoteCardsToScreen();
                 return;
             }
             window.scheduleAutomaticLayout();
@@ -284,7 +294,14 @@ Variants {
                     + String(window.screenKey) + " layer=Bottom"
             );
             WallpaperSceneService.sceneFor(window.screenKey);
-            Qt.callLater(window.requestAnalysis);
+            Qt.callLater(function() {
+                // Legacy v2 desktop records were wallpaper coordinates. If
+                // the current policy is free, capture their displayed output
+                // position once and migrate them to the new screen space.
+                if (window.layoutMode === "free")
+                    cardCanvas.promoteCardsToScreen();
+                window.requestAnalysis();
+            });
         }
     }
 }

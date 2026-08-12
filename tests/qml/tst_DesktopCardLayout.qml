@@ -96,4 +96,16 @@ TestCase {
         compare(placements.length, cards.length);
         verify(DesktopCardLayout.hasNoOverlap(placements, 12));
     }
+
+    function test_invalidAnalysisStillUsesDeterministicWallpaperPlacement() {
+        const cards = [
+            canonicalCard("weather", 0.1, 0.1),
+            canonicalCard("cpu", 0.4, 0.5)
+        ];
+        const placements = DesktopCardLayout.solve(
+            cards, 1800, 1000, { valid: false }, "leastBusy");
+
+        compare(placements.length, cards.length);
+        verify(DesktopCardLayout.hasNoOverlap(placements, 12));
+    }
 }
