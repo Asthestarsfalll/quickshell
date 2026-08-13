@@ -11,11 +11,6 @@ import qs.Widgets.common
 StyledFlickable {
     id: root
 
-    clip: true
-    contentWidth: width
-    contentHeight: contentColumn.implicitHeight + Metrics.pageMargin
-
-    property var selectedApplication: null
     property var pendingRemoveEntry: null
     property var parentModal: null
     readonly property real pageContentWidth: 720
@@ -24,6 +19,7 @@ StyledFlickable {
         appBrowserLoader.active = true;
         if (appBrowserLoader.item)
             appBrowserLoader.item.show();
+
     }
 
     function requestRemove(entry) {
@@ -37,13 +33,20 @@ StyledFlickable {
         root.pendingRemoveEntry = null;
         if (entry)
             AutostartService.remove(entry);
+
     }
 
-    function selectedApplicationDescription() {
-        if (!root.selectedApplication)
-            return "";
-        return String(root.selectedApplication.genericName
-            || root.selectedApplication.comment || "");
+    function closeChildWindows() {
+        if (appBrowserLoader.item)
+            appBrowserLoader.item.hide();
+
+    }
+
+    clip: true
+    contentWidth: width
+    contentHeight: contentColumn.implicitHeight + Metrics.pageMargin
+    Component.onCompleted: {
+        AutostartService.initialize();
     }
 
     Loader {
@@ -52,7 +55,6 @@ StyledFlickable {
         active: false
         asynchronous: false
         source: Qt.resolvedUrl("AppBrowserPopup.qml")
-
         onLoaded: item.parentModal = root.parentModal
     }
 
@@ -64,36 +66,25 @@ StyledFlickable {
     }
 
     Connections {
+        function onAppSelected(application) {
+            AutostartService.addApplication(application);
+        }
+
         target: appBrowserLoader.item
         ignoreUnknownSignals: true
-
-        function onAppSelected(application) {
-            root.selectedApplication = application;
-        }
-    }
-
-    Connections {
-        target: AutostartService
-
-        function onOperationFinished(success, operation) {
-            if (success && operation === "add")
-                root.selectedApplication = null;
-        }
     }
 
     ColumnLayout {
         id: contentColumn
 
-        width: Math.min(root.pageContentWidth,
-            Math.max(0, root.width - Metrics.pageMargin * 2))
+        width: Math.min(root.pageContentWidth, Math.max(0, root.width - Metrics.pageMargin * 2))
         x: Math.max(Metrics.pageMargin, (root.width - width) / 2)
         y: Metrics.pageMargin
-        spacing: Metrics.spacingL
+        spacing: Metrics.spacingXL
 
         InlineStatusBanner {
             Layout.fillWidth: true
-            visible: AutostartService.lastError !== ""
-                && !AutostartService.initializationFailed
+            visible: AutostartService.lastError !== "" && !AutostartService.initializationFailed
             tone: "error"
             message: AutostartService.lastError
         }
@@ -114,16 +105,14 @@ StyledFlickable {
 
         InlineStatusBanner {
             Layout.fillWidth: true
-            visible: AutostartService.initialized
-                && AutostartService.listing
+            visible: AutostartService.initialized && AutostartService.listing
             iconName: "progress_activity"
             message: qsTr("正在加载用户自启条目…")
         }
 
         RowLayout {
             Layout.fillWidth: true
-            visible: !AutostartService.initializing
-                && AutostartService.initializationFailed
+            visible: !AutostartService.initializing && AutostartService.initializationFailed
             spacing: Metrics.spacingS
 
             InlineStatusBanner {
@@ -132,110 +121,44 @@ StyledFlickable {
                 message: AutostartService.lastError
             }
 
-            DialogActionButton {
+            ActionButton {
                 text: qsTr("重试")
                 filled: true
                 onClicked: AutostartService.initialize()
             }
+
         }
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: Metrics.spacingL
+            spacing: Metrics.spacingXL
             visible: AutostartService.ready
 
-            MaterialCard {
+            SettingsSection {
                 Layout.fillWidth: true
+                flat: true
                 iconName: "rocket_launch"
                 title: qsTr("添加应用到开机启动")
 
-                ColumnLayout {
+                SettingsRow {
                     Layout.fillWidth: true
-                    spacing: Metrics.spacingS
+                    iconName: "apps"
+                    title: qsTr("浏览应用")
+                    supportingText: qsTr("选择一个已安装应用加入用户级开机启动")
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Metrics.spacingS
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Metrics.controlHeightXL
-                            radius: Appearance.rounding.normal
-                            color: root.selectedApplication
-                                ? Appearance.colors.colSecondaryContainer
-                                : Appearance.colors.colLayer2
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: Metrics.spacingM
-                                anchors.rightMargin: Metrics.spacingM
-                                spacing: Metrics.spacingS
-
-                                Image {
-                                    Layout.preferredWidth: Metrics.iconM
-                                    Layout.preferredHeight: Metrics.iconM
-                                    visible: root.selectedApplication !== null
-                                    source: root.selectedApplication
-                                        ? ApplicationService.iconSource(
-                                            root.selectedApplication.icon) : ""
-                                    sourceSize.width: Metrics.iconM * 2
-                                    sourceSize.height: Metrics.iconM * 2
-                                    fillMode: Image.PreserveAspectFit
-                                }
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: Metrics.spacingXXS
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: root.selectedApplication
-                                            ? root.selectedApplication.name
-                                            : qsTr("尚未选择应用")
-                                        color: root.selectedApplication
-                                            ? Appearance.colors.colOnSecondaryContainer
-                                            : Appearance.colors.colOnSurfaceVariant
-                                        font.family: Typography.bodyMedium.family
-                                        font.pixelSize: Typography.bodyMedium.pixelSize
-                                        font.weight: Font.Medium
-                                        elide: Text.ElideRight
-                                    }
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        visible: root.selectedApplication !== null
-                                            && root.selectedApplicationDescription() !== ""
-                                        text: root.selectedApplicationDescription()
-                                        color: Appearance.colors.colOnSecondaryContainer
-                                        font.family: Typography.bodySmall.family
-                                        font.pixelSize: Typography.bodySmall.pixelSize
-                                        elide: Text.ElideRight
-                                    }
-                                }
-                            }
-                        }
-
-                        DialogActionButton {
-                            text: qsTr("浏览应用")
-                            enabled: !AutostartService.busy
-                            onClicked: root.openApplicationBrowser()
-                        }
-                    }
-
-                    DialogActionButton {
-                        Layout.alignment: Qt.AlignRight
-                        text: qsTr("添加到自启")
-                        filled: true
+                    trailing: ActionButton {
+                        text: qsTr("浏览应用")
                         enabled: !AutostartService.busy
-                            && root.selectedApplication !== null
-                        onClicked: AutostartService.addApplication(
-                            root.selectedApplication)
+                        onClicked: root.openApplicationBrowser()
                     }
+
                 }
+
             }
 
-            MaterialCard {
+            SettingsSection {
                 Layout.fillWidth: true
+                flat: true
                 iconName: "list_alt"
                 title: qsTr("用户自启应用")
 
@@ -243,11 +166,12 @@ StyledFlickable {
                     Layout.fillWidth: true
                     spacing: Metrics.spacingS
 
-                    DialogActionButton {
+                    ActionButton {
                         text: qsTr("刷新")
                         enabled: AutostartService.ready
                         onClicked: AutostartService.refresh()
                     }
+
                 }
 
                 ColumnLayout {
@@ -257,16 +181,11 @@ StyledFlickable {
                     Repeater {
                         model: AutostartService.entries
 
-                        delegate: Rectangle {
+                        delegate: Item {
                             required property var modelData
 
                             Layout.fillWidth: true
-                            implicitHeight: Math.max(Metrics.controlHeightXL,
-                                entryContent.implicitHeight + Metrics.spacingS * 2)
-                            radius: Metrics.cornerM
-                            color: modelData.valid
-                                ? Appearance.colors.colLayer1
-                                : Appearance.colors.colErrorContainer
+                            implicitHeight: Math.max(Metrics.controlHeightXL, entryContent.implicitHeight + Metrics.spacingS * 2)
 
                             RowLayout {
                                 id: entryContent
@@ -292,11 +211,8 @@ StyledFlickable {
 
                                     Text {
                                         Layout.fillWidth: true
-                                        text: modelData.valid ? modelData.name
-                                            : qsTr("无效条目：%1").arg(modelData.name)
-                                        color: modelData.valid
-                                            ? Appearance.colors.colOnSurface
-                                            : Appearance.colors.colOnErrorContainer
+                                        text: modelData.valid ? modelData.name : qsTr("无效条目：%1").arg(modelData.name)
+                                        color: modelData.valid ? Appearance.colors.colOnSurface : Appearance.colors.colError
                                         font.family: Fonts.ui
                                         font.pixelSize: Typography.bodyMedium.pixelSize
                                         font.weight: Font.Medium
@@ -305,32 +221,32 @@ StyledFlickable {
 
                                     Text {
                                         Layout.fillWidth: true
-                                        text: modelData.valid ? modelData.exec
-                                            : modelData.error
-                                        color: modelData.valid
-                                            ? Appearance.colors.colOnSurfaceVariant
-                                            : Appearance.colors.colOnErrorContainer
+                                        text: modelData.valid ? modelData.exec : modelData.error
+                                        color: modelData.valid ? Appearance.colors.colOnSurfaceVariant : Appearance.colors.colError
                                         font.family: Fonts.mono
                                         font.pixelSize: Typography.bodySmall.pixelSize
                                         elide: Text.ElideMiddle
                                     }
+
                                 }
 
                                 StyledSwitch {
                                     Layout.alignment: Qt.AlignVCenter
                                     checked: modelData.valid && !modelData.hidden
                                     enabled: modelData.valid && !AutostartService.busy
-                                    onToggled: AutostartService.setEnabled(
-                                        modelData, checked)
+                                    onToggled: AutostartService.setEnabled(modelData, checked)
                                 }
 
-                                DialogActionButton {
+                                ActionButton {
                                     text: qsTr("删除")
                                     enabled: !AutostartService.busy
                                     onClicked: root.requestRemove(modelData)
                                 }
+
                             }
+
                         }
+
                     }
 
                     ColumnLayout {
@@ -356,9 +272,13 @@ StyledFlickable {
                         }
 
                     }
+
                 }
+
             }
+
         }
+
     }
 
     MaterialDialog {
@@ -367,9 +287,7 @@ StyledFlickable {
         anchors.centerIn: Overlay.overlay
         width: Math.min(420, root.width - Metrics.spacingL * 2)
         dialogTitle: qsTr("删除自启条目？")
-        messageText: root.pendingRemoveEntry
-            ? qsTr("将删除“%1”自启条目。")
-                .arg(root.pendingRemoveEntry.name) : ""
+        messageText: root.pendingRemoveEntry ? qsTr("将删除“%1”自启条目。").arg(root.pendingRemoveEntry.name) : ""
 
         actionsComponent: Component {
             RowLayout {
@@ -379,25 +297,20 @@ StyledFlickable {
                     Layout.fillWidth: true
                 }
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("取消")
                     onClicked: removeDialog.close()
                 }
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("删除")
                     onClicked: root.removePendingEntry()
                 }
+
             }
+
         }
+
     }
 
-    Component.onCompleted: {
-        AutostartService.initialize();
-    }
-
-    function closeChildWindows() {
-        if (appBrowserLoader.item)
-            appBrowserLoader.item.hide();
-    }
 }

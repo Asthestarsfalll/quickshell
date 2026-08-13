@@ -32,6 +32,9 @@ TextField {
         root.trailingContent !== null && root.trailingContent !== undefined
     readonly property real baseHorizontalPadding: Metrics.spacingL
     readonly property real labelX: root.leftPadding
+    // Keep the label in a fixed-height slot. Its type scale still animates,
+    // but that animation can no longer feed back into the vertical position.
+    readonly property real labelSlotHeight: Typography.bodyLarge.pixelSize
     readonly property real labelCenterY: root.labelFloating
         ? root.outlineWidth / 2 : root.height / 2
     readonly property real notchPadding: Metrics.spacingXS
@@ -292,7 +295,8 @@ TextField {
         id: floatingLabel
 
         x: root.labelX
-        y: root.labelCenterY - height / 2
+        y: root.labelCenterY - root.labelSlotHeight / 2
+        height: root.labelSlotHeight
         width: Math.min(implicitWidth,
             Math.max(0, root.width - root.labelX
                 - root.rightPadding - root.notchPadding * 2))
@@ -311,35 +315,27 @@ TextField {
         verticalAlignment: Text.AlignVCenter
         z: 20
 
-        Behavior on x {
-            NumberAnimation {
-                duration: Appearance.animation.expressiveFastEffects.duration
-                easing.type: Appearance.animation.expressiveFastEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
-            }
-        }
-
         Behavior on y {
             NumberAnimation {
-                duration: Appearance.animation.expressiveFastEffects.duration
-                easing.type: Appearance.animation.expressiveFastEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                duration: Appearance.animation.standardSmall.duration
+                easing.type: Appearance.animation.standardSmall.type
+                easing.bezierCurve: Appearance.animation.standardSmall.bezierCurve
             }
         }
 
         Behavior on font.pixelSize {
             NumberAnimation {
-                duration: Appearance.animation.expressiveFastEffects.duration
-                easing.type: Appearance.animation.expressiveFastEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                duration: Appearance.animation.standardSmall.duration
+                easing.type: Appearance.animation.standardSmall.type
+                easing.bezierCurve: Appearance.animation.standardSmall.bezierCurve
             }
         }
 
         Behavior on color {
             ColorAnimation {
-                duration: Appearance.animation.expressiveFastEffects.duration
-                easing.type: Appearance.animation.expressiveFastEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                duration: Appearance.animation.standardSmall.duration
+                easing.type: Appearance.animation.standardSmall.type
+                easing.bezierCurve: Appearance.animation.standardSmall.bezierCurve
             }
         }
     }

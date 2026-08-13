@@ -50,6 +50,26 @@ Item {
                 return qsTr("通用");
             }
         }
+        iconName: {
+            switch (root.currentSection) {
+            case "bar":
+                return "dock_to_bottom";
+            case "sidebar":
+                return "side_navigation";
+            case "effects":
+                return "blur_on";
+            case "scrolling":
+                return "swipe";
+            case "language-region":
+                return "language";
+            case "autostart":
+                return "rocket_launch";
+            case "default-apps":
+                return "apps";
+            default:
+                return "settings";
+            }
+        }
         onBackRequested: root.showOverview()
     }
 

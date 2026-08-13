@@ -431,7 +431,7 @@ WidgetPanel {
                     Layout.fillWidth: true
                 }
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("取消")
                     onClicked: {
                         forgetDialog.close();
@@ -439,7 +439,7 @@ WidgetPanel {
                     }
                 }
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("遗忘")
                     onClicked: {
                         const target = root.pendingForgetDevice;
@@ -499,13 +499,13 @@ WidgetPanel {
                 color: Appearance.colors.colOnLayer1
             }
 
-            DialogActionButton {
+            ActionButton {
                 visible: !deviceRow.deviceData.blocked
                 enabled: !BluetoothService.busy
                 text: deviceRow.deviceCategory === "connected"
                     ? qsTr("断开")
                     : deviceRow.deviceCategory === "paired" ? qsTr("连接") : qsTr("配对")
-                filled: deviceRow.deviceCategory !== "connected"
+                filled: false
                 onClicked: {
                     if (deviceRow.deviceCategory === "connected")
                         BluetoothService.disconnectDevice(deviceRow.deviceData);

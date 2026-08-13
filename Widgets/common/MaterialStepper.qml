@@ -24,7 +24,6 @@ Rectangle {
     implicitHeight: Metrics.controlHeightL
     radius: Appearance.rounding.full
     color: Appearance.colors.colLayer2
-    clip: true
 
     StepButton {
         anchors.left: parent.left
@@ -53,6 +52,10 @@ Rectangle {
 
         width: 54
         height: root.height
+        topLeftRadius: !button.increase ? root.radius : 0
+        bottomLeftRadius: !button.increase ? root.radius : 0
+        topRightRadius: button.increase ? root.radius : 0
+        bottomRightRadius: button.increase ? root.radius : 0
         color: !canChange ? "transparent" : pointer.pressed ? Appearance.colors.colLayer2Active : pointer.containsMouse ? Appearance.colors.colLayer2Hover : "transparent"
         opacity: canChange ? 1 : 0.38
         Accessible.role: Accessible.Button

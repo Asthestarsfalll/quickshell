@@ -114,10 +114,12 @@ StyledFlickable {
         }
     }
 
-    component DefaultAppsGroup: MaterialCard {
+    component DefaultAppsGroup: SettingsSection {
         property string groupTitle: ""
         property string groupIcon: "apps"
 
+        flat: true
+        flatIconContainer: true
         title: groupTitle
         iconName: groupIcon
 
@@ -140,7 +142,7 @@ StyledFlickable {
             Math.max(0, root.width - Metrics.pageMargin * 2))
         x: Math.max(Metrics.pageMargin, (root.width - width) / 2)
         y: Metrics.pageMargin
-        spacing: Metrics.spacingL
+        spacing: Metrics.spacingXL
 
         InlineStatusBanner {
             Layout.fillWidth: true

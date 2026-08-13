@@ -21,7 +21,9 @@ StyledFlickable {
 
         SettingsSection {
             Layout.fillWidth: true
+            flat: true
             title: qsTr("位置")
+            iconName: "dock_to_bottom"
 
             SettingsRow {
                 Layout.fillWidth: true

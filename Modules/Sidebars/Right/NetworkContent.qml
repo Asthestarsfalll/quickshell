@@ -239,7 +239,7 @@ WidgetPanel {
                 }
             }
 
-            DialogActionButton {
+            ActionButton {
                 Layout.fillWidth: true
                 visible: NetworkService.captivePortal
                 text: qsTr("打开网络门户")
@@ -389,7 +389,7 @@ WidgetPanel {
                     Layout.fillWidth: true
                 }
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("取消")
                     onClicked: {
                         forgetDialog.close();
@@ -397,7 +397,7 @@ WidgetPanel {
                     }
                 }
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("遗忘")
                     onClicked: {
                         const target = root.pendingForgetNetwork;
@@ -608,11 +608,11 @@ WidgetPanel {
                     spacing: Appearance.spacing.small
 
                     Item { Layout.fillWidth: true }
-                    DialogActionButton {
+                    ActionButton {
                         text: qsTr("取消")
                         onClicked: NetworkService.cancelPasswordRequest(itemRoot.wifiNetwork)
                     }
-                    DialogActionButton {
+                    ActionButton {
                         text: qsTr("连接")
                         filled: true
                         onClicked: itemRoot.submitPassword()

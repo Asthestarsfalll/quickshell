@@ -30,7 +30,9 @@ StyledFlickable {
 
         SettingsSection {
             Layout.fillWidth: true
-            title: qsTr("透明与模糊")
+            flat: true
+            title: qsTr("背景")
+            iconName: "wallpaper"
 
             GeneralSliderSetting {
                 title: qsTr("背景不透明度")

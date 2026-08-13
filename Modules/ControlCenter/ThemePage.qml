@@ -412,139 +412,15 @@ StyledFlickable {
                 font.weight: Font.Medium
             }
 
-            Item {
-                id: valueEditor
-
-                Layout.preferredWidth: 108
-                Layout.preferredHeight: 36
+            Text {
                 Layout.alignment: Qt.AlignVCenter
-
-                property bool editing: false
-                property bool invalid: false
-                property string draft: ""
-
-                function startEdit() {
-                    draft = Math.round(sliderRow.value).toString();
-                    invalid = false;
-                    editing = true;
-                }
-
-                function applyEdit() {
-                    if (!editing)
-                        return;
-
-                    const cleanDraft = draft.trim();
-                    const value = Number(cleanDraft);
-                    if (cleanDraft === "" || !isFinite(value)) {
-                        invalid = true;
-                        return;
-                    }
-
-                    const nextValue = Math.max(sliderRow.from, Math.min(sliderRow.to, Math.round(value)));
-                    invalid = false;
-                    editing = false;
-                    sliderRow.moved(nextValue);
-                }
-
-                function cancelEdit() {
-                    invalid = false;
-                    editing = false;
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Appearance.rounding.full
-                    color: valueEditor.editing
-                           ? Appearance.colors.colSecondaryContainer
-                           : valueMouse.pressed
-                             ? Appearance.colors.colSecondaryContainerActive
-                             : valueMouse.containsMouse
-                               ? Appearance.colors.colSecondaryContainerHover
-                               : Appearance.colors.colSecondaryContainer
-                    border.width: 0
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 150
-                        }
-                    }
-                }
-
-                Text {
-                    id: valueLabel
-
-                    anchors.centerIn: parent
-                    width: parent.width - 16
-                    visible: !valueEditor.editing
-                    text: sliderRow.formatValue(sliderRow.value)
-                    color: Appearance.colors.colOnSecondaryContainer
-                    font.family: Fonts.numeric
-                    font.pixelSize: 13
-                    font.weight: Font.Medium
-                    fontSizeMode: Text.HorizontalFit
-                    minimumPixelSize: 10
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-                TextField {
-                    id: valueInput
-
-                    anchors.fill: parent
-                    visible: valueEditor.editing
-                    text: valueEditor.draft
-                    color: Appearance.colors.colOnSecondaryContainer
-                    selectedTextColor: Appearance.colors.colOnPrimary
-                    selectionColor: Appearance.colors.colPrimary
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    selectByMouse: true
-                    validator: IntValidator {
-                        bottom: Math.ceil(sliderRow.from)
-                        top: Math.floor(sliderRow.to)
-                    }
-                    font.family: Fonts.numeric
-                    font.pixelSize: 13
-                    font.weight: Font.Medium
-                    padding: 0
-                    leftPadding: 0
-                    rightPadding: 0
-                    topPadding: 0
-                    bottomPadding: 0
-                    Material.accent: Appearance.colors.colPrimary
-                    background: Item {}
-                    onTextChanged: {
-                        if (valueEditor.editing) {
-                            valueEditor.draft = text;
-                            valueEditor.invalid = false;
-                        }
-                    }
-                    onVisibleChanged: {
-                        if (visible) {
-                            Qt.callLater(() => {
-                                valueInput.forceActiveFocus();
-                                valueInput.selectAll();
-                            });
-                        }
-                    }
-                    onEditingFinished: valueEditor.applyEdit()
-                    Keys.onReturnPressed: valueEditor.applyEdit()
-                    Keys.onEnterPressed: valueEditor.applyEdit()
-                    Keys.onEscapePressed: event => {
-                        valueEditor.cancelEdit();
-                        event.accepted = true;
-                    }
-                }
-
-                MouseArea {
-                    id: valueMouse
-
-                    anchors.fill: parent
-                    enabled: !valueEditor.editing
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: valueEditor.startEdit()
-                }
+                text: sliderRow.formatValue(sliderRow.value)
+                color: Appearance.colors.colOnSurfaceVariant
+                font.family: Fonts.numeric
+                font.pixelSize: Typography.bodyMedium.pixelSize
+                font.weight: Font.Medium
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
             }
         }
 
@@ -754,7 +630,7 @@ StyledFlickable {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignRight
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("恢复默认字体")
                     onClicked: PersonalizationConfig.resetFontFamilies()
                 }

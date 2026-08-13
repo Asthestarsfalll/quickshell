@@ -920,7 +920,7 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                DialogActionButton {
+                ActionButton {
                     id: cancelButton
 
                     text: qsTr("取消")
@@ -929,7 +929,7 @@ Item {
                     onClicked: clearDialog.close()
                 }
 
-                DialogActionButton {
+                ActionButton {
                     text: qsTr("清空")
                     onClicked: {
                         root.clearRequested();

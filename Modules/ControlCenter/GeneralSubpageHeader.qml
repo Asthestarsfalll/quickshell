@@ -8,6 +8,7 @@ Item {
     id: root
 
     property string title: ""
+    property string iconName: "settings"
     property string backAccessibleName: qsTr("返回通用设置")
     signal backRequested()
 
@@ -34,6 +35,15 @@ Item {
                 iconSize: Metrics.iconM
                 color: Appearance.colors.colOnSurface
             }
+        }
+
+        MaterialSymbol {
+            visible: root.iconName !== ""
+            Layout.preferredWidth: visible ? Metrics.iconM : 0
+            Layout.preferredHeight: Metrics.iconM
+            text: root.iconName
+            iconSize: Metrics.iconM
+            color: Appearance.colors.colOnSurfaceVariant
         }
 
         Text {

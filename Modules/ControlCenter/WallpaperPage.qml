@@ -757,166 +757,41 @@ StyledFlickable {
                         PointerDevice.Mouse | PointerDevice.TouchPad
                 }
 
-                Text {
+                RowLayout {
                     Layout.fillWidth: true
-                    text: qsTr("过渡时间")
-                    color: Appearance.colors.colOnSurface
-                    font.family: Fonts.ui
-                    font.pixelSize: 15
-                    font.weight: Font.Medium
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: qsTr("过渡时间")
+                        color: Appearance.colors.colOnSurface
+                        font.family: Fonts.ui
+                        font.pixelSize: 15
+                        font.weight: Font.Medium
+                    }
+
+                    Text {
+                        text: PersonalizationConfig.transitionDurationMs + " ms"
+                        color: Appearance.colors.colOnSurfaceVariant
+                        font.family: Fonts.numeric
+                        font.pixelSize: Typography.bodyMedium.pixelSize
+                        font.weight: Font.Medium
+                    }
                 }
 
-                RowLayout {
-                    id: durationControls
+                MaterialSlider {
+                    id: transitionDurationSlider
 
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: 12
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 72
+                    from: 0
+                    to: 5000
+                    stepSize: 50
+                    value: PersonalizationConfig.transitionDurationMs
                     enabled: root.sharedTransitionParametersEnabled
-
-                    MaterialSlider {
-                        id: transitionDurationSlider
-
-                        Layout.preferredWidth: Math.min(460, Math.max(330, root.pageContentWidth - 140))
-                        Layout.preferredHeight: 72
-                        from: 0
-                        to: 5000
-                        stepSize: 50
-                        value: PersonalizationConfig.transitionDurationMs
-                        enabled: root.sharedTransitionParametersEnabled
-                        accessibleName: qsTr("壁纸过渡时间")
-                        valueFormatter: sliderValue => Math.round(sliderValue).toString()
-                        onMoved: value => WallpaperService
-                            .setTransitionDurationMs(Math.round(value))
-                    }
-
-                    Item {
-                        id: transitionDurationEditor
-
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 92
-                        Layout.preferredHeight: 36
-
-                        property bool editing: false
-                        property bool invalid: false
-                        property string draft: ""
-
-                        function startEdit() {
-                            draft = String(PersonalizationConfig.transitionDurationMs);
-                            invalid = false;
-                            editing = true;
-                        }
-
-                        function applyEdit() {
-                            if (!editing)
-                                return;
-
-                            const cleanDraft = draft.trim();
-                            const value = Number(cleanDraft);
-                            if (cleanDraft === "" || !isFinite(value)) {
-                                invalid = true;
-                                return;
-                            }
-
-                            WallpaperService.setTransitionDurationMs(Math.max(0, Math.min(5000, Math.round(value))));
-                            invalid = false;
-                            editing = false;
-                        }
-
-                        function cancelEdit() {
-                            invalid = false;
-                            editing = false;
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Appearance.rounding.extraSmall
-                            color: transitionDurationEditor.editing
-                                   ? Appearance.colors.colLayer2
-                                   : durationValueMouse.containsMouse
-                                     ? Appearance.colors.colLayer1Hover
-                                     : "transparent"
-                            border.width: transitionDurationEditor.editing ? 1 : 0
-                            border.color: transitionDurationEditor.invalid ? Appearance.colors.colError : Appearance.applyAlpha(Appearance.colors.colOnSurfaceVariant, 0.28)
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Appearance.animation.expressiveEffects.duration
-                                    easing.type: Appearance.animation.expressiveEffects.type
-                                    easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                                }
-                            }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            visible: !transitionDurationEditor.editing
-                            text: PersonalizationConfig.transitionDurationMs + " ms"
-                            color: durationValueMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                            font.family: Fonts.numeric
-                            font.pixelSize: 14
-                            font.weight: Font.Medium
-                        }
-
-                        TextField {
-                            id: transitionDurationInput
-
-                            anchors.fill: parent
-                            visible: transitionDurationEditor.editing
-                            text: transitionDurationEditor.draft
-                            color: Appearance.colors.colOnSurface
-                            selectedTextColor: Appearance.colors.colOnPrimary
-                            selectionColor: Appearance.colors.colPrimary
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            selectByMouse: true
-                            validator: IntValidator {
-                                bottom: 0
-                                top: 5000
-                            }
-                            font.family: Fonts.numeric
-                            font.pixelSize: 14
-                            font.weight: Font.Medium
-                            padding: 0
-                            leftPadding: 0
-                            rightPadding: 0
-                            topPadding: 0
-                            bottomPadding: 0
-                            Material.accent: Appearance.colors.colPrimary
-                            background: Item {}
-                            onTextChanged: {
-                                if (transitionDurationEditor.editing) {
-                                    transitionDurationEditor.draft = text;
-                                    transitionDurationEditor.invalid = false;
-                                }
-                            }
-                            onVisibleChanged: {
-                                if (visible) {
-                                    Qt.callLater(() => {
-                                        transitionDurationInput.forceActiveFocus();
-                                        transitionDurationInput.selectAll();
-                                    });
-                                }
-                            }
-                            onEditingFinished: transitionDurationEditor.applyEdit()
-                            Keys.onReturnPressed: transitionDurationEditor.applyEdit()
-                            Keys.onEnterPressed: transitionDurationEditor.applyEdit()
-                            Keys.onEscapePressed: event => {
-                                transitionDurationEditor.cancelEdit();
-                                event.accepted = true;
-                            }
-                        }
-
-                        MouseArea {
-                            id: durationValueMouse
-
-                            anchors.fill: parent
-                            enabled: !transitionDurationEditor.editing
-                                && root.sharedTransitionParametersEnabled
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: transitionDurationEditor.startEdit()
-                        }
-                    }
+                    accessibleName: qsTr("壁纸过渡时间")
+                    valueFormatter: sliderValue => Math.round(sliderValue).toString()
+                    onMoved: value => WallpaperService
+                        .setTransitionDurationMs(Math.round(value))
                 }
 
                 StyledToolTip {

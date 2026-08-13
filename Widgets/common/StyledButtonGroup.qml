@@ -8,7 +8,7 @@ RowLayout {
 
     property var model: []
     property var currentValue: ""
-    property int buttonHeight: 36
+    property int buttonHeight: Metrics.controlHeightM
     property int horizontalPadding: 24
     readonly property int innerRadius: 6
     property real edgeRadius: buttonHeight / 2
@@ -29,7 +29,7 @@ RowLayout {
 
     signal valueSelected(var value, var modelData)
 
-    spacing: 2
+    spacing: Metrics.spacingXS
 
     function roleValue(item, role, fallback) {
         if (item === undefined || item === null)

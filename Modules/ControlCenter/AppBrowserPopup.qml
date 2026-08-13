@@ -202,7 +202,7 @@ FloatingWindow {
                         }
                     }
 
-                    DialogActionButton {
+                    ActionButton {
                         text: qsTr("关闭")
                         onClicked: root.hide()
                     }

@@ -18,10 +18,11 @@ StyledFlickable {
         width: Math.min(640, Math.max(0, root.width - Metrics.pageMargin * 2))
         x: Math.max(Metrics.pageMargin, (root.width - width) / 2)
         y: Metrics.pageMargin
-        spacing: Metrics.spacingL
+        spacing: Metrics.spacingXL
 
         SettingsSection {
             Layout.fillWidth: true
+            flat: true
             title: qsTr("语言")
             iconName: "translate"
 
@@ -50,6 +51,7 @@ StyledFlickable {
 
         SettingsSection {
             Layout.fillWidth: true
+            flat: true
             title: qsTr("天气")
             iconName: "map"
 
@@ -98,6 +100,7 @@ StyledFlickable {
 
         SettingsSection {
             Layout.fillWidth: true
+            flat: true
             title: qsTr("单位")
             iconName: "thermostat"
 
@@ -149,6 +152,7 @@ StyledFlickable {
 
         SettingsSection {
             Layout.fillWidth: true
+            flat: true
             title: qsTr("时间与日期")
             iconName: "schedule"
 

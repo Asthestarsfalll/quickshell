@@ -6746,4 +6746,24 @@
     <name>SidebarCookieClock</name>
     <message><source>曲奇时钟 </source><translation>曲奇时钟 </translation></message>
 </context>
+<context>
+    <name>GeneralBarPage</name>
+    <message><source>位置</source><translation>位置</translation></message>
+</context>
+<context>
+    <name>GeneralEffectsPage</name>
+    <message><source>背景</source><translation>背景</translation></message>
+</context>
+<context>
+    <name>GeneralScrollingPage</name>
+    <message><source>滚动</source><translation>滚动</translation></message>
+</context>
+<context>
+    <name>GeneralSidebarPage</name>
+    <message><source>桌面卡片</source><translation>桌面卡片</translation></message>
+</context>
+<context>
+    <name>AutostartPage</name>
+    <message><source>选择一个已安装应用加入用户级开机启动</source><translation>选择一个已安装应用加入用户级开机启动</translation></message>
+</context>
 </TS>

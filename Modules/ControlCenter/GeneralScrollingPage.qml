@@ -20,7 +20,9 @@ StyledFlickable {
 
         SettingsSection {
             Layout.fillWidth: true
-            title: qsTr("滚动交互")
+            flat: true
+            title: qsTr("滚动")
+            iconName: "swipe"
 
             SettingsRow {
                 Layout.fillWidth: true

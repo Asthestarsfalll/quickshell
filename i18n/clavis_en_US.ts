@@ -6786,4 +6786,24 @@ Windows: </translation>
     <name>SidebarCookieClock</name>
     <message><source>曲奇时钟 </source><translation>Cookie clock </translation></message>
 </context>
+<context>
+    <name>GeneralBarPage</name>
+    <message><source>位置</source><translation>Position</translation></message>
+</context>
+<context>
+    <name>GeneralEffectsPage</name>
+    <message><source>背景</source><translation>Background</translation></message>
+</context>
+<context>
+    <name>GeneralScrollingPage</name>
+    <message><source>滚动</source><translation>Scrolling</translation></message>
+</context>
+<context>
+    <name>GeneralSidebarPage</name>
+    <message><source>桌面卡片</source><translation>Desktop cards</translation></message>
+</context>
+<context>
+    <name>AutostartPage</name>
+    <message><source>选择一个已安装应用加入用户级开机启动</source><translation>Select an installed app to add to user-level startup</translation></message>
+</context>
 </TS>

@@ -305,19 +305,11 @@ Item {
                                             }
                                         }
 
-                                        Button {
+                                        ActionButton {
                                             text: root.bluetoothActionText(
                                                 deviceRow.modelData)
-                                            flat: true
                                             enabled: BluetoothService.enabled
                                                 && !BluetoothService.busy
-                                            Material.accent:
-                                                Appearance.colors.colPrimary
-                                            Material.foreground: enabled
-                                                ? Appearance.colors.colPrimary
-                                                : Appearance.applyAlpha(
-                                                    Appearance.colors.colOnSurface,
-                                                    0.38)
                                             onClicked: root.bluetoothAction(
                                                 deviceRow.modelData)
                                         }

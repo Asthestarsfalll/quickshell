@@ -227,12 +227,12 @@ Item {
                     Layout.bottomMargin: 16
                     spacing: 5
 
-                    DialogActionButton {
+                    ActionButton {
                         text: qsTr("取消")
                         onClicked: root.showAddDialog = false
                     }
 
-                    DialogActionButton {
+                    ActionButton {
                         text: qsTr("添加")
                         filled: true
                         enabled: todoInput.text.trim().length > 0
