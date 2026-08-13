@@ -1,5 +1,5 @@
 import QtQuick
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 import qs.Common
 
 Item {
@@ -13,27 +13,23 @@ Item {
     anchors.fill: parent
 
     CookieFace {
-        id: shadowSource
+        id: cookieFace
 
-        sides: root.sides
-        fillColor: "white"
-        visible: false
-    }
-
-    DropShadow {
-        anchors.fill: shadowSource
-        source: shadowSource
-        horizontalOffset: 0
-        verticalOffset: 4
-        radius: 10
-        samples: 21
-        color: Appearance.colors.colShadow
-        cached: false
-    }
-
-    CookieFace {
         sides: root.sides
         fillColor: root.faceColor
+        // The effect receives this exact M3Shapes render layer, so the face
+        // and its shadow share one geometry, rotation, and morph lifecycle.
+        layer.enabled: true
+
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Appearance.applyAlpha(Appearance.colors.colShadow, 0.4)
+            shadowBlur: 0.8
+            shadowVerticalOffset: 4
+            shadowHorizontalOffset: 0
+            autoPaddingEnabled: true
+        }
+
     }
 
     RotationAnimation on rotation {
