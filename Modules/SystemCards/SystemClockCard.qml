@@ -37,6 +37,12 @@ Item {
         onTriggered: root.currentTime = new Date()
     }
 
+    SidebarCookieClock {
+        anchors.fill: parent
+        visible: UiPreferences.sidebarClockStyle === "cookie"
+        active: root.active && visible
+    }
+
     Item {
         id: clockFace
 
@@ -44,6 +50,8 @@ Item {
         readonly property real minuteSize: UiPreferences.useTwelveHourClock ? Math.min(164, hourSize * 0.61) : hourSize
         readonly property real periodSize: Math.min(26, Math.max(22, height * 0.085))
         readonly property real dateSize: Math.min(32, Math.max(25, height * 0.115))
+
+        visible: UiPreferences.sidebarClockStyle === "digital"
 
         anchors {
             fill: parent

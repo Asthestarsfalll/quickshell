@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.Common
 import qs.Services
 import qs.Widgets.common
+import qs.Modules.SystemCards
 
 StyledFlickable {
     id: root
@@ -33,7 +34,318 @@ StyledFlickable {
                     Accessible.name: qsTr("保持侧边栏已加载")
                     onToggled: PersonalizationConfig.setKeepSidebarsLoaded(checked)
                 }
+
             }
+
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            title: qsTr("时钟样式")
+            iconName: "schedule"
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [{
+                    "value": "digital",
+                    "label": qsTr("数字"),
+                    "icon": "timer_10"
+                }, {
+                    "value": "cookie",
+                    "label": qsTr("曲奇"),
+                    "icon": "cookie"
+                }]
+                currentValue: UiPreferences.sidebarClockStyle
+                buttonHeight: 40
+                buttonMinWidth: 120
+                onValueSelected: (value) => {
+                    return UiPreferences.setSidebarClockStyle(value);
+                }
+            }
+
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 248
+                Layout.preferredHeight: 248
+                visible: UiPreferences.sidebarClockStyle === "cookie"
+                radius: Appearance.rounding.extraLarge
+                color: Appearance.colors.colSurfaceContainerLow
+
+                SidebarCookieClock {
+                    anchors.fill: parent
+                    anchors.margins: Metrics.spacingS
+                    active: parent.visible
+                }
+
+            }
+
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            visible: UiPreferences.sidebarClockStyle === "cookie"
+            title: qsTr("曲奇时钟设置")
+            iconName: "cookie"
+
+            SettingsRow {
+                Layout.fillWidth: true
+                iconName: "add_triangle"
+                title: qsTr("边数")
+                supportingText: qsTr("0 或 1 为圆形，最多 40 边")
+
+                trailing: MaterialStepper {
+                    value: UiPreferences.sidebarCookieSides
+                    from: 0
+                    to: 40
+                    stepSize: 1
+                    onValueModified: (value) => {
+                        return UiPreferences.setSidebarCookieSides(value);
+                    }
+                }
+
+            }
+
+            SettingsRow {
+                Layout.fillWidth: true
+                iconName: "autoplay"
+                title: qsTr("持续旋转")
+                supportingText: qsTr("让曲奇轮廓匀速旋转")
+
+                trailing: StyledSwitch {
+                    checked: UiPreferences.sidebarCookieConstantlyRotate
+                    Accessible.name: qsTr("持续旋转")
+                    onToggled: UiPreferences.setSidebarCookieConstantlyRotate(checked)
+                }
+
+            }
+
+            SettingsRow {
+                Layout.fillWidth: true
+                enabled: UiPreferences.sidebarCookieDialStyle === "dots" || UiPreferences.sidebarCookieDialStyle === "full"
+                iconName: "brightness_7"
+                title: qsTr("时标")
+                supportingText: qsTr("仅适用于圆点或完整表盘")
+
+                trailing: StyledSwitch {
+                    checked: UiPreferences.sidebarCookieHourMarks
+                    Accessible.name: qsTr("时标")
+                    onToggled: UiPreferences.setSidebarCookieHourMarks(checked)
+                }
+
+            }
+
+            SettingsRow {
+                Layout.fillWidth: true
+                enabled: UiPreferences.sidebarCookieDialStyle !== "numbers"
+                iconName: "timer_10"
+                title: qsTr("在中心显示数字")
+                supportingText: qsTr("数字表盘下不可用")
+
+                trailing: StyledSwitch {
+                    checked: UiPreferences.sidebarCookieTimeIndicators
+                    Accessible.name: qsTr("在中心显示数字")
+                    onToggled: UiPreferences.setSidebarCookieTimeIndicators(checked)
+                }
+
+            }
+
+        }
+
+        SettingsSection {
+            Layout.fillWidth: true
+            visible: UiPreferences.sidebarClockStyle === "cookie"
+            title: qsTr("表盘与指针")
+            iconName: "browse_activity"
+
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("表盘样式")
+                color: Appearance.colors.colOnSurface
+                font.family: Fonts.ui
+                font.pixelSize: Typography.labelLarge.pixelSize
+                font.weight: Font.Medium
+            }
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [{
+                    "value": "none",
+                    "label": qsTr("无"),
+                    "icon": "block"
+                }, {
+                    "value": "dots",
+                    "label": qsTr("圆点"),
+                    "icon": "graph_6"
+                }, {
+                    "value": "full",
+                    "label": qsTr("完整"),
+                    "icon": "history_toggle_off"
+                }, {
+                    "value": "numbers",
+                    "label": qsTr("数字"),
+                    "icon": "counter_1"
+                }]
+                currentValue: UiPreferences.sidebarCookieDialStyle
+                buttonHeight: 40
+                horizontalPadding: 10
+                onValueSelected: (value) => {
+                    return UiPreferences.setSidebarCookieDialStyle(value);
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.topMargin: Metrics.spacingS
+                text: qsTr("时针")
+                color: Appearance.colors.colOnSurface
+                font.family: Fonts.ui
+                font.pixelSize: Typography.labelLarge.pixelSize
+                font.weight: Font.Medium
+            }
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [{
+                    "value": "hide",
+                    "label": qsTr("无"),
+                    "icon": "block"
+                }, {
+                    "value": "classic",
+                    "label": qsTr("经典"),
+                    "icon": "radio"
+                }, {
+                    "value": "hollow",
+                    "label": qsTr("镂空"),
+                    "icon": "circle"
+                }, {
+                    "value": "fill",
+                    "label": qsTr("填充"),
+                    "icon": "eraser_size_5"
+                }]
+                currentValue: UiPreferences.sidebarCookieHourHandStyle
+                buttonHeight: 40
+                horizontalPadding: 10
+                onValueSelected: (value) => {
+                    return UiPreferences.setSidebarCookieHourHandStyle(value);
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.topMargin: Metrics.spacingS
+                text: qsTr("分针")
+                color: Appearance.colors.colOnSurface
+                font.family: Fonts.ui
+                font.pixelSize: Typography.labelLarge.pixelSize
+                font.weight: Font.Medium
+            }
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [{
+                    "value": "hide",
+                    "label": qsTr("无"),
+                    "icon": "block"
+                }, {
+                    "value": "classic",
+                    "label": qsTr("经典"),
+                    "icon": "radio"
+                }, {
+                    "value": "thin",
+                    "label": qsTr("细"),
+                    "icon": "line_end"
+                }, {
+                    "value": "medium",
+                    "label": qsTr("中等"),
+                    "icon": "eraser_size_2"
+                }, {
+                    "value": "bold",
+                    "label": qsTr("粗"),
+                    "icon": "eraser_size_4"
+                }]
+                currentValue: UiPreferences.sidebarCookieMinuteHandStyle
+                buttonHeight: 40
+                horizontalPadding: 8
+                contentSpacing: 4
+                onValueSelected: (value) => {
+                    return UiPreferences.setSidebarCookieMinuteHandStyle(value);
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.topMargin: Metrics.spacingS
+                text: qsTr("秒针")
+                color: Appearance.colors.colOnSurface
+                font.family: Fonts.ui
+                font.pixelSize: Typography.labelLarge.pixelSize
+                font.weight: Font.Medium
+            }
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [{
+                    "value": "hide",
+                    "label": qsTr("无"),
+                    "icon": "block"
+                }, {
+                    "value": "classic",
+                    "label": qsTr("经典"),
+                    "icon": "radio"
+                }, {
+                    "value": "line",
+                    "label": qsTr("线条"),
+                    "icon": "line_end"
+                }, {
+                    "value": "dot",
+                    "label": qsTr("圆点"),
+                    "icon": "adjust"
+                }]
+                currentValue: UiPreferences.sidebarCookieSecondHandStyle
+                buttonHeight: 40
+                horizontalPadding: 10
+                onValueSelected: (value) => {
+                    return UiPreferences.setSidebarCookieSecondHandStyle(value);
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.topMargin: Metrics.spacingS
+                text: qsTr("日期样式")
+                color: Appearance.colors.colOnSurface
+                font.family: Fonts.ui
+                font.pixelSize: Typography.labelLarge.pixelSize
+                font.weight: Font.Medium
+            }
+
+            StyledButtonGroup {
+                Layout.fillWidth: true
+                model: [{
+                    "value": "hide",
+                    "label": qsTr("无"),
+                    "icon": "block"
+                }, {
+                    "value": "bubble",
+                    "label": qsTr("气泡"),
+                    "icon": "bubble_chart"
+                }, {
+                    "value": "border",
+                    "label": qsTr("边缘"),
+                    "icon": "rotate_right"
+                }, {
+                    "value": "rect",
+                    "label": qsTr("矩形"),
+                    "icon": "rectangle"
+                }]
+                currentValue: UiPreferences.sidebarCookieDateStyle
+                buttonHeight: 40
+                horizontalPadding: 10
+                onValueSelected: (value) => {
+                    return UiPreferences.setSidebarCookieDateStyle(value);
+                }
+            }
+
         }
 
         SettingsSection {
@@ -59,25 +371,25 @@ StyledFlickable {
                         supportingText: {
                             const cards = SystemCardService.cards;
                             const state = cards ? cards[modelData] : null;
-                            return state && state.container === "desktop"
-                                ? qsTr("桌面") : qsTr("侧边栏");
+                            return state && state.container === "desktop" ? qsTr("桌面") : qsTr("侧边栏");
                         }
 
                         trailing: StyledSwitch {
                             checked: {
                                 const cards = SystemCardService.cards;
-                                const state = cards
-                                    ? cards[modelData] : null;
+                                const state = cards ? cards[modelData] : null;
                                 return state ? state.enabled : true;
                             }
-                            Accessible.name: SystemCardService.cardName(
-                                modelData)
-                            onToggled: SystemCardService.setCardEnabled(
-                                modelData, checked)
+                            Accessible.name: SystemCardService.cardName(modelData)
+                            onToggled: SystemCardService.setCardEnabled(modelData, checked)
                         }
+
                     }
+
                 }
+
             }
+
         }
 
         SettingsSection {
@@ -86,34 +398,53 @@ StyledFlickable {
 
             StyledButtonGroup {
                 Layout.fillWidth: true
-                model: [
-                    { value: "free", label: qsTr("自由拖拽") },
-                    { value: "leastBusy", label: qsTr("最空旷处") },
-                    { value: "mostBusy", label: qsTr("最密集处") }
-                ]
+                model: [{
+                    "value": "free",
+                    "label": qsTr("自由拖拽")
+                }, {
+                    "value": "leastBusy",
+                    "label": qsTr("最空旷处")
+                }, {
+                    "value": "mostBusy",
+                    "label": qsTr("最密集处")
+                }]
                 currentValue: SystemCardService.globalDesktopLayoutMode
                 buttonHeight: 40
                 horizontalPadding: 14
-                onValueSelected: value =>
-                    SystemCardService.setGlobalDesktopLayoutMode(value)
+                onValueSelected: (value) => {
+                    return SystemCardService.setGlobalDesktopLayoutMode(value);
+                }
             }
 
             StyledButtonGroup {
                 Layout.fillWidth: true
-                model: [
-                    { value: "screenTopLeft", label: qsTr("左上") },
-                    { value: "screenTopRight", label: qsTr("右上") },
-                    { value: "screenBottomLeft", label: qsTr("左下") },
-                    { value: "screenBottomRight", label: qsTr("右下") },
-                    { value: "screenCenter", label: qsTr("居中") }
-                ]
+                model: [{
+                    "value": "screenTopLeft",
+                    "label": qsTr("左上")
+                }, {
+                    "value": "screenTopRight",
+                    "label": qsTr("右上")
+                }, {
+                    "value": "screenBottomLeft",
+                    "label": qsTr("左下")
+                }, {
+                    "value": "screenBottomRight",
+                    "label": qsTr("右下")
+                }, {
+                    "value": "screenCenter",
+                    "label": qsTr("居中")
+                }]
                 currentValue: SystemCardService.globalDesktopLayoutMode
                 buttonHeight: 40
                 horizontalPadding: 10
                 buttonMinWidth: 0
-                onValueSelected: value =>
-                    SystemCardService.setGlobalDesktopLayoutMode(value)
+                onValueSelected: (value) => {
+                    return SystemCardService.setGlobalDesktopLayoutMode(value);
+                }
             }
+
         }
+
     }
+
 }

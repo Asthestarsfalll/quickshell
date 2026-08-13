@@ -6743,4 +6743,47 @@ Windows: </translation>
     <message><source>24 小时</source><translation>24-hour</translation></message>
     <message><source>12 小时</source><translation>12-hour</translation></message>
 </context>
+<context>
+    <name>GeneralSidebarPage</name>
+    <message><source>时钟样式</source><translation>Clock style</translation></message>
+    <message><source>数字</source><translation>Digital</translation></message>
+    <message><source>曲奇</source><translation>Cookie</translation></message>
+    <message><source>曲奇时钟设置</source><translation>Cookie clock settings</translation></message>
+    <message><source>边数</source><translation>Sides</translation></message>
+    <message><source>0 或 1 为圆形，最多 40 边</source><translation>0 or 1 produces a circle; up to 40 sides</translation></message>
+    <message><source>持续旋转</source><translation>Constantly rotate</translation></message>
+    <message><source>让曲奇轮廓匀速旋转</source><translation>Rotate the cookie outline continuously</translation></message>
+    <message><source>时标</source><translation>Hour marks</translation></message>
+    <message><source>仅适用于圆点或完整表盘</source><translation>Available with Dots or Full dials</translation></message>
+    <message><source>在中心显示数字</source><translation>Digits in the middle</translation></message>
+    <message><source>数字表盘下不可用</source><translation>Unavailable with the Numbers dial</translation></message>
+    <message><source>表盘与指针</source><translation>Dial and hands</translation></message>
+    <message><source>表盘样式</source><translation>Dial style</translation></message>
+    <message><source>无</source><translation>None</translation></message>
+    <message><source>圆点</source><translation>Dots</translation></message>
+    <message><source>完整</source><translation>Full</translation></message>
+    <message><source>时针</source><translation>Hour hand</translation></message>
+    <message><source>经典</source><translation>Classic</translation></message>
+    <message><source>镂空</source><translation>Hollow</translation></message>
+    <message><source>填充</source><translation>Fill</translation></message>
+    <message><source>分针</source><translation>Minute hand</translation></message>
+    <message><source>细</source><translation>Thin</translation></message>
+    <message><source>中等</source><translation>Medium</translation></message>
+    <message><source>粗</source><translation>Bold</translation></message>
+    <message><source>秒针</source><translation>Second hand</translation></message>
+    <message><source>线条</source><translation>Line</translation></message>
+    <message><source>日期样式</source><translation>Date style</translation></message>
+    <message><source>气泡</source><translation>Bubble</translation></message>
+    <message><source>边缘</source><translation>Border</translation></message>
+    <message><source>矩形</source><translation>Rect</translation></message>
+</context>
+<context>
+    <name>MaterialStepper</name>
+    <message><source>减少</source><translation>Decrease</translation></message>
+    <message><source>增加</source><translation>Increase</translation></message>
+</context>
+<context>
+    <name>SidebarCookieClock</name>
+    <message><source>曲奇时钟 </source><translation>Cookie clock </translation></message>
+</context>
 </TS>

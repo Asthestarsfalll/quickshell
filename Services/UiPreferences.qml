@@ -15,6 +15,16 @@ Singleton {
     property string weatherTemperatureUnit: "celsius"
     property string systemTemperatureUnit: "celsius"
     property bool useTwelveHourClock: true
+    property string sidebarClockStyle: "digital"
+    property int sidebarCookieSides: 14
+    property bool sidebarCookieConstantlyRotate: false
+    property bool sidebarCookieHourMarks: false
+    property bool sidebarCookieTimeIndicators: true
+    property string sidebarCookieDialStyle: "full"
+    property string sidebarCookieHourHandStyle: "fill"
+    property string sidebarCookieMinuteHandStyle: "medium"
+    property string sidebarCookieSecondHandStyle: "dot"
+    property string sidebarCookieDateStyle: "bubble"
     property bool storeReady: false
     property bool preferencesReady: false
     property bool savePending: false
@@ -80,6 +90,75 @@ Singleton {
             return ;
 
         root.useTwelveHourClock = enabled;
+        root.save();
+    }
+
+    function allowedValue(value, allowed, fallback) {
+        const normalized = String(value || "");
+        return allowed.indexOf(normalized) >= 0 ? normalized : fallback;
+    }
+
+    function setSidebarClockStyle(value) {
+        const normalized = root.allowedValue(value, ["digital", "cookie"], "digital");
+        if (root.sidebarClockStyle === normalized)
+            return ;
+
+        root.sidebarClockStyle = normalized;
+        root.save();
+    }
+
+    function setSidebarCookieSides(value) {
+        const normalized = Math.max(0, Math.min(40, Math.round(Number(value) || 0)));
+        if (root.sidebarCookieSides === normalized)
+            return ;
+
+        root.sidebarCookieSides = normalized;
+        root.save();
+    }
+
+    function setSidebarCookieConstantlyRotate(value) {
+        root.sidebarCookieConstantlyRotate = !!value;
+        root.save();
+    }
+
+    function setSidebarCookieHourMarks(value) {
+        root.sidebarCookieHourMarks = !!value;
+        root.save();
+    }
+
+    function setSidebarCookieTimeIndicators(value) {
+        root.sidebarCookieTimeIndicators = !!value;
+        root.save();
+    }
+
+    function setSidebarCookieDialStyle(value) {
+        root.sidebarCookieDialStyle = root.allowedValue(value, ["none", "dots", "full", "numbers"], "full");
+        if (root.sidebarCookieDialStyle !== "dots" && root.sidebarCookieDialStyle !== "full")
+            root.sidebarCookieHourMarks = false;
+
+        if (root.sidebarCookieDialStyle === "numbers")
+            root.sidebarCookieTimeIndicators = false;
+
+        root.save();
+    }
+
+    function setSidebarCookieHourHandStyle(value) {
+        root.sidebarCookieHourHandStyle = root.allowedValue(value, ["hide", "classic", "hollow", "fill"], "fill");
+        root.save();
+    }
+
+    function setSidebarCookieMinuteHandStyle(value) {
+        root.sidebarCookieMinuteHandStyle = root.allowedValue(value, ["hide", "classic", "thin", "medium", "bold"], "medium");
+        root.save();
+    }
+
+    function setSidebarCookieSecondHandStyle(value) {
+        root.sidebarCookieSecondHandStyle = root.allowedValue(value, ["hide", "classic", "line", "dot"], "dot");
+        root.save();
+    }
+
+    function setSidebarCookieDateStyle(value) {
+        root.sidebarCookieDateStyle = root.allowedValue(value, ["hide", "bubble", "border", "rect"], "bubble");
         root.save();
     }
 
@@ -159,6 +238,16 @@ Singleton {
             "weatherTemperatureUnit": root.weatherTemperatureUnit,
             "systemTemperatureUnit": root.systemTemperatureUnit,
             "useTwelveHourClock": root.useTwelveHourClock,
+            "sidebarClockStyle": root.sidebarClockStyle,
+            "sidebarCookieSides": root.sidebarCookieSides,
+            "sidebarCookieConstantlyRotate": root.sidebarCookieConstantlyRotate,
+            "sidebarCookieHourMarks": root.sidebarCookieHourMarks,
+            "sidebarCookieTimeIndicators": root.sidebarCookieTimeIndicators,
+            "sidebarCookieDialStyle": root.sidebarCookieDialStyle,
+            "sidebarCookieHourHandStyle": root.sidebarCookieHourHandStyle,
+            "sidebarCookieMinuteHandStyle": root.sidebarCookieMinuteHandStyle,
+            "sidebarCookieSecondHandStyle": root.sidebarCookieSecondHandStyle,
+            "sidebarCookieDateStyle": root.sidebarCookieDateStyle,
             "systemGridLayout": root.systemGridLayout,
             "systemCards": root.systemCards
         }, null, 2));
@@ -197,6 +286,22 @@ Singleton {
                 root.weatherTemperatureUnit = root.normalizedTemperatureUnit(parsed.weatherTemperatureUnit);
                 root.systemTemperatureUnit = root.normalizedTemperatureUnit(parsed.systemTemperatureUnit);
                 root.useTwelveHourClock = typeof parsed.useTwelveHourClock === "boolean" ? parsed.useTwelveHourClock : true;
+                root.sidebarClockStyle = root.allowedValue(parsed.sidebarClockStyle, ["digital", "cookie"], "digital");
+                root.sidebarCookieSides = Math.max(0, Math.min(40, Math.round(Number(parsed.sidebarCookieSides === undefined ? 14 : parsed.sidebarCookieSides) || 0)));
+                root.sidebarCookieConstantlyRotate = !!parsed.sidebarCookieConstantlyRotate;
+                root.sidebarCookieHourMarks = !!parsed.sidebarCookieHourMarks;
+                root.sidebarCookieTimeIndicators = parsed.sidebarCookieTimeIndicators === undefined ? true : !!parsed.sidebarCookieTimeIndicators;
+                root.sidebarCookieDialStyle = root.allowedValue(parsed.sidebarCookieDialStyle, ["none", "dots", "full", "numbers"], "full");
+                root.sidebarCookieHourHandStyle = root.allowedValue(parsed.sidebarCookieHourHandStyle, ["hide", "classic", "hollow", "fill"], "fill");
+                root.sidebarCookieMinuteHandStyle = root.allowedValue(parsed.sidebarCookieMinuteHandStyle, ["hide", "classic", "thin", "medium", "bold"], "medium");
+                root.sidebarCookieSecondHandStyle = root.allowedValue(parsed.sidebarCookieSecondHandStyle, ["hide", "classic", "line", "dot"], "dot");
+                root.sidebarCookieDateStyle = root.allowedValue(parsed.sidebarCookieDateStyle, ["hide", "bubble", "border", "rect"], "bubble");
+                if (root.sidebarCookieDialStyle !== "dots" && root.sidebarCookieDialStyle !== "full")
+                    root.sidebarCookieHourMarks = false;
+
+                if (root.sidebarCookieDialStyle === "numbers")
+                    root.sidebarCookieTimeIndicators = false;
+
                 if (parsed.systemGridLayout && typeof parsed.systemGridLayout === "object")
                     root.systemGridLayout = parsed.systemGridLayout;
 

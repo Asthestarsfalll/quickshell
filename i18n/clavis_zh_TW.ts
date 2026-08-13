@@ -6703,4 +6703,47 @@
     <message><source>24 小时</source><translation>24 小時</translation></message>
     <message><source>12 小时</source><translation>12 小時</translation></message>
 </context>
+<context>
+    <name>GeneralSidebarPage</name>
+    <message><source>时钟样式</source><translation>時鐘樣式</translation></message>
+    <message><source>数字</source><translation>數字</translation></message>
+    <message><source>曲奇</source><translation>曲奇</translation></message>
+    <message><source>曲奇时钟设置</source><translation>曲奇時鐘設定</translation></message>
+    <message><source>边数</source><translation>邊數</translation></message>
+    <message><source>0 或 1 为圆形，最多 40 边</source><translation>0 或 1 為圓形，最多 40 邊</translation></message>
+    <message><source>持续旋转</source><translation>持續旋轉</translation></message>
+    <message><source>让曲奇轮廓匀速旋转</source><translation>讓曲奇輪廓等速旋轉</translation></message>
+    <message><source>时标</source><translation>時標</translation></message>
+    <message><source>仅适用于圆点或完整表盘</source><translation>僅適用於圓點或完整錶盤</translation></message>
+    <message><source>在中心显示数字</source><translation>在中心顯示數字</translation></message>
+    <message><source>数字表盘下不可用</source><translation>數字錶盤下不可用</translation></message>
+    <message><source>表盘与指针</source><translation>錶盤與指針</translation></message>
+    <message><source>表盘样式</source><translation>錶盤樣式</translation></message>
+    <message><source>无</source><translation>無</translation></message>
+    <message><source>圆点</source><translation>圓點</translation></message>
+    <message><source>完整</source><translation>完整</translation></message>
+    <message><source>时针</source><translation>時針</translation></message>
+    <message><source>经典</source><translation>經典</translation></message>
+    <message><source>镂空</source><translation>鏤空</translation></message>
+    <message><source>填充</source><translation>填充</translation></message>
+    <message><source>分针</source><translation>分針</translation></message>
+    <message><source>细</source><translation>細</translation></message>
+    <message><source>中等</source><translation>中等</translation></message>
+    <message><source>粗</source><translation>粗</translation></message>
+    <message><source>秒针</source><translation>秒針</translation></message>
+    <message><source>线条</source><translation>線條</translation></message>
+    <message><source>日期样式</source><translation>日期樣式</translation></message>
+    <message><source>气泡</source><translation>氣泡</translation></message>
+    <message><source>边缘</source><translation>邊緣</translation></message>
+    <message><source>矩形</source><translation>矩形</translation></message>
+</context>
+<context>
+    <name>MaterialStepper</name>
+    <message><source>减少</source><translation>減少</translation></message>
+    <message><source>增加</source><translation>增加</translation></message>
+</context>
+<context>
+    <name>SidebarCookieClock</name>
+    <message><source>曲奇时钟 </source><translation>曲奇時鐘 </translation></message>
+</context>
 </TS>
