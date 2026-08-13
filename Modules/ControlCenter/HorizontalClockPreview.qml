@@ -9,15 +9,16 @@ Item {
 
     readonly property real referenceWidth: 220
     readonly property real referenceHeight: 42
-    readonly property real previewScale: Math.max(0.01, Math.min(
-        width / referenceWidth, height / referenceHeight))
-    implicitHeight: 42
-    implicitWidth: 220
+    readonly property real previewScale: Math.max(0.01, Math.min(width / referenceWidth, height / referenceHeight))
     property string edge: "top"
     readonly property int h0: clockContent.h0
     readonly property int h1: clockContent.h1
     readonly property int m0: clockContent.m0
     readonly property int m1: clockContent.m1
+    readonly property string periodLead: clockContent.periodLead
+
+    implicitHeight: 42
+    implicitWidth: 220
 
     Rectangle {
         id: shadowSource
@@ -61,6 +62,9 @@ Item {
                 anchors.fill: parent
                 edge: root.edge
             }
+
         }
+
     }
+
 }

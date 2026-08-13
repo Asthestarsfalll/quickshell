@@ -48,12 +48,21 @@ StyledFlickable {
                 trailingIconName: "chevron_right"
                 onClicked: root.sectionRequested("effects")
             }
+
         }
 
         SettingsSection {
             Layout.fillWidth: true
-            title: qsTr("交互")
-            iconName: "touch_app"
+            title: qsTr("系统")
+            iconName: "settings_suggest"
+
+            SettingsActionRow {
+                Layout.fillWidth: true
+                iconName: "language"
+                text: qsTr("语言与地区")
+                trailingIconName: "chevron_right"
+                onClicked: root.sectionRequested("language-region")
+            }
 
             SettingsActionRow {
                 Layout.fillWidth: true
@@ -62,6 +71,7 @@ StyledFlickable {
                 trailingIconName: "chevron_right"
                 onClicked: root.sectionRequested("scrolling")
             }
+
         }
 
         SettingsSection {
@@ -84,6 +94,9 @@ StyledFlickable {
                 trailingIconName: "chevron_right"
                 onClicked: root.sectionRequested("default-apps")
             }
+
         }
+
     }
+
 }

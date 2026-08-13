@@ -9,17 +9,14 @@ import qs.Widgets.common
 Item {
     id: root
 
-    implicitHeight: layout.implicitHeight
-    implicitWidth: 300
-
-    signal refreshRequested()
-
     property string locationName: qsTr("天气")
     property string currentTemp: "--"
     property string currentIcon: "cloud"
     property string currentDesc: "--"
     property string highTemp: "--"
     property string lowTemp: "--"
+
+    signal refreshRequested()
 
     function syncData() {
         if (!WeatherPlugin.hasValidData) {
@@ -29,36 +26,47 @@ Item {
             root.currentDesc = "--";
             root.highTemp = "--";
             root.lowTemp = "--";
-            return;
+            return ;
         }
-
         root.locationName = WeatherPlugin.locationName || qsTr("未知");
-        root.currentTemp = Math.round(WeatherPlugin.currentTemperatureC || 0) + "°";
+        root.currentTemp = Math.round(UiPreferences.weatherTemperature(WeatherPlugin.currentTemperatureC || 0)) + "°";
         root.currentIcon = WeatherPlugin.currentIconName || "cloud";
         root.currentDesc = WeatherPlugin.currentWeatherText || qsTr("未知");
-
         if (WeatherPlugin.dailyForecast.count() > 0) {
             const today = WeatherPlugin.dailyForecast.get(0);
-            const dayPart = today.day || {};
-            root.highTemp = Math.round(Number(today.temperatureMaxC || dayPart.temperatureC || 0)) + "°";
-            root.lowTemp = Math.round(Number(today.temperatureMinC || 0)) + "°";
+            const dayPart = today.day || {
+            };
+            root.highTemp = Math.round(UiPreferences.weatherTemperature(Number(today.temperatureMaxC || dayPart.temperatureC || 0))) + "°";
+            root.lowTemp = Math.round(UiPreferences.weatherTemperature(Number(today.temperatureMinC || 0))) + "°";
         } else {
             root.highTemp = "--";
             root.lowTemp = "--";
         }
     }
 
+    implicitHeight: layout.implicitHeight
+    implicitWidth: 300
+    Component.onCompleted: syncData()
+
     Connections {
-        target: WeatherPlugin
         function onDataChanged() {
             syncData();
         }
+
+        target: WeatherPlugin
     }
 
-    Component.onCompleted: syncData()
+    Connections {
+        function onWeatherTemperatureUnitChanged() {
+            root.syncData();
+        }
+
+        target: UiPreferences
+    }
 
     RowLayout {
         id: layout
+
         anchors.fill: parent
         spacing: 8
 
@@ -83,7 +91,7 @@ Item {
                 elide: Text.ElideRight
                 Layout.maximumWidth: 120
             }
-            
+
             Text {
                 text: root.currentTemp
                 color: Appearance.colors.colOnSurface
@@ -92,31 +100,40 @@ Item {
                 font.weight: Font.Light
                 lineHeight: 0.95
             }
-            
+
             Text {
                 text: "↑" + root.highTemp + "  ↓" + root.lowTemp
                 color: Appearance.colors.colOnSurfaceVariant
                 font.family: Fonts.numeric
                 font.pixelSize: 12
             }
+
         }
 
-        Item { Layout.fillWidth: true }
+        Item {
+            Layout.fillWidth: true
+        }
 
         ToolButton {
             id: refreshButton
+
             Layout.alignment: Qt.AlignVCenter
             width: 42
             height: 42
             enabled: !WeatherPlugin.loading
             hoverEnabled: true
+            onClicked: root.refreshRequested()
 
-            background: Item {}
+            StyledToolTip {
+                text: qsTr("刷新天气")
+            }
 
-            StyledToolTip { text: qsTr("刷新天气") }
+            background: Item {
+            }
 
             contentItem: MaterialSymbol {
                 id: refreshIcon
+
                 text: "refresh"
                 iconSize: 26
                 color: Appearance.colors.colOnSurface
@@ -132,15 +149,19 @@ Item {
 
                 Behavior on rotation {
                     enabled: !WeatherPlugin.loading
+
                     NumberAnimation {
                         duration: Appearance.animation.expressiveEffects.duration
                         easing.type: Appearance.animation.expressiveEffects.type
                         easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                     }
+
                 }
+
             }
 
-            onClicked: root.refreshRequested()
         }
+
     }
+
 }

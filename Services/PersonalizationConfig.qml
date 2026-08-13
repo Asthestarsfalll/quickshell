@@ -1,5 +1,4 @@
 pragma Singleton
-
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -8,168 +7,250 @@ import qs.Common
 Singleton {
     id: root
 
-    readonly property string configOverride:
-        Quickshell.env("CLAVIS_PERSONALIZATION_CONFIG") || ""
-    readonly property string filePath: root.configOverride !== ""
-        ? root.configOverride
-        : Paths.configHome + "/config.json"
+    readonly property string configOverride: Quickshell.env("CLAVIS_PERSONALIZATION_CONFIG") || ""
+    readonly property string filePath: root.configOverride !== "" ? root.configOverride : Paths.configHome + "/config.json"
     readonly property string configDir: {
         const separator = root.filePath.lastIndexOf("/");
-        return separator > 0
-            ? root.filePath.slice(0, separator)
-            : Paths.configHome;
+        return separator > 0 ? root.filePath.slice(0, separator) : Paths.configHome;
     }
-
-    readonly property var fillModes: [
-        ({ "value": "Stretch", "label": qsTr("拉伸") }),
-        ({ "value": "Fit", "label": qsTr("适合") }),
-        ({ "value": "Fill", "label": qsTr("填充") }),
-        ({ "value": "Tile", "label": qsTr("平铺") }),
-        ({ "value": "TileVertically", "label": qsTr("垂直平铺") }),
-        ({ "value": "TileHorizontally", "label": qsTr("水平平铺") }),
-        ({ "value": "Pad", "label": qsTr("覆盖") })
-    ]
-    readonly property var desktopFillModes: root.fillModes.concat([
-        ({ "value": "panorama", "label": qsTr("全景") })
-    ])
-
-    readonly property var transitionTypes: [
-        ({ "value": "random", "label": qsTr("随机") }),
-        ({ "value": "none", "label": qsTr("无") }),
-        ({ "value": "fade", "label": qsTr("淡入淡出") }),
-        ({ "value": "wipe", "label": qsTr("擦除") }),
-        ({ "value": "disc", "label": qsTr("圆盘") }),
-        ({ "value": "stripes", "label": qsTr("条纹") }),
-        ({ "value": "iris bloom", "label": qsTr("光圈绽放") }),
-        ({ "value": "pixelate", "label": qsTr("像素化") }),
-        ({ "value": "portal", "label": qsTr("门户") })
-    ]
-
-    readonly property var awwwTransitionTypes: [
-        ({ "value": "none", "label": qsTr("无") }),
-        ({ "value": "simple", "label": qsTr("简单") }),
-        ({ "value": "fade", "label": qsTr("淡入淡出") }),
-        ({ "value": "left", "label": qsTr("从左侧") }),
-        ({ "value": "right", "label": qsTr("从右侧") }),
-        ({ "value": "top", "label": qsTr("从顶部") }),
-        ({ "value": "bottom", "label": qsTr("从底部") }),
-        ({ "value": "wipe", "label": qsTr("擦除") }),
-        ({ "value": "wave", "label": qsTr("波浪") }),
-        ({ "value": "grow", "label": qsTr("扩散") }),
-        ({ "value": "center", "label": qsTr("中心扩散") }),
-        ({ "value": "any", "label": qsTr("随机位置扩散") }),
-        ({ "value": "outer", "label": qsTr("向内收缩") }),
-        ({ "value": "random", "label": qsTr("随机") })
-    ]
-
-    readonly property var transitionEasingModes: [
-        ({ "value": "linear", "label": qsTr("线性") }),
-        ({ "value": "quad", "label": qsTr("二次方") }),
-        ({ "value": "cubic", "label": qsTr("三次方") }),
-        ({ "value": "quart", "label": qsTr("四次方") }),
-        ({ "value": "quint", "label": qsTr("五次方") }),
-        ({ "value": "sine", "label": qsTr("正弦") }),
-        ({ "value": "expo", "label": qsTr("指数") }),
-        ({ "value": "circ", "label": qsTr("圆形") }),
-        ({ "value": "customBezier", "label": qsTr("自定义贝塞尔") })
-    ]
-
+    readonly property var fillModes: [({
+        "value": "Stretch",
+        "label": qsTr("拉伸")
+    }), ({
+        "value": "Fit",
+        "label": qsTr("适合")
+    }), ({
+        "value": "Fill",
+        "label": qsTr("填充")
+    }), ({
+        "value": "Tile",
+        "label": qsTr("平铺")
+    }), ({
+        "value": "TileVertically",
+        "label": qsTr("垂直平铺")
+    }), ({
+        "value": "TileHorizontally",
+        "label": qsTr("水平平铺")
+    }), ({
+        "value": "Pad",
+        "label": qsTr("覆盖")
+    })]
+    readonly property var desktopFillModes: root.fillModes.concat([({
+        "value": "panorama",
+        "label": qsTr("全景")
+    })])
+    readonly property var transitionTypes: [({
+        "value": "random",
+        "label": qsTr("随机")
+    }), ({
+        "value": "none",
+        "label": qsTr("无")
+    }), ({
+        "value": "fade",
+        "label": qsTr("淡入淡出")
+    }), ({
+        "value": "wipe",
+        "label": qsTr("擦除")
+    }), ({
+        "value": "disc",
+        "label": qsTr("圆盘")
+    }), ({
+        "value": "stripes",
+        "label": qsTr("条纹")
+    }), ({
+        "value": "iris bloom",
+        "label": qsTr("光圈绽放")
+    }), ({
+        "value": "pixelate",
+        "label": qsTr("像素化")
+    }), ({
+        "value": "portal",
+        "label": qsTr("门户")
+    })]
+    readonly property var awwwTransitionTypes: [({
+        "value": "none",
+        "label": qsTr("无")
+    }), ({
+        "value": "simple",
+        "label": qsTr("简单")
+    }), ({
+        "value": "fade",
+        "label": qsTr("淡入淡出")
+    }), ({
+        "value": "left",
+        "label": qsTr("从左侧")
+    }), ({
+        "value": "right",
+        "label": qsTr("从右侧")
+    }), ({
+        "value": "top",
+        "label": qsTr("从顶部")
+    }), ({
+        "value": "bottom",
+        "label": qsTr("从底部")
+    }), ({
+        "value": "wipe",
+        "label": qsTr("擦除")
+    }), ({
+        "value": "wave",
+        "label": qsTr("波浪")
+    }), ({
+        "value": "grow",
+        "label": qsTr("扩散")
+    }), ({
+        "value": "center",
+        "label": qsTr("中心扩散")
+    }), ({
+        "value": "any",
+        "label": qsTr("随机位置扩散")
+    }), ({
+        "value": "outer",
+        "label": qsTr("向内收缩")
+    }), ({
+        "value": "random",
+        "label": qsTr("随机")
+    })]
+    readonly property var transitionEasingModes: [({
+        "value": "linear",
+        "label": qsTr("线性")
+    }), ({
+        "value": "quad",
+        "label": qsTr("二次方")
+    }), ({
+        "value": "cubic",
+        "label": qsTr("三次方")
+    }), ({
+        "value": "quart",
+        "label": qsTr("四次方")
+    }), ({
+        "value": "quint",
+        "label": qsTr("五次方")
+    }), ({
+        "value": "sine",
+        "label": qsTr("正弦")
+    }), ({
+        "value": "expo",
+        "label": qsTr("指数")
+    }), ({
+        "value": "circ",
+        "label": qsTr("圆形")
+    }), ({
+        "value": "customBezier",
+        "label": qsTr("自定义贝塞尔")
+    })]
     readonly property var baseTransitions: ["fade", "wipe", "disc", "stripes", "iris bloom", "pixelate", "portal"]
-
-    readonly property var matugenSchemes: [
-        ({ "value": "scheme-tonal-spot", "label": qsTr("音色斑点") }),
-        ({ "value": "scheme-vibrant", "label": qsTr("鲜艳") }),
-        ({ "value": "scheme-content", "label": qsTr("内容") }),
-        ({ "value": "scheme-expressive", "label": qsTr("具有表现力的") }),
-        ({ "value": "scheme-fidelity", "label": qsTr("保真") }),
-        ({ "value": "scheme-fruit-salad", "label": qsTr("水果沙拉") }),
-        ({ "value": "scheme-monochrome", "label": qsTr("单色") }),
-        ({ "value": "scheme-neutral", "label": qsTr("中性") }),
-        ({ "value": "scheme-rainbow", "label": qsTr("彩虹") })
-    ]
-    readonly property var matugenTemplateIds: [
-        "btop",
-        "cava",
-        "kitty",
-        "fcitx5",
-        "zsh",
-        "keytop",
-        "niri",
-        "yazi"
-    ]
-
-    readonly property var keystoneStyles: [
-        ({ "value": "bangs", "label": qsTr("刘海") }),
-        ({ "value": "pill", "label": qsTr("药丸") })
-    ]
-    readonly property var edgePositions: [
-        ({ "value": "top", "label": qsTr("顶部"), "icon": "arrow_upward" }),
-        ({ "value": "left", "label": qsTr("左侧"), "icon": "arrow_back" }),
-        ({ "value": "bottom", "label": qsTr("底部"), "icon": "arrow_downward" }),
-        ({ "value": "right", "label": qsTr("右侧"), "icon": "arrow_forward" })
-    ]
-    readonly property var powerMenuStyles: [
-        ({ "value": "grid", "label": qsTr("四宫格") }),
-        ({ "value": "row", "label": qsTr("横向六项") })
-    ]
-
+    readonly property var matugenSchemes: [({
+        "value": "scheme-tonal-spot",
+        "label": qsTr("音色斑点")
+    }), ({
+        "value": "scheme-vibrant",
+        "label": qsTr("鲜艳")
+    }), ({
+        "value": "scheme-content",
+        "label": qsTr("内容")
+    }), ({
+        "value": "scheme-expressive",
+        "label": qsTr("具有表现力的")
+    }), ({
+        "value": "scheme-fidelity",
+        "label": qsTr("保真")
+    }), ({
+        "value": "scheme-fruit-salad",
+        "label": qsTr("水果沙拉")
+    }), ({
+        "value": "scheme-monochrome",
+        "label": qsTr("单色")
+    }), ({
+        "value": "scheme-neutral",
+        "label": qsTr("中性")
+    }), ({
+        "value": "scheme-rainbow",
+        "label": qsTr("彩虹")
+    })]
+    readonly property var matugenTemplateIds: ["btop", "cava", "kitty", "fcitx5", "zsh", "keytop", "niri", "yazi"]
+    readonly property var keystoneStyles: [({
+        "value": "bangs",
+        "label": qsTr("刘海")
+    }), ({
+        "value": "pill",
+        "label": qsTr("药丸")
+    })]
+    readonly property var edgePositions: [({
+        "value": "top",
+        "label": qsTr("顶部"),
+        "icon": "arrow_upward"
+    }), ({
+        "value": "left",
+        "label": qsTr("左侧"),
+        "icon": "arrow_back"
+    }), ({
+        "value": "bottom",
+        "label": qsTr("底部"),
+        "icon": "arrow_downward"
+    }), ({
+        "value": "right",
+        "label": qsTr("右侧"),
+        "icon": "arrow_forward"
+    })]
+    readonly property var powerMenuStyles: [({
+        "value": "grid",
+        "label": qsTr("四宫格")
+    }), ({
+        "value": "row",
+        "label": qsTr("横向六项")
+    })]
     property bool storeReady: false
     property bool loading: false
     property bool loaded: false
     readonly property bool ready: root.storeReady && root.loaded && !root.loading
-
-    signal settingsLoaded()
-
     property string wallpaperFolder: Paths.dataHome + "/wallpapers"
     property string wallpaperPath: ""
     property string wallpaperPathLight: ""
     property string wallpaperPathDark: ""
     property bool perModeWallpaper: false
     property bool perMonitorWallpaper: false
-    property var monitorWallpapers: ({})
-    property var monitorWallpaperFillModes: ({})
+    property var monitorWallpapers: ({
+    })
+    property var monitorWallpaperFillModes: ({
+    })
     property var recentWallpaperColors: []
     property string wallpaperFillMode: "Fill"
     property string desktopWallpaperBackend: "quickshell"
-
     property bool autoCycleEnabled: false
     property string autoCycleMode: "interval"
     property int autoCycleInterval: 300
     property string autoCycleTime: "06:00"
-
     property string wallpaperTransitionType: "fade"
     property var includedTransitions: root.baseTransitions
     property int transitionDurationMs: 1000
     property string transitionEasingMode: "customBezier"
-    property var transitionBezierCurve: [0.43, 1.19, 1.0, 0.4, 1.0, 1.0]
-
+    property var transitionBezierCurve: [0.43, 1.19, 1, 0.4, 1, 1]
     property string awwwDesktopTransitionType: "fade"
     property int awwwTransitionFps: 60
     property int awwwTransitionStep: 90
     property real awwwTransitionAngle: 45
     property string awwwTransitionPosition: "center"
     property string awwwTransitionWave: "20,20"
-
     property bool overviewEnabled: true
     property bool overviewUseDesktopWallpaper: true
     property string overviewWallpaperPath: ""
     property string overviewWallpaperFillMode: "Fill"
     property bool overviewPerMonitorWallpaper: false
-    property var overviewMonitorWallpapers: ({})
-    property var overviewMonitorFillModes: ({})
+    property var overviewMonitorWallpapers: ({
+    })
+    property var overviewMonitorFillModes: ({
+    })
     property string overviewTransitionType: "fade"
     property real overviewBlurRadius: 0
     property real overviewDim: 0
     property real overviewSaturation: 1
     property real overviewContrast: 1
-
     property bool parallaxVerticalEnabled: false
     property bool parallaxFollowWorkspaces: true
     property bool parallaxFollowSidebars: false
     property bool parallaxFollowTiledColumns: false
-    property real parallaxPreferredScale: 1.10
+    property real parallaxPreferredScale: 1.1
     property int parallaxTiledColumnSpan: 6
-
     property string matugenScheme: "scheme-tonal-spot"
     property var matugenTemplates: ({
         "btop": true,
@@ -217,20 +298,46 @@ Singleton {
     })
     readonly property var horizontalClockDigitDefaults: ({
         "h0": ({
-            "x": 0, "y": -2, "rotation": -3,
-            "colorRole": "inversePrimary", "customColor": ""
+            "x": 0,
+            "y": -2,
+            "rotation": -3,
+            "colorRole": "inversePrimary",
+            "customColor": ""
         }),
         "h1": ({
-            "x": 0, "y": 1, "rotation": 3,
-            "colorRole": "primary", "customColor": ""
+            "x": 0,
+            "y": 1,
+            "rotation": 3,
+            "colorRole": "primary",
+            "customColor": ""
         }),
         "m0": ({
-            "x": 0, "y": -1, "rotation": -2,
-            "colorRole": "inversePrimary", "customColor": ""
+            "x": 0,
+            "y": -1,
+            "rotation": -2,
+            "colorRole": "inversePrimary",
+            "customColor": ""
         }),
         "m1": ({
-            "x": 0, "y": 1, "rotation": 2,
-            "colorRole": "primary", "customColor": ""
+            "x": 0,
+            "y": 1,
+            "rotation": 2,
+            "colorRole": "primary",
+            "customColor": ""
+        }),
+        "ap": ({
+            "x": 1,
+            "y": -2,
+            "rotation": -2,
+            "colorRole": "inversePrimary",
+            "customColor": ""
+        }),
+        "periodM": ({
+            "x": 1,
+            "y": 1,
+            "rotation": 2,
+            "colorRole": "primary",
+            "customColor": ""
         })
     })
     property int horizontalClockFontSize: 22
@@ -244,48 +351,69 @@ Singleton {
     })
     property var horizontalClockDigits: ({
         "h0": ({
-            "x": 0, "y": -2, "rotation": -3,
-            "colorRole": "inversePrimary", "customColor": ""
+            "x": 0,
+            "y": -2,
+            "rotation": -3,
+            "colorRole": "inversePrimary",
+            "customColor": ""
         }),
         "h1": ({
-            "x": 0, "y": 1, "rotation": 3,
-            "colorRole": "primary", "customColor": ""
+            "x": 0,
+            "y": 1,
+            "rotation": 3,
+            "colorRole": "primary",
+            "customColor": ""
         }),
         "m0": ({
-            "x": 0, "y": -1, "rotation": -2,
-            "colorRole": "inversePrimary", "customColor": ""
+            "x": 0,
+            "y": -1,
+            "rotation": -2,
+            "colorRole": "inversePrimary",
+            "customColor": ""
         }),
         "m1": ({
-            "x": 0, "y": 1, "rotation": 2,
-            "colorRole": "primary", "customColor": ""
+            "x": 0,
+            "y": 1,
+            "rotation": 2,
+            "colorRole": "primary",
+            "customColor": ""
+        }),
+        "ap": ({
+            "x": 1,
+            "y": -2,
+            "rotation": -2,
+            "colorRole": "inversePrimary",
+            "customColor": ""
+        }),
+        "periodM": ({
+            "x": 1,
+            "y": 1,
+            "rotation": 2,
+            "colorRole": "primary",
+            "customColor": ""
         })
     })
     property string powerMenuStyle: "grid"
-
-    readonly property string uiFontFamily:
-        Fonts.configuredUi || Fonts.defaultUi
-    readonly property string monoFontFamily:
-        Fonts.configuredMono || Fonts.defaultMono
-    readonly property string numericFontFamily:
-        Fonts.configuredNumeric || Fonts.defaultNumeric
-    readonly property string expressiveFontFamily:
-        Fonts.configuredExpressive || Fonts.bundledFamilyName
-
-    property real shellBackgroundOpacity: 1.0
+    readonly property string uiFontFamily: Fonts.configuredUi || Fonts.defaultUi
+    readonly property string monoFontFamily: Fonts.configuredMono || Fonts.defaultMono
+    readonly property string numericFontFamily: Fonts.configuredNumeric || Fonts.defaultNumeric
+    readonly property string expressiveFontFamily: Fonts.configuredExpressive || Fonts.bundledFamilyName
+    property real shellBackgroundOpacity: 1
     property bool shellBlurEnabled: false
     property bool shellBlurXray: true
-
     property bool keepSidebarsLoaded: true
-
     property bool scrollSmoothEnabled: true
     property int scrollMouseFactor: 50
     property int scrollTouchpadFactor: 100
     property int scrollMouseDeltaThreshold: 120
 
+    signal settingsLoaded()
+
     function optionExists(options, value) {
         for (let i = 0; i < options.length; i += 1) {
             if (options[i].value === value)
                 return true;
+
         }
         return false;
     }
@@ -319,13 +447,13 @@ Singleton {
             const value = raw[i];
             if (root.baseTransitions.indexOf(value) !== -1 && result.indexOf(value) === -1)
                 result.push(value);
+
         }
         return result.length > 0 ? result : root.baseTransitions.slice();
     }
 
     function normalizedBezier(raw) {
-        const fallback =
-            [0.43, 1.19, 1.0, 0.4, 1.0, 1.0];
+        const fallback = [0.43, 1.19, 1, 0.4, 1, 1];
         if (!Array.isArray(raw) || raw.length < 4)
             return fallback.slice();
 
@@ -339,22 +467,22 @@ Singleton {
     }
 
     function cloneMap(map) {
-        const result = {};
+        const result = {
+        };
         if (!map)
             return result;
 
-        for (let key in map)
-            result[key] = map[key];
+        for (let key in map) result[key] = map[key]
         return result;
     }
 
     function normalizedStringMap(raw) {
-        const result = {};
+        const result = {
+        };
         if (!raw || typeof raw !== "object" || Array.isArray(raw))
             return result;
 
-        for (let key in raw)
-            result[String(key)] = String(raw[key] || "");
+        for (let key in raw) result[String(key)] = String(raw[key] || "")
         return result;
     }
 
@@ -365,13 +493,15 @@ Singleton {
         const result = value.trim();
         if (result.length > 256 || /[\u0000-\u001f\u007f]/.test(result))
             return "";
+
         return result;
     }
 
     function normalizedMatugenTemplates(raw) {
-        const source = raw && typeof raw === "object"
-            && !Array.isArray(raw) ? raw : {};
-        const result = {};
+        const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {
+        };
+        const result = {
+        };
         for (let i = 0; i < root.matugenTemplateIds.length; i += 1) {
             const id = root.matugenTemplateIds[i];
             result[id] = source[id] === undefined ? true : !!source[id];
@@ -380,14 +510,13 @@ Singleton {
     }
 
     function normalizedFillModeMap(raw, options) {
-        const result = {};
+        const result = {
+        };
         if (!raw || typeof raw !== "object" || Array.isArray(raw))
             return result;
 
         const validOptions = options || root.desktopFillModes;
-        for (let key in raw)
-            result[String(key)] = normalizedOption(
-                validOptions, raw[key], "Fill");
+        for (let key in raw) result[String(key)] = normalizedOption(validOptions, raw[key], "Fill")
         return result;
     }
 
@@ -400,13 +529,15 @@ Singleton {
             const value = String(raw[i] || "").trim().toLowerCase();
             if (/^#([0-9a-f]{6}|[0-9a-f]{8})$/.test(value) && result.indexOf(value) === -1)
                 result.push(value);
+
         }
         return result;
     }
 
     function setValue(propertyName, value) {
         if (root[propertyName] === value)
-            return;
+            return ;
+
         root[propertyName] = value;
         root.save();
     }
@@ -435,13 +566,13 @@ Singleton {
     }
 
     function setDesktopWallpaperBackend(value) {
-        setValue("desktopWallpaperBackend",
-            value === "awww" ? "awww" : "quickshell");
+        setValue("desktopWallpaperBackend", value === "awww" ? "awww" : "quickshell");
     }
 
     function setMonitorWallpaper(screenName, value) {
         if (!screenName)
-            return;
+            return ;
+
         const next = cloneMap(root.monitorWallpapers);
         next[screenName] = value || "";
         root.monitorWallpapers = next;
@@ -451,20 +582,20 @@ Singleton {
     function monitorWallpaper(screenName) {
         if (!screenName || !root.monitorWallpapers)
             return "";
+
         return root.monitorWallpapers[screenName] || "";
     }
 
     function setWallpaperFillMode(value) {
-        setValue("wallpaperFillMode", normalizedOption(
-            root.desktopFillModes, value, "Fill"));
+        setValue("wallpaperFillMode", normalizedOption(root.desktopFillModes, value, "Fill"));
     }
 
     function setMonitorWallpaperFillMode(screenName, value) {
         if (!screenName)
-            return;
+            return ;
+
         const next = cloneMap(root.monitorWallpaperFillModes);
-        next[screenName] = normalizedOption(
-            root.desktopFillModes, value, "Fill");
+        next[screenName] = normalizedOption(root.desktopFillModes, value, "Fill");
         root.monitorWallpaperFillModes = next;
         root.save();
     }
@@ -472,21 +603,22 @@ Singleton {
     function monitorFillMode(screenName) {
         if (!screenName || !root.monitorWallpaperFillModes)
             return root.wallpaperFillMode;
+
         return root.monitorWallpaperFillModes[screenName] || root.wallpaperFillMode;
     }
 
     function addRecentWallpaperColor(color) {
         const value = String(color || "").trim().toLowerCase();
         if (!/^#([0-9a-f]{6}|[0-9a-f]{8})$/.test(value))
-            return;
+            return ;
 
         const next = [value];
         const source = normalizedRecentColors(root.recentWallpaperColors);
         for (let i = 0; i < source.length && next.length < 5; i += 1) {
             if (source[i] !== value)
                 next.push(source[i]);
-        }
 
+        }
         root.recentWallpaperColors = next;
         root.save();
     }
@@ -519,33 +651,35 @@ Singleton {
 
     function setTransitionIncluded(value, enabled) {
         if (root.baseTransitions.indexOf(value) === -1)
-            return;
+            return ;
 
         const next = root.includedTransitions.slice();
         const index = next.indexOf(value);
         if (enabled && index === -1)
             next.push(value);
+
         if (!enabled && index !== -1)
             next.splice(index, 1);
+
         root.setIncludedTransitions(next);
     }
 
     function normalizedDurationMs(value, fallback) {
         if (value === null || value === undefined || value === "")
             return fallback;
+
         const numberValue = Number(value);
-        return !isFinite(numberValue)
-            ? fallback
-            : Math.max(0, Math.min(5000,
-                Math.round(numberValue)));
+        return !isFinite(numberValue) ? fallback : Math.max(0, Math.min(5000, Math.round(numberValue)));
     }
 
     function normalizedBoundedInt(value, fallback, minValue, maxValue) {
         if (value === null || value === undefined || value === "")
             return fallback;
+
         const numberValue = Number(value);
         if (!isFinite(numberValue))
             return fallback;
+
         return Math.max(minValue, Math.min(maxValue, Math.round(numberValue)));
     }
 
@@ -569,56 +703,49 @@ Singleton {
     function normalizedBoundedReal(value, fallback, minValue, maxValue) {
         if (value === null || value === undefined || value === "")
             return fallback;
+
         const numberValue = Number(value);
         if (!isFinite(numberValue))
             return fallback;
+
         return Math.max(minValue, Math.min(maxValue, numberValue));
     }
 
     function normalizedHorizontalClockAxes(raw) {
-        const source = raw && typeof raw === "object"
-            && !Array.isArray(raw) ? raw : {};
-        const result = {};
+        const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {
+        };
+        const result = {
+        };
         const names = ["wght", "wdth", "opsz", "GRAD", "ROND", "slnt"];
         for (let i = 0; i < names.length; i += 1) {
             const name = names[i];
-            result[name] = root.normalizedBoundedReal(
-                source[name],
-                root.horizontalClockAxisDefaults[name],
-                root.horizontalClockAxisMinimums[name],
-                root.horizontalClockAxisMaximums[name]);
+            result[name] = root.normalizedBoundedReal(source[name], root.horizontalClockAxisDefaults[name], root.horizontalClockAxisMinimums[name], root.horizontalClockAxisMaximums[name]);
         }
         return result;
     }
 
     function normalizedHorizontalClockDigits(raw) {
-        const source = raw && typeof raw === "object"
-            && !Array.isArray(raw) ? raw : {};
-        const result = {};
-        const ids = ["h0", "h1", "m0", "m1"];
+        const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {
+        };
+        const result = {
+        };
+        const ids = ["h0", "h1", "m0", "m1", "ap", "periodM"];
         const colorRoles = ["primary", "inversePrimary", "custom"];
-
         for (let i = 0; i < ids.length; i += 1) {
             const id = ids[i];
             const fallback = root.horizontalClockDigitDefaults[id];
-            const candidate = source[id] && typeof source[id] === "object"
-                && !Array.isArray(source[id]) ? source[id] : {};
-            const candidateColor = String(candidate.customColor || "")
-                .trim().toLowerCase();
-            const hasCustomColor = /^#([0-9a-f]{6}|[0-9a-f]{8})$/
-                .test(candidateColor);
-            let colorRole = colorRoles.indexOf(candidate.colorRole) !== -1
-                ? candidate.colorRole : fallback.colorRole;
+            const candidate = source[id] && typeof source[id] === "object" && !Array.isArray(source[id]) ? source[id] : {
+            };
+            const candidateColor = String(candidate.customColor || "").trim().toLowerCase();
+            const hasCustomColor = /^#([0-9a-f]{6}|[0-9a-f]{8})$/.test(candidateColor);
+            let colorRole = colorRoles.indexOf(candidate.colorRole) !== -1 ? candidate.colorRole : fallback.colorRole;
             if (colorRole === "custom" && !hasCustomColor)
                 colorRole = fallback.colorRole;
 
             result[id] = {
-                "x": root.normalizedBoundedInt(candidate.x,
-                    fallback.x, -8, 8),
-                "y": root.normalizedBoundedInt(candidate.y,
-                    fallback.y, -6, 6),
-                "rotation": root.normalizedBoundedInt(candidate.rotation,
-                    fallback.rotation, -12, 12),
+                "x": root.normalizedBoundedInt(candidate.x, fallback.x, -8, 8),
+                "y": root.normalizedBoundedInt(candidate.y, fallback.y, -6, 6),
+                "rotation": root.normalizedBoundedInt(candidate.rotation, fallback.rotation, -12, 12),
                 "colorRole": colorRole,
                 "customColor": hasCustomColor ? candidateColor : ""
             };
@@ -634,61 +761,52 @@ Singleton {
 
     function horizontalClockDigitColor(id) {
         const digit = root.horizontalClockDigit(id);
-        if (digit.colorRole === "custom"
-                && /^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(
-                    String(digit.customColor || "")))
+        if (digit.colorRole === "custom" && /^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(String(digit.customColor || "")))
             return digit.customColor;
-        return digit.colorRole === "inversePrimary"
-            ? Appearance.colors.colInversePrimary
-            : Appearance.colors.colPrimary;
+
+        return digit.colorRole === "inversePrimary" ? Appearance.colors.colInversePrimary : Appearance.colors.colPrimary;
     }
 
     function normalizedAwwwPosition(value) {
         const position = String(value || "").trim();
-        const aliases = [
-            "center", "top", "left", "right", "bottom",
-            "top-left", "top-right", "bottom-left", "bottom-right"
-        ];
+        const aliases = ["center", "top", "left", "right", "bottom", "top-left", "top-right", "bottom-left", "bottom-right"];
         if (aliases.indexOf(position) !== -1)
             return position;
+
         if (/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(position))
             return position;
+
         return "center";
     }
 
     function normalizedAwwwWave(value) {
-        const match = String(value || "").trim()
-            .match(/^(\d+(\.\d+)?),(\d+(\.\d+)?)$/);
+        const match = String(value || "").trim().match(/^(\d+(\.\d+)?),(\d+(\.\d+)?)$/);
         if (!match)
             return "20,20";
+
         const width = normalizedBoundedReal(match[1], 20, 1, 1000);
         const height = normalizedBoundedReal(match[3], 20, 1, 1000);
         return width + "," + height;
     }
 
     function setAwwwDesktopTransitionType(value) {
-        setValue("awwwDesktopTransitionType",
-            normalizedAwwwTransition(value));
+        setValue("awwwDesktopTransitionType", normalizedAwwwTransition(value));
     }
 
     function setAwwwTransitionFps(value) {
-        setValue("awwwTransitionFps",
-            normalizedBoundedInt(value, 60, 10, 240));
+        setValue("awwwTransitionFps", normalizedBoundedInt(value, 60, 10, 240));
     }
 
     function setAwwwTransitionStep(value) {
-        setValue("awwwTransitionStep",
-            normalizedBoundedInt(value, 90, 0, 255));
+        setValue("awwwTransitionStep", normalizedBoundedInt(value, 90, 0, 255));
     }
 
     function setAwwwTransitionAngle(value) {
-        setValue("awwwTransitionAngle",
-            normalizedBoundedReal(value, 45, 0, 360));
+        setValue("awwwTransitionAngle", normalizedBoundedReal(value, 45, 0, 360));
     }
 
     function setAwwwTransitionPosition(value) {
-        setValue("awwwTransitionPosition",
-            normalizedAwwwPosition(value));
+        setValue("awwwTransitionPosition", normalizedAwwwPosition(value));
     }
 
     function setAwwwTransitionWave(value) {
@@ -708,8 +826,7 @@ Singleton {
     }
 
     function setOverviewWallpaperFillMode(value) {
-        setValue("overviewWallpaperFillMode",
-            normalizedOption(root.fillModes, value, "Fill"));
+        setValue("overviewWallpaperFillMode", normalizedOption(root.fillModes, value, "Fill"));
     }
 
     function setOverviewPerMonitorWallpaper(value) {
@@ -718,7 +835,8 @@ Singleton {
 
     function setOverviewMonitorWallpaper(screenName, value) {
         if (!screenName)
-            return;
+            return ;
+
         const next = cloneMap(root.overviewMonitorWallpapers);
         next[screenName] = value || "";
         root.overviewMonitorWallpapers = next;
@@ -728,15 +846,16 @@ Singleton {
     function overviewMonitorWallpaper(screenName) {
         if (!screenName || !root.overviewMonitorWallpapers)
             return "";
+
         return root.overviewMonitorWallpapers[screenName] || "";
     }
 
     function setOverviewMonitorFillMode(screenName, value) {
         if (!screenName)
-            return;
+            return ;
+
         const next = cloneMap(root.overviewMonitorFillModes);
-        next[screenName] =
-            normalizedOption(root.fillModes, value, "Fill");
+        next[screenName] = normalizedOption(root.fillModes, value, "Fill");
         root.overviewMonitorFillModes = next;
         root.save();
     }
@@ -744,8 +863,8 @@ Singleton {
     function overviewMonitorFillMode(screenName) {
         if (!screenName || !root.overviewMonitorFillModes)
             return root.overviewWallpaperFillMode;
-        return root.overviewMonitorFillModes[screenName]
-            || root.overviewWallpaperFillMode;
+
+        return root.overviewMonitorFillModes[screenName] || root.overviewWallpaperFillMode;
     }
 
     function setOverviewTransitionType(value) {
@@ -753,23 +872,19 @@ Singleton {
     }
 
     function setOverviewBlurRadius(value) {
-        setValue("overviewBlurRadius",
-            normalizedBoundedReal(value, 0, 0, 100));
+        setValue("overviewBlurRadius", normalizedBoundedReal(value, 0, 0, 100));
     }
 
     function setOverviewDim(value) {
-        setValue("overviewDim",
-            normalizedBoundedReal(value, 0, 0, 1));
+        setValue("overviewDim", normalizedBoundedReal(value, 0, 0, 1));
     }
 
     function setOverviewSaturation(value) {
-        setValue("overviewSaturation",
-            normalizedBoundedReal(value, 1, 0, 2));
+        setValue("overviewSaturation", normalizedBoundedReal(value, 1, 0, 2));
     }
 
     function setOverviewContrast(value) {
-        setValue("overviewContrast",
-            normalizedBoundedReal(value, 1, 0.5, 2));
+        setValue("overviewContrast", normalizedBoundedReal(value, 1, 0.5, 2));
     }
 
     function setParallaxVerticalEnabled(value) {
@@ -789,13 +904,11 @@ Singleton {
     }
 
     function setParallaxPreferredScale(value) {
-        setValue("parallaxPreferredScale",
-            normalizedBoundedReal(value, 1.10, 1, 1.35));
+        setValue("parallaxPreferredScale", normalizedBoundedReal(value, 1.1, 1, 1.35));
     }
 
     function setParallaxTiledColumnSpan(value) {
-        setValue("parallaxTiledColumnSpan",
-            normalizedBoundedInt(value, 6, 2, 12));
+        setValue("parallaxTiledColumnSpan", normalizedBoundedInt(value, 6, 2, 12));
     }
 
     function setMatugenScheme(value) {
@@ -805,6 +918,7 @@ Singleton {
     function isMatugenTemplateEnabled(id) {
         if (root.matugenTemplateIds.indexOf(id) === -1)
             return false;
+
         return root.matugenTemplates[id] !== false;
     }
 
@@ -840,8 +954,7 @@ Singleton {
     }
 
     function setCursorHideAfterInactiveMs(value) {
-        setValue("cursorHideAfterInactiveMs",
-            root.normalizedBoundedInt(value, 0, 0, 5000));
+        setValue("cursorHideAfterInactiveMs", root.normalizedBoundedInt(value, 0, 0, 5000));
     }
 
     function setIconTheme(value) {
@@ -853,8 +966,7 @@ Singleton {
     }
 
     function setPowerMenuStyle(value) {
-        setValue("powerMenuStyle", normalizedOption(
-            root.powerMenuStyles, value, "grid"));
+        setValue("powerMenuStyle", normalizedOption(root.powerMenuStyles, value, "grid"));
     }
 
     function setFontFamily(role, family) {
@@ -865,10 +977,13 @@ Singleton {
         const value = String(family || "").trim();
         if (value === "")
             return false;
+
         if (!FontService.containsFamily(value))
             return false;
+
         if (!Fonts.setConfiguredFamily(role, value))
             return false;
+
         root.save();
         return true;
     }
@@ -879,8 +994,7 @@ Singleton {
     }
 
     function setShellBackgroundOpacity(value) {
-        setValue("shellBackgroundOpacity",
-            normalizedBoundedReal(value, 1.0, 0.0, 1.0));
+        setValue("shellBackgroundOpacity", normalizedBoundedReal(value, 1, 0, 1));
     }
 
     function setShellBlurEnabled(value) {
@@ -910,12 +1024,11 @@ Singleton {
     function resetHorizontalClock(persist) {
         root.keystoneHideDate = false;
         root.horizontalClockFontSize = 22;
-        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(
-            root.horizontalClockAxisDefaults);
-        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(
-            root.horizontalClockDigitDefaults);
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(root.horizontalClockAxisDefaults);
+        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(root.horizontalClockDigitDefaults);
         if (persist !== false)
             root.save();
+
     }
 
     function setHorizontalClockFontSize(value, persist) {
@@ -923,33 +1036,34 @@ Singleton {
         if (root.horizontalClockFontSize === next) {
             if (persist !== false)
                 root.save();
-            return;
+
+            return ;
         }
         root.horizontalClockFontSize = next;
         if (persist !== false)
             root.save();
+
     }
 
     function setHorizontalClockAxis(axis, value, persist) {
         const name = String(axis || "");
         if (root.horizontalClockAxisDefaults[name] === undefined)
-            return;
-        const next = root.normalizedBoundedReal(
-            value,
-            root.horizontalClockAxisDefaults[name],
-            root.horizontalClockAxisMinimums[name],
-            root.horizontalClockAxisMaximums[name]);
+            return ;
+
+        const next = root.normalizedBoundedReal(value, root.horizontalClockAxisDefaults[name], root.horizontalClockAxisMinimums[name], root.horizontalClockAxisMaximums[name]);
         const current = root.horizontalClockAxes[name];
         if (current === next) {
             if (persist !== false)
                 root.save();
-            return;
+
+            return ;
         }
         const axes = root.cloneMap(root.horizontalClockAxes);
         axes[name] = next;
         root.horizontalClockAxes = root.normalizedHorizontalClockAxes(axes);
         if (persist !== false)
             root.save();
+
     }
 
     function setHorizontalClockDigitValue(id, field, value, persist) {
@@ -957,46 +1071,43 @@ Singleton {
         const propertyName = String(field || "");
         const fallback = root.horizontalClockDigitDefaults[name];
         if (!fallback || ["x", "y", "rotation"].indexOf(propertyName) === -1)
-            return;
-        const limits = propertyName === "x"
-            ? [-8, 8] : propertyName === "y" ? [-6, 6] : [-12, 12];
+            return ;
+
+        const limits = propertyName === "x" ? [-8, 8] : propertyName === "y" ? [-6, 6] : [-12, 12];
         const current = root.horizontalClockDigit(name);
-        const next = root.normalizedBoundedInt(
-            value, fallback[propertyName], limits[0], limits[1]);
+        const next = root.normalizedBoundedInt(value, fallback[propertyName], limits[0], limits[1]);
         if (current[propertyName] === next) {
             if (persist !== false)
                 root.save();
-            return;
+
+            return ;
         }
-        const digits = root.normalizedHorizontalClockDigits(
-            root.horizontalClockDigits);
+        const digits = root.normalizedHorizontalClockDigits(root.horizontalClockDigits);
         digits[name][propertyName] = next;
         root.horizontalClockDigits = digits;
         if (persist !== false)
             root.save();
+
     }
 
     function setHorizontalClockDigitColor(id, role, customColor, persist) {
         const name = String(id || "");
         const fallback = root.horizontalClockDigitDefaults[name];
         if (!fallback)
-            return;
+            return ;
+
         const candidateRole = String(role || "");
-        const normalizedColor = String(customColor || "")
-            .trim().toLowerCase();
-        const customValid = /^#([0-9a-f]{6}|[0-9a-f]{8})$/
-            .test(normalizedColor);
-        const validRole = ["primary", "inversePrimary"]
-            .indexOf(candidateRole) !== -1;
-        const nextRole = validRole || (candidateRole === "custom" && customValid)
-            ? candidateRole : fallback.colorRole;
-        const digits = root.normalizedHorizontalClockDigits(
-            root.horizontalClockDigits);
+        const normalizedColor = String(customColor || "").trim().toLowerCase();
+        const customValid = /^#([0-9a-f]{6}|[0-9a-f]{8})$/.test(normalizedColor);
+        const validRole = ["primary", "inversePrimary"].indexOf(candidateRole) !== -1;
+        const nextRole = validRole || (candidateRole === "custom" && customValid) ? candidateRole : fallback.colorRole;
+        const digits = root.normalizedHorizontalClockDigits(root.horizontalClockDigits);
         digits[name].colorRole = nextRole;
         digits[name].customColor = customValid ? normalizedColor : "";
         root.horizontalClockDigits = digits;
         if (persist !== false)
             root.save();
+
     }
 
     function setScrollSmoothEnabled(value) {
@@ -1052,15 +1163,12 @@ Singleton {
                 },
                 "overview": {
                     "enabled": root.overviewEnabled,
-                    "useDesktopWallpaper":
-                        root.overviewUseDesktopWallpaper,
+                    "useDesktopWallpaper": root.overviewUseDesktopWallpaper,
                     "path": root.overviewWallpaperPath,
                     "fillMode": root.overviewWallpaperFillMode,
                     "perMonitor": root.overviewPerMonitorWallpaper,
-                    "monitorWallpapers":
-                        root.overviewMonitorWallpapers,
-                    "monitorFillModes":
-                        root.overviewMonitorFillModes,
+                    "monitorWallpapers": root.overviewMonitorWallpapers,
+                    "monitorFillModes": root.overviewMonitorFillModes,
                     "transitionType": root.overviewTransitionType,
                     "blurRadius": root.overviewBlurRadius,
                     "dim": root.overviewDim,
@@ -1069,20 +1177,16 @@ Singleton {
                 },
                 "parallax": {
                     "verticalEnabled": root.parallaxVerticalEnabled,
-                    "followWorkspaces":
-                        root.parallaxFollowWorkspaces,
+                    "followWorkspaces": root.parallaxFollowWorkspaces,
                     "followSidebars": root.parallaxFollowSidebars,
-                    "followTiledColumns":
-                        root.parallaxFollowTiledColumns,
+                    "followTiledColumns": root.parallaxFollowTiledColumns,
                     "preferredScale": root.parallaxPreferredScale,
-                    "tiledColumnSpan":
-                        root.parallaxTiledColumnSpan
+                    "tiledColumnSpan": root.parallaxTiledColumnSpan
                 }
             },
             "theme": {
                 "matugenScheme": root.matugenScheme,
-                "matugenTemplates":
-                    root.cloneMap(root.matugenTemplates),
+                "matugenTemplates": root.cloneMap(root.matugenTemplates),
                 "mode": root.themeMode,
                 "cursorTheme": root.cursorTheme,
                 "cursorSize": root.cursorSize,
@@ -1098,8 +1202,7 @@ Singleton {
                 }
             },
             "effects": {
-                "shellBackgroundOpacity":
-                    root.shellBackgroundOpacity,
+                "shellBackgroundOpacity": root.shellBackgroundOpacity,
                 "shellBlurEnabled": root.shellBlurEnabled,
                 "shellBlurXray": root.shellBlurXray
             },
@@ -1131,38 +1234,47 @@ Singleton {
     }
 
     function loadFromObject(parsed) {
-        const wallpaper = parsed.wallpaper || {};
-        const theme = parsed.theme || {};
-        const effects = parsed.effects || {};
-        const keystone = parsed.keystone || {};
-        const bar = parsed.bar || {};
-        const sidebar = parsed.sidebar || {};
-        const interactions = parsed.interactions || {};
-        const scrolling = interactions.scrolling || {};
-        const transition = wallpaper.transition || {};
-        const awww = wallpaper.awww || {};
-        const overview = wallpaper.overview || {};
-        const parallax = wallpaper.parallax || {};
-        const autoCycle = wallpaper.autoCycle || {};
-        const fonts = theme.fonts || {};
-        const horizontalClock = keystone.horizontalClock || {};
-
+        const wallpaper = parsed.wallpaper || {
+        };
+        const theme = parsed.theme || {
+        };
+        const effects = parsed.effects || {
+        };
+        const keystone = parsed.keystone || {
+        };
+        const bar = parsed.bar || {
+        };
+        const sidebar = parsed.sidebar || {
+        };
+        const interactions = parsed.interactions || {
+        };
+        const scrolling = interactions.scrolling || {
+        };
+        const transition = wallpaper.transition || {
+        };
+        const awww = wallpaper.awww || {
+        };
+        const overview = wallpaper.overview || {
+        };
+        const parallax = wallpaper.parallax || {
+        };
+        const autoCycle = wallpaper.autoCycle || {
+        };
+        const fonts = theme.fonts || {
+        };
+        const horizontalClock = keystone.horizontalClock || {
+        };
         root.wallpaperFolder = wallpaper.folder || Paths.dataHome + "/wallpapers";
         root.wallpaperPath = wallpaper.path === Paths.currentWallpaper ? "" : (wallpaper.path || "");
         root.wallpaperPathLight = wallpaper.pathLight || "";
         root.wallpaperPathDark = wallpaper.pathDark || "";
         root.perModeWallpaper = !!wallpaper.perMode;
         root.perMonitorWallpaper = !!wallpaper.perMonitor;
-        root.monitorWallpapers =
-            normalizedStringMap(wallpaper.monitorWallpapers);
-        root.monitorWallpaperFillModes =
-            normalizedFillModeMap(wallpaper.monitorFillModes);
+        root.monitorWallpapers = normalizedStringMap(wallpaper.monitorWallpapers);
+        root.monitorWallpaperFillModes = normalizedFillModeMap(wallpaper.monitorFillModes);
         root.recentWallpaperColors = normalizedRecentColors(wallpaper.recentColors);
-        root.wallpaperFillMode = normalizedOption(
-            root.desktopFillModes, wallpaper.fillMode, "Fill");
-        root.desktopWallpaperBackend =
-            wallpaper.desktopBackend === "awww"
-                ? "awww" : "quickshell";
+        root.wallpaperFillMode = normalizedOption(root.desktopFillModes, wallpaper.fillMode, "Fill");
+        root.desktopWallpaperBackend = wallpaper.desktopBackend === "awww" ? "awww" : "quickshell";
         root.autoCycleEnabled = !!autoCycle.enabled;
         root.autoCycleMode = autoCycle.mode === "time" ? "time" : "interval";
         root.autoCycleInterval = Math.max(5, Math.round(Number(autoCycle.interval) || 300));
@@ -1172,96 +1284,51 @@ Singleton {
         root.transitionDurationMs = normalizedDurationMs(transition.durationMs, 1000);
         root.transitionEasingMode = normalizedEasingMode(transition.easingMode || "customBezier");
         root.transitionBezierCurve = normalizedBezier(transition.bezierCurve);
-
-        root.awwwDesktopTransitionType =
-            normalizedAwwwTransition(awww.transitionType || "fade");
-        root.awwwTransitionFps =
-            normalizedBoundedInt(awww.transitionFps, 60, 10, 240);
-        root.awwwTransitionStep =
-            normalizedBoundedInt(awww.transitionStep, 90, 0, 255);
-        root.awwwTransitionAngle =
-            normalizedBoundedReal(awww.transitionAngle, 45, 0, 360);
-        root.awwwTransitionPosition =
-            normalizedAwwwPosition(awww.transitionPosition);
-        root.awwwTransitionWave =
-            normalizedAwwwWave(awww.transitionWave);
-
-        root.overviewEnabled = overview.enabled === undefined
-            ? true : !!overview.enabled;
-        root.overviewUseDesktopWallpaper =
-            overview.useDesktopWallpaper === undefined
-                ? true : !!overview.useDesktopWallpaper;
+        root.awwwDesktopTransitionType = normalizedAwwwTransition(awww.transitionType || "fade");
+        root.awwwTransitionFps = normalizedBoundedInt(awww.transitionFps, 60, 10, 240);
+        root.awwwTransitionStep = normalizedBoundedInt(awww.transitionStep, 90, 0, 255);
+        root.awwwTransitionAngle = normalizedBoundedReal(awww.transitionAngle, 45, 0, 360);
+        root.awwwTransitionPosition = normalizedAwwwPosition(awww.transitionPosition);
+        root.awwwTransitionWave = normalizedAwwwWave(awww.transitionWave);
+        root.overviewEnabled = overview.enabled === undefined ? true : !!overview.enabled;
+        root.overviewUseDesktopWallpaper = overview.useDesktopWallpaper === undefined ? true : !!overview.useDesktopWallpaper;
         root.overviewWallpaperPath = String(overview.path || "");
-        root.overviewWallpaperFillMode =
-            normalizedOption(root.fillModes, overview.fillMode, "Fill");
+        root.overviewWallpaperFillMode = normalizedOption(root.fillModes, overview.fillMode, "Fill");
         root.overviewPerMonitorWallpaper = !!overview.perMonitor;
-        root.overviewMonitorWallpapers =
-            normalizedStringMap(overview.monitorWallpapers);
-        root.overviewMonitorFillModes =
-            normalizedFillModeMap(
-                overview.monitorFillModes, root.fillModes);
-        root.overviewTransitionType =
-            normalizedTransition(overview.transitionType || "fade");
-        root.overviewBlurRadius =
-            normalizedBoundedReal(overview.blurRadius, 0, 0, 100);
-        root.overviewDim =
-            normalizedBoundedReal(overview.dim, 0, 0, 1);
-        root.overviewSaturation =
-            normalizedBoundedReal(overview.saturation, 1, 0, 2);
-        root.overviewContrast =
-            normalizedBoundedReal(overview.contrast, 1, 0.5, 2);
-
+        root.overviewMonitorWallpapers = normalizedStringMap(overview.monitorWallpapers);
+        root.overviewMonitorFillModes = normalizedFillModeMap(overview.monitorFillModes, root.fillModes);
+        root.overviewTransitionType = normalizedTransition(overview.transitionType || "fade");
+        root.overviewBlurRadius = normalizedBoundedReal(overview.blurRadius, 0, 0, 100);
+        root.overviewDim = normalizedBoundedReal(overview.dim, 0, 0, 1);
+        root.overviewSaturation = normalizedBoundedReal(overview.saturation, 1, 0, 2);
+        root.overviewContrast = normalizedBoundedReal(overview.contrast, 1, 0.5, 2);
         root.parallaxVerticalEnabled = !!parallax.verticalEnabled;
-        root.parallaxFollowWorkspaces =
-            parallax.followWorkspaces === undefined
-                ? true : !!parallax.followWorkspaces;
+        root.parallaxFollowWorkspaces = parallax.followWorkspaces === undefined ? true : !!parallax.followWorkspaces;
         root.parallaxFollowSidebars = !!parallax.followSidebars;
-        root.parallaxFollowTiledColumns =
-            !!parallax.followTiledColumns;
-        root.parallaxPreferredScale =
-            normalizedBoundedReal(parallax.preferredScale,
-                1.10, 1, 1.35);
-        root.parallaxTiledColumnSpan =
-            normalizedBoundedInt(parallax.tiledColumnSpan,
-                6, 2, 12);
-
+        root.parallaxFollowTiledColumns = !!parallax.followTiledColumns;
+        root.parallaxPreferredScale = normalizedBoundedReal(parallax.preferredScale, 1.1, 1, 1.35);
+        root.parallaxTiledColumnSpan = normalizedBoundedInt(parallax.tiledColumnSpan, 6, 2, 12);
         root.matugenScheme = normalizedOption(root.matugenSchemes, theme.matugenScheme, "scheme-tonal-spot");
-        root.matugenTemplates =
-            normalizedMatugenTemplates(theme.matugenTemplates);
+        root.matugenTemplates = normalizedMatugenTemplates(theme.matugenTemplates);
         root.themeMode = theme.mode === "light" ? "light" : "dark";
         root.cursorTheme = root.normalizedCursorTheme(theme.cursorTheme);
         root.cursorSize = root.normalizedBoundedInt(theme.cursorSize, 24, 12, 128);
-        root.cursorHideWhenTyping =
-            typeof theme.cursorHideWhenTyping === "boolean"
-                ? theme.cursorHideWhenTyping : false;
-        root.cursorHideAfterInactiveMs = root.normalizedBoundedInt(
-            theme.cursorHideAfterInactiveMs, 0, 0, 5000);
+        root.cursorHideWhenTyping = typeof theme.cursorHideWhenTyping === "boolean" ? theme.cursorHideWhenTyping : false;
+        root.cursorHideAfterInactiveMs = root.normalizedBoundedInt(theme.cursorHideAfterInactiveMs, 0, 0, 5000);
         root.iconTheme = theme.iconTheme || "";
-        root.powerMenuStyle = normalizedOption(
-            root.powerMenuStyles, theme.powerMenuStyle, "grid");
-        Fonts.setConfiguredFamilies(
-            fonts.ui, fonts.mono, fonts.numeric, fonts.expressive);
-        root.shellBackgroundOpacity = normalizedBoundedReal(
-            effects.shellBackgroundOpacity, 1.0, 0.0, 1.0);
-        root.shellBlurEnabled =
-            typeof effects.shellBlurEnabled === "boolean"
-                ? effects.shellBlurEnabled : false;
-        root.shellBlurXray =
-            typeof effects.shellBlurXray === "boolean"
-                ? effects.shellBlurXray : true;
+        root.powerMenuStyle = normalizedOption(root.powerMenuStyles, theme.powerMenuStyle, "grid");
+        Fonts.setConfiguredFamilies(fonts.ui, fonts.mono, fonts.numeric, fonts.expressive);
+        root.shellBackgroundOpacity = normalizedBoundedReal(effects.shellBackgroundOpacity, 1, 0, 1);
+        root.shellBlurEnabled = typeof effects.shellBlurEnabled === "boolean" ? effects.shellBlurEnabled : false;
+        root.shellBlurXray = typeof effects.shellBlurXray === "boolean" ? effects.shellBlurXray : true;
         root.keystoneStyle = normalizedOption(root.keystoneStyles, keystone.style, "bangs");
         root.keystonePosition = normalizedEdgePosition(keystone.position);
-        root.keystoneHideDate = typeof keystone.hideDate === "boolean"
-            ? keystone.hideDate : false;
-        root.horizontalClockFontSize = root.normalizedBoundedInt(
-            horizontalClock.fontSize, 22, 16, 28);
-        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(
-            horizontalClock.axes);
-        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(
-            horizontalClock.digits);
+        root.keystoneHideDate = typeof keystone.hideDate === "boolean" ? keystone.hideDate : false;
+        root.horizontalClockFontSize = root.normalizedBoundedInt(horizontalClock.fontSize, 22, 16, 28);
+        root.horizontalClockAxes = root.normalizedHorizontalClockAxes(horizontalClock.axes);
+        root.horizontalClockDigits = root.normalizedHorizontalClockDigits(horizontalClock.digits);
         root.barPosition = normalizedEdgePosition(bar.position);
-        root.keepSidebarsLoaded = sidebar.keepLoaded === undefined
-            ? true : !!sidebar.keepLoaded;
+        root.keepSidebarsLoaded = sidebar.keepLoaded === undefined ? true : !!sidebar.keepLoaded;
         root.scrollSmoothEnabled = scrolling.smoothEnabled === undefined ? true : !!scrolling.smoothEnabled;
         root.scrollMouseFactor = normalizedBoundedInt(scrolling.mouseFactor, 50, 10, 240);
         root.scrollTouchpadFactor = normalizedBoundedInt(scrolling.touchpadFactor, 100, 10, 300);
@@ -1272,50 +1339,39 @@ Singleton {
         const wallpaper = parsed && parsed.wallpaper;
         if (!wallpaper || typeof wallpaper !== "object")
             return true;
-        return wallpaper.desktopBackend === undefined
-            || wallpaper.awww === undefined
-            || wallpaper.overview === undefined
-            || wallpaper.parallax === undefined;
+
+        return wallpaper.desktopBackend === undefined || wallpaper.awww === undefined || wallpaper.overview === undefined || wallpaper.parallax === undefined;
     }
 
     function needsEffectsMigration(parsed) {
         const effects = parsed && parsed.effects;
-        if (!effects || typeof effects !== "object"
-                || Array.isArray(effects))
+        if (!effects || typeof effects !== "object" || Array.isArray(effects))
             return true;
-        return effects.shellBackgroundOpacity === undefined
-            || effects.shellBlurEnabled === undefined
-            || effects.shellBlurXray === undefined;
+
+        return effects.shellBackgroundOpacity === undefined || effects.shellBlurEnabled === undefined || effects.shellBlurXray === undefined;
     }
 
     function needsThemeMigration(parsed) {
         const theme = parsed && parsed.theme;
-        return !theme || typeof theme !== "object"
-            || Array.isArray(theme)
-            || theme.powerMenuStyle === undefined
-            || theme.matugenTemplates === undefined
-            || theme.fonts === undefined;
+        return !theme || typeof theme !== "object" || Array.isArray(theme) || theme.powerMenuStyle === undefined || theme.matugenTemplates === undefined || theme.fonts === undefined;
     }
 
     function needsEdgePositionMigration(parsed) {
         const bar = parsed && parsed.bar;
         const keystone = parsed && parsed.keystone;
-        return !bar || typeof bar !== "object" || Array.isArray(bar)
-            || bar.position !== root.normalizedEdgePosition(bar.position)
-            || !keystone || typeof keystone !== "object"
-            || Array.isArray(keystone)
-            || keystone.position
-                !== root.normalizedEdgePosition(keystone.position);
+        return !bar || typeof bar !== "object" || Array.isArray(bar) || bar.position !== root.normalizedEdgePosition(bar.position) || !keystone || typeof keystone !== "object" || Array.isArray(keystone) || keystone.position !== root.normalizedEdgePosition(keystone.position);
     }
 
     function save() {
         if (!root.storeReady || root.loading)
-            return;
+            return ;
+
         configFile.setText(JSON.stringify(root.toJson(), null, 2));
     }
 
     Process {
         id: ensureStoreDir
+
         command: ["mkdir", "-p", root.configDir]
         running: true
         onExited: {
@@ -1334,58 +1390,48 @@ Singleton {
 
     FileView {
         id: configFile
+
         path: root.filePath
         blockLoading: true
         blockWrites: true
         atomicWrites: true
         watchChanges: true
-
         onFileChanged: configReloadDebounce.restart()
-
         onLoaded: {
             let shouldRepair = false;
-            let parsed = {};
+            let parsed = {
+            };
             root.loading = true;
             try {
                 parsed = JSON.parse(configFile.text().trim() || "{}");
-                shouldRepair = root.needsWallpaperMigration(parsed)
-                    || root.needsEffectsMigration(parsed)
-                    || root.needsThemeMigration(parsed)
-                    || root.needsEdgePositionMigration(parsed);
+                shouldRepair = root.needsWallpaperMigration(parsed) || root.needsEffectsMigration(parsed) || root.needsThemeMigration(parsed) || root.needsEdgePositionMigration(parsed);
                 root.loadFromObject(parsed);
-                shouldRepair = shouldRepair
-                    || JSON.stringify(parsed.wallpaper || {})
-                        !== JSON.stringify(
-                            root.toJson().wallpaper)
-                    || JSON.stringify(parsed.effects || {})
-                        !== JSON.stringify(
-                            root.toJson().effects)
-                    || JSON.stringify(parsed.theme || {})
-                        !== JSON.stringify(root.toJson().theme)
-                    || JSON.stringify(parsed.bar || {})
-                        !== JSON.stringify(root.toJson().bar)
-                    || JSON.stringify(parsed.keystone || {})
-                        !== JSON.stringify(root.toJson().keystone);
+                shouldRepair = shouldRepair || JSON.stringify(parsed.wallpaper || {
+                }) !== JSON.stringify(root.toJson().wallpaper) || JSON.stringify(parsed.effects || {
+                }) !== JSON.stringify(root.toJson().effects) || JSON.stringify(parsed.theme || {
+                }) !== JSON.stringify(root.toJson().theme) || JSON.stringify(parsed.bar || {
+                }) !== JSON.stringify(root.toJson().bar) || JSON.stringify(parsed.keystone || {
+                }) !== JSON.stringify(root.toJson().keystone);
             } catch (error) {
                 console.log("PersonalizationConfig failed to load:", error);
                 shouldRepair = true;
-            } finally {
-                root.loading = false;
             }
-
+            root.loading = false;
             root.loaded = true;
             root.settingsLoaded();
             if (shouldRepair)
                 root.save();
-        }
 
+        }
         onLoadFailed: {
             root.loading = true;
-            root.loadFromObject({});
+            root.loadFromObject({
+            });
             root.loading = false;
             root.loaded = true;
             root.settingsLoaded();
             root.save();
         }
     }
+
 }

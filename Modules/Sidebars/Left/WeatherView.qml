@@ -13,257 +13,366 @@ Item {
     property bool foreground: false
     property bool presentationActive: false
     property var weatherSourceOverride: null
-    readonly property var weatherSource:
-        weatherSourceOverride || WeatherPlugin
-    readonly property bool weatherAnimationActive:
-        weatherBackground.animationTimerRunning
+    readonly property var weatherSource: weatherSourceOverride || WeatherPlugin
+    readonly property bool weatherAnimationActive: weatherBackground.animationTimerRunning
     readonly property int weatherTargetFps: weatherBackground.targetFps
-    readonly property int weatherFrameInterval:
-        weatherBackground.sceneFrameInterval
-    readonly property string weatherSceneType:
-        weatherBackground.weatherType
-    readonly property int weatherSimulationFrameCount:
-        weatherBackground.simulationFrameCount
+    readonly property int weatherFrameInterval: weatherBackground.sceneFrameInterval
+    readonly property string weatherSceneType: weatherBackground.weatherType
+    readonly property int weatherSimulationFrameCount: weatherBackground.simulationFrameCount
     readonly property int weatherPaintCount: weatherBackground.paintCount
-    readonly property real effectiveDpr:
-        Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1
+    readonly property real effectiveDpr: Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1
     property int contentMargin: 16
     property int headerHeight: 62
     property bool lightHeaderPalette: currentIsNight()
-    property color headerInk: lightHeaderPalette ? Qt.rgba(0.96, 0.98, 1.0, 0.94) : Qt.rgba(0.09, 0.14, 0.20, 0.88)
-    property color headerInkMuted: lightHeaderPalette ? Qt.rgba(0.87, 0.91, 0.98, 0.76) : Qt.rgba(0.20, 0.28, 0.38, 0.62)
-    property color headerErrorInk: lightHeaderPalette ? Qt.rgba(1.0, 0.79, 0.82, 0.96) : Qt.rgba(0.62, 0.14, 0.18, 0.88)
+    property color headerInk: lightHeaderPalette ? Qt.rgba(0.96, 0.98, 1, 0.94) : Qt.rgba(0.09, 0.14, 0.2, 0.88)
+    property color headerInkMuted: lightHeaderPalette ? Qt.rgba(0.87, 0.91, 0.98, 0.76) : Qt.rgba(0.2, 0.28, 0.38, 0.62)
+    property color headerErrorInk: lightHeaderPalette ? Qt.rgba(1, 0.79, 0.82, 0.96) : Qt.rgba(0.62, 0.14, 0.18, 0.88)
     property real currentEpoch: Math.floor(Date.now() / 1000)
 
     function validNumber(value) {
-        return value !== undefined && value !== null && !isNaN(value)
+        return value !== undefined && value !== null && !isNaN(value);
     }
 
     function modelCount(model) {
         if (!model)
-            return 0
-        return typeof model.count === "function"
-            ? model.count() : Number(model.count || 0)
+            return 0;
+
+        return typeof model.count === "function" ? model.count() : Number(model.count || 0);
     }
 
     function fmtTemp(value) {
-        return validNumber(value) ? Math.round(value) + "°" : "--"
+        return validNumber(value) ? Math.round(UiPreferences.weatherTemperature(value)) + "°" : "--";
     }
 
     function fmtTempPlain(value) {
-        return validNumber(value) ? Math.round(value).toString() : "--"
+        return validNumber(value) ? Math.round(UiPreferences.weatherTemperature(value)).toString() : "--";
     }
 
     function fmtTime(epoch) {
-        if (!epoch) return "--"
-        return Qt.formatDateTime(new Date(epoch * 1000), "hh:mm")
+        if (!epoch)
+            return "--";
+
+        return UiPreferences.shortTime(new Date(epoch * 1000));
     }
 
     function fmtSpeed(ms) {
-        return validNumber(ms) ? ms.toFixed(1) + " m/s" : "--"
+        return validNumber(ms) ? ms.toFixed(1) + " m/s" : "--";
     }
 
     function fmtPercent(value) {
-        return validNumber(value) ? Math.round(value) + "%" : "--"
+        return validNumber(value) ? Math.round(value) + "%" : "--";
     }
 
     function fmtDistance(meters) {
-        return validNumber(meters) ? (meters / 1000).toFixed(1) + " km" : "--"
+        return validNumber(meters) ? (meters / 1000).toFixed(1) + " km" : "--";
     }
 
     function currentHour() {
-        return new Date(root.currentEpoch * 1000).getHours()
+        return new Date(root.currentEpoch * 1000).getHours();
     }
 
     function updatedText() {
-        if (root.weatherSource.loading) return qsTr("正在刷新")
+        if (root.weatherSource.loading)
+            return qsTr("正在刷新");
+
         if (root.weatherSource.status === "fresh" || root.weatherSource.status === "partial") {
-            const date = new Date(root.weatherSource.lastUpdated)
-            return qsTr("更新于 ") + Qt.formatDateTime(date, "hh:mm")
+            const date = new Date(root.weatherSource.lastUpdated);
+            return qsTr("更新于 ") + UiPreferences.shortTime(date);
         }
-        if (root.weatherSource.status === "stale") return qsTr("数据较旧")
-        if (root.weatherSource.status === "error") return qsTr("更新失败")
-        return qsTr("待更新")
+        if (root.weatherSource.status === "stale")
+            return qsTr("数据较旧");
+
+        if (root.weatherSource.status === "error")
+            return qsTr("更新失败");
+
+        return qsTr("待更新");
     }
 
     function dayLabel(index, epoch) {
-        if (index === 0) return qsTr("今天")
-        if (index === 1) return qsTr("明天")
-        return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "ddd") : "--"
+        if (index === 0)
+            return qsTr("今天");
+
+        if (index === 1)
+            return qsTr("明天");
+
+        return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "ddd") : "--";
     }
 
     function uvLevel(value) {
-        if (!validNumber(value)) return "--"
-        if (value < 3) return qsTr("低")
-        if (value < 6) return qsTr("中")
-        if (value < 8) return qsTr("高")
-        if (value < 11) return qsTr("很高")
-        return qsTr("极高")
+        if (!validNumber(value))
+            return "--";
+
+        if (value < 3)
+            return qsTr("低");
+
+        if (value < 6)
+            return qsTr("中");
+
+        if (value < 8)
+            return qsTr("高");
+
+        if (value < 11)
+            return qsTr("很高");
+
+        return qsTr("极高");
     }
 
     function uvIndexBucket(value) {
-        if (!validNumber(value)) return -1
-        if (value < 3) return 0
-        if (value < 6) return 1
-        if (value < 8) return 2
-        if (value < 11) return 3
-        return 4
+        if (!validNumber(value))
+            return -1;
+
+        if (value < 3)
+            return 0;
+
+        if (value < 6)
+            return 1;
+
+        if (value < 8)
+            return 2;
+
+        if (value < 11)
+            return 3;
+
+        return 4;
     }
 
     function windAccent(ms) {
-        if (!validNumber(ms)) return "#4d8d7b"
-        if (ms < 4) return "#72d572"
-        if (ms < 6) return "#ffca28"
-        if (ms < 8) return "#ffa726"
-        if (ms < 10) return "#e52f35"
-        if (ms < 12) return "#99004c"
-        return "#7e0023"
+        if (!validNumber(ms))
+            return "#4d8d7b";
+
+        if (ms < 4)
+            return "#72d572";
+
+        if (ms < 6)
+            return "#ffca28";
+
+        if (ms < 8)
+            return "#ffa726";
+
+        if (ms < 10)
+            return "#e52f35";
+
+        if (ms < 12)
+            return "#99004c";
+
+        return "#7e0023";
     }
 
     function directionLabel(degree) {
-        if (!validNumber(degree)) return "--"
-        const normalized = ((degree % 360) + 360) % 360
-        if (normalized < 22.5 || normalized >= 337.5) return "N"
-        if (normalized < 67.5) return "NE"
-        if (normalized < 112.5) return "E"
-        if (normalized < 157.5) return "SE"
-        if (normalized < 202.5) return "S"
-        if (normalized < 247.5) return "SW"
-        if (normalized < 292.5) return "W"
-        return "NW"
+        if (!validNumber(degree))
+            return "--";
+
+        const normalized = ((degree % 360) + 360) % 360;
+        if (normalized < 22.5 || normalized >= 337.5)
+            return "N";
+
+        if (normalized < 67.5)
+            return "NE";
+
+        if (normalized < 112.5)
+            return "E";
+
+        if (normalized < 157.5)
+            return "SE";
+
+        if (normalized < 202.5)
+            return "S";
+
+        if (normalized < 247.5)
+            return "SW";
+
+        if (normalized < 292.5)
+            return "W";
+
+        return "NW";
     }
 
     function activeHalfDay() {
-        const day = today()
-        const hour = currentHour()
-        if (hour < 5) return day.night || ({})
-        if (hour < 17) return day.day || ({})
-        return day.night || ({})
+        const day = today();
+        const hour = currentHour();
+        if (hour < 5)
+            return day.night || ({
+        });
+
+        if (hour < 17)
+            return day.day || ({
+        });
+
+        return day.night || ({
+        });
     }
 
     function precipitationValueText() {
-        const half = activeHalfDay()
-        const snow = validNumber(half.snowCm) ? half.snowCm : 0
-        const rain = validNumber(half.rainMm) ? half.rainMm : 0
-        const total = validNumber(half.precipitationMm) ? half.precipitationMm : NaN
-        if (snow > 0 && rain <= 0) return snow.toFixed(1) + " cm"
-        return validNumber(total) ? total.toFixed(1) + " mm" : "--"
+        const half = activeHalfDay();
+        const snow = validNumber(half.snowCm) ? half.snowCm : 0;
+        const rain = validNumber(half.rainMm) ? half.rainMm : 0;
+        const total = validNumber(half.precipitationMm) ? half.precipitationMm : NaN;
+        if (snow > 0 && rain <= 0)
+            return snow.toFixed(1) + " cm";
+
+        return validNumber(total) ? total.toFixed(1) + " mm" : "--";
     }
 
     function precipitationDescriptionText() {
-        const half = activeHalfDay()
-        const snow = validNumber(half.snowCm) ? half.snowCm : 0
-        const rain = validNumber(half.rainMm) ? half.rainMm : 0
-        const hour = currentHour()
-        const isDay = hour >= 5 && hour < 17
-        if (snow > 0 && rain <= 0) return isDay ? qsTr("白天降雪总量") : qsTr("夜间降雪总量")
-        if (rain > 0 && snow <= 0) return isDay ? qsTr("白天降雨总量") : qsTr("夜间降雨总量")
-        if (snow > 0 && rain > 0) return isDay ? qsTr("白天总降水") : qsTr("夜间总降水")
-        return isDay ? qsTr("白天总降水") : qsTr("夜间总降水")
+        const half = activeHalfDay();
+        const snow = validNumber(half.snowCm) ? half.snowCm : 0;
+        const rain = validNumber(half.rainMm) ? half.rainMm : 0;
+        const hour = currentHour();
+        const isDay = hour >= 5 && hour < 17;
+        if (snow > 0 && rain <= 0)
+            return isDay ? qsTr("白天降雪总量") : qsTr("夜间降雪总量");
+
+        if (rain > 0 && snow <= 0)
+            return isDay ? qsTr("白天降雨总量") : qsTr("夜间降雨总量");
+
+        if (snow > 0 && rain > 0)
+            return isDay ? qsTr("白天总降水") : qsTr("夜间总降水");
+
+        return isDay ? qsTr("白天总降水") : qsTr("夜间总降水");
     }
 
     function humidityWaveAccent() {
-        return "#625985"
+        return "#625985";
     }
 
     function visibilityDescription(meters) {
-        if (!validNumber(meters)) return "--"
-        const km = meters / 1000
-        if (km >= 16) return qsTr("极清晰")
-        if (km >= 10) return qsTr("清晰")
-        if (km >= 6) return qsTr("良好")
-        if (km >= 3) return qsTr("朦胧")
-        if (km >= 1) return qsTr("较低")
-        return qsTr("浓雾")
+        if (!validNumber(meters))
+            return "--";
+
+        const km = meters / 1000;
+        if (km >= 16)
+            return qsTr("极清晰");
+
+        if (km >= 10)
+            return qsTr("清晰");
+
+        if (km >= 6)
+            return qsTr("良好");
+
+        if (km >= 3)
+            return qsTr("朦胧");
+
+        if (km >= 1)
+            return qsTr("较低");
+
+        return qsTr("浓雾");
     }
 
     function aqiThresholds() {
-        return [0, 20, 50, 100, 150, 250]
+        return [0, 20, 50, 100, 150, 250];
     }
 
     function pollutantIndex(value, thresholds) {
-        if (!validNumber(value)) return NaN
-        let level = -1
+        if (!validNumber(value))
+            return NaN;
+
+        let level = -1;
         for (let i = 0; i < thresholds.length; ++i) {
-            if (value >= thresholds[i]) level = i
+            if (value >= thresholds[i])
+                level = i;
+
         }
-        if (level < 0) return NaN
-        const aqi = aqiThresholds()
+        if (level < 0)
+            return NaN;
+
+        const aqi = aqiThresholds();
         if (level < thresholds.length - 1) {
-            const bpLo = thresholds[level]
-            const bpHi = thresholds[level + 1]
-            const inLo = aqi[level]
-            const inHi = aqi[level + 1]
-            return Math.round(((inHi - inLo) / (bpHi - bpLo)) * (value - bpLo) + inLo)
+            const bpLo = thresholds[level];
+            const bpHi = thresholds[level + 1];
+            const inLo = aqi[level];
+            const inHi = aqi[level + 1];
+            return Math.round(((inHi - inLo) / (bpHi - bpLo)) * (value - bpLo) + inLo);
         }
-        return Math.round((value * aqi[aqi.length - 1]) / thresholds[thresholds.length - 1])
+        return Math.round((value * aqi[aqi.length - 1]) / thresholds[thresholds.length - 1]);
     }
 
     function aqiLevelIndex(value) {
-        if (!validNumber(value)) return -1
-        const thresholds = aqiThresholds()
-        let level = 0
+        if (!validNumber(value))
+            return -1;
+
+        const thresholds = aqiThresholds();
+        let level = 0;
         for (let i = 0; i < thresholds.length; ++i) {
-            if (value >= thresholds[i]) level = i
+            if (value >= thresholds[i])
+                level = i;
+
         }
-        return Math.min(level, 5)
+        return Math.min(level, 5);
     }
 
     function aqiPalette(level) {
-        const colors = ["#00e59b", "#ffc302", "#ff712b", "#f62a55", "#c72eaa", "#9930ff"]
-        return colors[Math.max(0, Math.min(colors.length - 1, level))]
+        const colors = ["#00e59b", "#ffc302", "#ff712b", "#f62a55", "#c72eaa", "#9930ff"];
+        return colors[Math.max(0, Math.min(colors.length - 1, level))];
     }
 
     function aqiLevelName(level) {
-        const names = [qsTr("优"), qsTr("良"), qsTr("差"), qsTr("不健康"), qsTr("很不健康"), qsTr("危险")]
-        if (level < 0 || level >= names.length) return "--"
-        return names[level]
+        const names = [qsTr("优"), qsTr("良"), qsTr("差"), qsTr("不健康"), qsTr("很不健康"), qsTr("危险")];
+        if (level < 0 || level >= names.length)
+            return "--";
+
+        return names[level];
     }
 
     function aqiSummary() {
-        const air = root.weatherSource.currentAirQuality || ({})
-        const values = [
-            pollutantIndex(air.ozone, [0, 50, 100, 160, 240, 480]),
-            pollutantIndex(air.nitrogenDioxide, [0, 10, 25, 200, 400, 1000]),
-            pollutantIndex(air.pm10, [0, 15, 45, 80, 160, 400]),
-            pollutantIndex(air.pm25, [0, 5, 15, 30, 60, 150])
-        ].filter(validNumber)
-        if (values.length === 0) return ({ value: NaN, level: "--", color: "#00e59b" })
-        const value = Math.max.apply(Math, values)
-        const level = aqiLevelIndex(value)
-        return ({ value: value, level: aqiLevelName(level), color: aqiPalette(level) })
+        const air = root.weatherSource.currentAirQuality || ({
+        });
+        const values = [pollutantIndex(air.ozone, [0, 50, 100, 160, 240, 480]), pollutantIndex(air.nitrogenDioxide, [0, 10, 25, 200, 400, 1000]), pollutantIndex(air.pm10, [0, 15, 45, 80, 160, 400]), pollutantIndex(air.pm25, [0, 5, 15, 30, 60, 150])].filter(validNumber);
+        if (values.length === 0)
+            return ({
+            "value": NaN,
+            "level": "--",
+            "color": "#00e59b"
+        });
+
+        const value = Math.max.apply(Math, values);
+        const level = aqiLevelIndex(value);
+        return ({
+            "value": value,
+            "level": aqiLevelName(level),
+            "color": aqiPalette(level)
+        });
     }
 
     function pressureValueText(value) {
-        return validNumber(value) ? Number(value).toLocaleString(Qt.locale(), "f", 1) : "--"
+        return validNumber(value) ? Number(value).toLocaleString(Qt.locale(), "f", 1) : "--";
     }
 
     function today() {
-        return modelCount(root.weatherSource.dailyForecast) > 0
-            ? root.weatherSource.dailyForecast.get(0) : ({})
+        return modelCount(root.weatherSource.dailyForecast) > 0 ? root.weatherSource.dailyForecast.get(0) : ({
+        });
     }
 
     function currentIsNight() {
-        const day = today()
-        const sunrise = day.sunrise || 0
-        const sunset = day.sunset || 0
+        const day = today();
+        const sunrise = day.sunrise || 0;
+        const sunset = day.sunset || 0;
         if (sunrise > 0 && sunset > 0) {
-            const now = Math.floor(root.currentEpoch)
-            return now < sunrise || now >= sunset
+            const now = Math.floor(root.currentEpoch);
+            return now < sunrise || now >= sunset;
         }
+        const current = root.weatherSource.current();
+        if (current && current.isDaylight !== undefined)
+            return !current.isDaylight;
 
-        const current = root.weatherSource.current()
-        if (current && current.isDaylight !== undefined) return !current.isDaylight
+        const nextHour = modelCount(root.weatherSource.hourlyForecast) > 0 ? root.weatherSource.hourlyForecast.get(0) : ({
+        });
+        if (nextHour && nextHour.isDaylight !== undefined)
+            return !nextHour.isDaylight;
 
-        const nextHour = modelCount(root.weatherSource.hourlyForecast) > 0
-            ? root.weatherSource.hourlyForecast.get(0) : ({})
-        if (nextHour && nextHour.isDaylight !== undefined) return !nextHour.isDaylight
+        const name = (root.weatherSource.currentIconName || "").toLowerCase();
+        if (name.indexOf("night") >= 0 || name.indexOf("_night") >= 0)
+            return true;
 
-        const name = (root.weatherSource.currentIconName || "").toLowerCase()
-        if (name.indexOf("night") >= 0 || name.indexOf("_night") >= 0) return true
-        if (name.indexOf("day") >= 0 || name.indexOf("_day") >= 0) return false
+        if (name.indexOf("day") >= 0 || name.indexOf("_day") >= 0)
+            return false;
 
-        return false
+        return false;
+    }
+
+    onForegroundChanged: {
+        if (root.foreground)
+            root.currentEpoch = Math.floor(Date.now() / 1000);
+
     }
 
     Timer {
@@ -273,25 +382,14 @@ Item {
         onTriggered: root.currentEpoch = Math.floor(Date.now() / 1000)
     }
 
-    onForegroundChanged: {
-        if (root.foreground)
-            root.currentEpoch = Math.floor(Date.now() / 1000);
-    }
-
     Rectangle {
         id: weatherPanel
+
         anchors.fill: parent
         radius: 30
         clip: true
         color: "transparent"
         layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: weatherPanel.width
-                height: weatherPanel.height
-                radius: weatherPanel.radius
-            }
-        }
 
         WeatherBackground {
             id: weatherBackground
@@ -309,6 +407,7 @@ Item {
 
         Rectangle {
             id: fixedHeader
+
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -353,10 +452,12 @@ Item {
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
+
                     }
 
                     ToolButton {
                         id: editButton
+
                         implicitWidth: 38
                         implicitHeight: 38
                         Layout.alignment: Qt.AlignVCenter
@@ -364,11 +465,7 @@ Item {
 
                         background: Rectangle {
                             radius: width / 2
-                            color: editButton.down
-                                   ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
-                                   : editButton.hovered
-                                     ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.10)
-                                     : "transparent"
+                            color: editButton.down ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18) : editButton.hovered ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1) : "transparent"
                         }
 
                         contentItem: Text {
@@ -379,10 +476,12 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
+
                     }
 
                     ToolButton {
                         id: refreshButton
+
                         implicitWidth: 38
                         implicitHeight: 38
                         Layout.alignment: Qt.AlignVCenter
@@ -392,11 +491,7 @@ Item {
 
                         background: Rectangle {
                             radius: width / 2
-                            color: refreshButton.down
-                                   ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
-                                   : refreshButton.hovered
-                                     ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.10)
-                                     : "transparent"
+                            color: refreshButton.down ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18) : refreshButton.hovered ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1) : "transparent"
                         }
 
                         contentItem: Text {
@@ -407,7 +502,9 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
+
                     }
+
                 }
 
                 RowLayout {
@@ -416,9 +513,7 @@ Item {
 
                     Text {
                         text: "schedule"
-                        color: root.weatherSource.status === "stale" || root.weatherSource.status === "error"
-                               ? root.headerErrorInk
-                               : root.headerInkMuted
+                        color: root.weatherSource.status === "stale" || root.weatherSource.status === "error" ? root.headerErrorInk : root.headerInkMuted
                         font.family: Fonts.materialSymbolsOutlined
                         font.pixelSize: 19
                         Layout.preferredWidth: 20
@@ -428,20 +523,22 @@ Item {
 
                     Text {
                         text: updatedText()
-                        color: root.weatherSource.status === "stale" || root.weatherSource.status === "error"
-                               ? root.headerErrorInk
-                               : root.headerInk
+                        color: root.weatherSource.status === "stale" || root.weatherSource.status === "error" ? root.headerErrorInk : root.headerInk
                         font.family: Fonts.mono
                         font.pixelSize: 12
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
+
                 }
+
             }
+
         }
 
         StyledFlickable {
             id: flick
+
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: fixedHeader.bottom
@@ -454,18 +551,13 @@ Item {
 
             Column {
                 id: contentColumn
+
                 width: flick.width
                 spacing: 14
 
                 Item {
                     width: parent.width
-                    height: Math.max(
-                        220,
-                        currentConditionsColumn.implicitHeight
-                            + Appearance.spacing.large,
-                        flick.height - 452 - 286
-                            - contentColumn.spacing * 2
-                    )
+                    height: Math.max(220, currentConditionsColumn.implicitHeight + Appearance.spacing.large, flick.height - 452 - 286 - contentColumn.spacing * 2)
 
                     Column {
                         id: currentConditionsColumn
@@ -488,12 +580,14 @@ Item {
 
                         Item {
                             id: currentVisual
+
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: tempText.implicitWidth + weatherHeroIcon.width - 18
                             height: Math.max(tempText.implicitHeight, weatherHeroIcon.height + 12)
 
                             Text {
                                 id: tempText
+
                                 anchors.left: parent.left
                                 anchors.bottom: parent.bottom
                                 text: fmtTempPlain(root.weatherSource.currentTemperatureC)
@@ -506,6 +600,7 @@ Item {
 
                             MeteoIcon {
                                 id: weatherHeroIcon
+
                                 width: 108
                                 height: 108
                                 anchors.right: parent.right
@@ -515,6 +610,7 @@ Item {
                                 night: root.currentIsNight()
                                 playing: root.presentationActive
                             }
+
                         }
 
                         Text {
@@ -529,19 +625,21 @@ Item {
 
                         Text {
                             width: parent.width
-                            text: qsTr("最高 ") + fmtTemp(today().temperatureMaxC)
-                                  + qsTr(" · 最低 ") + fmtTemp(today().temperatureMinC)
+                            text: qsTr("最高 ") + fmtTemp(today().temperatureMaxC) + qsTr(" · 最低 ") + fmtTemp(today().temperatureMinC)
                             color: Appearance.colors.colOnImage
                             font.family: Fonts.ui
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
                         }
+
                     }
+
                 }
 
                 DailyForecastTrendCard {
                     id: dailyForecastCard
+
                     width: parent.width
                     height: 452
                     sourceModel: root.weatherSource.dailyTrendForecast
@@ -557,11 +655,13 @@ Item {
 
                 RowLayout {
                     id: precipitationWindRow
+
                     width: parent.width
                     spacing: 10
 
                     WeatherRevealCard {
                         id: precipitationReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: precipitationWindRow.y
@@ -577,10 +677,12 @@ Item {
                             animationEnabled: true
                             animationActive: precipitationReveal.contentAnimationActive
                         }
+
                     }
 
                     WeatherRevealCard {
                         id: windReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: precipitationWindRow.y
@@ -598,16 +700,20 @@ Item {
                             animationEnabled: true
                             animationActive: windReveal.contentAnimationActive
                         }
+
                     }
+
                 }
 
                 RowLayout {
                     id: aqiHumidityRow
+
                     width: parent.width
                     spacing: 10
 
                     WeatherRevealCard {
                         id: aqiReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: aqiHumidityRow.y
@@ -624,10 +730,12 @@ Item {
                             animationEnabled: true
                             animationActive: aqiReveal.contentAnimationActive
                         }
+
                     }
 
                     WeatherRevealCard {
                         id: humidityReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: aqiHumidityRow.y
@@ -645,16 +753,20 @@ Item {
                             animationEnabled: true
                             animationActive: humidityReveal.contentAnimationActive
                         }
+
                     }
+
                 }
 
                 RowLayout {
                     id: uvVisibilityRow
+
                     width: parent.width
                     spacing: 10
 
                     WeatherRevealCard {
                         id: uvReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: uvVisibilityRow.y
@@ -671,10 +783,12 @@ Item {
                             animationEnabled: true
                             animationActive: uvReveal.contentAnimationActive
                         }
+
                     }
 
                     WeatherRevealCard {
                         id: visibilityReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: uvVisibilityRow.y
@@ -689,16 +803,20 @@ Item {
                             animationEnabled: true
                             animationActive: visibilityReveal.contentAnimationActive
                         }
+
                     }
+
                 }
 
                 RowLayout {
                     id: pressureSunRow
+
                     width: parent.width
                     spacing: 10
 
                     WeatherRevealCard {
                         id: pressureReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: pressureSunRow.y
@@ -715,10 +833,12 @@ Item {
                             animationEnabled: true
                             animationActive: pressureReveal.contentAnimationActive
                         }
+
                     }
 
                     WeatherRevealCard {
                         id: sunReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: pressureSunRow.y
@@ -738,16 +858,20 @@ Item {
                             animationEnabled: true
                             animationActive: sunReveal.contentAnimationActive
                         }
+
                     }
+
                 }
 
                 RowLayout {
                     id: moonRow
+
                     width: parent.width
                     spacing: 10
 
                     WeatherRevealCard {
                         id: moonReveal
+
                         Layout.preferredWidth: (parent.width - parent.spacing) / 2
                         Layout.preferredHeight: Layout.preferredWidth
                         contentTop: moonRow.y
@@ -768,15 +892,30 @@ Item {
                             animationEnabled: true
                             animationActive: moonReveal.contentAnimationActive
                         }
+
                     }
+
                 }
 
                 Item {
                     width: 1
                     height: 8
                 }
+
             }
+
         }
+
+        layer.effect: OpacityMask {
+
+            maskSource: Rectangle {
+                width: weatherPanel.width
+                height: weatherPanel.height
+                radius: weatherPanel.radius
+            }
+
+        }
+
     }
 
     // Keep the one-pixel outline outside the OpacityMask texture. Rendering it
@@ -787,21 +926,18 @@ Item {
         color: "transparent"
         radius: weatherPanel.radius
         border.width: 1 / root.effectiveDpr
-        border.color: Qt.rgba(
-            Appearance.colors.colOutlineVariant.r,
-            Appearance.colors.colOutlineVariant.g,
-            Appearance.colors.colOutlineVariant.b, 0.34)
+        border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.34)
     }
 
     component SectionCard: Rectangle {
         id: card
+
         property string title: ""
         property string icon: ""
         default property alias content: contentLayer.data
 
         radius: 26
-        color: BlurService.opaqueBackgroundColor(
-            Appearance.m3colors.m3surfaceContainer)
+        color: BlurService.opaqueBackgroundColor(Appearance.m3colors.m3surfaceContainer)
         border.width: 1
         border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.55)
 
@@ -828,13 +964,16 @@ Item {
                 font.pixelSize: 15
                 anchors.verticalCenter: parent.verticalCenter
             }
+
         }
 
         Item {
             id: contentLayer
+
             anchors.fill: parent
             anchors.margins: 14
         }
+
     }
 
 }

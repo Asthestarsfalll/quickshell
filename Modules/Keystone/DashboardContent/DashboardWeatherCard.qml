@@ -11,91 +11,92 @@ Rectangle {
 
     property bool active: false
     property real currentEpoch: Math.floor(Date.now() / 1000)
-    property var today: ({})
-
+    property var today: ({
+    })
     readonly property bool hasWeather: WeatherPlugin.hasValidData
     readonly property bool night: currentIsNight()
 
     function validNumber(value) {
-        return value !== undefined && value !== null && !isNaN(value)
+        return value !== undefined && value !== null && !isNaN(value);
     }
 
     function fmtTemp(value) {
-        return hasWeather && validNumber(value) ? Math.round(value) + "°" : "--"
+        return hasWeather && validNumber(value) ? Math.round(UiPreferences.weatherTemperature(value)) + "°" : "--";
     }
 
     function fmtTempPlain(value) {
-        return hasWeather && validNumber(value) ? Math.round(value).toString() : "--"
+        return hasWeather && validNumber(value) ? Math.round(UiPreferences.weatherTemperature(value)).toString() : "--";
     }
 
     function currentIsNight() {
-        const sunrise = Number(today.sunrise || 0)
-        const sunset = Number(today.sunset || 0)
+        const sunrise = Number(today.sunrise || 0);
+        const sunset = Number(today.sunset || 0);
         if (sunrise > 0 && sunset > 0)
-            return currentEpoch < sunrise || currentEpoch >= sunset
+            return currentEpoch < sunrise || currentEpoch >= sunset;
 
-        const current = WeatherPlugin.current()
+        const current = WeatherPlugin.current();
         if (current && current.isDaylight !== undefined)
-            return !current.isDaylight
+            return !current.isDaylight;
 
-        const hourly = WeatherPlugin.hourlyForecast.count() > 0
-            ? WeatherPlugin.hourlyForecast.get(0) : ({})
+        const hourly = WeatherPlugin.hourlyForecast.count() > 0 ? WeatherPlugin.hourlyForecast.get(0) : ({
+        });
         if (hourly.isDaylight !== undefined)
-            return !hourly.isDaylight
+            return !hourly.isDaylight;
 
-        const iconName = String(WeatherPlugin.currentIconName || "").toLowerCase()
-        return iconName.indexOf("night") >= 0 || iconName.indexOf("_night") >= 0
+        const iconName = String(WeatherPlugin.currentIconName || "").toLowerCase();
+        return iconName.indexOf("night") >= 0 || iconName.indexOf("_night") >= 0;
     }
 
     function conditionText() {
         if (hasWeather)
-            return WeatherPlugin.currentWeatherText || qsTr("未知")
+            return WeatherPlugin.currentWeatherText || qsTr("未知");
+
         if (WeatherPlugin.loading)
-            return qsTr("正在获取天气")
-        return qsTr("天气暂不可用")
+            return qsTr("正在获取天气");
+
+        return qsTr("天气暂不可用");
     }
 
     function updatedText() {
         if (WeatherPlugin.loading)
-            return qsTr("正在刷新")
+            return qsTr("正在刷新");
+
         if (WeatherPlugin.status === "stale")
-            return qsTr("数据较旧")
+            return qsTr("数据较旧");
+
         if (WeatherPlugin.status === "error")
-            return qsTr("更新失败")
+            return qsTr("更新失败");
+
         if (WeatherPlugin.lastUpdated) {
-            const updated = new Date(WeatherPlugin.lastUpdated)
-            return Qt.formatDateTime(updated, "hh:mm")
+            const updated = new Date(WeatherPlugin.lastUpdated);
+            return UiPreferences.shortTime(updated);
         }
-        return qsTr("待更新")
+        return qsTr("待更新");
     }
 
     function syncWeatherData() {
-        today = WeatherPlugin.dailyForecast.count() > 0
-            ? WeatherPlugin.dailyForecast.get(0) : ({})
-        currentEpoch = Math.floor(Date.now() / 1000)
+        today = WeatherPlugin.dailyForecast.count() > 0 ? WeatherPlugin.dailyForecast.get(0) : ({
+        });
+        currentEpoch = Math.floor(Date.now() / 1000);
     }
 
     radius: 20
     color: "transparent"
     clip: true
     layer.enabled: true
-    layer.effect: OpacityMask {
-        maskSource: Rectangle {
-            width: root.width
-            height: root.height
-            radius: root.radius
-        }
-    }
-
     Component.onCompleted: {
-        syncWeatherData()
+        syncWeatherData();
         if (!WeatherPlugin.hasValidData && !WeatherPlugin.loading)
-            WeatherPlugin.refresh()
+            WeatherPlugin.refresh();
+
     }
 
     Connections {
+        function onDataChanged() {
+            root.syncWeatherData();
+        }
+
         target: WeatherPlugin
-        function onDataChanged() { root.syncWeatherData(); }
     }
 
     Timer {
@@ -131,17 +132,13 @@ Rectangle {
             text: "location_on"
             iconSize: 18
             fill: 1
-            color: root.night
-                ? Qt.rgba(0.87, 0.91, 0.98, 0.78)
-                : Qt.rgba(0.20, 0.28, 0.38, 0.66)
+            color: root.night ? Qt.rgba(0.87, 0.91, 0.98, 0.78) : Qt.rgba(0.2, 0.28, 0.38, 0.66)
         }
 
         Text {
             Layout.fillWidth: true
             text: WeatherPlugin.locationName || qsTr("天气")
-            color: root.night
-                ? Qt.rgba(0.96, 0.98, 1.0, 0.96)
-                : Qt.rgba(0.09, 0.14, 0.20, 0.90)
+            color: root.night ? Qt.rgba(0.96, 0.98, 1, 0.96) : Qt.rgba(0.09, 0.14, 0.2, 0.9)
             font.family: Fonts.ui
             font.pixelSize: 15
             font.bold: true
@@ -151,12 +148,11 @@ Rectangle {
 
         Text {
             text: root.updatedText()
-            color: root.night
-                ? Qt.rgba(0.87, 0.91, 0.98, 0.74)
-                : Qt.rgba(0.20, 0.28, 0.38, 0.62)
+            color: root.night ? Qt.rgba(0.87, 0.91, 0.98, 0.74) : Qt.rgba(0.2, 0.28, 0.38, 0.62)
             font.family: Fonts.numeric
             font.pixelSize: 10
         }
+
     }
 
     Column {
@@ -209,6 +205,7 @@ Rectangle {
                 animated: true
                 playing: root.active
             }
+
         }
 
         Text {
@@ -223,13 +220,24 @@ Rectangle {
 
         Text {
             width: parent.width
-            text: qsTr("最高 ") + root.fmtTemp(root.today.temperatureMaxC)
-                + qsTr(" · 最低 ") + root.fmtTemp(root.today.temperatureMinC)
+            text: qsTr("最高 ") + root.fmtTemp(root.today.temperatureMaxC) + qsTr(" · 最低 ") + root.fmtTemp(root.today.temperatureMinC)
             color: Appearance.colors.colOnImage
             font.family: Fonts.ui
             font.pixelSize: 16
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
         }
+
     }
+
+    layer.effect: OpacityMask {
+
+        maskSource: Rectangle {
+            width: root.width
+            height: root.height
+            radius: root.radius
+        }
+
+    }
+
 }

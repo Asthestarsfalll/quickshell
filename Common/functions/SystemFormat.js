@@ -20,8 +20,10 @@ function percent(value, decimals) {
     return number(value, decimals === undefined ? 1 : decimals, "%");
 }
 
-function temperature(value) {
-    return number(value, 0, " °C");
+function temperature(value, fahrenheit) {
+    const converted = fahrenheit && isNumber(value)
+        ? value * 9 / 5 + 32 : value;
+    return number(converted, 0, fahrenheit ? " °F" : " °C");
 }
 
 function watts(value) {

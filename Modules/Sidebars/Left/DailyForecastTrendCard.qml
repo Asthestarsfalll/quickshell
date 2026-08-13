@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Common
+import qs.Services
 import qs.Widgets.common
 import qs.Widgets.weather
 
@@ -14,70 +15,107 @@ Rectangle {
     property int currentTab: 0
     property bool foreground: false
 
+    function modelCount() {
+        if (!sourceModel)
+            return 0;
+
+        const count = typeof sourceModel.count === "function" ? sourceModel.count() : Number(sourceModel.count || 0);
+        return Math.min(maxItems, count);
+    }
+
+    function itemAt(index) {
+        return sourceModel && sourceModel.get ? sourceModel.get(index) : ({
+        });
+    }
+
+    function valueAt(map, key, fallback) {
+        const v = map ? map[key] : undefined;
+        return (v === undefined || v === null || isNaN(v)) ? fallback : Number(v);
+    }
+
+    function fmtTemp(value) {
+        return value !== undefined && value !== null && !isNaN(value) ? Math.round(UiPreferences.weatherTemperature(value)) + "°" : "--";
+    }
+
+    function fmtPercent(value) {
+        return value !== undefined && value !== null && !isNaN(value) ? Math.round(value) + "%" : "--";
+    }
+
+    function applyInitialPosition() {
+        if (trendFlick.initialPositionApplied)
+            return ;
+
+        const count = root.modelCount();
+        if (count < 2) {
+            trendFlick.contentX = 0;
+            trendFlick.initialPositionApplied = true;
+            return ;
+        }
+        const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width);
+        if (maxX <= 0) {
+            trendFlick.contentX = 0;
+            trendFlick.initialPositionApplied = true;
+            return ;
+        }
+        trendFlick.contentX = Math.min(root.itemWidth, maxX);
+        trendFlick.initialPositionApplied = true;
+    }
+
+    function dayLabel(index, epoch) {
+        if (index === 0)
+            return qsTr("昨天");
+
+        if (index === 1)
+            return qsTr("今天");
+
+        if (index === 2)
+            return qsTr("明天");
+
+        if (!epoch)
+            return "--";
+
+        const week = [qsTr("周日"), qsTr("周一"), qsTr("周二"), qsTr("周三"), qsTr("周四"), qsTr("周五"), qsTr("周六")];
+        return week[new Date(epoch * 1000).getDay()];
+    }
+
+    function dateLabel(epoch) {
+        return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "M/d") : "--";
+    }
+
     radius: 26
     color: Appearance.colors.colWeatherCardSurface
     border.width: 1
     border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.42)
     clip: true
-
-    function modelCount() {
-        if (!sourceModel)
-            return 0
-        const count = typeof sourceModel.count === "function"
-            ? sourceModel.count() : Number(sourceModel.count || 0)
-        return Math.min(maxItems, count)
+    onSourceModelChanged: {
+        trendFlick.initialPositionApplied = false;
+        initialPositionTimer.restart();
+        trendCanvas.requestPaint();
     }
+    onCurrentTabChanged: {
+        if (root.currentTab === 0)
+            trendCanvas.requestPaint();
 
-    function itemAt(index) {
-        return sourceModel && sourceModel.get ? sourceModel.get(index) : ({})
     }
+    onForegroundChanged: {
+        if (root.foreground)
+            trendCanvas.requestPaint();
 
-    function valueAt(map, key, fallback) {
-        const v = map ? map[key] : undefined
-        return (v === undefined || v === null || isNaN(v)) ? fallback : Number(v)
     }
+    onWidthChanged: trendCanvas.requestPaint()
+    onHeightChanged: trendCanvas.requestPaint()
 
-    function fmtTemp(value) {
-        return value !== undefined && value !== null && !isNaN(value) ? Math.round(value) + "°" : "--"
-    }
-
-    function fmtPercent(value) {
-        return value !== undefined && value !== null && !isNaN(value) ? Math.round(value) + "%" : "--"
-    }
-
-    function applyInitialPosition() {
-        if (trendFlick.initialPositionApplied) return
-        const count = root.modelCount()
-        if (count < 2) {
-            trendFlick.contentX = 0
-            trendFlick.initialPositionApplied = true
-            return
+    Connections {
+        function onWeatherTemperatureUnitChanged() {
+            trendCanvas.requestPaint();
         }
-        const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width)
-        if (maxX <= 0) {
-            trendFlick.contentX = 0
-            trendFlick.initialPositionApplied = true
-            return
-        }
-        trendFlick.contentX = Math.min(root.itemWidth, maxX)
-        trendFlick.initialPositionApplied = true
-    }
 
-    function dayLabel(index, epoch) {
-        if (index === 0) return qsTr("昨天")
-        if (index === 1) return qsTr("今天")
-        if (index === 2) return qsTr("明天")
-        if (!epoch) return "--"
-        const week = [qsTr("周日"), qsTr("周一"), qsTr("周二"), qsTr("周三"), qsTr("周四"), qsTr("周五"), qsTr("周六")]
-        return week[new Date(epoch * 1000).getDay()]
-    }
-
-    function dateLabel(epoch) {
-        return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "M/d") : "--"
+        target: UiPreferences
     }
 
     Timer {
         id: initialPositionTimer
+
         interval: 0
         repeat: false
         onTriggered: applyInitialPosition()
@@ -117,7 +155,10 @@ Rectangle {
                     Layout.alignment: Qt.AlignVCenter
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
+
             }
 
             RowLayout {
@@ -126,15 +167,24 @@ Rectangle {
 
                 StyledButtonGroup {
                     currentValue: root.currentTab
-                    model: [
-                        ({ "value": 0, "label": qsTr("天气情况") }),
-                        ({ "value": 1, "label": qsTr("空气质量") }),
-                        ({ "value": 2, "label": qsTr("风况") })
-                    ]
-                    onValueSelected: value => root.currentTab = value
+                    model: [({
+                        "value": 0,
+                        "label": qsTr("天气情况")
+                    }), ({
+                        "value": 1,
+                        "label": qsTr("空气质量")
+                    }), ({
+                        "value": 2,
+                        "label": qsTr("风况")
+                    })]
+                    onValueSelected: (value) => {
+                        return root.currentTab = value;
+                    }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 Rectangle {
                     Layout.preferredWidth: 36
@@ -142,8 +192,6 @@ Rectangle {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 18
                     color: moreMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
-
-                    Behavior on color { ColorAnimation { duration: 150 } }
 
                     Text {
                         anchors.centerIn: parent
@@ -155,12 +203,23 @@ Rectangle {
 
                     MouseArea {
                         id: moreMouse
+
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: console.log("Open weather forecast menu")
                     }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+
+                    }
+
                 }
+
             }
+
         }
 
         Item {
@@ -169,6 +228,8 @@ Rectangle {
 
             StyledFlickable {
                 id: trendFlick
+
+                property bool initialPositionApplied: false
 
                 anchors.fill: parent
                 clip: true
@@ -180,21 +241,18 @@ Rectangle {
                 contentWidth: Math.max(width, root.modelCount() * root.itemWidth)
                 contentHeight: height
                 visible: root.currentTab === 0
-                property bool initialPositionApplied: false
-
                 onContentXChanged: trendCanvas.requestPaint()
-
                 Component.onCompleted: initialPositionTimer.restart()
                 onContentWidthChanged: initialPositionTimer.restart()
                 onWidthChanged: initialPositionTimer.restart()
                 onVisibleChanged: {
-                    if (visible) initialPositionTimer.restart()
+                    if (visible)
+                        initialPositionTimer.restart();
+
                 }
 
                 Item {
                     id: trendContent
-                    width: trendFlick.contentWidth
-                    height: trendFlick.height
 
                     property real columnWidth: root.itemWidth
                     property real topTextY: 8
@@ -209,150 +267,145 @@ Rectangle {
                     property real highTempTextY: 102
                     property real lowTempTextY: nightIconY - 30
 
+                    width: trendFlick.contentWidth
+                    height: trendFlick.height
+
                     Canvas {
                         id: trendCanvas
-                        anchors.fill: parent
-                        antialiasing: true
 
-                        property color primaryColor:
-                            Appearance.colors.colPrimary
-                        property color secondaryColor:
-                            Appearance.colors.colSecondary
+                        property color primaryColor: Appearance.colors.colPrimary
+                        property color secondaryColor: Appearance.colors.colSecondary
                         property real chartTop: trendContent.chartTopInset
                         property real chartBottom: trendContent.chartBottomInset
 
-                        onPrimaryColorChanged: requestPaint()
-                        onSecondaryColorChanged: requestPaint()
-
                         function pointX(index) {
-                            return root.itemWidth * index + root.itemWidth / 2
+                            return root.itemWidth * index + root.itemWidth / 2;
                         }
 
                         function yAt(value, minValue, maxValue) {
-                            return chartBottom - (value - minValue) / (maxValue - minValue) * (chartBottom - chartTop)
-                        }
-
-                        onPaint: {
-                            const ctx = getContext("2d")
-                            ctx.clearRect(0, 0, width, height)
-
-                            const count = root.modelCount()
-                            if (count < 2) return
-
-                            let dayValues = []
-                            let nightValues = []
-                            let precipitationValues = []
-                            let minTemp = 999
-                            let maxTemp = -999
-
-                            for (let i = 0; i < count; ++i) {
-                                const item = root.itemAt(i)
-                                const day = item.day || ({})
-                                const night = item.night || ({})
-                                const dayTemp = root.valueAt(day, "temperatureC", root.valueAt(item, "temperatureMaxC", NaN))
-                                const nightTemp = root.valueAt(night, "temperatureC", root.valueAt(item, "temperatureMinC", NaN))
-                                const pop = Math.max(
-                                    root.valueAt(day, "precipitationProbability", 0),
-                                    root.valueAt(night, "precipitationProbability", 0)
-                                )
-
-                                dayValues.push(dayTemp)
-                                nightValues.push(nightTemp)
-                                precipitationValues.push(pop)
-                                if (!isNaN(dayTemp)) {
-                                    minTemp = Math.min(minTemp, dayTemp)
-                                    maxTemp = Math.max(maxTemp, dayTemp)
-                                }
-                                if (!isNaN(nightTemp)) {
-                                    minTemp = Math.min(minTemp, nightTemp)
-                                    maxTemp = Math.max(maxTemp, nightTemp)
-                                }
-                            }
-
-                            if (maxTemp < minTemp) return
-                            if (Math.abs(maxTemp - minTemp) < 0.1) {
-                                maxTemp += 1
-                                minTemp -= 1
-                            }
-
-                            ctx.beginPath()
-                            for (let f = 0; f < count; ++f) {
-                                const xFill = pointX(f)
-                                const yFill = yAt(dayValues[f], minTemp, maxTemp)
-                                if (f === 0) ctx.moveTo(xFill, yFill)
-                                else ctx.lineTo(xFill, yFill)
-                            }
-                            for (let r = count - 1; r >= 0; --r) {
-                                ctx.lineTo(pointX(r), yAt(nightValues[r], minTemp, maxTemp))
-                            }
-                            ctx.closePath()
-                            const fillGradient = ctx.createLinearGradient(0, chartTop, 0, chartBottom)
-                            fillGradient.addColorStop(0, "rgba(" + Math.round(primaryColor.r * 255) + "," + Math.round(primaryColor.g * 255) + "," + Math.round(primaryColor.b * 255) + ",0.12)")
-                            fillGradient.addColorStop(1, "rgba(" + Math.round(primaryColor.r * 255) + "," + Math.round(primaryColor.g * 255) + "," + Math.round(primaryColor.b * 255) + ",0.02)")
-                            ctx.fillStyle = fillGradient
-                            ctx.fill()
-
-                            for (let p = 0; p < count; ++p) {
-                                const popValue = precipitationValues[p]
-                                if (popValue <= 0) continue
-                                const x = pointX(p)
-                                const fadedBar = p === 0
-                                const barTop = chartBottom - (chartBottom - chartTop) * Math.min(100, popValue) / 100
-                                ctx.fillStyle = fadedBar
-                                    ? Qt.rgba(secondaryColor.r, secondaryColor.g, secondaryColor.b, 0.10)
-                                    : Qt.rgba(secondaryColor.r, secondaryColor.g, secondaryColor.b, 0.18)
-                                ctx.beginPath()
-                                roundedRect(ctx, x - 5, barTop, 10, chartBottom - barTop, 5)
-                                ctx.fill()
-                                ctx.fillStyle = fadedBar
-                                    ? Qt.rgba(primaryColor.r, primaryColor.g, primaryColor.b, 0.42)
-                                    : primaryColor
-                                ctx.font = "bold 11px " + Fonts.cssFamily(Fonts.numeric)
-                                ctx.textAlign = "center"
-                                ctx.fillText(root.fmtPercent(popValue), x, trendContent.rainLabelY)
-                            }
-
-                            drawSeries(ctx, dayValues, minTemp, maxTemp, primaryColor, 4)
-                            drawSeries(ctx, nightValues, minTemp, maxTemp, secondaryColor, 4)
+                            return chartBottom - (value - minValue) / (maxValue - minValue) * (chartBottom - chartTop);
                         }
 
                         function drawSeries(ctx, values, minValue, maxValue, color, lineWidth) {
                             for (let i = 1; i < values.length; ++i) {
-                                const prevX = pointX(i - 1)
-                                const prevY = yAt(values[i - 1], minValue, maxValue)
-                                const x = pointX(i)
-                                const y = yAt(values[i], minValue, maxValue)
-                                const faded = i - 1 === 0 || i === 0
+                                const prevX = pointX(i - 1);
+                                const prevY = yAt(values[i - 1], minValue, maxValue);
+                                const x = pointX(i);
+                                const y = yAt(values[i], minValue, maxValue);
+                                const faded = i - 1 === 0 || i === 0;
+                                ctx.save();
+                                if (ctx.setLineDash && i === 1)
+                                    ctx.setLineDash([4, 3]);
 
-                                ctx.save()
-                                if (ctx.setLineDash && i === 1) ctx.setLineDash([4, 3])
-                                ctx.strokeStyle = withAlpha(color, faded ? 0.26 : 1)
-                                ctx.lineWidth = lineWidth
-                                ctx.lineJoin = "round"
-                                ctx.lineCap = "round"
-                                ctx.beginPath()
-                                ctx.moveTo(prevX, prevY)
-                                ctx.lineTo(x, y)
-                                ctx.stroke()
-                                ctx.restore()
+                                ctx.strokeStyle = withAlpha(color, faded ? 0.26 : 1);
+                                ctx.lineWidth = lineWidth;
+                                ctx.lineJoin = "round";
+                                ctx.lineCap = "round";
+                                ctx.beginPath();
+                                ctx.moveTo(prevX, prevY);
+                                ctx.lineTo(x, y);
+                                ctx.stroke();
+                                ctx.restore();
                             }
-
                         }
 
                         function withAlpha(color, factor) {
-                            return Qt.rgba(color.r, color.g, color.b, color.a * factor)
+                            return Qt.rgba(color.r, color.g, color.b, color.a * factor);
                         }
 
                         function roundedRect(ctx, x, y, w, h, r) {
-                            ctx.moveTo(x + r, y)
-                            ctx.lineTo(x + w - r, y)
-                            ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-                            ctx.lineTo(x + w, y + h - r)
-                            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-                            ctx.lineTo(x + r, y + h)
-                            ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-                            ctx.lineTo(x, y + r)
-                            ctx.quadraticCurveTo(x, y, x + r, y)
+                            ctx.moveTo(x + r, y);
+                            ctx.lineTo(x + w - r, y);
+                            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                            ctx.lineTo(x + w, y + h - r);
+                            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                            ctx.lineTo(x + r, y + h);
+                            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                            ctx.lineTo(x, y + r);
+                            ctx.quadraticCurveTo(x, y, x + r, y);
+                        }
+
+                        anchors.fill: parent
+                        antialiasing: true
+                        onPrimaryColorChanged: requestPaint()
+                        onSecondaryColorChanged: requestPaint()
+                        onPaint: {
+                            const ctx = getContext("2d");
+                            ctx.clearRect(0, 0, width, height);
+                            const count = root.modelCount();
+                            if (count < 2)
+                                return ;
+
+                            let dayValues = [];
+                            let nightValues = [];
+                            let precipitationValues = [];
+                            let minTemp = 999;
+                            let maxTemp = -999;
+                            for (let i = 0; i < count; ++i) {
+                                const item = root.itemAt(i);
+                                const day = item.day || ({
+                                });
+                                const night = item.night || ({
+                                });
+                                const dayTemp = root.valueAt(day, "temperatureC", root.valueAt(item, "temperatureMaxC", NaN));
+                                const nightTemp = root.valueAt(night, "temperatureC", root.valueAt(item, "temperatureMinC", NaN));
+                                const pop = Math.max(root.valueAt(day, "precipitationProbability", 0), root.valueAt(night, "precipitationProbability", 0));
+                                dayValues.push(dayTemp);
+                                nightValues.push(nightTemp);
+                                precipitationValues.push(pop);
+                                if (!isNaN(dayTemp)) {
+                                    minTemp = Math.min(minTemp, dayTemp);
+                                    maxTemp = Math.max(maxTemp, dayTemp);
+                                }
+                                if (!isNaN(nightTemp)) {
+                                    minTemp = Math.min(minTemp, nightTemp);
+                                    maxTemp = Math.max(maxTemp, nightTemp);
+                                }
+                            }
+                            if (maxTemp < minTemp)
+                                return ;
+
+                            if (Math.abs(maxTemp - minTemp) < 0.1) {
+                                maxTemp += 1;
+                                minTemp -= 1;
+                            }
+                            ctx.beginPath();
+                            for (let f = 0; f < count; ++f) {
+                                const xFill = pointX(f);
+                                const yFill = yAt(dayValues[f], minTemp, maxTemp);
+                                if (f === 0)
+                                    ctx.moveTo(xFill, yFill);
+                                else
+                                    ctx.lineTo(xFill, yFill);
+                            }
+                            for (let r = count - 1; r >= 0; --r) {
+                                ctx.lineTo(pointX(r), yAt(nightValues[r], minTemp, maxTemp));
+                            }
+                            ctx.closePath();
+                            const fillGradient = ctx.createLinearGradient(0, chartTop, 0, chartBottom);
+                            fillGradient.addColorStop(0, "rgba(" + Math.round(primaryColor.r * 255) + "," + Math.round(primaryColor.g * 255) + "," + Math.round(primaryColor.b * 255) + ",0.12)");
+                            fillGradient.addColorStop(1, "rgba(" + Math.round(primaryColor.r * 255) + "," + Math.round(primaryColor.g * 255) + "," + Math.round(primaryColor.b * 255) + ",0.02)");
+                            ctx.fillStyle = fillGradient;
+                            ctx.fill();
+                            for (let p = 0; p < count; ++p) {
+                                const popValue = precipitationValues[p];
+                                if (popValue <= 0)
+                                    continue;
+
+                                const x = pointX(p);
+                                const fadedBar = p === 0;
+                                const barTop = chartBottom - (chartBottom - chartTop) * Math.min(100, popValue) / 100;
+                                ctx.fillStyle = fadedBar ? Qt.rgba(secondaryColor.r, secondaryColor.g, secondaryColor.b, 0.1) : Qt.rgba(secondaryColor.r, secondaryColor.g, secondaryColor.b, 0.18);
+                                ctx.beginPath();
+                                roundedRect(ctx, x - 5, barTop, 10, chartBottom - barTop, 5);
+                                ctx.fill();
+                                ctx.fillStyle = fadedBar ? Qt.rgba(primaryColor.r, primaryColor.g, primaryColor.b, 0.42) : primaryColor;
+                                ctx.font = "bold 11px " + Fonts.cssFamily(Fonts.numeric);
+                                ctx.textAlign = "center";
+                                ctx.fillText(root.fmtPercent(popValue), x, trendContent.rainLabelY);
+                            }
+                            drawSeries(ctx, dayValues, minTemp, maxTemp, primaryColor, 4);
+                            drawSeries(ctx, nightValues, minTemp, maxTemp, secondaryColor, 4);
                         }
                     }
 
@@ -360,14 +413,16 @@ Rectangle {
                         model: root.modelCount()
 
                         delegate: Item {
+                            property var dayItem: root.itemAt(index)
+                            property var dayPart: dayItem.day || ({
+                            })
+                            property var nightPart: dayItem.night || ({
+                            })
+
                             x: root.itemWidth * index
                             width: root.itemWidth
                             height: trendContent.height
                             opacity: index === 0 ? 0.45 : 1
-
-                            property var dayItem: root.itemAt(index)
-                            property var dayPart: dayItem.day || ({})
-                            property var nightPart: dayItem.night || ({})
 
                             Rectangle {
                                 anchors.fill: parent
@@ -401,6 +456,7 @@ Rectangle {
                                     font.pixelSize: 13
                                     horizontalAlignment: Text.AlignHCenter
                                 }
+
                             }
 
                             MeteoIcon {
@@ -448,11 +504,16 @@ Rectangle {
                                 style: "fill"
                                 animated: false
                             }
+
                         }
+
                     }
 
                     MouseArea {
                         id: dragArea
+
+                        property real lastMouseX: 0
+
                         x: trendFlick.contentX
                         y: 0
                         z: 20
@@ -461,22 +522,22 @@ Rectangle {
                         acceptedButtons: Qt.LeftButton
                         preventStealing: true
                         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-
-                        property real lastMouseX: 0
-
                         onPressed: function(mouse) {
-                            lastMouseX = mouse.x
+                            lastMouseX = mouse.x;
                         }
-
                         onPositionChanged: function(mouse) {
-                            if (!pressed) return
-                            const dx = mouse.x - lastMouseX
-                            const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width)
-                            trendFlick.contentX = Math.max(0, Math.min(maxX, trendFlick.contentX - dx))
-                            lastMouseX = mouse.x
+                            if (!pressed)
+                                return ;
+
+                            const dx = mouse.x - lastMouseX;
+                            const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width);
+                            trendFlick.contentX = Math.max(0, Math.min(maxX, trendFlick.contentX - dx));
+                            lastMouseX = mouse.x;
                         }
                     }
+
                 }
+
             }
 
             Item {
@@ -487,6 +548,7 @@ Rectangle {
                     anchors.fill: parent
                     sourceModel: root.sourceModel
                 }
+
             }
 
             Item {
@@ -497,45 +559,44 @@ Rectangle {
                     anchors.fill: parent
                     sourceModel: root.sourceModel
                 }
+
             }
+
         }
+
     }
 
     Connections {
+        function onModelReset() {
+            trendFlick.initialPositionApplied = false;
+            initialPositionTimer.restart();
+            trendCanvas.requestPaint();
+        }
+
+        function onDataChanged() {
+            trendCanvas.requestPaint();
+        }
+
+        function onRowsInserted() {
+            trendFlick.initialPositionApplied = false;
+            initialPositionTimer.restart();
+            trendCanvas.requestPaint();
+        }
+
+        function onRowsRemoved() {
+            trendCanvas.requestPaint();
+        }
+
         target: root.sourceModel
         ignoreUnknownSignals: true
-        function onModelReset() {
-            trendFlick.initialPositionApplied = false
-            initialPositionTimer.restart()
-            trendCanvas.requestPaint()
-        }
-        function onDataChanged() { trendCanvas.requestPaint() }
-        function onRowsInserted() {
-            trendFlick.initialPositionApplied = false
-            initialPositionTimer.restart()
-            trendCanvas.requestPaint()
-        }
-        function onRowsRemoved() { trendCanvas.requestPaint() }
     }
 
     Connections {
+        function onNumericChanged() {
+            trendCanvas.requestPaint();
+        }
+
         target: Fonts
-        function onNumericChanged() { trendCanvas.requestPaint() }
     }
 
-    onSourceModelChanged: {
-        trendFlick.initialPositionApplied = false
-        initialPositionTimer.restart()
-        trendCanvas.requestPaint()
-    }
-    onCurrentTabChanged: {
-        if (root.currentTab === 0)
-            trendCanvas.requestPaint()
-    }
-    onForegroundChanged: {
-        if (root.foreground)
-            trendCanvas.requestPaint()
-    }
-    onWidthChanged: trendCanvas.requestPaint()
-    onHeightChanged: trendCanvas.requestPaint()
 }

@@ -11,9 +11,10 @@ Item {
 
     property var context: null
     property real screenHeight: height
-
     readonly property real centerScale: Math.min(1, root.screenHeight / 1440)
     readonly property real centerWidth: Sizes.lockCenterWidth * centerScale
+    readonly property int clockHour24: clockTimer.now.getHours()
+    readonly property int clockHour: UiPreferences.useTwelveHourClock ? ((clockHour24 + 11) % 12) + 1 : clockHour24
 
     function forceAuthFocus() {
         authCard.forceActiveFocus();
@@ -46,6 +47,7 @@ Item {
                 radius: Sizes.lockCardRadiusSmall
                 bottomLeftRadius: Sizes.lockCardRadiusLarge
             }
+
         }
 
         ColumnLayout {
@@ -60,7 +62,7 @@ Item {
 
                 Text {
                     Layout.alignment: Qt.AlignVCenter
-                    text: Qt.formatTime(clockTimer.now, "hh")
+                    text: String(root.clockHour).padStart(2, "0")
                     color: Appearance.colors.colSecondary
                     font.family: Fonts.numeric
                     font.pixelSize: Math.floor(Sizes.lockTimeFontSize * root.centerScale)
@@ -88,12 +90,14 @@ Item {
                 Text {
                     Layout.leftMargin: Math.round(7 * 4 / 3)
                     Layout.alignment: Qt.AlignVCenter
+                    visible: UiPreferences.useTwelveHourClock
                     text: Qt.formatTime(clockTimer.now, "AP")
                     color: Appearance.colors.colPrimary
                     font.family: Fonts.numeric
                     font.pixelSize: Math.floor(Sizes.lockTimeSuffixFontSize * root.centerScale)
                     font.bold: true
                 }
+
             }
 
             Text {
@@ -120,6 +124,7 @@ Item {
 
                 Rectangle {
                     id: avatarMask
+
                     anchors.fill: parent
                     radius: width / 2
                     visible: false
@@ -128,6 +133,7 @@ Item {
 
                 Image {
                     id: fallbackAvatarImg
+
                     anchors.fill: parent
                     source: Paths.fileUrl(Paths.defaultAvatar)
                     sourceSize: Qt.size(width, height)
@@ -138,6 +144,7 @@ Item {
 
                 Image {
                     id: avatarImg
+
                     anchors.fill: parent
                     source: AvatarService.avatarUrl
                     sourceSize: Qt.size(width, height)
@@ -160,18 +167,20 @@ Item {
                     font.family: Fonts.materialSymbolsRounded
                     font.pixelSize: parent.width * 0.45
                 }
+
             }
 
             AuthCard {
                 id: authCard
+
                 Layout.preferredWidth: root.centerWidth * 0.8
                 Layout.preferredHeight: Sizes.lockAuthHeight
                 Layout.alignment: Qt.AlignHCenter
                 context: root.context
-
                 onRequestUnlock: {
                     if (root.context)
                         root.context.tryUnlock();
+
                 }
             }
 
@@ -180,32 +189,11 @@ Item {
                 Layout.topMargin: -Math.round(20 * 4 / 3)
                 implicitHeight: Math.max(errorMessage.implicitHeight, stateMessage.implicitHeight, 18)
 
-                Behavior on implicitHeight {
-                    NumberAnimation {
-                        duration: Appearance.animation.standard.duration
-                        easing.type: Appearance.animation.standard.type
-                        easing.bezierCurve: Appearance.animation.standard.bezierCurve
-                    }
-                }
-
                 Text {
                     id: errorMessage
 
-                    property string msg: root.context && root.context.showFailure
-                        ? qsTr("密码错误，请重试。") : ""
+                    property string msg: root.context && root.context.showFailure ? qsTr("密码错误，请重试。") : ""
                     property string pendingText: ""
-
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    text: ""
-                    opacity: 0
-                    scale: 0.7
-                    color: Appearance.colors.colError
-                    font.family: Fonts.numeric
-                    font.pixelSize: 15
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    lineHeight: 1.2
 
                     function showText(newText) {
                         if (newText === text && opacity > 0) {
@@ -214,18 +202,15 @@ Item {
                                 errorAppearAnim.restart();
                             else
                                 errorFlashAnim.restart();
-                            return;
+                            return ;
                         }
-
                         errorExitAnim.stop();
                         errorFlashAnim.stop();
-
                         if (opacity > 0 && text.length > 0) {
                             pendingText = newText;
                             errorSwapAnim.restart();
-                            return;
+                            return ;
                         }
-
                         text = newText;
                         errorAppearAnim.restart();
                     }
@@ -238,6 +223,17 @@ Item {
                         errorExitAnim.restart();
                     }
 
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    text: ""
+                    opacity: 0
+                    scale: 0.7
+                    color: Appearance.colors.colError
+                    font.family: Fonts.numeric
+                    font.pixelSize: 15
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                    lineHeight: 1.2
                     onMsgChanged: {
                         if (msg.length > 0)
                             showText(msg);
@@ -267,10 +263,13 @@ Item {
                             easing.type: Appearance.animation.expressiveEffects.type
                             easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
+
                     }
 
                     SequentialAnimation {
                         id: errorSwapAnim
+
+                        onFinished: errorFlashAnim.restart()
 
                         ParallelAnimation {
                             NumberAnimation {
@@ -281,6 +280,7 @@ Item {
                                 easing.type: Appearance.animation.standard.type
                                 easing.bezierCurve: Appearance.animation.standard.bezierCurve
                             }
+
                             NumberAnimation {
                                 target: errorMessage
                                 property: "opacity"
@@ -289,6 +289,7 @@ Item {
                                 easing.type: Appearance.animation.standard.type
                                 easing.bezierCurve: Appearance.animation.standard.bezierCurve
                             }
+
                         }
 
                         ScriptAction {
@@ -307,6 +308,7 @@ Item {
                                 easing.type: Appearance.animation.expressiveDefaultSpatial.type
                                 easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                             }
+
                             NumberAnimation {
                                 target: errorMessage
                                 property: "opacity"
@@ -315,9 +317,9 @@ Item {
                                 easing.type: Appearance.animation.expressiveEffects.type
                                 easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                             }
+
                         }
 
-                        onFinished: errorFlashAnim.restart()
                     }
 
                     SequentialAnimation {
@@ -327,6 +329,7 @@ Item {
                         onFinished: {
                             if (root.context && root.context.showFailure)
                                 root.context.showFailure = false;
+
                         }
 
                         NumberAnimation {
@@ -344,6 +347,7 @@ Item {
                             duration: Animations.durations.small
                             easing.type: Easing.Linear
                         }
+
                     }
 
                     ParallelAnimation {
@@ -366,7 +370,9 @@ Item {
                             easing.type: Appearance.animation.standardLarge.type
                             easing.bezierCurve: Appearance.animation.standardLarge.bezierCurve
                         }
+
                     }
+
                 }
 
                 Text {
@@ -375,50 +381,38 @@ Item {
                     property string msg: {
                         if (KeyboardLockState.capsLock && KeyboardLockState.numLock)
                             return qsTr("大写锁定和数字锁定已开启。");
+
                         if (KeyboardLockState.capsLock)
                             return qsTr("大写锁定已开启。");
+
                         if (KeyboardLockState.numLock)
                             return qsTr("数字锁定已开启。");
+
                         return "";
                     }
                     property bool blocked: errorMessage.msg.length > 0
                     property bool shouldBeVisible: false
                     property string pendingText: ""
 
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    text: ""
-                    opacity: 0
-                    scale: 0.7
-                    color: Appearance.colors.colOnSurfaceVariant
-                    font.family: Fonts.numeric
-                    font.pixelSize: Math.floor(12 * Sizes.lockReferenceScale)
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    lineHeight: 1.2
-
                     function refresh() {
                         if (blocked || msg.length === 0) {
                             hideText();
-                            return;
+                            return ;
                         }
-
                         showText(msg);
                     }
 
                     function showText(newText) {
                         shouldBeVisible = true;
                         stateExitAnim.stop();
-
                         if (newText === text && opacity > 0)
-                            return;
+                            return ;
 
                         if (opacity > 0 && text.length > 0) {
                             pendingText = newText;
                             stateSwapAnim.restart();
-                            return;
+                            return ;
                         }
-
                         text = newText;
                         stateEnterAnim.restart();
                     }
@@ -431,10 +425,20 @@ Item {
                         stateExitAnim.restart();
                     }
 
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    text: ""
+                    opacity: 0
+                    scale: 0.7
+                    color: Appearance.colors.colOnSurfaceVariant
+                    font.family: Fonts.numeric
+                    font.pixelSize: Math.floor(12 * Sizes.lockReferenceScale)
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                    lineHeight: 1.2
                     onMsgChanged: {
                         refresh();
                     }
-
                     onBlockedChanged: refresh()
 
                     ParallelAnimation {
@@ -457,6 +461,7 @@ Item {
                             easing.type: Appearance.animation.expressiveEffects.type
                             easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
+
                     }
 
                     SequentialAnimation {
@@ -471,6 +476,7 @@ Item {
                                 easing.type: Appearance.animation.standard.type
                                 easing.bezierCurve: Appearance.animation.standard.bezierCurve
                             }
+
                             NumberAnimation {
                                 target: stateMessage
                                 property: "opacity"
@@ -479,6 +485,7 @@ Item {
                                 easing.type: Appearance.animation.standard.type
                                 easing.bezierCurve: Appearance.animation.standard.bezierCurve
                             }
+
                         }
 
                         ScriptAction {
@@ -497,6 +504,7 @@ Item {
                                 easing.type: Appearance.animation.expressiveDefaultSpatial.type
                                 easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                             }
+
                             NumberAnimation {
                                 target: stateMessage
                                 property: "opacity"
@@ -505,11 +513,19 @@ Item {
                                 easing.type: Appearance.animation.expressiveEffects.type
                                 easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                             }
+
                         }
+
                     }
 
                     ParallelAnimation {
                         id: stateExitAnim
+
+                        onFinished: {
+                            if (!stateMessage.shouldBeVisible)
+                                stateMessage.text = "";
+
+                        }
 
                         NumberAnimation {
                             target: stateMessage
@@ -529,13 +545,21 @@ Item {
                             easing.bezierCurve: Appearance.animation.standardLarge.bezierCurve
                         }
 
-                        onFinished: {
-                            if (!stateMessage.shouldBeVisible)
-                                stateMessage.text = "";
-                        }
                     }
+
                 }
+
+                Behavior on implicitHeight {
+                    NumberAnimation {
+                        duration: Appearance.animation.standard.duration
+                        easing.type: Appearance.animation.standard.type
+                        easing.bezierCurve: Appearance.animation.standard.bezierCurve
+                    }
+
+                }
+
             }
+
         }
 
         ColumnLayout {
@@ -556,15 +580,20 @@ Item {
                 radius: Sizes.lockCardRadiusSmall
                 bottomRightRadius: Sizes.lockCardRadiusLarge
             }
+
         }
+
     }
 
     Timer {
         id: clockTimer
+
         property date now: new Date()
+
         interval: 1000
         running: true
         repeat: true
         onTriggered: now = new Date()
     }
+
 }

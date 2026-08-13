@@ -7,11 +7,8 @@ Rectangle {
     id: root
 
     property real rootHeight: height
-
     readonly property string temp: fmtTemp(WeatherPlugin.currentTemperatureC, "--")
-    readonly property string cond: WeatherPlugin.loading
-        ? qsTr("正在加载…")
-        : (WeatherPlugin.currentWeatherText || qsTr("未知"))
+    readonly property string cond: WeatherPlugin.loading ? qsTr("正在加载…") : (WeatherPlugin.currentWeatherText || qsTr("未知"))
     readonly property string loc: WeatherPlugin.locationName || qsTr("位置")
     readonly property string iconName: WeatherPlugin.currentIconName || "cloud"
     readonly property string feelsLike: qsTr("体感温度：") + fmtTemp(WeatherPlugin.currentFeelsLikeC, "--")
@@ -27,12 +24,6 @@ Rectangle {
     readonly property int contentMargin: Sizes.lockOuterPadding * 2
     property real skeletonPulse: 0
 
-    Layout.fillWidth: true
-    implicitHeight: showForecast || showSkeletonForecast ? Sizes.lockWeatherForecastHeight : Sizes.lockWeatherCompactHeight
-    color: Appearance.colors.colLayer2
-    radius: Sizes.lockCardRadius
-    clip: true
-
     function validNumber(value) {
         return typeof value === "number" && isFinite(value);
     }
@@ -40,39 +31,52 @@ Rectangle {
     function fmtTemp(value, fallback) {
         if (!WeatherPlugin.hasValidData || !validNumber(value))
             return fallback;
-        return Math.round(value) + "°";
+
+        return Math.round(UiPreferences.weatherTemperature(value)) + "°";
     }
 
     function fmtPercent(value) {
         if (!WeatherPlugin.hasValidData || !validNumber(value))
             return "--";
+
         return Math.round(value) + "%";
     }
 
     function hourLabel(value) {
         const epoch = Number(value || 0);
-        const date = new Date(epoch > 100000000000 ? epoch : epoch * 1000);
+        const date = new Date(epoch > 1e+11 ? epoch : epoch * 1000);
         if (isNaN(date.getTime()))
             return "--";
+
         const hour = date.getHours();
+        if (!UiPreferences.useTwelveHourClock)
+            return String(hour).padStart(2, "0") + ":00";
+
         if (hour === 0)
             return "12 AM";
+
         if (hour === 12)
             return "12 PM";
+
         return (hour > 12 ? hour - 12 : hour).toString().padStart(2, "0") + (hour > 12 ? " PM" : " AM");
     }
 
     function forecastModel() {
         const count = Math.min(root.forecastCount, WeatherPlugin.hourlyForecast.count());
         const items = [];
-        for (let i = 0; i < count; i += 1)
-            items.push(WeatherPlugin.hourlyForecast.get(i));
+        for (let i = 0; i < count; i += 1) items.push(WeatherPlugin.hourlyForecast.get(i))
         return items;
     }
 
+    Layout.fillWidth: true
+    implicitHeight: showForecast || showSkeletonForecast ? Sizes.lockWeatherForecastHeight : Sizes.lockWeatherCompactHeight
+    color: Appearance.colors.colLayer2
+    radius: Sizes.lockCardRadius
+    clip: true
     Component.onCompleted: {
         if (!WeatherPlugin.hasValidData)
             WeatherPlugin.refresh();
+
     }
 
     ColumnLayout {
@@ -86,22 +90,6 @@ Rectangle {
         opacity: root.loadingState ? 0 : 1
         scale: root.loadingState ? 0.98 : 1
         spacing: 7
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Appearance.animation.expressiveEffects.duration
-                easing.type: Appearance.animation.expressiveEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-            }
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
-            }
-        }
 
         Text {
             visible: root.showTitle
@@ -149,6 +137,7 @@ Rectangle {
                     font.pixelSize: 17
                     elide: Text.ElideRight
                 }
+
             }
 
             ColumnLayout {
@@ -177,7 +166,9 @@ Rectangle {
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideLeft
                 }
+
             }
+
         }
 
         RowLayout {
@@ -223,9 +214,31 @@ Rectangle {
                         font.family: Fonts.ui
                         font.pixelSize: root.forecastFontSize
                     }
+
                 }
+
             }
+
         }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveEffects.duration
+                easing.type: Appearance.animation.expressiveEffects.type
+                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+            }
+
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveDefaultSpatial.duration
+                easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+            }
+
+        }
+
     }
 
     Item {
@@ -236,22 +249,6 @@ Rectangle {
         opacity: root.loadingState ? 1 : 0
         scale: root.loadingState ? 1 : 0.98
         visible: opacity > 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Appearance.animation.expressiveEffects.duration
-                easing.type: Appearance.animation.expressiveEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-            }
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
-            }
-        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -298,6 +295,7 @@ Rectangle {
                         Layout.preferredHeight: 18
                         pulse: root.skeletonPulse
                     }
+
                 }
 
                 ColumnLayout {
@@ -317,7 +315,9 @@ Rectangle {
                         Layout.preferredHeight: 18
                         pulse: root.skeletonPulse
                     }
+
                 }
+
             }
 
             RowLayout {
@@ -353,10 +353,40 @@ Rectangle {
                             Layout.alignment: Qt.AlignHCenter
                             pulse: root.skeletonPulse
                         }
+
                     }
+
                 }
+
             }
+
         }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveEffects.duration
+                easing.type: Appearance.animation.expressiveEffects.type
+                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+            }
+
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveDefaultSpatial.duration
+                easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+            }
+
+        }
+
+    }
+
+    Timer {
+        running: true
+        repeat: true
+        interval: 900000
+        onTriggered: WeatherPlugin.refresh()
     }
 
     SequentialAnimation on skeletonPulse {
@@ -376,13 +406,7 @@ Rectangle {
             easing.type: Appearance.animation.standard.type
             easing.bezierCurve: Appearance.animation.standard.bezierCurve
         }
-    }
 
-    Timer {
-        running: true
-        repeat: true
-        interval: 900000
-        onTriggered: WeatherPlugin.refresh()
     }
 
     component SkeletonBlock: Rectangle {
@@ -392,4 +416,5 @@ Rectangle {
         opacity: 0.14 + pulse * 0.12
         radius: 8
     }
+
 }

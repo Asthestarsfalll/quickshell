@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Common
+import qs.Services
 import qs.Widgets.common
 
 Item {
@@ -13,7 +14,6 @@ Item {
     property real chartMax: 150
     property bool hasData: false
     property real itemWidth: width > 0 ? width / 6 : 122
-
     readonly property real sidePadding: 18
     readonly property real topPadding: 14
     readonly property real chartTop: 70
@@ -21,151 +21,182 @@ Item {
     readonly property real chartWidth: Math.max(0, width - sidePadding * 2)
     readonly property real contentWidth: Math.max(width, items.length * itemWidth)
 
-    clip: true
-
     function aqiThresholds() {
-        return [0, 20, 50, 100, 150, 250]
+        return [0, 20, 50, 100, 150, 250];
     }
 
     function aqiLevelIndex(aqi) {
-        if (aqi === undefined || aqi === null || isNaN(aqi)) return -1
-        const thresholds = root.aqiThresholds()
+        if (aqi === undefined || aqi === null || isNaN(aqi))
+            return -1;
+
+        const thresholds = root.aqiThresholds();
         for (let i = thresholds.length - 1; i >= 0; --i) {
-            if (aqi >= thresholds[i]) return i
+            if (aqi >= thresholds[i])
+                return i;
+
         }
-        return -1
+        return -1;
     }
 
     function aqiLevelName(level) {
-        const names = [qsTr("优"), qsTr("良"), qsTr("差"), qsTr("不健康"), qsTr("很不健康"), qsTr("危险")]
-        return level >= 0 && level < names.length ? names[level] : "--"
+        const names = [qsTr("优"), qsTr("良"), qsTr("差"), qsTr("不健康"), qsTr("很不健康"), qsTr("危险")];
+        return level >= 0 && level < names.length ? names[level] : "--";
     }
 
     function aqiPalette(level) {
-        const colors = ["#00e59b", "#ffc302", "#ff712b", "#f62a55", "#c72eaa", "#9930ff"]
-        return colors[Math.max(0, Math.min(colors.length - 1, level >= 0 ? level : 0))]
+        const colors = ["#00e59b", "#ffc302", "#ff712b", "#f62a55", "#c72eaa", "#9930ff"];
+        return colors[Math.max(0, Math.min(colors.length - 1, level >= 0 ? level : 0))];
     }
 
     function pollutantIndex(value, thresholds) {
-        if (value === undefined || value === null || isNaN(value)) return NaN
-        const aqi = root.aqiThresholds()
+        if (value === undefined || value === null || isNaN(value))
+            return NaN;
+
+        const aqi = root.aqiThresholds();
         for (let level = thresholds.length - 1; level >= 0; --level) {
             if (value >= thresholds[level]) {
                 if (level < thresholds.length - 1) {
-                    const bpLo = thresholds[level]
-                    const bpHi = thresholds[level + 1]
-                    const inLo = aqi[level]
-                    const inHi = aqi[level + 1]
-                    return Math.round((inHi - inLo) / (bpHi - bpLo) * (value - bpLo) + inLo)
+                    const bpLo = thresholds[level];
+                    const bpHi = thresholds[level + 1];
+                    const inLo = aqi[level];
+                    const inHi = aqi[level + 1];
+                    return Math.round((inHi - inLo) / (bpHi - bpLo) * (value - bpLo) + inLo);
                 }
-                return Math.round(value * aqi[aqi.length - 1] / thresholds[thresholds.length - 1])
+                return Math.round(value * aqi[aqi.length - 1] / thresholds[thresholds.length - 1]);
             }
         }
-        return NaN
+        return NaN;
     }
 
     function hourlyAqiValue(air) {
-        if (!air) return NaN
-        const values = [
-            root.pollutantIndex(air.ozone, [0, 50, 100, 160, 240, 480]),
-            root.pollutantIndex(air.nitrogenDioxide, [0, 10, 25, 200, 400, 1000]),
-            root.pollutantIndex(air.pm10, [0, 15, 45, 80, 160, 400]),
-            root.pollutantIndex(air.pm25, [0, 5, 15, 30, 60, 150])
-        ].filter(function(v) { return !isNaN(v) })
-        if (values.length === 0) return NaN
-        return Math.max.apply(Math, values)
+        if (!air)
+            return NaN;
+
+        const values = [root.pollutantIndex(air.ozone, [0, 50, 100, 160, 240, 480]), root.pollutantIndex(air.nitrogenDioxide, [0, 10, 25, 200, 400, 1000]), root.pollutantIndex(air.pm10, [0, 15, 45, 80, 160, 400]), root.pollutantIndex(air.pm25, [0, 5, 15, 30, 60, 150])].filter(function(v) {
+            return !isNaN(v);
+        });
+        if (values.length === 0)
+            return NaN;
+
+        return Math.max.apply(Math, values);
     }
 
     function hourLabel(epoch) {
-        return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "hh:00") : "--"
+        return epoch ? UiPreferences.hourTime(new Date(epoch * 1000)) : "--";
     }
 
     function yForValue(value) {
-        if (value === undefined || value === null || isNaN(value)) return chartBottom
-        if (chartMax <= 0) return chartBottom
-        const clamped = Math.max(0, Math.min(chartMax, value))
-        return chartBottom - clamped / chartMax * (chartBottom - chartTop)
+        if (value === undefined || value === null || isNaN(value))
+            return chartBottom;
+
+        if (chartMax <= 0)
+            return chartBottom;
+
+        const clamped = Math.max(0, Math.min(chartMax, value));
+        return chartBottom - clamped / chartMax * (chartBottom - chartTop);
     }
 
     function chartUpperBound(highest) {
-        if (highest === undefined || highest === null || isNaN(highest) || highest <= 0) return 100
-        if (highest <= 100) return 100
-        if (highest <= 150) return 150
-        if (highest <= 250) return 250
-        return Math.ceil(highest / 50) * 50
+        if (highest === undefined || highest === null || isNaN(highest) || highest <= 0)
+            return 100;
+
+        if (highest <= 100)
+            return 100;
+
+        if (highest <= 150)
+            return 150;
+
+        if (highest <= 250)
+            return 250;
+
+        return Math.ceil(highest / 50) * 50;
     }
 
     function rebuild() {
-        const list = []
-        let highest = 0
-        let validCount = 0
-        const modelCount = root.sourceModel
-            ? (typeof root.sourceModel.count === "function"
-                ? root.sourceModel.count()
-                : Number(root.sourceModel.count || 0)) : 0
-        const count = Math.min(root.maxHours, modelCount)
+        const list = [];
+        let highest = 0;
+        let validCount = 0;
+        const modelCount = root.sourceModel ? (typeof root.sourceModel.count === "function" ? root.sourceModel.count() : Number(root.sourceModel.count || 0)) : 0;
+        const count = Math.min(root.maxHours, modelCount);
         for (let i = 0; i < count; ++i) {
-            const hour = root.sourceModel.get(i) || ({})
-            const aqi = root.hourlyAqiValue(hour.airQuality || ({}))
-            const level = root.aqiLevelIndex(aqi)
+            const hour = root.sourceModel.get(i) || ({
+            });
+            const aqi = root.hourlyAqiValue(hour.airQuality || ({
+            }));
+            const level = root.aqiLevelIndex(aqi);
             if (!isNaN(aqi)) {
-                highest = Math.max(highest, aqi)
-                validCount += 1
+                highest = Math.max(highest, aqi);
+                validCount += 1;
             }
             list.push({
-                time: hour.time || 0,
-                hourText: root.hourLabel(hour.time || 0),
-                aqi: aqi,
-                aqiText: !isNaN(aqi) ? Math.round(aqi).toString() : "--",
-                color: root.aqiPalette(level),
-                emphasized: i !== 0
-            })
+                "time": hour.time || 0,
+                "hourText": root.hourLabel(hour.time || 0),
+                "aqi": aqi,
+                "aqiText": !isNaN(aqi) ? Math.round(aqi).toString() : "--",
+                "color": root.aqiPalette(level),
+                "emphasized": i !== 0
+            });
         }
-        items = list
-        chartMax = root.chartUpperBound(highest)
-        hasData = validCount > 0
+        items = list;
+        chartMax = root.chartUpperBound(highest);
+        hasData = validCount > 0;
+        const lines = [{
+            "value": 20,
+            "label": root.aqiLevelName(1)
+        }, {
+            "value": 100,
+            "label": root.aqiLevelName(3)
+        }];
+        if (chartMax >= 250)
+            lines.push({
+            "value": 250,
+            "label": root.aqiLevelName(5)
+        });
 
-        const lines = [
-            { value: 20, label: root.aqiLevelName(1) },
-            { value: 100, label: root.aqiLevelName(3) }
-        ]
-        if (chartMax >= 250) {
-            lines.push({ value: 250, label: root.aqiLevelName(5) })
-        }
-        keyLines = lines
+        keyLines = lines;
     }
 
-    Timer {
-        id: rebuildTimer
-        interval: 0
-        repeat: false
-        onTriggered: rebuild()
-    }
-
+    clip: true
     onSourceModelChanged: rebuild()
     onWidthChanged: rebuildTimer.restart()
     onHeightChanged: rebuildTimer.restart()
     Component.onCompleted: rebuild()
 
-    Connections {
-        target: root.sourceModel
-        ignoreUnknownSignals: true
+    Timer {
+        id: rebuildTimer
 
+        interval: 0
+        repeat: false
+        onTriggered: rebuild()
+    }
+
+    Connections {
         function onModelReset() {
-            root.rebuild()
+            root.rebuild();
         }
 
         function onRowsInserted() {
-            root.rebuild()
+            root.rebuild();
         }
 
         function onRowsRemoved() {
-            root.rebuild()
+            root.rebuild();
         }
 
         function onDataChanged() {
-            root.rebuild()
+            root.rebuild();
         }
+
+        target: root.sourceModel
+        ignoreUnknownSignals: true
+    }
+
+    Connections {
+        function onUseTwelveHourClockChanged() {
+            root.rebuild();
+        }
+
+        target: UiPreferences
     }
 
     Repeater {
@@ -208,7 +239,9 @@ Item {
                 font.family: Fonts.ui
                 font.pixelSize: 12
             }
+
         }
+
     }
 
     StyledFlickable {
@@ -226,6 +259,7 @@ Item {
 
         Item {
             id: trendContent
+
             width: trendFlick.contentWidth
             height: trendFlick.height
 
@@ -235,16 +269,13 @@ Item {
                 Item {
                     required property var modelData
                     required property int index
+                    readonly property real barWidth: Math.max(8, Math.min(12, width * 0.36))
+                    readonly property real barHeight: !isNaN(modelData.aqi) ? Math.max(8, root.chartBottom - root.yForValue(modelData.aqi)) : 0
+                    readonly property color hourColor: modelData.emphasized ? Appearance.colors.colOnSurfaceVariant : Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.64)
 
                     x: index * root.itemWidth
                     width: root.itemWidth
                     height: root.height
-
-                    readonly property real barWidth: Math.max(8, Math.min(12, width * 0.36))
-                    readonly property real barHeight: !isNaN(modelData.aqi) ? Math.max(8, root.chartBottom - root.yForValue(modelData.aqi)) : 0
-                    readonly property color hourColor: modelData.emphasized
-                                                       ? Appearance.colors.colOnSurfaceVariant
-                                                       : Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.64)
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -273,11 +304,16 @@ Item {
                         font.family: Fonts.numeric
                         font.pixelSize: 10
                     }
+
                 }
+
             }
 
             MouseArea {
                 id: dragArea
+
+                property real lastMouseX: 0
+
                 x: trendFlick.contentX
                 y: 0
                 z: 20
@@ -286,22 +322,22 @@ Item {
                 acceptedButtons: Qt.LeftButton
                 preventStealing: true
                 cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-
-                property real lastMouseX: 0
-
                 onPressed: function(mouse) {
-                    lastMouseX = mouse.x
+                    lastMouseX = mouse.x;
                 }
-
                 onPositionChanged: function(mouse) {
-                    if (!pressed) return
-                    const dx = mouse.x - lastMouseX
-                    const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width)
-                    trendFlick.contentX = Math.max(0, Math.min(maxX, trendFlick.contentX - dx))
-                    lastMouseX = mouse.x
+                    if (!pressed)
+                        return ;
+
+                    const dx = mouse.x - lastMouseX;
+                    const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width);
+                    trendFlick.contentX = Math.max(0, Math.min(maxX, trendFlick.contentX - dx));
+                    lastMouseX = mouse.x;
                 }
             }
+
         }
+
     }
 
     Text {
@@ -312,4 +348,5 @@ Item {
         font.family: Fonts.ui
         font.pixelSize: 16
     }
+
 }

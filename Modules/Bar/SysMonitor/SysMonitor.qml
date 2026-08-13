@@ -11,55 +11,34 @@ Item {
 
     property bool vertical: false
     readonly property bool isHovered: mouseArea.containsMouse
-    readonly property var memory: SystemMonitorService.memory || ({})
-    readonly property var cpu: SystemMonitorService.cpu || ({})
-    readonly property var disk:
-        Format.rootDisk(SystemMonitorService.disks)
-    readonly property real memoryUsage:
-        root.normalizedPercent(root.memory.usagePercent)
-    readonly property real diskUsage:
-        root.normalizedPercent(root.disk.usagePercent)
-    readonly property real temperatureValue:
-        Format.isNumber(root.cpu.packageTemperatureCelsius)
-            ? root.cpu.packageTemperatureCelsius
-            : root.cpu.temperatureCelsius
-    readonly property real temperatureUsage:
-        root.normalizedTemperature(root.temperatureValue)
-    readonly property real cpuUsage:
-        root.normalizedPercent(root.cpu.usagePercent)
-    readonly property string memoryPercentage:
-        Format.percent(root.memory.usagePercent, 0)
-    readonly property string diskPercentage:
-        Format.percent(root.disk.usagePercent, 0)
-    readonly property string temperaturePercentage:
-        Format.isNumber(root.temperatureValue)
-            ? Format.percent(root.temperatureUsage * 100, 0)
-            : Format.unavailable()
-    readonly property string cpuPercentage:
-        Format.percent(root.cpu.usagePercent, 0)
+    readonly property var memory: SystemMonitorService.memory || ({
+    })
+    readonly property var cpu: SystemMonitorService.cpu || ({
+    })
+    readonly property var disk: Format.rootDisk(SystemMonitorService.disks)
+    readonly property real memoryUsage: root.normalizedPercent(root.memory.usagePercent)
+    readonly property real diskUsage: root.normalizedPercent(root.disk.usagePercent)
+    readonly property real temperatureValue: Format.isNumber(root.cpu.packageTemperatureCelsius) ? root.cpu.packageTemperatureCelsius : root.cpu.temperatureCelsius
+    readonly property real temperatureUsage: root.normalizedTemperature(root.temperatureValue)
+    readonly property real cpuUsage: root.normalizedPercent(root.cpu.usagePercent)
+    readonly property string memoryPercentage: Format.percent(root.memory.usagePercent, 0)
+    readonly property string diskPercentage: Format.percent(root.disk.usagePercent, 0)
+    readonly property string temperaturePercentage: Format.isNumber(root.temperatureValue) ? Format.percent(root.temperatureUsage * 100, 0) : Format.unavailable()
+    readonly property string cpuPercentage: Format.percent(root.cpu.usagePercent, 0)
     // Match the ordinary circular controls in QuickSettings. Vertical bars
     // use the same circle geometry while intentionally hiding percentages.
     readonly property real horizontalIndicatorSize: Sizes.barControlCircleSize
     readonly property real verticalIndicatorSize: Sizes.barControlCircleSize
-    readonly property real indicatorSize: root.vertical
-        ? root.verticalIndicatorSize : root.horizontalIndicatorSize
+    readonly property real indicatorSize: root.vertical ? root.verticalIndicatorSize : root.horizontalIndicatorSize
     readonly property real indicatorIconSize: 15
-    readonly property real indicatorSpacing: root.vertical
-        ? Appearance.spacing.small : Appearance.spacing.xSmall
-
-    implicitWidth: root.vertical
-        ? Sizes.barVisualThickness
-        : resourceLayout.implicitWidth
-            + 2 * Sizes.barPillHorizontalPadding
-    implicitHeight: root.vertical
-        ? resourceLayout.implicitHeight
-            + 2 * Sizes.barPillHorizontalPadding
-        : Sizes.barPillThickness
+    readonly property real indicatorSpacing: root.vertical ? Appearance.spacing.small : Appearance.spacing.xSmall
+    readonly property string tooltipText: [qsTr("内存") + "    " + root.bytesPair(root.memory), qsTr("磁盘") + "    " + root.bytesPair(root.disk), qsTr("温度") + "    " + Format.temperature(root.temperatureValue, UiPreferences.systemTemperatureUnit === "fahrenheit"), qsTr("CPU") + "    " + Format.percent(root.cpu.usagePercent)].join("\n")
 
     function clamp(value) {
         const numeric = Number(value);
         if (!isFinite(numeric))
             return 0;
+
         return Math.max(0, Math.min(1, numeric));
     }
 
@@ -76,18 +55,13 @@ Item {
     function bytesPair(item) {
         const used = Format.bytes(item && item.usedBytes);
         const total = Format.bytes(item && item.totalBytes);
-        return used === Format.unavailable()
-            || total === Format.unavailable()
-            ? Format.unavailable()
-            : used + " / " + total;
+        return used === Format.unavailable() || total === Format.unavailable() ? Format.unavailable() : used + " / " + total;
     }
 
-    readonly property string tooltipText: [
-        qsTr("内存") + "    " + root.bytesPair(root.memory),
-        qsTr("磁盘") + "    " + root.bytesPair(root.disk),
-        qsTr("温度") + "    " + Format.temperature(root.temperatureValue),
-        qsTr("CPU") + "    " + Format.percent(root.cpu.usagePercent)
-    ].join("\n")
+    implicitWidth: root.vertical ? Sizes.barVisualThickness : resourceLayout.implicitWidth + 2 * Sizes.barPillHorizontalPadding
+    implicitHeight: root.vertical ? resourceLayout.implicitHeight + 2 * Sizes.barPillHorizontalPadding : Sizes.barPillThickness
+    Component.onCompleted: SystemMonitorService.acquire()
+    Component.onDestruction: SystemMonitorService.release()
 
     TopBarPillBackground {
         anchors.fill: parent
@@ -152,14 +126,15 @@ Item {
             trackColor: Appearance.colors.colTertiaryContainer
             iconColor: Appearance.colors.colOnTertiary
         }
+
     }
 
     MouseArea {
         id: mouseArea
+
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-
         onClicked: Quickshell.execDetached(["gnome-system-monitor"])
     }
 
@@ -168,6 +143,4 @@ Item {
         text: root.tooltipText
     }
 
-    Component.onCompleted: SystemMonitorService.acquire()
-    Component.onDestruction: SystemMonitorService.release()
 }

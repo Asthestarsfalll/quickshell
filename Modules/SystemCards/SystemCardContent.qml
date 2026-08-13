@@ -34,7 +34,7 @@ Item {
     }
 
     function temperatureBadge(value) {
-        return Format.isNumber(value) ? Math.round(value) + "°" : "";
+        return Format.isNumber(value) ? Math.round(UiPreferences.systemTemperature(value)) + "°" : "";
     }
 
     function cpuDetail() {

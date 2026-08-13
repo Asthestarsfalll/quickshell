@@ -9,33 +9,33 @@ import qs.Widgets.common
 Rectangle {
     id: root
 
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-
-    color: Appearance.colors.colLayer2
-    radius: Sizes.lockCardRadius
-    clip: true
-
-    readonly property var notifications: NotificationManager.list.slice().sort((a, b) => b.time - a.time)
+    readonly property var notifications: NotificationManager.list.slice().sort((a, b) => {
+        return b.time - a.time;
+    })
     readonly property int notificationCount: notifications.length
     readonly property int cardMargin: Sizes.lockOuterPadding
 
     function normalizeSource(source) {
         if (!source || source === "")
             return "";
+
         if (source.startsWith("/"))
             return "file://" + source;
+
         return source;
     }
 
     function iconSourceFor(notificationObject) {
         if (!notificationObject)
             return "";
+
         if (notificationObject.image && notificationObject.image !== "")
             return normalizeSource(notificationObject.image);
+
         if (notificationObject.appIcon && notificationObject.appIcon !== "") {
             if (notificationObject.appIcon.startsWith("/") || notificationObject.appIcon.startsWith("file://"))
                 return normalizeSource(notificationObject.appIcon);
+
             return Quickshell.iconPath(notificationObject.appIcon, "image-missing");
         }
         return "";
@@ -48,9 +48,16 @@ Rectangle {
 
         const now = new Date();
         if (date.toDateString() === now.toDateString())
-            return Qt.formatTime(date, "HH:mm");
-        return Qt.formatDate(date, "MM/dd") + " " + Qt.formatTime(date, "HH:mm");
+            return UiPreferences.shortTime(date);
+
+        return Qt.formatDate(date, "MM/dd") + " " + UiPreferences.shortTime(date);
     }
+
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    color: Appearance.colors.colLayer2
+    radius: Sizes.lockCardRadius
+    clip: true
 
     ColumnLayout {
         anchors.fill: parent
@@ -59,9 +66,7 @@ Rectangle {
 
         Text {
             Layout.fillWidth: true
-            text: root.notificationCount > 0
-                ? qsTr("%1 条通知").arg(root.notificationCount)
-                : qsTr("通知")
+            text: root.notificationCount > 0 ? qsTr("%1 条通知").arg(root.notificationCount) : qsTr("通知")
             color: Appearance.colors.colOutline
             font.family: Fonts.numeric
             font.pixelSize: 17
@@ -84,22 +89,6 @@ Rectangle {
                 scale: root.notificationCount > 0 ? 0.96 : 1
                 visible: opacity > 0
 
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Appearance.animation.standardExtraLarge.duration
-                        easing.type: Appearance.animation.standardExtraLarge.type
-                        easing.bezierCurve: Appearance.animation.standardExtraLarge.bezierCurve
-                    }
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Appearance.animation.expressiveDefaultSpatial.duration
-                        easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                        easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
-                    }
-                }
-
                 Item {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: Math.min(clipRect.width * 0.8, 360)
@@ -120,16 +109,36 @@ Rectangle {
                         source: dinoImage
                         color: Appearance.colors.colOutlineVariant
                     }
+
                 }
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
-            text: qsTr("没有通知")
+                    text: qsTr("没有通知")
                     color: Appearance.colors.colOutlineVariant
                     font.family: Fonts.numeric
                     font.pixelSize: 24
                     font.weight: 500
                 }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Appearance.animation.standardExtraLarge.duration
+                        easing.type: Appearance.animation.standardExtraLarge.type
+                        easing.bezierCurve: Appearance.animation.standardExtraLarge.bezierCurve
+                    }
+
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Appearance.animation.expressiveDefaultSpatial.duration
+                        easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                        easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                    }
+
+                }
+
             }
 
             StyledListView {
@@ -145,13 +154,12 @@ Rectangle {
                     id: delegateRoot
 
                     required property var modelData
+                    readonly property string iconSource: root.iconSourceFor(modelData)
 
                     width: ListView.view ? ListView.view.width : 0
                     height: Math.max(84, contentRow.implicitHeight + 14)
                     radius: Sizes.lockCardRadiusSmall
                     color: Appearance.colors.colLayer3
-
-                    readonly property string iconSource: root.iconSourceFor(modelData)
 
                     RowLayout {
                         id: contentRow
@@ -170,6 +178,7 @@ Rectangle {
 
                             Image {
                                 id: iconImg
+
                                 anchors.fill: parent
                                 anchors.margins: delegateRoot.modelData && delegateRoot.modelData.image ? 0 : 8
                                 source: delegateRoot.iconSource
@@ -187,6 +196,7 @@ Rectangle {
                                 font.family: Fonts.materialSymbolsRounded
                                 font.pixelSize: 27
                             }
+
                         }
 
                         ColumnLayout {
@@ -235,12 +245,15 @@ Rectangle {
 
                                     MouseArea {
                                         id: closeMouse
+
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: NotificationManager.discardNotification(delegateRoot.modelData.notificationId)
                                     }
+
                                 }
+
                             }
 
                             Text {
@@ -263,9 +276,11 @@ Rectangle {
                                 maximumLineCount: 2
                                 opacity: 0.8
                             }
+
                         }
 
                     }
+
                 }
 
                 add: Transition {
@@ -278,6 +293,7 @@ Rectangle {
                             easing.type: Appearance.animation.expressiveEffects.type
                             easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
+
                         NumberAnimation {
                             property: "scale"
                             from: 0.92
@@ -286,7 +302,9 @@ Rectangle {
                             easing.type: Appearance.animation.expressiveDefaultSpatial.type
                             easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                         }
+
                     }
+
                 }
 
                 remove: Transition {
@@ -298,6 +316,7 @@ Rectangle {
                             easing.type: Appearance.animation.expressiveEffects.type
                             easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
+
                         NumberAnimation {
                             property: "scale"
                             to: 0.6
@@ -305,7 +324,9 @@ Rectangle {
                             easing.type: Appearance.animation.expressiveEffects.type
                             easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
+
                     }
+
                 }
 
                 displaced: Transition {
@@ -315,8 +336,13 @@ Rectangle {
                         easing.type: Appearance.animation.expressiveDefaultSpatial.type
                         easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                     }
+
                 }
+
             }
+
         }
+
     }
+
 }

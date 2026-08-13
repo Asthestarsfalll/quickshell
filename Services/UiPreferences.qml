@@ -1,5 +1,4 @@
 pragma Singleton
-
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -10,25 +9,28 @@ Singleton {
 
     readonly property string configDir: Paths.configHome
     readonly property string filePath: configDir + "/ui-preferences.json"
-
     property bool dndEnabled: false
     property bool darkMode: false
     property string language: normalizedLanguage(Qt.locale().name)
+    property string weatherTemperatureUnit: "celsius"
+    property string systemTemperatureUnit: "celsius"
+    property bool useTwelveHourClock: true
     property bool storeReady: false
     property bool preferencesReady: false
     property bool savePending: false
-    property var systemGridLayout: ({})
-    property var systemCards: ({})
+    property var systemGridLayout: ({
+    })
+    property var systemCards: ({
+    })
 
     function normalizedLanguage(value) {
         const normalized = String(value || "").replace("-", "_").toLowerCase();
         if (normalized.startsWith("en"))
             return "en_US";
-        if (normalized === "zh_tw"
-                || normalized === "zh_hk"
-                || normalized === "zh_mo"
-                || normalized.indexOf("hant") >= 0)
+
+        if (normalized === "zh_tw" || normalized === "zh_hk" || normalized === "zh_mo" || normalized.indexOf("hant") >= 0)
             return "zh_TW";
+
         return "zh_CN";
     }
 
@@ -44,9 +46,73 @@ Singleton {
     function setLanguage(value) {
         const normalized = root.normalizedLanguage(value);
         if (root.language === normalized)
-            return;
+            return ;
+
         root.language = normalized;
         root.save();
+    }
+
+    function normalizedTemperatureUnit(value) {
+        return String(value || "").toLowerCase() === "fahrenheit" ? "fahrenheit" : "celsius";
+    }
+
+    function setWeatherTemperatureUnit(value) {
+        const normalized = root.normalizedTemperatureUnit(value);
+        if (root.weatherTemperatureUnit === normalized)
+            return ;
+
+        root.weatherTemperatureUnit = normalized;
+        root.save();
+    }
+
+    function setSystemTemperatureUnit(value) {
+        const normalized = root.normalizedTemperatureUnit(value);
+        if (root.systemTemperatureUnit === normalized)
+            return ;
+
+        root.systemTemperatureUnit = normalized;
+        root.save();
+    }
+
+    function setUseTwelveHourClock(value) {
+        const enabled = !!value;
+        if (root.useTwelveHourClock === enabled)
+            return ;
+
+        root.useTwelveHourClock = enabled;
+        root.save();
+    }
+
+    function convertedTemperature(value, unit) {
+        const numberValue = Number(value);
+        if (!isFinite(numberValue))
+            return NaN;
+
+        return root.normalizedTemperatureUnit(unit) === "fahrenheit" ? numberValue * 9 / 5 + 32 : numberValue;
+    }
+
+    function weatherTemperature(value) {
+        return root.convertedTemperature(value, root.weatherTemperatureUnit);
+    }
+
+    function systemTemperature(value) {
+        return root.convertedTemperature(value, root.systemTemperatureUnit);
+    }
+
+    function weatherTemperatureSymbol() {
+        return root.weatherTemperatureUnit === "fahrenheit" ? "°F" : "°C";
+    }
+
+    function systemTemperatureSymbol() {
+        return root.systemTemperatureUnit === "fahrenheit" ? "°F" : "°C";
+    }
+
+    function shortTime(value) {
+        return Qt.formatDateTime(value, root.useTwelveHourClock ? "hh:mm AP" : "HH:mm");
+    }
+
+    function hourTime(value) {
+        return Qt.formatDateTime(value, root.useTwelveHourClock ? "hh AP" : "HH:00");
     }
 
     function setDarkMode(value) {
@@ -61,30 +127,22 @@ Singleton {
 
     function setSystemGridLayout(layout) {
         try {
-            root.systemGridLayout = JSON.parse(
-                JSON.stringify(layout || {})
-            );
+            root.systemGridLayout = JSON.parse(JSON.stringify(layout || {
+            }));
         } catch (error) {
-            console.log(
-                "UiPreferences rejected system grid layout:",
-                error
-            );
-            return;
+            console.log("UiPreferences rejected system grid layout:", error);
+            return ;
         }
         root.save();
     }
 
     function setSystemCards(cards) {
         try {
-            root.systemCards = JSON.parse(
-                JSON.stringify(cards || {})
-            );
+            root.systemCards = JSON.parse(JSON.stringify(cards || {
+            }));
         } catch (error) {
-            console.log(
-                "UiPreferences rejected system card state:",
-                error
-            );
-            return;
+            console.log("UiPreferences rejected system card state:", error);
+            return ;
         }
         root.save();
     }
@@ -92,13 +150,15 @@ Singleton {
     function save() {
         if (!root.storeReady) {
             root.savePending = true;
-            return;
+            return ;
         }
-
         root.savePending = false;
         prefsFile.setText(JSON.stringify({
             "dndEnabled": root.dndEnabled,
             "language": root.language,
+            "weatherTemperatureUnit": root.weatherTemperatureUnit,
+            "systemTemperatureUnit": root.systemTemperatureUnit,
+            "useTwelveHourClock": root.useTwelveHourClock,
             "systemGridLayout": root.systemGridLayout,
             "systemCards": root.systemCards
         }, null, 2));
@@ -106,6 +166,7 @@ Singleton {
 
     Process {
         id: ensureStoreDir
+
         command: ["mkdir", "-p", root.configDir]
         running: true
         onExited: {
@@ -113,44 +174,40 @@ Singleton {
             prefsFile.reload();
             if (root.savePending)
                 root.save();
+
         }
     }
 
     FileView {
         id: prefsFile
+
         path: root.filePath
         watchChanges: true
         blockLoading: true
         blockWrites: true
         atomicWrites: true
-
         onFileChanged: preferencesReloadDebounce.restart()
-
         onLoaded: {
             try {
                 const parsed = JSON.parse(prefsFile.text().trim() || "{}");
                 if (typeof parsed.dndEnabled === "boolean")
                     root.dndEnabled = parsed.dndEnabled;
-                root.language = root.normalizedLanguage(
-                    parsed.language || Qt.locale().name
-                );
-                if (parsed.systemGridLayout
-                        && typeof parsed.systemGridLayout === "object") {
-                    root.systemGridLayout =
-                        parsed.systemGridLayout;
-                }
-                if (parsed.systemCards
-                        && typeof parsed.systemCards === "object"
-                        && !Array.isArray(parsed.systemCards)) {
+
+                root.language = root.normalizedLanguage(parsed.language || Qt.locale().name);
+                root.weatherTemperatureUnit = root.normalizedTemperatureUnit(parsed.weatherTemperatureUnit);
+                root.systemTemperatureUnit = root.normalizedTemperatureUnit(parsed.systemTemperatureUnit);
+                root.useTwelveHourClock = typeof parsed.useTwelveHourClock === "boolean" ? parsed.useTwelveHourClock : true;
+                if (parsed.systemGridLayout && typeof parsed.systemGridLayout === "object")
+                    root.systemGridLayout = parsed.systemGridLayout;
+
+                if (parsed.systemCards && typeof parsed.systemCards === "object" && !Array.isArray(parsed.systemCards))
                     root.systemCards = parsed.systemCards;
-                }
+
             } catch (error) {
                 console.log("UiPreferences failed to load:", error);
-            } finally {
-                root.preferencesReady = true;
             }
+            root.preferencesReady = true;
         }
-
         onLoadFailed: {
             root.preferencesReady = true;
             root.save();
@@ -159,6 +216,7 @@ Singleton {
 
     Timer {
         id: preferencesReloadDebounce
+
         interval: 100
         repeat: false
         onTriggered: prefsFile.reload()
@@ -166,12 +224,14 @@ Singleton {
 
     Process {
         id: themePoller
+
         command: ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"]
         running: true
 
         stdout: StdioCollector {
             onStreamFinished: root.darkMode = this.text.toLowerCase().includes("prefer-dark")
         }
+
     }
 
     Timer {
@@ -183,9 +243,11 @@ Singleton {
 
     Timer {
         id: themeDebounce
+
         interval: 350
         running: false
         repeat: false
         onTriggered: themePoller.running = true
     }
+
 }

@@ -7,9 +7,6 @@ import qs.Components
 
 Item {
     id: root
-    
-    implicitHeight: grid.implicitHeight
-    implicitWidth: 300
 
     property string uv: "--"
     property string feelsLike: "--"
@@ -26,42 +23,70 @@ Item {
             root.wind = "--";
             root.pressure = "--";
             root.visibility = "--";
-            return;
+            return ;
         }
-        
         root.uv = Math.round(WeatherPlugin.currentUvIndex || 0).toString();
-        root.feelsLike = Math.round(WeatherPlugin.currentFeelsLikeC || 0) + "°C";
+        root.feelsLike = Math.round(UiPreferences.weatherTemperature(WeatherPlugin.currentFeelsLikeC || 0)) + UiPreferences.weatherTemperatureSymbol();
         root.humidity = Math.round(WeatherPlugin.currentRelativeHumidity || 0) + "%";
         root.wind = Math.round((WeatherPlugin.currentWindSpeedMs || 0) * 3.6) + " km/h";
         root.pressure = Math.round(WeatherPlugin.currentPressureHpa || 0) + " hPa";
         root.visibility = Math.round((WeatherPlugin.currentVisibilityM || 0) / 1000) + " km";
     }
 
+    implicitHeight: grid.implicitHeight
+    implicitWidth: 300
+    Component.onCompleted: syncParams()
+
     Connections {
-        target: WeatherPlugin
         function onDataChanged() {
             syncParams();
         }
+
+        target: WeatherPlugin
     }
 
-    Component.onCompleted: syncParams()
+    Connections {
+        function onWeatherTemperatureUnitChanged() {
+            root.syncData();
+        }
+
+        target: UiPreferences
+    }
 
     GridLayout {
         id: grid
+
         anchors.fill: parent
         columns: 3
         rowSpacing: 40
         columnSpacing: 24
 
         Repeater {
-            model: [
-                { icon: "sunny", label: qsTr("紫外线"), value: root.uv },
-                { icon: "thermostat", label: qsTr("体感"), value: root.feelsLike },
-                { icon: "water_drop", label: qsTr("湿度"), value: root.humidity },
-                { icon: "air", label: qsTr("风速"), value: root.wind },
-                { icon: "compress", label: qsTr("气压"), value: root.pressure },
-                { icon: "visibility", label: qsTr("能见度"), value: root.visibility }
-            ]
+            model: [{
+                "icon": "sunny",
+                "label": qsTr("紫外线"),
+                "value": root.uv
+            }, {
+                "icon": "thermostat",
+                "label": qsTr("体感"),
+                "value": root.feelsLike
+            }, {
+                "icon": "water_drop",
+                "label": qsTr("湿度"),
+                "value": root.humidity
+            }, {
+                "icon": "air",
+                "label": qsTr("风速"),
+                "value": root.wind
+            }, {
+                "icon": "compress",
+                "label": qsTr("气压"),
+                "value": root.pressure
+            }, {
+                "icon": "visibility",
+                "label": qsTr("能见度"),
+                "value": root.visibility
+            }]
 
             delegate: ColumnLayout {
                 Layout.fillWidth: true
@@ -86,6 +111,7 @@ Item {
                         font.pixelSize: 16
                         elide: Text.ElideRight
                     }
+
                 }
 
                 Text {
@@ -97,7 +123,11 @@ Item {
                     font.weight: Font.Medium
                     elide: Text.ElideRight
                 }
+
             }
+
         }
+
     }
+
 }

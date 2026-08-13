@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Common
+import qs.Services
 import qs.Widgets.common
 import qs.Widgets.weather
 
@@ -14,35 +15,57 @@ Rectangle {
     property int currentTab: 0
     property bool foreground: false
 
+    function modelCount() {
+        if (!sourceModel)
+            return 0;
+
+        const count = typeof sourceModel.count === "function" ? sourceModel.count() : Number(sourceModel.count || 0);
+        return Math.min(maxItems, count);
+    }
+
+    function itemAt(index) {
+        return sourceModel && sourceModel.get ? sourceModel.get(index) : ({
+        });
+    }
+
+    function valueAt(map, key, fallback) {
+        const v = map ? map[key] : undefined;
+        return (v === undefined || v === null || isNaN(v)) ? fallback : Number(v);
+    }
+
+    function fmtTemp(value) {
+        return value !== undefined && value !== null && !isNaN(value) ? Math.round(UiPreferences.weatherTemperature(value)) + "°" : "--";
+    }
+
+    function hourLabel(epoch) {
+        return epoch ? UiPreferences.hourTime(new Date(epoch * 1000)) : "--";
+    }
+
     radius: 26
     color: Appearance.colors.colWeatherCardSurface
     border.width: 1
     border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.42)
     clip: true
+    onSourceModelChanged: trendCanvas.requestPaint()
+    onCurrentTabChanged: {
+        if (root.currentTab === 0)
+            trendCanvas.requestPaint();
 
-    function modelCount() {
-        if (!sourceModel)
-            return 0
-        const count = typeof sourceModel.count === "function"
-            ? sourceModel.count() : Number(sourceModel.count || 0)
-        return Math.min(maxItems, count)
     }
+    onForegroundChanged: {
+        if (root.foreground)
+            trendCanvas.requestPaint();
 
-    function itemAt(index) {
-        return sourceModel && sourceModel.get ? sourceModel.get(index) : ({})
     }
+    onWidthChanged: trendCanvas.requestPaint()
+    onHeightChanged: trendCanvas.requestPaint()
 
-    function valueAt(map, key, fallback) {
-        const v = map ? map[key] : undefined
-        return (v === undefined || v === null || isNaN(v)) ? fallback : Number(v)
-    }
+    Connections {
+        function onWeatherTemperatureUnitChanged() {
+            trendCanvas.requestPaint();
+        }
 
-    function fmtTemp(value) {
-        return value !== undefined && value !== null && !isNaN(value) ? Math.round(value) + "°" : "--"
-    }
-
-    function hourLabel(epoch) {
-        return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "hh:00") : "--"
+        target: UiPreferences
     }
 
     ColumnLayout {
@@ -79,7 +102,10 @@ Rectangle {
                     Layout.alignment: Qt.AlignVCenter
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
+
             }
 
             RowLayout {
@@ -88,15 +114,24 @@ Rectangle {
 
                 StyledButtonGroup {
                     currentValue: root.currentTab
-                    model: [
-                        ({ "value": 0, "label": qsTr("天气情况") }),
-                        ({ "value": 1, "label": qsTr("空气质量") }),
-                        ({ "value": 2, "label": qsTr("风况") })
-                    ]
-                    onValueSelected: value => root.currentTab = value
+                    model: [({
+                        "value": 0,
+                        "label": qsTr("天气情况")
+                    }), ({
+                        "value": 1,
+                        "label": qsTr("空气质量")
+                    }), ({
+                        "value": 2,
+                        "label": qsTr("风况")
+                    })]
+                    onValueSelected: (value) => {
+                        return root.currentTab = value;
+                    }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 Rectangle {
                     Layout.preferredWidth: 36
@@ -104,8 +139,6 @@ Rectangle {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 18
                     color: moreMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
-
-                    Behavior on color { ColorAnimation { duration: 150 } }
 
                     Text {
                         anchors.centerIn: parent
@@ -117,12 +150,23 @@ Rectangle {
 
                     MouseArea {
                         id: moreMouse
+
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: console.log("Open hourly weather menu")
                     }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+
+                    }
+
                 }
+
             }
+
         }
 
         Item {
@@ -142,13 +186,10 @@ Rectangle {
                 contentWidth: Math.max(width, root.modelCount() * root.itemWidth)
                 contentHeight: height
                 visible: root.currentTab === 0
-
                 onContentXChanged: trendCanvas.requestPaint()
 
                 Item {
                     id: trendContent
-                    width: trendFlick.contentWidth
-                    height: trendFlick.height
 
                     property real topTextY: 6
                     property real iconY: 28
@@ -156,90 +197,88 @@ Rectangle {
                     property real chartTopInset: 96
                     property real chartBottomInset: Math.max(chartTopInset + 70, height - 30)
 
+                    width: trendFlick.contentWidth
+                    height: trendFlick.height
+
                     Canvas {
                         id: trendCanvas
-                        anchors.fill: parent
-                        antialiasing: true
 
-                        property color primaryColor:
-                            Appearance.colors.colPrimary
-                        property color pointInnerColor:
-                            Appearance.colors.colLayer4
-                        property color textColor:
-                            Appearance.colors.colOnSurface
+                        property color primaryColor: Appearance.colors.colPrimary
+                        property color pointInnerColor: Appearance.colors.colLayer4
+                        property color textColor: Appearance.colors.colOnSurface
                         property real chartTop: trendContent.chartTopInset
                         property real chartBottom: trendContent.chartBottomInset
 
-                        onPrimaryColorChanged: requestPaint()
-                        onPointInnerColorChanged: requestPaint()
-                        onTextColorChanged: requestPaint()
-
                         function pointX(index) {
-                            return root.itemWidth * index + root.itemWidth / 2
+                            return root.itemWidth * index + root.itemWidth / 2;
                         }
 
                         function yAt(value, minValue, maxValue) {
-                            return chartBottom - (value - minValue) / (maxValue - minValue) * (chartBottom - chartTop)
+                            return chartBottom - (value - minValue) / (maxValue - minValue) * (chartBottom - chartTop);
                         }
 
+                        anchors.fill: parent
+                        antialiasing: true
+                        onPrimaryColorChanged: requestPaint()
+                        onPointInnerColorChanged: requestPaint()
+                        onTextColorChanged: requestPaint()
                         onPaint: {
-                            const ctx = getContext("2d")
-                            ctx.clearRect(0, 0, width, height)
+                            const ctx = getContext("2d");
+                            ctx.clearRect(0, 0, width, height);
+                            const count = root.modelCount();
+                            if (count < 2)
+                                return ;
 
-                            const count = root.modelCount()
-                            if (count < 2) return
-
-                            let values = []
-                            let minTemp = 999
-                            let maxTemp = -999
-
+                            let values = [];
+                            let minTemp = 999;
+                            let maxTemp = -999;
                             for (let i = 0; i < count; ++i) {
-                                const item = root.itemAt(i)
-                                const temp = root.valueAt(item, "temperatureC", NaN)
-                                values.push(temp)
+                                const item = root.itemAt(i);
+                                const temp = root.valueAt(item, "temperatureC", NaN);
+                                values.push(temp);
                                 if (!isNaN(temp)) {
-                                    minTemp = Math.min(minTemp, temp)
-                                    maxTemp = Math.max(maxTemp, temp)
+                                    minTemp = Math.min(minTemp, temp);
+                                    maxTemp = Math.max(maxTemp, temp);
                                 }
                             }
+                            if (maxTemp < minTemp)
+                                return ;
 
-                            if (maxTemp < minTemp) return
                             if (Math.abs(maxTemp - minTemp) < 0.1) {
-                                maxTemp += 1
-                                minTemp -= 1
+                                maxTemp += 1;
+                                minTemp -= 1;
                             }
-
-                            ctx.strokeStyle = primaryColor
-                            ctx.lineWidth = 3
-                            ctx.lineJoin = "round"
-                            ctx.lineCap = "round"
-                            ctx.beginPath()
+                            ctx.strokeStyle = primaryColor;
+                            ctx.lineWidth = 3;
+                            ctx.lineJoin = "round";
+                            ctx.lineCap = "round";
+                            ctx.beginPath();
                             for (let j = 0; j < count; ++j) {
-                                const x2 = pointX(j)
-                                const y2 = yAt(values[j], minTemp, maxTemp)
-                                if (j === 0) ctx.moveTo(x2, y2)
-                                else ctx.lineTo(x2, y2)
+                                const x2 = pointX(j);
+                                const y2 = yAt(values[j], minTemp, maxTemp);
+                                if (j === 0)
+                                    ctx.moveTo(x2, y2);
+                                else
+                                    ctx.lineTo(x2, y2);
                             }
-                            ctx.stroke()
-
+                            ctx.stroke();
                             for (let p = 0; p < count; ++p) {
-                                const px = pointX(p)
-                                const py = yAt(values[p], minTemp, maxTemp)
-                                ctx.fillStyle = primaryColor
-                                ctx.beginPath()
-                                ctx.arc(px, py, 4.5, 0, Math.PI * 2)
-                                ctx.fill()
-                                ctx.fillStyle = pointInnerColor
-                                ctx.beginPath()
-                                ctx.arc(px, py, 2.4, 0, Math.PI * 2)
-                                ctx.fill()
+                                const px = pointX(p);
+                                const py = yAt(values[p], minTemp, maxTemp);
+                                ctx.fillStyle = primaryColor;
+                                ctx.beginPath();
+                                ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.fillStyle = pointInnerColor;
+                                ctx.beginPath();
+                                ctx.arc(px, py, 2.4, 0, Math.PI * 2);
+                                ctx.fill();
                             }
-
-                            ctx.fillStyle = textColor
-                            ctx.font = "bold 13px " + Fonts.cssFamily(Fonts.numeric)
-                            ctx.textAlign = "center"
+                            ctx.fillStyle = textColor;
+                            ctx.font = "bold 13px " + Fonts.cssFamily(Fonts.numeric);
+                            ctx.textAlign = "center";
                             for (let n = 0; n < count; ++n) {
-                                ctx.fillText(root.fmtTemp(values[n]), pointX(n), yAt(values[n], minTemp, maxTemp) - 10)
+                                ctx.fillText(root.fmtTemp(values[n]), pointX(n), yAt(values[n], minTemp, maxTemp) - 10);
                             }
                         }
                     }
@@ -248,11 +287,11 @@ Rectangle {
                         model: root.modelCount()
 
                         delegate: Item {
+                            property var hourItem: root.itemAt(index)
+
                             x: root.itemWidth * index
                             width: root.itemWidth
                             height: trendContent.height
-
-                            property var hourItem: root.itemAt(index)
 
                             Text {
                                 width: parent.width
@@ -275,11 +314,16 @@ Rectangle {
                                 style: "fill"
                                 animated: false
                             }
+
                         }
+
                     }
 
                     MouseArea {
                         id: dragArea
+
+                        property real lastMouseX: 0
+
                         x: trendFlick.contentX
                         y: 0
                         z: 20
@@ -288,22 +332,22 @@ Rectangle {
                         acceptedButtons: Qt.LeftButton
                         preventStealing: true
                         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-
-                        property real lastMouseX: 0
-
                         onPressed: function(mouse) {
-                            lastMouseX = mouse.x
+                            lastMouseX = mouse.x;
                         }
-
                         onPositionChanged: function(mouse) {
-                            if (!pressed) return
-                            const dx = mouse.x - lastMouseX
-                            const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width)
-                            trendFlick.contentX = Math.max(0, Math.min(maxX, trendFlick.contentX - dx))
-                            lastMouseX = mouse.x
+                            if (!pressed)
+                                return ;
+
+                            const dx = mouse.x - lastMouseX;
+                            const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width);
+                            trendFlick.contentX = Math.max(0, Math.min(maxX, trendFlick.contentX - dx));
+                            lastMouseX = mouse.x;
                         }
                     }
+
                 }
+
             }
 
             Item {
@@ -314,6 +358,7 @@ Rectangle {
                     anchors.fill: parent
                     sourceModel: root.sourceModel
                 }
+
             }
 
             Item {
@@ -324,33 +369,40 @@ Rectangle {
                     anchors.fill: parent
                     sourceModel: root.sourceModel
                 }
+
             }
+
         }
+
     }
 
     Connections {
+        function onModelReset() {
+            trendCanvas.requestPaint();
+        }
+
+        function onDataChanged() {
+            trendCanvas.requestPaint();
+        }
+
+        function onRowsInserted() {
+            trendCanvas.requestPaint();
+        }
+
+        function onRowsRemoved() {
+            trendCanvas.requestPaint();
+        }
+
         target: root.sourceModel
         ignoreUnknownSignals: true
-        function onModelReset() { trendCanvas.requestPaint() }
-        function onDataChanged() { trendCanvas.requestPaint() }
-        function onRowsInserted() { trendCanvas.requestPaint() }
-        function onRowsRemoved() { trendCanvas.requestPaint() }
     }
 
     Connections {
+        function onNumericChanged() {
+            trendCanvas.requestPaint();
+        }
+
         target: Fonts
-        function onNumericChanged() { trendCanvas.requestPaint() }
     }
 
-    onSourceModelChanged: trendCanvas.requestPaint()
-    onCurrentTabChanged: {
-        if (root.currentTab === 0)
-            trendCanvas.requestPaint()
-    }
-    onForegroundChanged: {
-        if (root.foreground)
-            trendCanvas.requestPaint()
-    }
-    onWidthChanged: trendCanvas.requestPaint()
-    onHeightChanged: trendCanvas.requestPaint()
 }

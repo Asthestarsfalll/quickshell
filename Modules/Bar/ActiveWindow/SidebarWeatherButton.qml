@@ -8,16 +8,24 @@ Item {
     id: root
 
     property bool vertical: false
-    readonly property string temperatureText: WeatherPlugin.hasValidData ? Math.round(WeatherPlugin.currentTemperatureC) + "°" : "--°"
+    readonly property string temperatureText: WeatherPlugin.hasValidData ? Math.round(UiPreferences.weatherTemperature(WeatherPlugin.currentTemperatureC)) + "°" : "--°"
     readonly property int iconSize: 20
     readonly property int temperatureSize: 12
     readonly property int contentSpacing: 6
     readonly property int iconSlotWidth: 24
     readonly property real temperatureSlotWidth: Math.ceil(temperatureMetrics.width)
-    readonly property real contentWidth: iconSlotWidth + contentSpacing
-        + temperatureSlotWidth
+    readonly property real contentWidth: iconSlotWidth + contentSpacing + temperatureSlotWidth
     readonly property real buttonWidth: contentWidth + 20
     readonly property int buttonHeight: 28
+
+    function toggleView() {
+        if (WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "weather") {
+            WidgetState.leftSidebarOpen = false;
+            return ;
+        }
+        WidgetState.leftSidebarView = "weather";
+        WidgetState.leftSidebarOpen = true;
+    }
 
     implicitHeight: vertical ? Sizes.barWeatherVerticalPillHeight : buttonHeight
     implicitWidth: vertical ? buttonHeight : buttonWidth
@@ -25,6 +33,7 @@ Item {
 
     TextMetrics {
         id: temperatureMetrics
+
         text: root.temperatureText
         font.family: Fonts.numeric
         font.pixelSize: root.temperatureSize
@@ -33,12 +42,6 @@ Item {
 
     Rectangle {
         id: background
-        anchors.centerIn: parent
-        width: root.width
-        height: root.height
-        radius: height / 2
-        color: Appearance.colors.colTertiaryContainer
-        clip: true
 
         function startRipple(x, y) {
             ripple.centerX = x;
@@ -46,6 +49,13 @@ Item {
             rippleAnimation.diameter = Math.sqrt(width * width + height * height) * 2.2;
             rippleAnimation.restart();
         }
+
+        anchors.centerIn: parent
+        width: root.width
+        height: root.height
+        radius: height / 2
+        color: Appearance.colors.colTertiaryContainer
+        clip: true
 
         Rectangle {
             id: ripple
@@ -86,21 +96,14 @@ Item {
                 duration: 700
                 easing.type: Easing.OutCubic
             }
-        }
-    }
 
-    function toggleView() {
-        if (WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "weather") {
-            WidgetState.leftSidebarOpen = false;
-            return;
         }
 
-        WidgetState.leftSidebarView = "weather";
-        WidgetState.leftSidebarOpen = true;
     }
 
     GridLayout {
         id: contentRow
+
         anchors.centerIn: parent
         width: root.vertical ? root.buttonHeight : root.contentWidth
         height: root.vertical ? root.height : root.buttonHeight
@@ -109,8 +112,7 @@ Item {
         columns: root.vertical ? 1 : 2
 
         Item {
-            Layout.preferredWidth: root.vertical
-                ? root.buttonHeight : root.iconSlotWidth
+            Layout.preferredWidth: root.vertical ? root.buttonHeight : root.iconSlotWidth
             Layout.preferredHeight: root.vertical ? 20 : root.buttonHeight
             Layout.alignment: Qt.AlignCenter
 
@@ -118,17 +120,25 @@ Item {
                 anchors.centerIn: parent
                 text: WeatherPlugin.currentIconName || "cloud"
                 font.family: Fonts.materialSymbolsRounded
-                font.variableAxes: { "FILL": 0 }
+                font.variableAxes: {
+                    "FILL": 0
+                }
                 font.pixelSize: root.iconSize
                 color: Appearance.colors.colOnTertiaryContainer
 
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 160
+                    }
+
+                }
+
             }
+
         }
 
         Item {
-            Layout.preferredWidth: root.vertical
-                ? root.buttonHeight : root.temperatureSlotWidth
+            Layout.preferredWidth: root.vertical ? root.buttonHeight : root.temperatureSlotWidth
             Layout.preferredHeight: root.vertical ? 16 : root.buttonHeight
             Layout.alignment: Qt.AlignCenter
             visible: true
@@ -141,17 +151,28 @@ Item {
                 font.bold: true
                 color: Appearance.colors.colOnTertiaryContainer
 
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 160
+                    }
+
+                }
+
             }
+
         }
+
     }
 
     MouseArea {
         id: mouseArea
+
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onPressed: (mouse) => background.startRipple(mouse.x, mouse.y)
+        onPressed: (mouse) => {
+            return background.startRipple(mouse.x, mouse.y);
+        }
         onClicked: root.toggleView()
     }
 
@@ -159,4 +180,5 @@ Item {
         extraVisibleCondition: mouseArea.containsMouse
         text: qsTr("天气")
     }
+
 }

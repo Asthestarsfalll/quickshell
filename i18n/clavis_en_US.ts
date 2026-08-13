@@ -6714,4 +6714,33 @@ Windows: </translation>
     <message><source>Wi-Fi 信号强度 </source><translation>Wi-Fi signal strength </translation></message>
     <message><source>Wi-Fi 未连接</source><translation>Wi-Fi is not connected</translation></message>
 </context>
+<context>
+    <name>GeneralOverviewPage</name>
+    <message><source>系统</source><translation>System</translation></message>
+    <message><source>语言与地区</source><translation>Language &amp; region</translation></message>
+</context>
+<context>
+    <name>GeneralPage</name>
+    <message><source>语言与地区</source><translation>Language &amp; region</translation></message>
+</context>
+<context>
+    <name>LanguageAndRegionPage</name>
+    <message><source>语言</source><translation>Language</translation></message>
+    <message><source>界面语言</source><translation>Interface language</translation></message>
+    <message><source>用于 Clavis Quickshell 界面的显示语言</source><translation>Display language for the Clavis Quickshell interface</translation></message>
+    <message><source>选择语言</source><translation>Select language</translation></message>
+    <message><source>天气</source><translation>Weather</translation></message>
+    <message><source>天气位置地图即将推出</source><translation>Weather location map coming soon</translation></message>
+    <message><source>后续可在地图上选择天气位置</source><translation>You will be able to choose a weather location on the map</translation></message>
+    <message><source>单位</source><translation>Units</translation></message>
+    <message><source>天气温度</source><translation>Weather temperature</translation></message>
+    <message><source>侧边栏、灵动岛与锁屏天气的温度单位</source><translation>Temperature unit for sidebar, Dynamic Island, and lock-screen weather</translation></message>
+    <message><source>硬件温度</source><translation>Hardware temperature</translation></message>
+    <message><source>CPU、GPU 与系统监测组件的温度单位</source><translation>Temperature unit for CPU, GPU, and system monitors</translation></message>
+    <message><source>时间与日期</source><translation>Time &amp; date</translation></message>
+    <message><source>时钟格式</source><translation>Clock format</translation></message>
+    <message><source>用于灵动岛、侧边栏与锁屏时钟</source><translation>Used by Dynamic Island, sidebar, and lock-screen clocks</translation></message>
+    <message><source>24 小时</source><translation>24-hour</translation></message>
+    <message><source>12 小时</source><translation>12-hour</translation></message>
+</context>
 </TS>

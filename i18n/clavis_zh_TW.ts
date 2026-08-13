@@ -6674,4 +6674,33 @@
     <message><source>Wi-Fi 信号强度 </source><translation>Wi-Fi 訊號強度 </translation></message>
     <message><source>Wi-Fi 未连接</source><translation>Wi-Fi 未連線</translation></message>
 </context>
+<context>
+    <name>GeneralOverviewPage</name>
+    <message><source>系统</source><translation>系統</translation></message>
+    <message><source>语言与地区</source><translation>語言與地區</translation></message>
+</context>
+<context>
+    <name>GeneralPage</name>
+    <message><source>语言与地区</source><translation>語言與地區</translation></message>
+</context>
+<context>
+    <name>LanguageAndRegionPage</name>
+    <message><source>语言</source><translation>語言</translation></message>
+    <message><source>界面语言</source><translation>介面語言</translation></message>
+    <message><source>用于 Clavis Quickshell 界面的显示语言</source><translation>用於 Clavis Quickshell 介面的顯示語言</translation></message>
+    <message><source>选择语言</source><translation>選擇語言</translation></message>
+    <message><source>天气</source><translation>天氣</translation></message>
+    <message><source>天气位置地图即将推出</source><translation>天氣位置地圖即將推出</translation></message>
+    <message><source>后续可在地图上选择天气位置</source><translation>後續可在地圖上選擇天氣位置</translation></message>
+    <message><source>单位</source><translation>單位</translation></message>
+    <message><source>天气温度</source><translation>天氣溫度</translation></message>
+    <message><source>侧边栏、灵动岛与锁屏天气的温度单位</source><translation>側邊欄、靈動島與鎖定畫面天氣的溫度單位</translation></message>
+    <message><source>硬件温度</source><translation>硬體溫度</translation></message>
+    <message><source>CPU、GPU 与系统监测组件的温度单位</source><translation>CPU、GPU 與系統監測元件的溫度單位</translation></message>
+    <message><source>时间与日期</source><translation>時間與日期</translation></message>
+    <message><source>时钟格式</source><translation>時鐘格式</translation></message>
+    <message><source>用于灵动岛、侧边栏与锁屏时钟</source><translation>用於靈動島、側邊欄與鎖定畫面時鐘</translation></message>
+    <message><source>24 小时</source><translation>24 小時</translation></message>
+    <message><source>12 小时</source><translation>12 小時</translation></message>
+</context>
 </TS>

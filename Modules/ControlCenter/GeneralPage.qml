@@ -18,9 +18,9 @@ Item {
     }
 
     function closeChildWindows() {
-        if (pageLoader.item
-                && typeof pageLoader.item.closeChildWindows === "function")
+        if (pageLoader.item && typeof pageLoader.item.closeChildWindows === "function")
             pageLoader.item.closeChildWindows();
+
     }
 
     GeneralSubpageHeader {
@@ -32,13 +32,22 @@ Item {
         visible: root.currentSection !== "overview"
         title: {
             switch (root.currentSection) {
-            case "bar": return qsTr("条栏");
-            case "sidebar": return qsTr("侧边栏");
-            case "effects": return qsTr("透明与模糊");
-            case "scrolling": return qsTr("滚动交互");
-            case "autostart": return qsTr("开机启动");
-            case "default-apps": return qsTr("默认应用");
-            default: return qsTr("通用");
+            case "bar":
+                return qsTr("条栏");
+            case "sidebar":
+                return qsTr("侧边栏");
+            case "effects":
+                return qsTr("透明与模糊");
+            case "scrolling":
+                return qsTr("滚动交互");
+            case "language-region":
+                return qsTr("语言与地区");
+            case "autostart":
+                return qsTr("开机启动");
+            case "default-apps":
+                return qsTr("默认应用");
+            default:
+                return qsTr("通用");
             }
         }
         onBackRequested: root.showOverview()
@@ -53,30 +62,41 @@ Item {
         anchors.bottom: parent.bottom
         source: {
             switch (root.currentSection) {
-            case "bar": return Qt.resolvedUrl("GeneralBarPage.qml");
-            case "sidebar": return Qt.resolvedUrl("GeneralSidebarPage.qml");
-            case "effects": return Qt.resolvedUrl("GeneralEffectsPage.qml");
-            case "scrolling": return Qt.resolvedUrl("GeneralScrollingPage.qml");
-            case "autostart": return Qt.resolvedUrl("AutostartPage.qml");
-            case "default-apps": return Qt.resolvedUrl("DefaultAppsPage.qml");
-            default: return Qt.resolvedUrl("GeneralOverviewPage.qml");
+            case "bar":
+                return Qt.resolvedUrl("GeneralBarPage.qml");
+            case "sidebar":
+                return Qt.resolvedUrl("GeneralSidebarPage.qml");
+            case "effects":
+                return Qt.resolvedUrl("GeneralEffectsPage.qml");
+            case "scrolling":
+                return Qt.resolvedUrl("GeneralScrollingPage.qml");
+            case "language-region":
+                return Qt.resolvedUrl("LanguageAndRegionPage.qml");
+            case "autostart":
+                return Qt.resolvedUrl("AutostartPage.qml");
+            case "default-apps":
+                return Qt.resolvedUrl("DefaultAppsPage.qml");
+            default:
+                return Qt.resolvedUrl("GeneralOverviewPage.qml");
             }
         }
-
         onLoaded: {
             if (!item)
-                return;
+                return ;
+
             if ("parentModal" in item)
                 item.parentModal = root.parentModal;
+
         }
     }
 
     Connections {
-        target: pageLoader.item
-        ignoreUnknownSignals: true
-
         function onSectionRequested(section) {
             root.openSection(section);
         }
+
+        target: pageLoader.item
+        ignoreUnknownSignals: true
     }
+
 }
