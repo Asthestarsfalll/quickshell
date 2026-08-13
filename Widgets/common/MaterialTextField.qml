@@ -21,7 +21,6 @@ TextField {
     readonly property bool hasTrailingContent: root.trailingContent !== null && root.trailingContent !== undefined
     readonly property color effectiveAccent: root.error ? Appearance.colors.colError : Appearance.colors.colPrimary
 
-    implicitHeight: root.compact ? Metrics.controlHeightS + Metrics.spacingXS : Metrics.controlHeightXL
     Material.theme: Appearance.m3colors.darkmode ? Material.Dark : Material.Light
     Material.accent: root.effectiveAccent
     Material.primary: root.effectiveAccent
@@ -32,7 +31,10 @@ TextField {
     selectByMouse: true
     wrapMode: TextInput.NoWrap
     activeFocusOnTab: true
-    clip: true
+    // The native outlined field owns its height and content rectangle. Keeping
+    // it unclipped avoids adding a top inset for the floating label, so text
+    // and our leading/trailing content share the control's true centre.
+    clip: false
     color: root.enabled ? Appearance.colors.colOnSurface : Appearance.applyAlpha(Appearance.colors.colOnSurface, 0.38)
     selectedTextColor: Appearance.colors.colOnPrimaryContainer
     selectionColor: Appearance.colors.colPrimaryContainer
