@@ -15,10 +15,6 @@ Item {
     property bool windy: false
     property bool componentReady: false
 
-    property real pointerX: width * 0.5
-    property real pointerY: height * 0.28
-    property real parallaxX: width > 0 ? (pointerX / width - 0.5) * 18 : 0
-    property real parallaxY: height > 0 ? (pointerY / height - 0.35) * 14 : 0
     property real rainBounceY: height
     property var cloudBands: []
     property var rainLayers: [[], [], []]
@@ -39,6 +35,10 @@ Item {
         || windy
     readonly property int targetFps: fastParticleScene ? 30 : 15
     readonly property int sceneFrameInterval: fastParticleScene ? 33 : 66
+    // Clear daytime has only the static gradient layers below. Keeping a
+    // transparent Canvas alive would otherwise repaint an empty frame at 15 FPS.
+    readonly property bool hasCanvasScene:
+        night || hasCloudBands() || isRainScene() || hasSnowScene()
     readonly property bool animationTimerRunning: sceneTimer.running
     property int simulationFrameCount: 0
     property int paintCount: 0
@@ -101,8 +101,7 @@ Item {
                 cloud1: "#f0efed",
                 cloud2: "#e0dfdd",
                 cloud3: "#cecdcb",
-                particle: "#fff2c0",
-                accent: "#ffd96d"
+                particle: "#fff2c0"
             }
         case "clear_night":
             return {
@@ -113,8 +112,7 @@ Item {
                 cloud1: "#eef2fb",
                 cloud2: "#d7dce8",
                 cloud3: "#c4cad8",
-                particle: "#eef2ff",
-                accent: "#d9e5ff"
+                particle: "#eef2ff"
             }
         case "partly_day":
             return {
@@ -125,8 +123,7 @@ Item {
                 cloud1: "#f0efed",
                 cloud2: "#e0dfdd",
                 cloud3: "#cecdcb",
-                particle: "#fff2c0",
-                accent: "#ffd96d"
+                particle: "#fff2c0"
             }
         case "partly_night":
             return {
@@ -137,8 +134,7 @@ Item {
                 cloud1: "#eef2fb",
                 cloud2: "#d7dce8",
                 cloud3: "#c4cad8",
-                particle: "#eef2ff",
-                accent: "#d9e5ff"
+                particle: "#eef2ff"
             }
         case "overcast_day":
             return {
@@ -149,8 +145,7 @@ Item {
                 cloud1: "#ecebea",
                 cloud2: "#dddcd9",
                 cloud3: "#cbc9c6",
-                particle: "#eaf0f5",
-                accent: "#dce7ef"
+                particle: "#eaf0f5"
             }
         case "overcast_night":
             return {
@@ -161,8 +156,7 @@ Item {
                 cloud1: "#dde2eb",
                 cloud2: "#c3c8d2",
                 cloud3: "#aeb4c0",
-                particle: "#dae6f4",
-                accent: "#c2d2e5"
+                particle: "#dae6f4"
             }
         case "rain_day":
             return {
@@ -173,8 +167,7 @@ Item {
                 cloud1: "#ecebea",
                 cloud2: "#dddcd9",
                 cloud3: "#cbc9c6",
-                particle: "#d8ecff",
-                accent: "#cce0f6"
+                particle: "#d8ecff"
             }
         case "rain_night":
             return {
@@ -185,8 +178,7 @@ Item {
                 cloud1: "#dde2eb",
                 cloud2: "#c3c8d2",
                 cloud3: "#aeb4c0",
-                particle: "#cee5ff",
-                accent: "#aac6e7"
+                particle: "#cee5ff"
             }
         case "snow_day":
             return {
@@ -197,8 +189,7 @@ Item {
                 cloud1: "#f2f2f1",
                 cloud2: "#e4e3e1",
                 cloud3: "#d3d2d0",
-                particle: "#ffffff",
-                accent: "#f5fbff"
+                particle: "#ffffff"
             }
         case "snow_night":
             return {
@@ -209,8 +200,7 @@ Item {
                 cloud1: "#edf1f8",
                 cloud2: "#d5dae4",
                 cloud3: "#c4ccd8",
-                particle: "#ffffff",
-                accent: "#e7f1ff"
+                particle: "#ffffff"
             }
         case "storm_day":
             return {
@@ -221,8 +211,7 @@ Item {
                 cloud1: "#9fa4ad",
                 cloud2: "#8b8e98",
                 cloud3: "#7b7988",
-                particle: "#d7e8ff",
-                accent: "#f0d48f"
+                particle: "#d7e8ff"
             }
         case "storm_night":
             return {
@@ -233,8 +222,7 @@ Item {
                 cloud1: "#8f949d",
                 cloud2: "#7d8089",
                 cloud3: "#6d6c79",
-                particle: "#d3dfff",
-                accent: "#f6dea6"
+                particle: "#d3dfff"
             }
         default:
             return {
@@ -245,8 +233,7 @@ Item {
                 cloud1: "#f0efed",
                 cloud2: "#e0dfdd",
                 cloud3: "#cecdcb",
-                particle: "#eef3f8",
-                accent: "#dae3ec"
+                particle: "#eef3f8"
             }
         }
     }
@@ -1045,6 +1032,7 @@ Item {
     Canvas {
         id: canvas
         anchors.fill: parent
+        visible: root.hasCanvasScene
         opacity: Math.max(0, 0.92 - root.scrollProgress * 0.34)
         renderStrategy: Canvas.Threaded
 
@@ -1133,41 +1121,11 @@ Item {
         }
     }
 
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
-
-        onPositionChanged: function(mouse) {
-            root.pointerX = mouse.x
-            root.pointerY = mouse.y
-        }
-
-        onExited: {
-            root.pointerX = root.width * 0.5
-            root.pointerY = root.height * 0.28
-        }
-    }
-
-    Behavior on pointerX {
-        NumberAnimation {
-            duration: 260
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on pointerY {
-        NumberAnimation {
-            duration: 260
-            easing.type: Easing.OutCubic
-        }
-    }
-
     Timer {
         id: sceneTimer
 
         interval: root.sceneFrameInterval
-        running: root.animate
+        running: root.animate && root.hasCanvasScene
         repeat: true
 
         property double lastTickMs: 0
