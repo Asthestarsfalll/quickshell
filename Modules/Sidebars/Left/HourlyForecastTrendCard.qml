@@ -143,7 +143,7 @@ Rectangle {
                     containerColor: Appearance.colors.colLayer2
                     hoverContainerColor: Appearance.colors.colLayer4
                     pressedContainerColor: Appearance.colors.colLayer4Active
-                    onClicked: console.log("Open hourly weather menu")
+                    onClicked: console.warn("[Weather] hourly forecast menu is unavailable")
                 }
 
             }

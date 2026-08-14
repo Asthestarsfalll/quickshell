@@ -80,17 +80,10 @@ Singleton {
             );
             return;
         }
-        const previous = root.phase;
         root.phase = nextPhase;
-        console.log(
-            "[SystemCards] drag",
-            previous + " -> " + nextPhase,
-            reason || ""
-        );
     }
 
     function clearToIdle(reason) {
-        const cardId = root.tileId;
         // Move to idle before clearing sourceItem.  If the source was
         // destroyed, its automatic null assignment must not recursively
         // interpret this cleanup as a new cancellation.
@@ -111,8 +104,6 @@ Singleton {
         root.transferPreparing = false;
         root.transferCommitted = false;
         root.sourceWasBound = false;
-        if (cardId !== "")
-            console.log("[SystemCards] drag session idle", cardId);
     }
 
     // Begin exactly once, at the real Sidebar drag start. The source-local
@@ -173,14 +164,6 @@ Singleton {
             root.presentationPointerY = Number(topLeftY)
                 + root.presentationGrabOffsetY;
         }
-        console.log(
-            "[SystemCards] presentation ghost frozen",
-            root.tileId,
-            "screen=" + root.screenName,
-            "x=" + root.ghostX,
-            "y=" + root.ghostY,
-            "size=" + root.ghostWidth + "x" + root.ghostHeight
-        );
         root.transition(root.frozenTransferPhase,
             "ghost frozen " + root.tileId);
         return root.presentationGhostRect.valid;
@@ -201,7 +184,6 @@ Singleton {
         // committed flag becomes visible to QML bindings.
         root.transferCommitted = true;
         root.transferPreparing = false;
-        console.log("[SystemCards] transfer committed", id);
         return true;
     }
 
@@ -230,7 +212,6 @@ Singleton {
                 || root.phase !== root.frozenTransferPhase)
             return false;
         root.transferPreparing = true;
-        console.log("[SystemCards] desktop handoff preparing", id);
         return true;
     }
 
@@ -253,7 +234,6 @@ Singleton {
         if (!root.transferCommitted || !root.visualHandoffPending
                 || id !== root.tileId)
             return false;
-        console.log("[SystemCards] visual handoff ghost -> desktop", id);
         // clearToIdle changes the two visual-owner bindings in one QML turn:
         // the ghost becomes invisible before the DesktopCard waiting binding
         // can become visible in the next scene render.
@@ -263,8 +243,6 @@ Singleton {
     function finishGhost() {
         if (!root.active)
             return false;
-        if (root.transferCommitted)
-            console.log("[SystemCards] drag ghost finished", root.tileId);
         root.clearToIdle("ghost finished");
         return true;
     }
@@ -325,7 +303,6 @@ Singleton {
         if (!root.sourceWasBound || !root.active)
             return;
 
-        console.log("[SystemCards] drag source destroyed", root.tileId);
         if (root.transferCommitted) {
             // Once ownership is committed, the sidebar source lifetime is no
             // longer authoritative. The DesktopCard still has to consume the
@@ -333,10 +310,6 @@ Singleton {
             // particular, do not clear the phase, tileId, commit flag, or
             // presentation rect here.
             // sourceItem destruction is not handoff completion.
-            console.log(
-                "[SystemCards] preserving committed desktop handoff",
-                root.tileId
-            );
         } else {
             root.cancel();
         }

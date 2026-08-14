@@ -95,9 +95,6 @@ Singleton {
         const id = String(cardId);
         const next = CardState.setContainer(root.internalState, id, container, screenName, xNorm, yNorm, placementSpace);
         const committed = root.commit(next, id, container === "desktop");
-        if (committed && container === "desktop")
-            console.log("[SystemCards] transfer", id + " sidebar -> desktop", "screen=" + String(screenName || ""));
-
         return committed;
     }
 
@@ -143,9 +140,6 @@ Singleton {
 
         next = CardState.setDesktopScreenPositions(next, batch);
         const committed = root.commit(next, id, !!requestLayout);
-        if (committed)
-            console.log("[SystemCards] transfer", id + " sidebar -> desktop", "screen=" + String(screenName || ""));
-
         return committed;
     }
 

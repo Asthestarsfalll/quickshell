@@ -99,9 +99,11 @@ var cardDefinitions = [
         nameKey: "天气",
         name: qsTr("天气"),
         icon: "cloud",
-        columnSpan: 3,
-        rowSpan: 1,
-        requiresSystemMonitor: false
+        columnSpan: 2,
+        rowSpan: 2,
+        requiresSystemMonitor: false,
+        preserveDefaultSurface: true,
+        excludeHostBlur: true
     },
     {
         id: "media",
@@ -126,7 +128,7 @@ var defaultAnchors = {
     network: { column: 1, row: 3 },
     storage: { column: 0, row: 4 },
     calendar: { column: 0, row: 5 },
-    weather: { column: 0, row: 6 },
+    weather: { column: 1, row: 5 },
     media: { column: 0, row: 7 }
 };
 

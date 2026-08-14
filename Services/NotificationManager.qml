@@ -184,7 +184,7 @@ Singleton {
                 root.idOffset = maxId;
                 root.initDone();
             } catch (error) {
-                console.log("NotificationManager failed to load history:", error);
+                console.warn("NotificationManager failed to load history:", error);
                 root.list = [];
                 root.idOffset = 0;
                 root.initDone();
@@ -197,7 +197,7 @@ Singleton {
                 root.saveNotifications();
                 root.initDone();
             } else {
-                console.log("NotificationManager failed to load notification file:", error);
+                console.warn("NotificationManager failed to load notification file:", error);
                 root.initDone();
             }
         }

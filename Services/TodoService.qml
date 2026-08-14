@@ -98,7 +98,7 @@ Singleton {
             try {
                 root.list = root.normalizeList(JSON.parse(todoFile.text().trim() || "[]"));
             } catch (error) {
-                console.log("TodoService failed to load:", error);
+                console.warn("TodoService failed to load:", error);
                 root.list = [];
             }
 
@@ -110,7 +110,7 @@ Singleton {
                 return;
 
             if (error !== FileViewError.FileNotFound)
-                console.log("TodoService failed to open:", error);
+                console.warn("TodoService failed to open:", error);
 
             root.list = [];
             root.ready = true;

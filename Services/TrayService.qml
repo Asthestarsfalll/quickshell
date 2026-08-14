@@ -115,7 +115,7 @@ Singleton {
             try {
                 root.loadFromObject(JSON.parse(configFile.text().trim() || "{}"));
             } catch (error) {
-                console.log("TrayService failed to load:", error);
+                console.warn("TrayService failed to load:", error);
                 root.loadFromObject(root.defaultConfig());
                 root.save();
             }

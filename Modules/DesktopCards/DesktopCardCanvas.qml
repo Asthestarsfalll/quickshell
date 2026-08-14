@@ -487,7 +487,6 @@ Item {
                     return false;
                 }
                 slot.handoffReadySent = true;
-                console.log("[DesktopCards] screen handoff ready", slot.tileId, "rect=" + actual.x + "," + actual.y);
                 return true;
             }
 

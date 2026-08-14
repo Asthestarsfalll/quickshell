@@ -58,8 +58,6 @@ Item {
     Keys.onEnterPressed: triggerSelected()
 
     function triggerSelected() {
-        console.log(qsTr("触发工具: ") + toolsModel[selectedIndex].tip)
-
         toolsRoot.requestHideKeystone()
         
         if (selectedIndex === 0) {
@@ -75,7 +73,7 @@ Item {
         } else if (selectedIndex === 7) {
             toolsBackend.startAudio("system")
         } else {
-            console.log(qsTr("该工具的后端尚未实现！"))
+            console.warn("[Tools] backend unavailable", toolsModel[selectedIndex].tip)
         }
     }
 

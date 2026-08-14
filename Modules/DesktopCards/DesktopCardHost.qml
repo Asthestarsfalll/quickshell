@@ -226,7 +226,6 @@ Variants {
             window.scheduleDesktopLayout("mode-changed");
         }
         Component.onCompleted: {
-            console.log("[DesktopCards] host screen=" + String(window.screenKey) + " layer=Bottom");
             WallpaperSceneService.sceneFor(window.screenKey);
             DesktopPresentationService.registerHost(window.screenKey, viewport);
             Qt.callLater(function() {
@@ -342,7 +341,6 @@ Variants {
                     window.scheduleDesktopLayout("analysis-failed");
                     return ;
                 }
-                console.log("[DesktopCards] analysis ready path=" + String(window.scene.sourcePath) + " size=" + String(result.analysisWidth) + "x" + String(result.analysisHeight) + " valid=true minBusy=" + Number(result.minBusyScore).toFixed(4) + " maxBusy=" + Number(result.maxBusyScore).toFixed(4));
                 window.scheduleDesktopLayout("analysis-ready");
             }
 

@@ -245,9 +245,7 @@ Item {
     Component {
         id: weatherComponent
 
-        SystemWeatherCard {
-            surfaceColor: root.surfaceColor(Appearance.m3colors.m3surfaceContainerHigh, Appearance.colors.colSurfaceContainerHigh)
-        }
+        SystemWeatherCard {}
 
     }
 

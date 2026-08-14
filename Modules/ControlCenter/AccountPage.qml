@@ -370,7 +370,7 @@ Item {
                         Layout.fillWidth: true
                         text: qsTr("更多蓝牙设置")
                         trailingIconName: "chevron_right"
-                        onClicked: console.log("TODO: open detailed Bluetooth settings")
+                        onClicked: console.warn("[Account] detailed Bluetooth settings are unavailable")
                     }
                 }
 
@@ -492,7 +492,7 @@ Item {
                             text: qsTr("管理云存储")
                             iconName: "settings"
                             trailingIconName: "chevron_right"
-                            onClicked: console.log("TODO: open cloud storage management")
+                            onClicked: console.warn("[Account] cloud storage management is unavailable")
                         }
                     }
                 }

@@ -13,16 +13,17 @@ TestCase {
         compare(layout.length, 11);
         let area = 0;
         for (let index = 0; index < layout.length; index += 1) area += layout[index].columnSpan * layout[index].rowSpan
-        compare(area, 23);
+        compare(area, 24);
         compare(GridLayout.placementFor(layout, "time").column, 0);
         compare(GridLayout.placementFor(layout, "battery").column, 2);
         compare(GridLayout.placementFor(layout, "time").rowSpan, 2);
         compare(GridLayout.placementFor(layout, "battery").rowSpan, 2);
         compare(GridLayout.placementFor(layout, "calendar").columnSpan, 1);
         compare(GridLayout.placementFor(layout, "calendar").rowSpan, 1);
-        compare(GridLayout.placementFor(layout, "weather").columnSpan, GridLayout.columnCount);
-        compare(GridLayout.placementFor(layout, "weather").row, 6);
-        compare(GridLayout.placementFor(layout, "media").row, 7);
+        compare(GridLayout.placementFor(layout, "weather").columnSpan, 2);
+        compare(GridLayout.placementFor(layout, "weather").rowSpan, 2);
+        compare(GridLayout.placementFor(layout, "weather").column, 1);
+        compare(GridLayout.placementFor(layout, "weather").row, 5);
         compare(GridLayout.placementFor(layout, "media").columnSpan, 2);
         compare(GridLayout.placementFor(layout, "media").rowSpan, 2);
     }
@@ -88,11 +89,12 @@ TestCase {
         compare(GridLayout.clampAnchor(storage, 2, storage.row).column, 0);
     }
 
-    function test_weatherSpansFullGridWidth() {
+    function test_weatherUsesSharedTwoByTwoSpan() {
         const weather = GridLayout.placementFor(GridLayout.defaultLayout(), "weather");
-        compare(weather.column, 0);
-        compare(weather.columnSpan, GridLayout.columnCount);
-        compare(GridLayout.clampAnchor(weather, 2, weather.row).column, 0);
+        compare(weather.column, 1);
+        compare(weather.columnSpan, 2);
+        compare(weather.rowSpan, 2);
+        compare(GridLayout.clampAnchor(weather, 2, weather.row).column, 1);
     }
 
     function test_solverIsDeterministic() {
@@ -108,7 +110,7 @@ TestCase {
         verify(moved !== null);
         verify(GridLayout.validateLayout(moved));
         compare(GridLayout.placementFor(moved, "time").column, 1);
-        compare(GridLayout.placementFor(moved, "time").row, 7);
+        compare(GridLayout.placementFor(moved, "time").row, 8);
     }
 
     function test_everyLegalAnchorCanBeSolved() {

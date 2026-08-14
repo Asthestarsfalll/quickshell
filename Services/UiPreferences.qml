@@ -209,7 +209,7 @@ Singleton {
             root.drawerGridLayout = JSON.parse(JSON.stringify(layout || {
             }));
         } catch (error) {
-            console.log("UiPreferences rejected drawer grid layout:", error);
+            console.warn("UiPreferences rejected drawer grid layout:", error);
             return ;
         }
         root.save();
@@ -220,7 +220,7 @@ Singleton {
             root.systemCards = JSON.parse(JSON.stringify(cards || {
             }));
         } catch (error) {
-            console.log("UiPreferences rejected system card state:", error);
+            console.warn("UiPreferences rejected system card state:", error);
             return ;
         }
         root.save();
@@ -302,15 +302,14 @@ Singleton {
                 if (root.sidebarCookieDialStyle === "numbers")
                     root.sidebarCookieTimeIndicators = false;
 
-                const persistedDrawerGridLayout = parsed.drawerGridLayout || parsed.systemGridLayout;
-                if (persistedDrawerGridLayout && typeof persistedDrawerGridLayout === "object")
-                    root.drawerGridLayout = persistedDrawerGridLayout;
+                if (parsed.drawerGridLayout && typeof parsed.drawerGridLayout === "object")
+                    root.drawerGridLayout = parsed.drawerGridLayout;
 
                 if (parsed.systemCards && typeof parsed.systemCards === "object" && !Array.isArray(parsed.systemCards))
                     root.systemCards = parsed.systemCards;
 
             } catch (error) {
-                console.log("UiPreferences failed to load:", error);
+                console.warn("UiPreferences failed to load:", error);
             }
             root.preferencesReady = true;
         }

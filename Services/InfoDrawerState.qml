@@ -163,7 +163,7 @@ Singleton {
             try {
                 root.loadState(stateFile.text());
             } catch (error) {
-                console.log("InfoDrawerState failed to load:", error);
+                console.warn("InfoDrawerState failed to load:", error);
             }
 
             root.ready = true;
@@ -175,7 +175,7 @@ Singleton {
                 return;
 
             if (error !== FileViewError.FileNotFound)
-                console.log("InfoDrawerState failed to open:", error);
+                console.warn("InfoDrawerState failed to open:", error);
 
             root.ready = true;
             root.scheduleSave();

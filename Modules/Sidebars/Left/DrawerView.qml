@@ -51,6 +51,7 @@ Item {
     property int targetRow: -1
     property bool dragTargetValid: false
     property bool desktopExtraction: false
+
     function layoutPlacement(layout, tileId) {
         return GridLayout.placementFor(layout, tileId);
     }
@@ -181,7 +182,7 @@ Item {
                 "width": SystemCardDragSession.hostWidth,
                 "height": SystemCardDragSession.hostHeight
             };
-            const size = root.cardSize(tileId);
+            const size = SystemCardService.cardSize(tileId);
             const screenX = Math.max(0, Math.min(Math.max(0, output.width - size.width), SystemCardDragSession.ghostX));
             const screenY = Math.max(0, Math.min(Math.max(0, output.height - size.height), SystemCardDragSession.ghostY));
             const normalized = Placement.normalizedPosition(screenX, screenY, output.width, output.height);

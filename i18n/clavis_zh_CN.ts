@@ -4055,73 +4055,12 @@
 <context>
     <name>SystemWeatherCard</name>
     <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="80" />
-        <source>正在定位</source>
-        <translation>正在定位</translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="84" />
-        <source>坐标未知</source>
-        <translation>坐标未知</translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="92" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="14" />
         <source>天气，</source>
         <translation>天气，</translation>
     </message>
     <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="96" />
-        <source>正在获取</source>
-        <translation>正在获取</translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="97" />
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="264" />
-        <source>位置未知</source>
-        <translation>位置未知</translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="98" />
-        <source>，坐标 </source>
-        <translation>，坐标 </translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="99" />
-        <source>，湿度 </source>
-        <translation>，湿度 </translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="101" />
-        <source>，风速 </source>
-        <translation>，风速 </translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="103" />
-        <source>，气压 </source>
-        <translation>，气压 </translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="105" />
-        <source>，能见度 </source>
-        <translation>，能见度 </translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="107" />
-        <source>，日出 </source>
-        <translation>，日出 </translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="108" />
-        <source>，日落 </source>
-        <translation>，日落 </translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="231" />
-        <source>正在获取天气</source>
-        <translation>正在获取天气</translation>
-    </message>
-    <message>
-        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="232" />
+        <location filename="../Modules/SystemCards/SystemWeatherCard.qml" line="14" />
         <source>天气不可用</source>
         <translation>天气不可用</translation>
     </message>

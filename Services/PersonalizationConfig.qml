@@ -1381,7 +1381,7 @@ Singleton {
                 }) !== JSON.stringify(root.toJson().bar) || JSON.stringify(parsed.keystone || {
                 }) !== JSON.stringify(root.toJson().keystone);
             } catch (error) {
-                console.log("PersonalizationConfig failed to load:", error);
+                console.warn("PersonalizationConfig failed to load:", error);
                 shouldRepair = true;
             }
             root.loading = false;

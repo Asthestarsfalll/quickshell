@@ -109,7 +109,7 @@ Singleton {
                 const parsed = JSON.parse(configFile.text().trim() || "{}");
                 root.toggles = root.normalizeToggles(parsed.toggles);
             } catch (error) {
-                console.log("QuickToggleConfig failed to load:", error);
+                console.warn("QuickToggleConfig failed to load:", error);
                 root.toggles = root.defaultToggles();
                 root.save();
             }

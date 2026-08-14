@@ -397,7 +397,7 @@ Singleton {
                 repair = root.needsPolicyMigration(parsed);
                 root.loadPolicy(parsed);
             } catch (error) {
-                console.log("IdleService failed to load policy:", error);
+                console.warn("IdleService failed to load policy:", error);
                 root.loadPolicy({});
                 repair = true;
             }

@@ -481,7 +481,7 @@ Item {
                         accessibleName: qsTr("编辑天气位置")
                         hoverContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1)
                         pressedContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
-                        onClicked: console.log("Open weather settings")
+                        onClicked: console.warn("[Weather] settings action is unavailable")
                     }
 
                     IconButton {
