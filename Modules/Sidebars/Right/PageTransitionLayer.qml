@@ -6,6 +6,7 @@ Item {
 
     property bool active: false
     property bool hubPage: false
+    property bool transitionsEnabled: true
     default property alias content: contentHost.data
 
     enabled: active
@@ -16,6 +17,8 @@ Item {
     z: active ? 1 : 0
 
     Behavior on opacity {
+        enabled: root.transitionsEnabled
+
         NumberAnimation {
             duration: root.active
                 ? Appearance.animation.elementResize.duration
@@ -30,6 +33,8 @@ Item {
     }
 
     Behavior on x {
+        enabled: root.transitionsEnabled
+
         NumberAnimation {
             duration: root.active
                 ? Appearance.animation.elementResize.duration
@@ -44,6 +49,8 @@ Item {
     }
 
     Behavior on scale {
+        enabled: root.transitionsEnabled
+
         NumberAnimation {
             duration: root.active
                 ? Appearance.animation.elementResize.duration

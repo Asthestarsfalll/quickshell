@@ -423,16 +423,15 @@ FocusScope {
             root.updatePopupGeometry();
             Qt.callLater(() => revealProgress = 1);
         }
-        onOpened: Qt.callLater(root.updatePopupGeometry)
+        onOpened: Qt.callLater(() => {
+            root.updatePopupGeometry();
+            popupContent.forceActiveFocus();
+        })
         onAboutToHide: revealProgress = 0
         onClosed: {
             if (root.expanded)
                 root.expanded = false;
             root.hasPendingAccepted = false;
-        }
-
-        Keys.onPressed: event => {
-            root.handleMenuKey(event);
         }
 
         enter: Transition {
@@ -481,9 +480,16 @@ FocusScope {
         background: Item {
         }
 
-        contentItem: Item {
+        contentItem: FocusScope {
+            id: popupContent
+
+            focus: optionsPopup.visible
             implicitWidth: optionsPopup.width
             implicitHeight: optionsPopup.height
+
+            Keys.onPressed: event => {
+                root.handleMenuKey(event);
+            }
 
             Item {
                 id: maskedSurface

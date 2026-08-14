@@ -13,36 +13,24 @@ Item {
     property bool presentationActive: false
     property var weatherSourceOverride: null
     readonly property string activeView: WidgetState.leftSidebarView
-    readonly property var activeViewLoader: {
-        const indexByView = {
-            "info": 0,
-            "sys": 1,
-            "weather": 2
-        };
-        return viewRepeater.itemAt(indexByView[root.activeView]);
-    }
+    readonly property var activeViewLoader: activeView === "info"
+        ? infoLoader
+        : activeView === "sys"
+            ? systemLoader : weatherLoader
     readonly property bool readyForPresentation:
-        activeViewLoader
+        activeViewLoader.active
             && activeViewLoader.status === Loader.Ready
             && activeViewLoader.item !== null
     readonly property int instantiatedViewCount: {
-        let count = 0
-        for (let index = 0; index < viewRepeater.count; ++index) {
-            const loader = viewRepeater.itemAt(index)
-            if (loader && loader.item)
-                count += 1
-        }
-        return count
+        return (infoLoader.item ? 1 : 0)
+            + (systemLoader.item ? 1 : 0)
+            + (weatherLoader.item ? 1 : 0)
     }
-    readonly property var weatherView: {
-        const loader = viewRepeater.itemAt(2)
-        return loader ? loader.item : null
-    }
+    readonly property var weatherView: weatherLoader.item
     readonly property var systemCardBlurExclusionItems: {
         if (root.activeView !== "sys")
             return [];
-        const loader = viewRepeater.itemAt(1);
-        const systemView = loader ? loader.item : null;
+        const systemView = systemLoader.item;
         return systemView ? systemView.systemCardBlurExclusionItems : [];
     }
 
@@ -227,31 +215,43 @@ Item {
             color: "transparent"
             radius: Appearance.rounding.large
 
-            Repeater {
-                id: viewRepeater
+            Loader {
+                id: infoLoader
 
-                model: ["info", "sys", "weather"]
+                property bool loadedOnce: false
 
-                Loader {
-                    id: viewLoader
+                anchors.fill: parent
+                active: root.activeView === "info" || loadedOnce
+                visible: active && root.activeView === "info"
+                asynchronous: true
+                sourceComponent: infoComponent
+                onLoaded: loadedOnce = true
+            }
 
-                    required property string modelData
-                    property bool loadedOnce: false
+            Loader {
+                id: systemLoader
 
-                    anchors.fill: parent
-                    // Cache every page visited during this sidebar content
-                    // lifetime. The outer Loader owns the common destruction
-                    // boundary after the panel has completely slid away.
-                    active: modelData === root.activeView || loadedOnce
-                    visible: active && modelData === root.activeView
-                    asynchronous: true
-                    sourceComponent: modelData === "info"
-                        ? infoComponent
-                        : modelData === "sys"
-                            ? systemComponent : weatherComponent
+                property bool loadedOnce: false
 
-                    onLoaded: loadedOnce = true
-                }
+                anchors.fill: parent
+                active: root.activeView === "sys" || loadedOnce
+                visible: active && root.activeView === "sys"
+                asynchronous: true
+                sourceComponent: systemComponent
+                onLoaded: loadedOnce = true
+            }
+
+            Loader {
+                id: weatherLoader
+
+                property bool loadedOnce: false
+
+                anchors.fill: parent
+                active: root.activeView === "weather" || loadedOnce
+                visible: active && root.activeView === "weather"
+                asynchronous: true
+                sourceComponent: weatherComponent
+                onLoaded: loadedOnce = true
             }
 
             Component {

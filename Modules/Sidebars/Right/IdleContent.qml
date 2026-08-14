@@ -309,32 +309,13 @@ WidgetPanel {
                             font.pixelSize: 13
                         }
 
-                        MaterialSplitSlider {
-                            id: dimFractionSlider
+                        Loader {
+                            id: dimFractionSliderLoader
 
                             Layout.fillWidth: true
                             Layout.minimumWidth: 148
-                            configuration: MaterialSplitSlider.Configuration.XS
-                            from: 0.1
-                            to: 0.8
-                            stepSize: 0.05
-                            stopIndicatorValues: []
-                            showTooltipOnHover: true
-                            usePercentTooltip: false
-                            tooltipContent: Math.round(value * 100) + "%"
-                            Accessible.name: qsTr("屏幕调暗比例")
-
-                            Binding {
-                                target: dimFractionSlider
-                                property: "value"
-                                value: IdleService.dimFraction
-                                when: !dimFractionSlider.pressed
-                            }
-
-                            onMoved: {
-                                panelRoot.pendingDimFraction = value;
-                                dimFractionCommitTimer.restart();
-                            }
+                            active: stageEditor.showDimFraction
+                            sourceComponent: dimFractionSliderComponent
                         }
                     }
 
@@ -356,6 +337,37 @@ WidgetPanel {
                             )
                         }
                     }
+                }
+            }
+        }
+
+        Component {
+            id: dimFractionSliderComponent
+
+            MaterialSplitSlider {
+                id: dimFractionSlider
+
+                width: parent ? parent.width : implicitWidth
+                configuration: MaterialSplitSlider.Configuration.XS
+                from: 0.1
+                to: 0.8
+                stepSize: 0.05
+                stopIndicatorValues: []
+                showTooltipOnHover: true
+                usePercentTooltip: false
+                tooltipContent: Math.round(value * 100) + "%"
+                Accessible.name: qsTr("屏幕调暗比例")
+
+                Binding {
+                    target: dimFractionSlider
+                    property: "value"
+                    value: IdleService.dimFraction
+                    when: !dimFractionSlider.pressed
+                }
+
+                onMoved: {
+                    panelRoot.pendingDimFraction = value;
+                    dimFractionCommitTimer.restart();
                 }
             }
         }

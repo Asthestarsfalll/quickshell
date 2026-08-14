@@ -6,70 +6,218 @@ Item {
 
     property var screen: null
     property bool foreground: false
-    property bool componentCompleted: false
-    readonly property bool readyForPresentation: componentCompleted
+    property string displayedView: ""
+    readonly property string activeView: {
+        switch (WidgetState.qsView) {
+        case "network":
+        case "bluetooth":
+        case "idle":
+        case "audio":
+        case "microphone":
+        case "settings":
+            return WidgetState.qsView;
+        default:
+            return "settings";
+        }
+    }
+    readonly property var activeViewLoader: activeView === "network"
+        ? networkLoader
+        : activeView === "bluetooth"
+            ? bluetoothLoader
+            : activeView === "idle"
+                ? idleLoader
+                : activeView === "audio"
+                    ? audioLoader
+                    : activeView === "microphone"
+                        ? microphoneLoader : settingsLoader
+    readonly property bool readyForPresentation:
+        activeViewLoader.active
+            && activeViewLoader.status === Loader.Ready
+            && activeViewLoader.item !== null
+            && displayedView === activeView
 
-    Component.onCompleted: componentCompleted = true
+    function syncDisplayedView() {
+        if (activeViewLoader.active
+                && activeViewLoader.status === Loader.Ready
+                && activeViewLoader.item !== null) {
+            displayedView = activeView;
+        }
+    }
+
+    Component.onCompleted: syncDisplayedView()
+    onActiveViewChanged: syncDisplayedView()
 
     PageTransitionLayer {
         anchors.fill: parent
-        active: WidgetState.qsView === "network"
+        active: root.displayedView === "network"
+        transitionsEnabled: root.foreground
+
+        Loader {
+            id: networkLoader
+
+            property bool loadedOnce: false
+
+            anchors.fill: parent
+            active: root.activeView === "network" || loadedOnce
+            asynchronous: true
+            sourceComponent: networkComponent
+            onLoaded: {
+                loadedOnce = true;
+                root.syncDisplayedView();
+            }
+        }
+    }
+
+    PageTransitionLayer {
+        anchors.fill: parent
+        active: root.displayedView === "bluetooth"
+        transitionsEnabled: root.foreground
+
+        Loader {
+            id: bluetoothLoader
+
+            property bool loadedOnce: false
+
+            anchors.fill: parent
+            active: root.activeView === "bluetooth" || loadedOnce
+            asynchronous: true
+            sourceComponent: bluetoothComponent
+            onLoaded: {
+                loadedOnce = true;
+                root.syncDisplayedView();
+            }
+        }
+    }
+
+    PageTransitionLayer {
+        anchors.fill: parent
+        active: root.displayedView === "idle"
+        transitionsEnabled: root.foreground
+
+        Loader {
+            id: idleLoader
+
+            property bool loadedOnce: false
+
+            anchors.fill: parent
+            active: root.activeView === "idle" || loadedOnce
+            asynchronous: true
+            sourceComponent: idleComponent
+            onLoaded: {
+                loadedOnce = true;
+                root.syncDisplayedView();
+            }
+        }
+    }
+
+    PageTransitionLayer {
+        anchors.fill: parent
+        active: root.displayedView === "audio"
+        transitionsEnabled: root.foreground
+
+        Loader {
+            id: audioLoader
+
+            property bool loadedOnce: false
+
+            anchors.fill: parent
+            active: root.activeView === "audio" || loadedOnce
+            asynchronous: true
+            sourceComponent: audioComponent
+            onLoaded: {
+                loadedOnce = true;
+                root.syncDisplayedView();
+            }
+        }
+    }
+
+    PageTransitionLayer {
+        anchors.fill: parent
+        active: root.displayedView === "microphone"
+        transitionsEnabled: root.foreground
+
+        Loader {
+            id: microphoneLoader
+
+            property bool loadedOnce: false
+
+            anchors.fill: parent
+            active: root.activeView === "microphone" || loadedOnce
+            asynchronous: true
+            sourceComponent: microphoneComponent
+            onLoaded: {
+                loadedOnce = true;
+                root.syncDisplayedView();
+            }
+        }
+    }
+
+    PageTransitionLayer {
+        anchors.fill: parent
+        active: root.displayedView === "settings"
+        hubPage: true
+        transitionsEnabled: root.foreground
+
+        Loader {
+            id: settingsLoader
+
+            property bool loadedOnce: false
+
+            anchors.fill: parent
+            active: root.activeView === "settings" || loadedOnce
+            asynchronous: true
+            sourceComponent: settingsComponent
+            onLoaded: {
+                loadedOnce = true;
+                root.syncDisplayedView();
+            }
+        }
+    }
+
+    Component {
+        id: networkComponent
 
         NetworkContent {
-            anchors.fill: parent
-            foreground: root.foreground
-                && WidgetState.qsView === "network"
+            foreground: root.foreground && root.activeView === "network"
         }
     }
 
-    PageTransitionLayer {
-        anchors.fill: parent
-        active: WidgetState.qsView === "bluetooth"
+    Component {
+        id: bluetoothComponent
 
         BluetoothContent {
-            anchors.fill: parent
-            foreground: root.foreground
-                && WidgetState.qsView === "bluetooth"
+            foreground: root.foreground && root.activeView === "bluetooth"
         }
     }
 
-    PageTransitionLayer {
-        anchors.fill: parent
-        active: WidgetState.qsView === "idle"
+    Component {
+        id: idleComponent
 
         IdleContent {
-            anchors.fill: parent
-            foreground: root.foreground
+            foreground: root.foreground && root.activeView === "idle"
         }
     }
 
-    PageTransitionLayer {
-        anchors.fill: parent
-        active: WidgetState.qsView === "audio"
+    Component {
+        id: audioComponent
 
         AudioContent {
-            anchors.fill: parent
-            foreground: root.foreground
+            foreground: root.foreground && root.activeView === "audio"
         }
     }
 
-    PageTransitionLayer {
-        anchors.fill: parent
-        active: WidgetState.qsView === "microphone"
+    Component {
+        id: microphoneComponent
 
         MicrophoneContent {
-            anchors.fill: parent
-            foreground: root.foreground
+            foreground: root.foreground && root.activeView === "microphone"
         }
     }
 
-    PageTransitionLayer {
-        anchors.fill: parent
-        active: WidgetState.qsView === "settings"
-        hubPage: true
+    Component {
+        id: settingsComponent
 
         SettingsContent {
-            anchors.fill: parent
             screen: root.screen
         }
     }
