@@ -266,7 +266,7 @@ Singleton {
         root.preferencesLoaded = true;
         // Missing systemCards is the legacy state: all cards remain in
         // the sidebar and are written as a new, independently versioned
-        // document without touching systemGridLayout.
+        // document without touching drawerGridLayout.
         if (!raw || !raw.cards || JSON.stringify(raw) !== JSON.stringify(CardState.serialize(raw)))
             root.persist(root.internalState);
 

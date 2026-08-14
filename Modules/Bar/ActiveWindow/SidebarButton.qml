@@ -31,8 +31,8 @@ Item {
         }
 
         SidebarPillButton {
-            viewName: "sys"
-            iconName: "memory"
+            viewName: "drawer"
+            iconName: "widgets"
             activeColor: Appearance.colors.colTertiary
             activeContentColor: Appearance.colors.colOnTertiary
         }

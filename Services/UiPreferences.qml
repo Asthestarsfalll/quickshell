@@ -28,7 +28,7 @@ Singleton {
     property bool storeReady: false
     property bool preferencesReady: false
     property bool savePending: false
-    property var systemGridLayout: ({
+    property var drawerGridLayout: ({
     })
     property var systemCards: ({
     })
@@ -204,12 +204,12 @@ Singleton {
         root.setDarkMode(!root.darkMode);
     }
 
-    function setSystemGridLayout(layout) {
+    function setDrawerGridLayout(layout) {
         try {
-            root.systemGridLayout = JSON.parse(JSON.stringify(layout || {
+            root.drawerGridLayout = JSON.parse(JSON.stringify(layout || {
             }));
         } catch (error) {
-            console.log("UiPreferences rejected system grid layout:", error);
+            console.log("UiPreferences rejected drawer grid layout:", error);
             return ;
         }
         root.save();
@@ -248,7 +248,7 @@ Singleton {
             "sidebarCookieMinuteHandStyle": root.sidebarCookieMinuteHandStyle,
             "sidebarCookieSecondHandStyle": root.sidebarCookieSecondHandStyle,
             "sidebarCookieDateStyle": root.sidebarCookieDateStyle,
-            "systemGridLayout": root.systemGridLayout,
+            "drawerGridLayout": root.drawerGridLayout,
             "systemCards": root.systemCards
         }, null, 2));
     }
@@ -302,8 +302,9 @@ Singleton {
                 if (root.sidebarCookieDialStyle === "numbers")
                     root.sidebarCookieTimeIndicators = false;
 
-                if (parsed.systemGridLayout && typeof parsed.systemGridLayout === "object")
-                    root.systemGridLayout = parsed.systemGridLayout;
+                const persistedDrawerGridLayout = parsed.drawerGridLayout || parsed.systemGridLayout;
+                if (persistedDrawerGridLayout && typeof persistedDrawerGridLayout === "object")
+                    root.drawerGridLayout = persistedDrawerGridLayout;
 
                 if (parsed.systemCards && typeof parsed.systemCards === "object" && !Array.isArray(parsed.systemCards))
                     root.systemCards = parsed.systemCards;

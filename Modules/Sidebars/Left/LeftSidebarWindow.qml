@@ -40,10 +40,6 @@ Item {
     readonly property var weatherView:
         sidebarContentLoader.item
             ? sidebarContentLoader.item.weatherView : null
-    readonly property var systemCardBlurExclusionItems:
-        root.activeView === "sys" && sidebarContentLoader.item
-            ? sidebarContentLoader.item.systemCardBlurExclusionItems : []
-
     function preparePresentation() {
         contentRetained = true
         startPresentation()

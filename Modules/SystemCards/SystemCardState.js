@@ -1,7 +1,7 @@
 .pragma library
 
 // QML JavaScript files cannot use ES-module imports from another JS file.
-// Include the catalog here so CardState and SystemGridLayout still consume
+// Include the catalog here so CardState and DrawerGridLayout still consume
 // the same metadata source when they are run directly by qmltestrunner.
 Qt.include("SystemCardCatalog.js");
 Qt.include("SystemCardPlacement.js");

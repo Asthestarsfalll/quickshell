@@ -1784,8 +1784,8 @@
     </message>
     <message>
         <location filename="../Modules/Sidebars/Left/LeftSidebarContent.qml" line="31" />
-        <source>系统</source>
-        <translation>系統</translation>
+        <source>抽屉</source>
+        <translation>抽屜</translation>
     </message>
     <message>
         <location filename="../Modules/Sidebars/Left/LeftSidebarContent.qml" line="32" />
@@ -3169,8 +3169,8 @@
     <name>SidebarPillButton</name>
     <message>
         <location filename="../Modules/Bar/ActiveWindow/SidebarPillButton.qml" line="63" />
-        <source>系统监控</source>
-        <translation>系統監控</translation>
+        <source>抽屉</source>
+        <translation>抽屜</translation>
     </message>
     <message>
         <location filename="../Modules/Bar/ActiveWindow/SidebarPillButton.qml" line="63" />
@@ -3970,86 +3970,86 @@
     </message>
 </context>
 <context>
-    <name>SystemView</name>
+    <name>DrawerView</name>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="74" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="74" />
         <source> 核 · </source>
         <translation> 核 · </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="74" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="74" />
         <source> 线程</source>
         <translation> 執行緒</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="75" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="75" />
         <source>总体利用率</source>
         <translation>總體利用率</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="90" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="90" />
         <source>未检测到可用图形设备</source>
         <translation>未檢測到可用圖形裝置</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="341" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="341" />
         <source>图形设备</source>
         <translation>圖形裝置</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="393" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="393" />
         <source>内存已使用 </source>
         <translation>記憶體已使用 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="428" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="428" />
         <source>Wi-Fi 信号强度</source>
         <translation>Wi-Fi 訊號強度</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="435" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="435" />
         <source>Wi-Fi 信号强度 </source>
         <translation>Wi-Fi 訊號強度 </translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="440" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="440" />
         <source>Wi-Fi 未连接</source>
         <translation>Wi-Fi 未連線</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="500" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="500" />
         <source>正在连接系统监测服务</source>
         <translation>正在連線系統監測服務</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="513" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="513" />
         <source>正在重新连接</source>
         <translation>正在重新連線</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="515" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="515" />
         <source>系统监测服务不可用</source>
         <translation>系統監測服務不可用</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="517" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="517" />
         <source>请确认 key 已重新构建并可从当前环境运行。</source>
         <translation>請確認 key 已重新構建並可從當前環境執行。</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="518" />
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="518" />
         <source>连接中断后会使用有限指数退避自动恢复。</source>
         <translation>連線中斷後會使用有限指數退避自動恢復。</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="538" />
-        <source>系统信息网格，可滚动并可拖动卡片</source>
-        <translation>系統資訊網格，可滾動並可拖動卡片</translation>
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="538" />
+        <source>抽屉网格，可滚动并可拖动卡片</source>
+        <translation>抽屜網格，可滾動並可拖動卡片</translation>
     </message>
     <message>
-        <location filename="../Modules/Sidebars/Left/SystemView.qml" line="539" />
-        <source>系统信息网格，可拖动卡片</source>
-        <translation>系統資訊網格，可拖動卡片</translation>
+        <location filename="../Modules/Sidebars/Left/DrawerView.qml" line="539" />
+        <source>抽屉网格，可拖动卡片</source>
+        <translation>抽屜網格，可拖動卡片</translation>
     </message>
 </context>
 <context>

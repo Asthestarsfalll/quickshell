@@ -6,8 +6,8 @@ import qs.Widgets.common
 import qs.Modules.SystemCards
 import "../../SystemCards/SystemCardGeometry.js" as CardGeometry
 import "../../SystemCards/SystemCardPlacement.js" as Placement
-import "./system"
-import "./system/SystemGridLayout.js" as GridLayout
+import "./drawer"
+import "./drawer/DrawerGridLayout.js" as GridLayout
 
 Item {
     id: root
@@ -51,17 +51,6 @@ Item {
     property int targetRow: -1
     property bool dragTargetValid: false
     property bool desktopExtraction: false
-    readonly property var systemCardBlurExclusionItems: {
-        const items = [];
-        for (let index = 0; index < tileRepeater.count; ++index) {
-            const item = tileRepeater.itemAt(index);
-            if (item && item.blurExclusionItem)
-                items.push(item.blurExclusionItem);
-
-        }
-        return items;
-    }
-
     function layoutPlacement(layout, tileId) {
         return GridLayout.placementFor(layout, tileId);
     }
@@ -95,13 +84,13 @@ Item {
         if ((!forceRefresh && root.preferencesApplied) || !UiPreferences.preferencesReady || root.draggingTileId.length > 0)
             return ;
 
-        const hydrated = GridLayout.hydrateSaved(UiPreferences.systemGridLayout, root.activeSidebarIds, root.sidebarAnchors);
+        const hydrated = GridLayout.hydrateSaved(UiPreferences.drawerGridLayout, root.activeSidebarIds, root.sidebarAnchors);
         const normalized = GridLayout.serializeLayout(hydrated, root.activeSidebarIds);
         root.committedLayout = hydrated;
         root.preferencesApplied = true;
-        if (JSON.stringify(normalized) !== JSON.stringify(UiPreferences.systemGridLayout || {
+        if (JSON.stringify(normalized) !== JSON.stringify(UiPreferences.drawerGridLayout || {
         }))
-            UiPreferences.setSystemGridLayout(normalized);
+            UiPreferences.setDrawerGridLayout(normalized);
 
     }
 
@@ -255,7 +244,7 @@ Item {
         }
         if (root.dragTargetValid) {
             root.committedLayout = root.previewLayout;
-            UiPreferences.setSystemGridLayout(GridLayout.serializeLayout(root.committedLayout, root.activeSidebarIds));
+            UiPreferences.setDrawerGridLayout(GridLayout.serializeLayout(root.committedLayout, root.activeSidebarIds));
             SystemCardService.setSidebarLayout(root.committedLayout);
         }
         root.resetDragState(false);
@@ -318,7 +307,7 @@ Item {
             root.applyStoredLayout();
         }
 
-        function onSystemGridLayoutChanged() {
+        function onDrawerGridLayoutChanged() {
             if (root.preferencesApplied)
                 root.applyStoredLayout(true);
 
@@ -404,11 +393,12 @@ Item {
             contentHeight: Math.max(height, root.gridContentHeight)
             // This page scrolls through wheel/touchpad and keyboard input.
             // Flickable's direct mouse drag otherwise competes with the
-            // SystemGridTile DragHandler and interactive card controls.
+            // DrawerGridTile DragHandler and interactive card controls.
             interactive: false
+            fasterTouchpadScroll: true
             showVerticalScrollBar: contentHeight > height + 1
             activeFocusOnTab: contentHeight > height + 1
-            Accessible.name: contentHeight > height + 1 ? qsTr("系统信息网格，可滚动并可拖动卡片") : qsTr("系统信息网格，可拖动卡片")
+            Accessible.name: contentHeight > height + 1 ? qsTr("抽屉网格，可滚动并可拖动卡片") : qsTr("抽屉网格，可拖动卡片")
             Keys.onPressed: (event) => {
                 if (root.draggingTileId.length > 0 && event.key === Qt.Key_Escape) {
                     root.cancelDrag();
@@ -500,7 +490,7 @@ Item {
 
                     model: root.tileDefinitions
 
-                    delegate: SystemGridTile {
+                    delegate: DrawerGridTile {
                         id: tile
 
                         required property var modelData

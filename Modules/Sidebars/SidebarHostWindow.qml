@@ -155,7 +155,6 @@ PanelWindow {
         additionalBackgroundItems: [
             rightSidebar.blurBackgroundItem
         ]
-        subtractedBackgroundItems: leftSidebar.systemCardBlurExclusionItems
     }
 
     Item {

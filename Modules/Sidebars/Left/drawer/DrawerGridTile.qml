@@ -2,7 +2,6 @@ import QtQuick
 import qs.Common
 import qs.Services
 import qs.Modules.SystemCards
-import "../../../SystemCards/SystemCardCatalog.js" as CardCatalog
 
 Item {
     id: root
@@ -11,18 +10,9 @@ Item {
     property bool active: true
     property bool dragging: false
     property bool motionEnabled: true
-    readonly property var catalogEntry:
-        CardCatalog.definitionFor(root.tileId)
     readonly property bool presentationOwned:
         SystemCardDragSession.presentationActive
         && SystemCardDragSession.tileId === root.tileId
-    readonly property bool excludeHostBlur:
-        root.catalogEntry !== null
-        && root.catalogEntry !== undefined
-        && root.catalogEntry.excludeHostBlur === true
-    readonly property Item blurExclusionItem:
-        root.active && !root.presentationOwned && root.excludeHostBlur
-            ? root : null
     readonly property Item contentItem: cardContent
 
     signal dragStarted(

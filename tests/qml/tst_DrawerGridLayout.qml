@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtTest 1.3
-import "../../Modules/Sidebars/Left/system/SystemGridLayout.js" as GridLayout
+import "../../Modules/Sidebars/Left/drawer/DrawerGridLayout.js" as GridLayout
 
 TestCase {
     function serialized(layout) {
@@ -165,5 +165,5 @@ TestCase {
         compare(GridLayout.contentRowCount(layout), 1);
     }
 
-    name: "SystemGridLayout"
+    name: "DrawerGridLayout"
 }

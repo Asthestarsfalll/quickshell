@@ -15,24 +15,18 @@ Item {
     readonly property string activeView: WidgetState.leftSidebarView
     readonly property var activeViewLoader: activeView === "info"
         ? infoLoader
-        : activeView === "sys"
-            ? systemLoader : weatherLoader
+        : activeView === "drawer"
+            ? drawerLoader : weatherLoader
     readonly property bool readyForPresentation:
         activeViewLoader.active
             && activeViewLoader.status === Loader.Ready
             && activeViewLoader.item !== null
     readonly property int instantiatedViewCount: {
         return (infoLoader.item ? 1 : 0)
-            + (systemLoader.item ? 1 : 0)
+            + (drawerLoader.item ? 1 : 0)
             + (weatherLoader.item ? 1 : 0)
     }
     readonly property var weatherView: weatherLoader.item
-    readonly property var systemCardBlurExclusionItems: {
-        if (root.activeView !== "sys")
-            return [];
-        const systemView = systemLoader.item;
-        return systemView ? systemView.systemCardBlurExclusionItems : [];
-    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -44,7 +38,7 @@ Item {
 
             readonly property var tabs: [
                 { id: "info", icon: "info", label: qsTr("信息") },
-                { id: "sys", icon: "monitoring", label: qsTr("系统") },
+                { id: "drawer", icon: "widgets", label: qsTr("抽屉") },
                 { id: "weather", icon: "cloud", label: qsTr("天气") }
             ]
             readonly property int currentIndex: Math.max(0,
@@ -229,15 +223,15 @@ Item {
             }
 
             Loader {
-                id: systemLoader
+                id: drawerLoader
 
                 property bool loadedOnce: false
 
                 anchors.fill: parent
-                active: root.activeView === "sys" || loadedOnce
-                visible: active && root.activeView === "sys"
+                active: root.activeView === "drawer" || loadedOnce
+                visible: active && root.activeView === "drawer"
                 asynchronous: true
-                sourceComponent: systemComponent
+                sourceComponent: drawerComponent
                 onLoaded: loadedOnce = true
             }
 
@@ -265,12 +259,12 @@ Item {
             }
 
             Component {
-                id: systemComponent
+                id: drawerComponent
 
-                SystemView {
+                DrawerView {
                     screenName: root.screenName
                     foreground: root.foreground
-                        && root.activeView === "sys"
+                        && root.activeView === "drawer"
                 }
             }
 
