@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import M3Shapes
 import qs.Common
 import qs.Components
@@ -11,20 +12,20 @@ Item {
     readonly property string temperature: root.dataAvailable && isFinite(Number(WeatherPlugin.currentTemperatureC)) ? Math.round(UiPreferences.weatherTemperature(WeatherPlugin.currentTemperatureC)) + "°" : "--°"
     readonly property string weatherIcon: root.dataAvailable && String(WeatherPlugin.currentIconName || "").length > 0 ? WeatherPlugin.currentIconName : "cloud"
 
+    implicitWidth: backgroundShape.implicitWidth
+    implicitHeight: backgroundShape.implicitHeight
     Accessible.name: qsTr("天气，") + root.temperature + "，" + (root.dataAvailable ? WeatherPlugin.currentWeatherText : qsTr("天气不可用"))
 
     MaterialShape {
-        id: weatherPill
-
-        readonly property real contentInset: Appearance.spacing.large
+        id: backgroundShape
 
         anchors.centerIn: parent
-        width: Math.max(0, Math.min(parent.width, parent.height) - Appearance.spacing.large * 2)
-        height: width
+        width: implicitWidth
+        height: implicitHeight
         shape: MaterialShape.Pill
         color: Appearance.colors.colPrimaryContainer
-        animationDuration: Appearance.animation.expressiveSlowSpatial.duration
-        animationEasing: Appearance.animation.expressiveSlowSpatial.type
+        implicitSize: 200
+        layer.enabled: true
 
         Text {
             text: root.temperature
@@ -34,13 +35,13 @@ Item {
             anchors {
                 top: parent.top
                 right: parent.right
-                topMargin: weatherPill.contentInset
-                rightMargin: weatherPill.contentInset
+                topMargin: 20
+                rightMargin: 16
             }
 
             font {
                 family: Fonts.expressive
-                pixelSize: Math.min(80, weatherPill.height * 0.34)
+                pixelSize: 80
                 weight: Font.Medium
             }
 
@@ -48,17 +49,25 @@ Item {
 
         MaterialSymbol {
             text: root.weatherIcon
-            iconSize: Math.min(80, weatherPill.height * 0.34)
-            fill: 0
+            iconSize: 80
             color: Appearance.colors.colOnPrimaryContainer
 
             anchors {
                 left: parent.left
                 bottom: parent.bottom
-                leftMargin: weatherPill.contentInset
-                bottomMargin: weatherPill.contentInset
+                leftMargin: 16
+                bottomMargin: 20
             }
 
+        }
+
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Appearance.colors.colShadow
+            shadowBlur: 0.8
+            shadowVerticalOffset: 4
+            shadowHorizontalOffset: 0
+            autoPaddingEnabled: true
         }
 
     }
