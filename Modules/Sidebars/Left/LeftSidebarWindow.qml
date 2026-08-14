@@ -10,7 +10,7 @@ Item {
     property var panelScreen: null
     property real sidebarWidth: Metrics.sidebarWidthComfortable
     property int gap: 24
-    readonly property alias blurBackgroundItem: panelSurface
+    readonly property alias blurBackgroundItem: blurRegionAnchor
     // The host window already starts inside layer-shell's usable geometry.
     readonly property int sidebarY: gap
     readonly property real closedSlideOffset: -(sidebarWidth + gap)
@@ -20,12 +20,13 @@ Item {
         Math.max(0, height - sidebarY - gap)
     property bool panelPresented: false
     property bool contentRetained: false
+    property bool blurActive: false
+    property bool contentActive: false
     property bool keepLoaded:
         PersonalizationConfig.keepSidebarsLoaded
     property var weatherSourceOverride: null
     readonly property bool panelVisuallyPresent:
         WidgetState.leftSidebarOpen || panelPresented
-    readonly property bool panelInteractive: WidgetState.leftSidebarOpen
     readonly property string activeView: WidgetState.leftSidebarView
     readonly property int instantiatedViewCount:
         sidebarContentLoader.item
@@ -34,12 +35,23 @@ Item {
         sidebarContentLoader.item
             ? sidebarContentLoader.item.weatherView : null
     readonly property var systemCardBlurExclusionItems:
-        sidebarContentLoader.item
+        root.blurActive && root.activeView === "sys"
+            && sidebarContentLoader.item
             ? sidebarContentLoader.item.systemCardBlurExclusionItems : []
 
     function beginPresentation() {
         panelPresented = true
         contentRetained = true
+        blurActive = false
+        contentActive = false
+    }
+
+    function finishOpening() {
+        if (!WidgetState.leftSidebarOpen)
+            return
+
+        blurActive = true
+        contentActive = true
     }
 
     function finishClosing() {
@@ -48,6 +60,8 @@ Item {
 
         // Hide the already off-screen surface before releasing its layout tree.
         panelPresented = false
+        blurActive = false
+        contentActive = false
         if (!root.keepLoaded)
             contentRetained = false
         root.presentationClosed()
@@ -55,6 +69,8 @@ Item {
 
     Component.onCompleted: {
         panelPresented = WidgetState.leftSidebarOpen
+        blurActive = WidgetState.leftSidebarOpen
+        contentActive = WidgetState.leftSidebarOpen
         contentRetained = WidgetState.leftSidebarOpen
             || root.keepLoaded
     }
@@ -65,6 +81,10 @@ Item {
         function onLeftSidebarOpenChanged() {
             if (WidgetState.leftSidebarOpen)
                 root.beginPresentation()
+            else {
+                root.blurActive = false
+                root.contentActive = false
+            }
         }
     }
 
@@ -117,12 +137,18 @@ Item {
                 id: openTransition
                 to: "open"
 
-                NumberAnimation {
-                    target: animController
-                    property: "slideOffset"
-                    duration: root.enterDuration
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 0.3
+                SequentialAnimation {
+                    NumberAnimation {
+                        target: animController
+                        property: "slideOffset"
+                        duration: root.enterDuration
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 0.3
+                    }
+
+                    ScriptAction {
+                        script: root.finishOpening()
+                    }
                 }
             },
             Transition {
@@ -159,6 +185,19 @@ Item {
         radius: Appearance.rounding.large
     }
 
+    // Keep the compositor blur region out of the per-frame slide path. This
+    // item becomes visible only after the panel reaches its resting position.
+    Item {
+        id: blurRegionAnchor
+
+        visible: root.blurActive
+        x: panelSurface.x
+        y: panelSurface.y
+        width: panelSurface.width
+        height: panelSurface.height
+        property real radius: panelSurface.radius
+    }
+
     Item {
         id: sidebarContentFrame
 
@@ -187,8 +226,8 @@ Item {
             anchors.fill: parent
             screenName: root.panelScreen ? root.panelScreen.name : ""
             weatherSourceOverride: root.weatherSourceOverride
-            foreground: root.panelInteractive
-            presentationActive: root.panelVisuallyPresent
+            foreground: root.contentActive
+            presentationActive: root.contentActive
         }
     }
 }

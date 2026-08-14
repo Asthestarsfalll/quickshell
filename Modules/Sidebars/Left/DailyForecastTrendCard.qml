@@ -221,7 +221,6 @@ Rectangle {
                 contentWidth: Math.max(width, root.modelCount() * root.itemWidth)
                 contentHeight: height
                 visible: root.currentTab === 0
-                onContentXChanged: trendCanvas.requestPaint()
                 Component.onCompleted: initialPositionTimer.restart()
                 onContentWidthChanged: initialPositionTimer.restart()
                 onWidthChanged: initialPositionTimer.restart()

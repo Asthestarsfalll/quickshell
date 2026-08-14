@@ -14,6 +14,7 @@ Item {
     readonly property bool hasRevealed: revealStarted
     readonly property bool contentAnimationActive:
         activationEnabled && animationStarted
+            && nearViewport
     readonly property int entryDelay: Math.max(0, staggerIndex) * 200
     readonly property int entryDuration: Math.max(250, 500 - Math.max(0, staggerIndex) * 50)
     readonly property bool layoutReady: width > 0 && height > 0 && contentTop > 0
@@ -26,6 +27,12 @@ Item {
         && inViewport
         && contentTop + revealDepth
             <= viewportContentY + viewportHeight
+    readonly property real viewportOverscan: 96
+    readonly property bool nearViewport:
+        viewportHeight <= 0
+        || (contentTop + height >= viewportContentY - viewportOverscan
+            && contentTop <= viewportContentY + viewportHeight
+                + viewportOverscan)
 
     property bool animationStarted: false
     property bool revealStarted: false
@@ -88,6 +95,7 @@ Item {
         id: visualLayer
         anchors.fill: parent
         opacity: root.visualOpacity
+        visible: root.nearViewport || entryAnimation.running
 
         transform: [
             Translate {

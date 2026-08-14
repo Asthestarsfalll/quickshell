@@ -27,6 +27,8 @@ Item {
         return loader ? loader.item : null
     }
     readonly property var systemCardBlurExclusionItems: {
+        if (root.activeView !== "sys")
+            return [];
         const loader = viewRepeater.itemAt(1);
         const systemView = loader ? loader.item : null;
         return systemView ? systemView.systemCardBlurExclusionItems : [];

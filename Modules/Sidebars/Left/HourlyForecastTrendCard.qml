@@ -166,8 +166,6 @@ Rectangle {
                 contentWidth: Math.max(width, root.modelCount() * root.itemWidth)
                 contentHeight: height
                 visible: root.currentTab === 0
-                onContentXChanged: trendCanvas.requestPaint()
-
                 Item {
                     id: trendContent
 
