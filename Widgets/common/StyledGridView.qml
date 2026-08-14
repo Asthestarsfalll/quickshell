@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import qs.Common
-import qs.Services
 
 GridView {
     id: root
@@ -14,13 +13,16 @@ GridView {
     property real removeOvershoot: 20
     property bool popin: true
     property bool animateAppearance: true
-    property bool animateMovement: true
-    property bool smoothWheelEnabled: PersonalizationConfig.scrollSmoothEnabled
+    property bool animateMovement: false
+    // Keep the default path native. This opt-in path is only for views that
+    // explicitly need the accelerated touchpad wheel handling.
+    property bool fasterTouchpadScroll: false
     property bool showVerticalScrollBar: true
+    readonly property real mouseScrollDeltaThreshold: 120
+    readonly property real mouseScrollFactor: 120
+    readonly property real touchpadScrollFactor: 450
+    // Only used while fasterTouchpadScroll is enabled.
     property real scrollTargetY: 0
-    property real mouseScrollFactor: PersonalizationConfig.scrollMouseFactor
-    property real touchpadScrollFactor: PersonalizationConfig.scrollTouchpadFactor
-    property real mouseScrollDeltaThreshold: PersonalizationConfig.scrollMouseDeltaThreshold
 
     function maxContentY() {
         return Math.max(0, root.contentHeight - root.height);
@@ -31,20 +33,25 @@ GridView {
     }
 
     function wheelDeltaY(wheelEvent) {
-        if (wheelEvent.pixelDelta.y !== 0)
-            return -wheelEvent.pixelDelta.y;
+        const pixelDeltaY = Number(wheelEvent.pixelDelta.y);
+        if (isFinite(pixelDeltaY) && pixelDeltaY !== 0)
+            return -pixelDeltaY;
 
-        if (wheelEvent.angleDelta.y === 0)
+        const angleDeltaY = Number(wheelEvent.angleDelta.y);
+        if (!isFinite(angleDeltaY) || angleDeltaY === 0)
             return 0;
 
-        const normalizedDelta = wheelEvent.angleDelta.y / Math.max(1, root.mouseScrollDeltaThreshold);
-        const factor = Math.abs(wheelEvent.angleDelta.y) >= root.mouseScrollDeltaThreshold
+        const normalizedDelta = angleDeltaY / Math.max(1, root.mouseScrollDeltaThreshold);
+        const factor = Math.abs(angleDeltaY) >= root.mouseScrollDeltaThreshold
                        ? root.mouseScrollFactor
                        : root.touchpadScrollFactor;
         return -normalizedDelta * factor;
     }
 
     function handleWheel(wheelEvent) {
+        if (!root.fasterTouchpadScroll)
+            return;
+
         const delta = root.wheelDeltaY(wheelEvent);
         if (delta === 0)
             return;
@@ -61,13 +68,13 @@ GridView {
 
     MouseArea {
         anchors.fill: parent
-        enabled: root.smoothWheelEnabled
+        visible: root.fasterTouchpadScroll
         acceptedButtons: Qt.NoButton
         onWheel: wheelEvent => root.handleWheel(wheelEvent)
     }
 
     Behavior on contentY {
-        enabled: root.smoothWheelEnabled
+        enabled: root.fasterTouchpadScroll
         NumberAnimation {
             id: scrollAnimation
             alwaysRunToEnd: true
@@ -78,11 +85,14 @@ GridView {
     }
 
     onContentYChanged: {
-        if (!scrollAnimation.running)
+        if (root.fasterTouchpadScroll && !scrollAnimation.running)
             root.scrollTargetY = root.contentY;
     }
 
     onContentHeightChanged: {
+        if (!root.fasterTouchpadScroll)
+            return;
+
         root.scrollTargetY = root.clampContentY(root.scrollTargetY);
         if (root.contentY > root.maxContentY())
             root.contentY = root.maxContentY();

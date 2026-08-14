@@ -253,7 +253,6 @@ MouseArea {
                     animateAppearance: true
                     animateMovement: false
                     showVerticalScrollBar: false
-                    smoothWheelEnabled: false
                     clip: false
 
                     function resetDrag() {

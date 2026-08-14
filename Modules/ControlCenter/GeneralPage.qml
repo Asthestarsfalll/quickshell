@@ -38,8 +38,6 @@ Item {
                 return qsTr("侧边栏");
             case "effects":
                 return qsTr("透明与模糊");
-            case "scrolling":
-                return qsTr("滚动交互");
             case "language-region":
                 return qsTr("语言与地区");
             case "autostart":
@@ -58,8 +56,6 @@ Item {
                 return "side_navigation";
             case "effects":
                 return "blur_on";
-            case "scrolling":
-                return "swipe";
             case "language-region":
                 return "language";
             case "autostart":
@@ -88,8 +84,6 @@ Item {
                 return Qt.resolvedUrl("GeneralSidebarPage.qml");
             case "effects":
                 return Qt.resolvedUrl("GeneralEffectsPage.qml");
-            case "scrolling":
-                return Qt.resolvedUrl("GeneralScrollingPage.qml");
             case "language-region":
                 return Qt.resolvedUrl("LanguageAndRegionPage.qml");
             case "autostart":

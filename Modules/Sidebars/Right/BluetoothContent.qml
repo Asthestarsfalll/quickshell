@@ -303,7 +303,6 @@ WidgetPanel {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         interactive: contentHeight > height
-                        smoothWheelEnabled: interactive
                         model: BluetoothService.availableDevices
 
                         delegate: BluetoothDeviceRow {

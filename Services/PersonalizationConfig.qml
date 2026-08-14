@@ -402,10 +402,6 @@ Singleton {
     property bool shellBlurEnabled: false
     property bool shellBlurXray: true
     property bool keepSidebarsLoaded: true
-    property bool scrollSmoothEnabled: true
-    property int scrollMouseFactor: 50
-    property int scrollTouchpadFactor: 100
-    property int scrollMouseDeltaThreshold: 120
 
     signal settingsLoaded()
 
@@ -1110,22 +1106,6 @@ Singleton {
 
     }
 
-    function setScrollSmoothEnabled(value) {
-        setValue("scrollSmoothEnabled", !!value);
-    }
-
-    function setScrollMouseFactor(value) {
-        setValue("scrollMouseFactor", normalizedBoundedInt(value, 50, 10, 240));
-    }
-
-    function setScrollTouchpadFactor(value) {
-        setValue("scrollTouchpadFactor", normalizedBoundedInt(value, 100, 10, 300));
-    }
-
-    function setScrollMouseDeltaThreshold(value) {
-        setValue("scrollMouseDeltaThreshold", normalizedBoundedInt(value, 120, 60, 240));
-    }
-
     function toJson() {
         return {
             "wallpaper": {
@@ -1221,14 +1201,6 @@ Singleton {
             },
             "sidebar": {
                 "keepLoaded": root.keepSidebarsLoaded
-            },
-            "interactions": {
-                "scrolling": {
-                    "smoothEnabled": root.scrollSmoothEnabled,
-                    "mouseFactor": root.scrollMouseFactor,
-                    "touchpadFactor": root.scrollTouchpadFactor,
-                    "mouseDeltaThreshold": root.scrollMouseDeltaThreshold
-                }
             }
         };
     }
@@ -1245,10 +1217,6 @@ Singleton {
         const bar = parsed.bar || {
         };
         const sidebar = parsed.sidebar || {
-        };
-        const interactions = parsed.interactions || {
-        };
-        const scrolling = interactions.scrolling || {
         };
         const transition = wallpaper.transition || {
         };
@@ -1329,10 +1297,10 @@ Singleton {
         root.horizontalClockDigits = root.normalizedHorizontalClockDigits(horizontalClock.digits);
         root.barPosition = normalizedEdgePosition(bar.position);
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined ? true : !!sidebar.keepLoaded;
-        root.scrollSmoothEnabled = scrolling.smoothEnabled === undefined ? true : !!scrolling.smoothEnabled;
-        root.scrollMouseFactor = normalizedBoundedInt(scrolling.mouseFactor, 50, 10, 240);
-        root.scrollTouchpadFactor = normalizedBoundedInt(scrolling.touchpadFactor, 100, 10, 300);
-        root.scrollMouseDeltaThreshold = normalizedBoundedInt(scrolling.mouseDeltaThreshold, 120, 60, 240);
+    }
+
+    function needsScrollingMigration(parsed) {
+        return !!(parsed && parsed.interactions !== undefined);
     }
 
     function needsWallpaperMigration(parsed) {
@@ -1404,7 +1372,7 @@ Singleton {
             root.loading = true;
             try {
                 parsed = JSON.parse(configFile.text().trim() || "{}");
-                shouldRepair = root.needsWallpaperMigration(parsed) || root.needsEffectsMigration(parsed) || root.needsThemeMigration(parsed) || root.needsEdgePositionMigration(parsed);
+                shouldRepair = root.needsWallpaperMigration(parsed) || root.needsEffectsMigration(parsed) || root.needsThemeMigration(parsed) || root.needsEdgePositionMigration(parsed) || root.needsScrollingMigration(parsed);
                 root.loadFromObject(parsed);
                 shouldRepair = shouldRepair || JSON.stringify(parsed.wallpaper || {
                 }) !== JSON.stringify(root.toJson().wallpaper) || JSON.stringify(parsed.effects || {

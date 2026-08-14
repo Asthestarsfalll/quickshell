@@ -64,14 +64,6 @@ StyledFlickable {
                 onClicked: root.sectionRequested("language-region")
             }
 
-            SettingsActionRow {
-                Layout.fillWidth: true
-                iconName: "swipe"
-                text: qsTr("滚动交互")
-                trailingIconName: "chevron_right"
-                onClicked: root.sectionRequested("scrolling")
-            }
-
         }
 
         SettingsSection {

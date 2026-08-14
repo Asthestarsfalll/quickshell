@@ -327,7 +327,6 @@ WidgetPanel {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         interactive: contentHeight > height
-                        smoothWheelEnabled: interactive
                         model: NetworkService.availableWifiNetworks
 
                         delegate: WifiNetworkItem {

@@ -297,7 +297,6 @@ Item {
                         showVerticalScrollBar: false
                         animateAppearance: false
                         animateMovement: false
-                        smoothWheelEnabled: true
                         boundsBehavior: Flickable.StopAtBounds
                         spacing: 8
 

@@ -1456,36 +1456,6 @@
         <source>配置</source>
         <translation>設定</translation>
     </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="339" />
-        <source>滚动交互</source>
-        <translation>滾動互動</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="343" />
-        <source>平滑滚轮</source>
-        <translation>平滑滾輪</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="349" />
-        <source>鼠标滚轮速度</source>
-        <translation>滑鼠滾輪速度</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="358" />
-        <source>触摸板滚动速度</source>
-        <translation>觸控板滾動速度</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="367" />
-        <source>滚轮识别阈值</source>
-        <translation>滾輪識別閾值</translation>
-    </message>
-    <message>
-        <location filename="../Modules/ControlCenter/GeneralPage.qml" line="368" />
-        <source>angleDelta 大于该值时按鼠标滚轮处理</source>
-        <translation>angleDelta 大於該值時按滑鼠滾輪處理</translation>
-    </message>
 </context>
 <context>
     <name>HourlyAirQualityTrendPane</name>
@@ -6753,10 +6723,6 @@
 <context>
     <name>GeneralEffectsPage</name>
     <message><source>背景</source><translation>背景</translation></message>
-</context>
-<context>
-    <name>GeneralScrollingPage</name>
-    <message><source>滚动</source><translation>捲動</translation></message>
 </context>
 <context>
     <name>GeneralSidebarPage</name>

@@ -148,6 +148,7 @@ Rectangle {
                 visible: root.notificationCount > 0
                 clip: true
                 spacing: Math.round(7 * 4 / 3)
+                animateMovement: true
                 model: root.notifications
 
                 delegate: Rectangle {

@@ -83,6 +83,7 @@ Item {
             anchors.bottomMargin: 16
             spacing: 4
             popin: true
+            animateMovement: true
             opacity: TimerService.stopwatchLaps.length > 0 ? 1 : 0
 
             Behavior on opacity {

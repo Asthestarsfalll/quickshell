@@ -158,7 +158,6 @@ WidgetPanel {
                             clip: true
                             boundsBehavior: Flickable.StopAtBounds
                             interactive: root.showInputDevices && contentHeight > height
-                            smoothWheelEnabled: interactive
                             model: Volume.inputDevices
 
                             delegate: SettingsRow {

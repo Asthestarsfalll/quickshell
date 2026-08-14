@@ -158,7 +158,6 @@ WidgetPanel {
                             clip: true
                             boundsBehavior: Flickable.StopAtBounds
                             interactive: root.showOutputDevices && contentHeight > height
-                            smoothWheelEnabled: interactive
                             model: Volume.outputDevices
 
                             delegate: SettingsRow {
@@ -196,7 +195,6 @@ WidgetPanel {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         interactive: contentHeight > height
-                        smoothWheelEnabled: interactive
                         model: Volume.playbackStreams
 
                         delegate: ApplicationVolumeRow {

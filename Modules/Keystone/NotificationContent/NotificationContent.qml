@@ -18,6 +18,7 @@ Item {
         spacing: 10
         clip: true
         interactive: false
+        animateMovement: true
         showVerticalScrollBar: false
 
         delegate: Rectangle {

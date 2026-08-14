@@ -394,7 +394,6 @@ Item {
                         animateAppearance: false
                         animateMovement: false
                         showVerticalScrollBar: false
-                        smoothWheelEnabled: false
                         model: root.standardColors
 
                         delegate: Rectangle {

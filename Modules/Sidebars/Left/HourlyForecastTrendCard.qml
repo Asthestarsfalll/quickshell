@@ -163,7 +163,6 @@ Rectangle {
                 boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.HorizontalFlick
                 showVerticalScrollBar: false
-                smoothWheelEnabled: false
                 contentWidth: Math.max(width, root.modelCount() * root.itemWidth)
                 contentHeight: height
                 visible: root.currentTab === 0

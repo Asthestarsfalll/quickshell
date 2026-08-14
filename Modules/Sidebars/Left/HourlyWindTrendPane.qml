@@ -207,7 +207,6 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalFlick
         showVerticalScrollBar: false
-        smoothWheelEnabled: false
         contentWidth: root.contentWidth
         contentHeight: height
 

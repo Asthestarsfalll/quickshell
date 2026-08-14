@@ -279,7 +279,6 @@ Item {
                         boundsBehavior: Flickable.StopAtBounds
                         flickableDirection: Flickable.HorizontalFlick
                         showVerticalScrollBar: false
-                        smoothWheelEnabled: false
 
                         RowLayout {
                             id: actionRowLayout
