@@ -421,9 +421,10 @@ Item {
         readonly property real letterXOffset: root.horizontalDigitValue(letterId, "x")
         readonly property real letterYOffset: root.horizontalDigitValue(letterId, "y")
         readonly property real letterRotation: root.horizontalDigitValue(letterId, "rotation")
+        readonly property real lineHeight: Math.max(18, root.horizontalFontSize + 2)
 
         width: letterText.implicitWidth
-        height: Math.max(18, root.horizontalFontSize + 2)
+        height: lineHeight
         anchors.verticalCenter: parent.verticalCenter
         transform: [
             Translate {
@@ -440,13 +441,13 @@ Item {
         Text {
             id: letterText
 
-            anchors.centerIn: parent
             text: letterContainer.value
             color: root.horizontalDigitColor(letterContainer.letterId)
             font.family: root.clockFamily
             font.variableAxes: root.horizontalClockAxes
             font.pixelSize: root.horizontalFontSize
-            font.weight: Font.Black
+            lineHeight: letterContainer.lineHeight
+            lineHeightMode: Text.FixedHeight
         }
 
     }
