@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
@@ -27,34 +26,15 @@ Rectangle {
         RowLayout {
             Layout.fillWidth: true
 
-            ToolButton {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 40
+            IconButton {
                 visible: root.showBackButton
-                hoverEnabled: true
-                Accessible.name: qsTr("返回快捷设置")
+                iconName: "arrow_back"
+                iconSize: 22
+                iconColor: Appearance.colors.colOnLayer2
+                accessibleName: qsTr("返回快捷设置")
+                hoverContainerColor: Appearance.colors.colLayer2Hover
+                pressedContainerColor: Appearance.colors.colLayer2Active
                 onClicked: root.backAction()
-
-                background: Rectangle {
-                    radius: Appearance.rounding.full
-                    color: parent.down
-                        ? Appearance.colors.colLayer2Active
-                        : parent.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Appearance.animation.expressiveFastEffects.duration
-                            easing.type: Appearance.animation.expressiveFastEffects.type
-                            easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
-                        }
-                    }
-                }
-
-                contentItem: MaterialSymbol {
-                    text: "arrow_back"
-                    iconSize: 22
-                    color: Appearance.colors.colOnLayer2
-                }
             }
 
             MaterialSymbol {

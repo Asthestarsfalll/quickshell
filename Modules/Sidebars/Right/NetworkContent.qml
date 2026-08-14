@@ -143,34 +143,22 @@ WidgetPanel {
     headerTools: RowLayout {
         spacing: Appearance.spacing.xSmall
 
-        ToolButton {
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
+        IconButton {
             enabled: root.networkUsable && !root.refreshLoading
-            hoverEnabled: true
-            Accessible.name: qsTr("刷新网络列表")
+            iconName: "refresh"
+            iconSize: 21
+            iconColor: Appearance.colors.colOnLayer2
+            accessibleName: qsTr("刷新网络列表")
+            hoverContainerColor: Appearance.colors.colLayer2Hover
+            pressedContainerColor: Appearance.colors.colLayer2Active
             onClicked: root.requestRefresh()
 
-            background: Rectangle {
-                radius: Appearance.rounding.full
-                color: parent.down
-                    ? Appearance.colors.colLayer2Active
-                    : parent.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-            }
-
-            contentItem: MaterialSymbol {
-                id: refreshIcon
-                text: "refresh"
-                iconSize: 21
-                color: Appearance.colors.colOnLayer2
-
-                RotationAnimation on rotation {
-                    from: 0
-                    to: 360
-                    duration: 900
-                    loops: Animation.Infinite
-                    running: root.refreshLoading
-                }
+            RotationAnimation on iconRotation {
+                from: 0
+                to: 360
+                duration: 900
+                loops: Animation.Infinite
+                running: root.refreshLoading
             }
         }
 
@@ -492,26 +480,17 @@ WidgetPanel {
                     }
                 }
 
-                ToolButton {
+                IconButton {
                     visible: itemRoot.networkKnown
-                    implicitWidth: 36
-                    implicitHeight: 36
+                    controlSize: 36
                     enabled: !NetworkService.busy
-                    Accessible.name: qsTr("网络操作")
+                    iconName: "more_vert"
+                    iconSize: 19
+                    iconColor: Appearance.colors.colOnLayer2
+                    accessibleName: qsTr("网络操作")
+                    hoverContainerColor: Appearance.colors.colLayer3Hover
+                    pressedContainerColor: Appearance.colors.colLayer3Active
                     onClicked: networkMenu.open()
-
-                    background: Rectangle {
-                        radius: Appearance.rounding.full
-                        color: parent.down
-                            ? Appearance.colors.colLayer3Active
-                            : parent.hovered ? Appearance.colors.colLayer3Hover : "transparent"
-                    }
-
-                    contentItem: MaterialSymbol {
-                        text: "more_vert"
-                        iconSize: 19
-                        color: Appearance.colors.colOnLayer2
-                    }
 
                     Menu {
                         id: networkMenu
@@ -573,31 +552,19 @@ WidgetPanel {
                     inputMethodHints: Qt.ImhSensitiveData
                     enabled: !NetworkService.busy
                     trailingContent: Component {
-                        ToolButton {
+                        IconButton {
                             anchors.fill: parent
-                            hoverEnabled: true
-                            focusPolicy: Qt.StrongFocus
                             enabled: !NetworkService.busy
-                            Accessible.name: itemRoot.showPassword
+                            iconName: itemRoot.showPassword
+                                ? "visibility_off" : "visibility"
+                            iconSize: 20
+                            iconColor: Appearance.colors.colOnLayer1
+                            accessibleName: itemRoot.showPassword
                                 ? qsTr("隐藏密码") : qsTr("显示密码")
+                            hoverContainerColor: Appearance.colors.colLayer1Hover
+                            pressedContainerColor: Appearance.colors.colLayer1Active
                             onClicked: itemRoot.showPassword =
                                 !itemRoot.showPassword
-
-                            background: Rectangle {
-                                radius: Appearance.rounding.full
-                                color: pressed
-                                    ? Appearance.colors.colLayer1Active
-                                    : hovered || activeFocus
-                                        ? Appearance.colors.colLayer1Hover
-                                        : "transparent"
-                            }
-
-                            contentItem: MaterialSymbol {
-                                text: itemRoot.showPassword
-                                    ? "visibility_off" : "visibility"
-                                iconSize: 20
-                                color: Appearance.colors.colOnLayer1
-                            }
                         }
                     }
                     onAccepted: itemRoot.submitPassword()

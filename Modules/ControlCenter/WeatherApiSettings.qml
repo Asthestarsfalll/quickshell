@@ -272,42 +272,22 @@ StyledFlickable {
                         enabled: WeatherMapPlugin.credentialsReady
                             && !WeatherMapPlugin.credentialBusy
                         trailingContent: Component {
-                            ToolButton {
-                                id: visibilityButton
-
+                            IconButton {
                                 anchors.fill: parent
-                                hoverEnabled: true
-                                focusPolicy: Qt.StrongFocus
-                                Accessible.name: root.revealApiKey
+                                iconName: root.revealApiKey
+                                    ? "visibility_off" : "visibility"
+                                iconSize: 20
+                                iconColor:
+                                    Appearance.colors.colOnSurfaceVariant
+                                accessibleName: root.revealApiKey
                                     ? qsTr("隐藏 API key")
                                     : qsTr("显示 API key")
+                                hoverContainerColor:
+                                    Appearance.colors.colLayer3Hover
+                                pressedContainerColor:
+                                    Appearance.colors.colLayer3Active
                                 onClicked: root.revealApiKey =
                                     !root.revealApiKey
-
-                                background: Rectangle {
-                                    radius: Appearance.rounding.full
-                                    color: visibilityButton.down
-                                        ? Appearance.colors.colLayer3Active
-                                        : visibilityButton.hovered
-                                            || visibilityButton.activeFocus
-                                            ? Appearance.colors.colLayer3Hover
-                                            : "transparent"
-                                }
-
-                                contentItem: MaterialSymbol {
-                                    text: root.revealApiKey
-                                        ? "visibility_off" : "visibility"
-                                    iconSize: 20
-                                    color: Appearance.colors.colOnSurfaceVariant
-                                }
-
-                                StyledToolTip {
-                                    extraVisibleCondition:
-                                        visibilityButton.hovered
-                                    text: root.revealApiKey
-                                        ? qsTr("隐藏 API key")
-                                        : qsTr("显示 API key")
-                                }
                             }
                         }
                         Accessible.name: "OpenWeather API key"

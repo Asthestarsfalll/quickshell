@@ -139,32 +139,27 @@ Item {
             }
         }
 
-        Item {
-            id: lyricsToggleBtn
+        IconButton {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: 16
-            width: 36
-            height: 36
             z: 10
-
-            MaterialSymbol {
-                anchors.centerIn: parent
-                text: "lyrics"
-                iconSize: 18
-                color: "white"
-                fill: root.showLyrics
-                    || lyricsToggleArea.containsMouse
-                    || lyricsToggleArea.pressed ? 1 : 0
-            }
-
-            MouseArea {
-                id: lyricsToggleArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.showLyrics = !root.showLyrics
-            }
+            controlSize: 36
+            iconName: "lyrics"
+            iconSize: 18
+            selected: root.showLyrics
+            iconFill: root.showLyrics || pointerHovered || down ? 1 : 0
+            iconColor: "white"
+            selectedIconColor: "white"
+            accessibleName: root.showLyrics
+                ? qsTr("隐藏歌词") : qsTr("显示歌词")
+            hoverContainerColor: Appearance.applyAlpha("white", 0.12)
+            pressedContainerColor: Appearance.applyAlpha("white", 0.2)
+            selectedHoverContainerColor:
+                Appearance.applyAlpha("white", 0.12)
+            selectedPressedContainerColor:
+                Appearance.applyAlpha("white", 0.2)
+            onClicked: root.showLyrics = !root.showLyrics
         }
 
         Item {

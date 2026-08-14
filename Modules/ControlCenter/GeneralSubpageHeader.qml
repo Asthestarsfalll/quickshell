@@ -20,21 +20,13 @@ Item {
         anchors.rightMargin: Metrics.spacingL
         spacing: Metrics.spacingS
 
-        MaterialRippleButton {
-            Layout.preferredWidth: Metrics.controlHeightM
-            Layout.preferredHeight: Metrics.controlHeightM
-            buttonRadius: Appearance.rounding.full
-            colBackground: "transparent"
-            colBackgroundHover: Appearance.colors.colLayer2Hover
-            colRipple: Appearance.colors.colLayer2Active
-            Accessible.name: root.backAccessibleName
-            releaseAction: () => root.backRequested()
-
-            contentItem: MaterialSymbol {
-                text: "arrow_back"
-                iconSize: Metrics.iconM
-                color: Appearance.colors.colOnSurface
-            }
+        IconButton {
+            iconName: "arrow_back"
+            iconColor: Appearance.colors.colOnSurface
+            accessibleName: root.backAccessibleName
+            hoverContainerColor: Appearance.colors.colLayer2Hover
+            pressedContainerColor: Appearance.colors.colLayer2Active
+            onClicked: root.backRequested()
         }
 
         MaterialSymbol {

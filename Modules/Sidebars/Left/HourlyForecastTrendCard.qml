@@ -133,36 +133,17 @@ Rectangle {
                     Layout.fillWidth: true
                 }
 
-                Rectangle {
-                    Layout.preferredWidth: 36
-                    Layout.preferredHeight: 36
+                IconButton {
                     Layout.alignment: Qt.AlignVCenter
-                    radius: 18
-                    color: moreMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "more_horiz"
-                        color: Appearance.colors.colOnSurfaceVariant
-                        font.family: Fonts.materialSymbolsOutlined
-                        font.pixelSize: 20
-                    }
-
-                    MouseArea {
-                        id: moreMouse
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: console.log("Open hourly weather menu")
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 150
-                        }
-
-                    }
-
+                    controlSize: 36
+                    iconName: "more_horiz"
+                    iconSize: 20
+                    iconColor: Appearance.colors.colOnSurfaceVariant
+                    accessibleName: qsTr("逐小时预报更多选项")
+                    containerColor: Appearance.colors.colLayer2
+                    hoverContainerColor: Appearance.colors.colLayer4
+                    pressedContainerColor: Appearance.colors.colLayer4Active
+                    onClicked: console.log("Open hourly weather menu")
                 }
 
             }

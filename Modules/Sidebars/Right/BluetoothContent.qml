@@ -170,36 +170,25 @@ WidgetPanel {
     headerTools: RowLayout {
         spacing: Appearance.spacing.xSmall
 
-        ToolButton {
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
+        IconButton {
             enabled: BluetoothService.available
                 && BluetoothService.enabled
                 && !BluetoothService.busy
                 && !root.refreshLoading
-            hoverEnabled: true
-            Accessible.name: qsTr("重新扫描蓝牙设备")
+            iconName: "refresh"
+            iconSize: 21
+            iconColor: Appearance.colors.colOnLayer2
+            accessibleName: qsTr("重新扫描蓝牙设备")
+            hoverContainerColor: Appearance.colors.colLayer2Hover
+            pressedContainerColor: Appearance.colors.colLayer2Active
             onClicked: root.restartDiscoveryLease()
 
-            background: Rectangle {
-                radius: Appearance.rounding.full
-                color: parent.down
-                    ? Appearance.colors.colLayer2Active
-                    : parent.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-            }
-
-            contentItem: MaterialSymbol {
-                text: "refresh"
-                iconSize: 21
-                color: Appearance.colors.colOnLayer2
-
-                RotationAnimation on rotation {
-                    from: 0
-                    to: 360
-                    duration: 800
-                    loops: Animation.Infinite
-                    running: root.refreshLoading
-                }
+            RotationAnimation on iconRotation {
+                from: 0
+                to: 360
+                duration: 800
+                loops: Animation.Infinite
+                running: root.refreshLoading
             }
         }
 
@@ -516,28 +505,19 @@ WidgetPanel {
                 }
             }
 
-            ToolButton {
+            IconButton {
                 visible: deviceRow.deviceData.paired
                     || deviceRow.deviceData.bonded
                     || deviceRow.deviceData.trusted
-                implicitWidth: 34
-                implicitHeight: 34
+                controlSize: 34
                 enabled: !BluetoothService.busy
-                Accessible.name: qsTr("蓝牙设备操作")
+                iconName: "more_vert"
+                iconSize: 18
+                iconColor: Appearance.colors.colOnLayer2
+                accessibleName: qsTr("蓝牙设备操作")
+                hoverContainerColor: Appearance.colors.colLayer3Hover
+                pressedContainerColor: Appearance.colors.colLayer3Active
                 onClicked: deviceMenu.open()
-
-                background: Rectangle {
-                    radius: Appearance.rounding.full
-                    color: parent.down
-                        ? Appearance.colors.colLayer3Active
-                        : parent.hovered ? Appearance.colors.colLayer3Hover : "transparent"
-                }
-
-                contentItem: MaterialSymbol {
-                    text: "more_vert"
-                    iconSize: 18
-                    color: Appearance.colors.colOnLayer2
-                }
 
                 Menu {
                     id: deviceMenu

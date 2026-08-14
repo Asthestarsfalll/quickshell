@@ -532,32 +532,16 @@ Item {
                     font.weight: Font.DemiBold
                 }
 
-                ToolButton {
+                ActionButton {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     enabled: root.providerAvailable
                         && !root.loading && !root.clipboardActionRunning
                         && root.results.length > 0
+                    filled: false
+                    iconName: "delete_sweep"
+                    text: qsTr("清空")
                     onClicked: clearDialog.open()
-
-                    contentItem: Row {
-                        spacing: 6
-
-                        MaterialSymbol {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "delete_sweep"
-                            iconSize: 19
-                            color: Appearance.colors.colOnSurfaceVariant
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: qsTr("清空")
-                            color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Fonts.ui
-                            font.pixelSize: 13
-                        }
-                    }
                 }
             }
 
@@ -762,26 +746,22 @@ Item {
                             Layout.minimumHeight: 42
                             Layout.maximumHeight: 42
 
-                            ToolButton {
+                            IconButton {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 42
-                                height: 42
+                                controlSize: 42
                                 visible: !clipboardDelegate.actionForThis
                                     || root.clipboardActionState === "idle"
                                 enabled: !root.clipboardActionRunning
+                                iconName: "delete"
+                                iconSize: 20
+                                iconColor:
+                                    Appearance.colors.colOnSurfaceVariant
+                                accessibleName:
+                                    qsTr("删除剪贴板条目")
                                 onClicked:
                                     root.deleteRequested(
                                         clipboardDelegate.index)
-                                Accessible.name:
-                                    qsTr("删除剪贴板条目")
-
-                                contentItem: MaterialSymbol {
-                                    text: "delete"
-                                    iconSize: 20
-                                    color:
-                                        Appearance.colors.colOnSurfaceVariant
-                                }
                             }
 
                             BusyIndicator {

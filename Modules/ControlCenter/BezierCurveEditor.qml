@@ -793,39 +793,15 @@ Item {
                     }
                 }
 
-                Item {
-                    implicitWidth: 28
-                    implicitHeight: 26
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 26
-                        height: 26
-                        radius: Appearance.rounding.extraSmall
-                        color: copyMouse.containsMouse ? Appearance.colors.colLayer2Hover : "transparent"
-                    }
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "content_copy"
-                        iconSize: 16
-                        color: copyMouse.containsMouse ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                        fill: copyMouse.containsMouse ? 1 : 0
-                    }
-
-                    MouseArea {
-                        id: copyMouse
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.copyCoordinateList()
-                    }
-
-                    StyledToolTip {
-                        extraVisibleCondition: copyMouse.containsMouse
-                        text: qsTr("复制")
-                    }
+                IconButton {
+                    controlSize: 28
+                    iconName: "content_copy"
+                    iconSize: 16
+                    iconColor: Appearance.colors.colOnSurfaceVariant
+                    accessibleName: qsTr("复制坐标")
+                    hoverContainerColor: Appearance.colors.colLayer2Hover
+                    pressedContainerColor: Appearance.colors.colLayer2Active
+                    onClicked: root.copyCoordinateList()
                 }
             }
         }

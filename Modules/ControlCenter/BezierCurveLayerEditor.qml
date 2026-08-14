@@ -774,25 +774,25 @@ FloatingWindow {
                 anchors.topMargin: 14
                 spacing: 8
 
-                IconButton {
+                EditorIconButton {
                     iconName: "content_copy"
                     tooltipText: qsTr("复制")
                     onClicked: root.copyCurve()
                 }
 
-                IconButton {
+                EditorIconButton {
                     iconName: "save"
                     tooltipText: qsTr("保存")
                     onClicked: root.saveCurve()
                 }
 
-                IconButton {
+                EditorIconButton {
                     iconName: "center_focus_strong"
                     tooltipText: qsTr("重置视图")
                     onClicked: root.resetView()
                 }
 
-                IconButton {
+                EditorIconButton {
                     iconName: "close"
                     tooltipText: qsTr("关闭")
                     onClicked: root.dismiss()
@@ -915,44 +915,13 @@ FloatingWindow {
 
         }
 
-    component IconButton: Item {
-        id: iconButton
-
-        property string iconName: ""
-        property string tooltipText: ""
-
-        signal clicked
-
-        implicitWidth: 36
-        implicitHeight: 36
-
-        Rectangle {
-            anchors.fill: parent
-            radius: Appearance.rounding.full
-            color: iconMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
-        }
-
-        MaterialSymbol {
-            anchors.centerIn: parent
-            text: iconButton.iconName
-            iconSize: 20
-            color: Appearance.colors.colOnSurface
-            fill: iconMouse.containsMouse ? 1 : 0
-        }
-
-        MouseArea {
-            id: iconMouse
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: iconButton.clicked()
-        }
-
-        StyledToolTip {
-            extraVisibleCondition: iconMouse.containsMouse && iconButton.tooltipText !== ""
-            text: iconButton.tooltipText
-        }
+    component EditorIconButton: IconButton {
+        controlSize: 36
+        iconSize: 20
+        iconColor: Appearance.colors.colOnSurface
+        containerColor: Appearance.colors.colLayer2
+        hoverContainerColor: Appearance.colors.colLayer4
+        pressedContainerColor: Appearance.colors.colLayer4Active
     }
 
     component MainFab: Item {
@@ -1417,7 +1386,7 @@ FloatingWindow {
                 }
             }
 
-            IconButton {
+            EditorIconButton {
                 iconName: "check"
                 tooltipText: qsTr("应用到草稿")
                 onClicked: root.applyManualInput()

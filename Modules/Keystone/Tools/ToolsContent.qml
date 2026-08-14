@@ -94,40 +94,26 @@ Item {
         Repeater {
             model: toolsRoot.toolsModel
 
-            Rectangle {
-                width: 48
-                height: 48
-                radius: 12
-                
-                color: (toolsMouse.containsMouse || index === toolsRoot.selectedIndex) 
-                    ? Appearance.colors.colLayer2Hover : "transparent"
-                Behavior on color { ColorAnimation { duration: 150 } }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.icon
-                    font.family: Fonts.materialSymbolsRounded
-                    font.pixelSize: 22
-                    color: Appearance.colors.colOnSurface
+            IconButton {
+                controlSize: 48
+                iconName: modelData.icon
+                iconSize: 22
+                iconColor: Appearance.colors.colOnSurface
+                selectedIconColor: Appearance.colors.colOnSurface
+                accessibleName: modelData.tip
+                selected: index === toolsRoot.selectedIndex
+                selectedContainerColor: Appearance.colors.colLayer2Hover
+                selectedHoverContainerColor: Appearance.colors.colLayer2Hover
+                selectedPressedContainerColor: Appearance.colors.colLayer2Active
+                hoverContainerColor: Appearance.colors.colLayer2Hover
+                pressedContainerColor: Appearance.colors.colLayer2Active
+                onPointerHoveredChanged: {
+                    if (pointerHovered)
+                        toolsRoot.selectedIndex = index;
                 }
-
-                MouseArea {
-                    id: toolsMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    
-                    onEntered: toolsRoot.selectedIndex = index
-
-                    onClicked: {
-                        toolsRoot.selectedIndex = index
-                        toolsRoot.triggerSelected()
-                    }
-                }
-
-                StyledToolTip {
-                    extraVisibleCondition: toolsMouse.containsMouse
-                    text: modelData.tip
+                onClicked: {
+                    toolsRoot.selectedIndex = index;
+                    toolsRoot.triggerSelected();
                 }
             }
         }

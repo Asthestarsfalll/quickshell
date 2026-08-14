@@ -34,27 +34,15 @@ WidgetPanel {
             outputDevicesExpanded = false;
     }
 
-    headerTools: ToolButton {
-        Layout.preferredWidth: 40
-        Layout.preferredHeight: 40
-        hoverEnabled: true
-        Accessible.name: qsTr("打开高级声音设置")
+    headerTools: IconButton {
+        controlSize: 40
+        iconName: "open_in_new"
+        iconSize: 20
+        iconColor: Appearance.colors.colOnLayer2
+        accessibleName: qsTr("打开高级声音设置")
+        hoverContainerColor: Appearance.colors.colLayer2Hover
+        pressedContainerColor: Appearance.colors.colLayer2Active
         onClicked: Volume.openMixer()
-
-        background: Rectangle {
-            radius: Appearance.rounding.full
-            color: parent.down
-                ? Appearance.colors.colLayer2Active
-                : parent.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-        }
-
-        contentItem: MaterialSymbol {
-            text: "open_in_new"
-            iconSize: 20
-            color: Appearance.colors.colOnLayer2
-        }
-
-        StyledToolTip { text: qsTr("高级声音设置") }
     }
 
     ColumnLayout {
@@ -126,38 +114,22 @@ WidgetPanel {
                             font.weight: Font.Medium
                         }
 
-                        ToolButton {
-                            id: outputDevicesButton
-
-                            Layout.preferredWidth: 40
-                            Layout.preferredHeight: 40
-                            hoverEnabled: true
-                            Accessible.name: root.outputDevicesExpanded ? qsTr("收起输出设备") : qsTr("展开输出设备")
+                        IconButton {
+                            selected: root.outputDevicesExpanded
+                            iconName: "expand_more"
+                            iconSize: 22
+                            iconColor: Appearance.colors.colOnLayer2
+                            selectedIconColor: Appearance.colors.colOnSecondaryContainer
+                            selectedContainerColor: Appearance.colors.colSecondaryContainer
+                            selectedHoverContainerColor: Appearance.colors.colSecondaryContainerHover
+                            selectedPressedContainerColor: Appearance.colors.colSecondaryContainerActive
+                            iconRotation: root.outputDevicesExpanded ? 180 : 0
+                            accessibleName: root.outputDevicesExpanded ? qsTr("收起输出设备") : qsTr("展开输出设备")
+                            hoverContainerColor: Appearance.colors.colLayer2Hover
+                            pressedContainerColor: Appearance.colors.colLayer2Active
                             onClicked: root.outputDevicesExpanded = !root.outputDevicesExpanded
 
-                            background: Rectangle {
-                                radius: Appearance.rounding.full
-                                color: root.outputDevicesExpanded
-                                    ? Appearance.colors.colSecondaryContainer
-                                    : outputDevicesButton.down
-                                        ? Appearance.colors.colLayer2Active
-                                        : outputDevicesButton.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-                            }
-
-                            contentItem: MaterialSymbol {
-                                text: "expand_more"
-                                iconSize: 22
-                                color: root.outputDevicesExpanded
-                                    ? Appearance.colors.colOnSecondaryContainer
-                                    : Appearance.colors.colOnLayer2
-                                rotation: root.outputDevicesExpanded ? 180 : 0
-
-                                Behavior on rotation { ElementMoveAnimation {} }
-                            }
-
-                            StyledToolTip {
-                                text: root.outputDevicesExpanded ? qsTr("收起输出设备") : qsTr("展开输出设备")
-                            }
+                            Behavior on iconRotation { ElementMoveAnimation {} }
                         }
                     }
 

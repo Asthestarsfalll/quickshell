@@ -169,53 +169,25 @@ StyledFlickable {
         radius: 0
     }
 
-    component HoverActionButton: Item {
+    component HoverActionButton: IconButton {
         id: action
 
-        property string iconName: ""
-        property string tooltipText: ""
         property bool darkOverlay: false
 
-        signal clicked
-
-        width: 32
-        height: 32
-        opacity: enabled ? 1 : 0.45
-
-        Rectangle {
-            anchors.fill: parent
-            radius: 16
-            color: action.darkOverlay
-                ? Appearance.applyAlpha(
-                    "white", actionMouse.containsMouse ? 0.28 : 0.18)
-                : (actionMouse.containsMouse
-                    ? Appearance.colors.colSurfaceContainerHighest
-                    : Appearance.colors.colSurfaceContainerHigh)
-        }
-
-        MaterialSymbol {
-            anchors.centerIn: parent
-            text: action.iconName
-            iconSize: 18
-            color: action.darkOverlay
-                ? "white" : Appearance.colors.colOnSurface
-            fill: 1
-        }
-
-        MouseArea {
-            id: actionMouse
-            anchors.fill: parent
-            enabled: action.enabled
-            hoverEnabled: true
-            cursorShape: action.enabled
-                ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: action.clicked()
-        }
-
-        StyledToolTip {
-            extraVisibleCondition: actionMouse.containsMouse && action.tooltipText !== ""
-            text: action.tooltipText
-        }
+        controlSize: 32
+        iconSize: 18
+        iconFill: 1
+        iconColor: action.darkOverlay
+            ? "white" : Appearance.colors.colOnSurface
+        containerColor: action.darkOverlay
+            ? Appearance.applyAlpha("white", 0.18)
+            : Appearance.colors.colSurfaceContainerHigh
+        hoverContainerColor: action.darkOverlay
+            ? Appearance.applyAlpha("white", 0.28)
+            : Appearance.colors.colSurfaceContainerHighest
+        pressedContainerColor: action.darkOverlay
+            ? Appearance.applyAlpha("white", 0.36)
+            : Appearance.colors.colLayer3Active
     }
 
     component WallpaperPreview: Item {

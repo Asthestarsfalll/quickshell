@@ -455,54 +455,29 @@ Item {
 
                     }
 
-                    ToolButton {
-                        id: editButton
-
-                        implicitWidth: 38
-                        implicitHeight: 38
+                    IconButton {
+                        controlSize: 38
                         Layout.alignment: Qt.AlignVCenter
+                        iconName: "edit"
+                        iconSize: 22
+                        iconColor: root.headerInk
+                        accessibleName: qsTr("编辑天气位置")
+                        hoverContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1)
+                        pressedContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
                         onClicked: console.log("Open weather settings")
-
-                        background: Rectangle {
-                            radius: width / 2
-                            color: editButton.down ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18) : editButton.hovered ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1) : "transparent"
-                        }
-
-                        contentItem: Text {
-                            text: "edit"
-                            color: root.headerInk
-                            font.family: Fonts.materialSymbolsOutlined
-                            font.pixelSize: 22
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
                     }
 
-                    ToolButton {
-                        id: refreshButton
-
-                        implicitWidth: 38
-                        implicitHeight: 38
+                    IconButton {
+                        controlSize: 38
                         Layout.alignment: Qt.AlignVCenter
                         enabled: !root.weatherSource.loading
-                        opacity: enabled ? 1 : 0.45
+                        iconName: "refresh"
+                        iconSize: 22
+                        iconColor: root.headerInk
+                        accessibleName: qsTr("刷新天气")
+                        hoverContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1)
+                        pressedContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
                         onClicked: root.weatherSource.refresh()
-
-                        background: Rectangle {
-                            radius: width / 2
-                            color: refreshButton.down ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18) : refreshButton.hovered ? Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1) : "transparent"
-                        }
-
-                        contentItem: Text {
-                            text: "refresh"
-                            color: root.headerInk
-                            font.family: Fonts.materialSymbolsOutlined
-                            font.pixelSize: 22
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
                     }
 
                 }

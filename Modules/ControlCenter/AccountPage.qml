@@ -314,20 +314,26 @@ Item {
                                                 deviceRow.modelData)
                                         }
 
-                                        ToolButton {
-                                            id: moreButton
+                                        Item {
+                                            Layout.preferredWidth:
+                                                Metrics.controlHeightM
+                                            Layout.preferredHeight:
+                                                Metrics.controlHeightM
 
-                                            enabled: !BluetoothService.busy
-                                            Accessible.name:
-                                                qsTr("%1 的更多选项").arg(
-                                                    deviceRow.modelData.name
-                                                        || qsTr("未命名设备"))
-                                            onClicked: forgetMenu.open()
+                                            IconButton {
+                                                id: moreButton
 
-                                            contentItem: MaterialSymbol {
-                                                text: "more_horiz"
+                                                anchors.fill: parent
+                                                enabled: !BluetoothService.busy
+                                                iconName: "more_horiz"
                                                 iconSize: 22
-                                                color: Appearance.colors.colOnSurfaceVariant
+                                                iconColor:
+                                                    Appearance.colors.colOnSurfaceVariant
+                                                accessibleName:
+                                                    qsTr("%1 的更多选项").arg(
+                                                        deviceRow.modelData.name
+                                                            || qsTr("未命名设备"))
+                                                onClicked: forgetMenu.open()
                                             }
 
                                             Menu {
@@ -401,19 +407,15 @@ Item {
                             elide: Text.ElideRight
                         }
 
-                        ToolButton {
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            Accessible.name: qsTr("刷新云存储信息")
+                        IconButton {
+                            controlSize: Metrics.controlHeightL
+                            iconName: "refresh"
+                            iconSize: 22
+                            iconColor: Appearance.colors.colOnSurfaceVariant
+                            accessibleName: qsTr("刷新云存储信息")
                             enabled: RcloneService.selectedRemote !== null
                                 && RcloneService.quotaState !== "loading"
                             onClicked: RcloneService.refreshCard()
-
-                            contentItem: MaterialSymbol {
-                                text: "refresh"
-                                iconSize: 22
-                                color: Appearance.colors.colOnSurfaceVariant
-                            }
                         }
                     }
 

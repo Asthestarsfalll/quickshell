@@ -114,52 +114,24 @@ Item {
             Layout.fillWidth: true
         }
 
-        ToolButton {
-            id: refreshButton
-
+        IconButton {
             Layout.alignment: Qt.AlignVCenter
-            width: 42
-            height: 42
+            controlSize: 42
             enabled: !WeatherPlugin.loading
-            hoverEnabled: true
+            iconName: "refresh"
+            iconSize: 26
+            iconColor: Appearance.colors.colOnSurface
+            iconRotation: WeatherPlugin.loading ? 360 : 0
+            accessibleName: qsTr("刷新天气")
             onClicked: root.refreshRequested()
 
-            StyledToolTip {
-                text: qsTr("刷新天气")
+            RotationAnimation on iconRotation {
+                from: 0
+                to: 360
+                duration: 800
+                loops: Animation.Infinite
+                running: WeatherPlugin.loading
             }
-
-            background: Item {
-            }
-
-            contentItem: MaterialSymbol {
-                id: refreshIcon
-
-                text: "refresh"
-                iconSize: 26
-                color: Appearance.colors.colOnSurface
-                anchors.centerIn: parent
-
-                RotationAnimation on rotation {
-                    from: 0
-                    to: 360
-                    duration: 800
-                    loops: Animation.Infinite
-                    running: WeatherPlugin.loading
-                }
-
-                Behavior on rotation {
-                    enabled: !WeatherPlugin.loading
-
-                    NumberAnimation {
-                        duration: Appearance.animation.expressiveEffects.duration
-                        easing.type: Appearance.animation.expressiveEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                    }
-
-                }
-
-            }
-
         }
 
     }

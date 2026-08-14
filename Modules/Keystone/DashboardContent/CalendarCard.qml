@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
+import qs.Widgets.common
 
 // Adapted from Caelestia Shell's dashboard calendar (GPL-3.0).
 Rectangle {
@@ -109,25 +110,14 @@ Rectangle {
             Layout.fillWidth: true
             spacing: 6
 
-            ToolButton {
-                id: previousMonthButton
-
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
-                padding: 0
-                background: Rectangle {
-                    radius: height / 2
-                    color: previousMonthButton.down
-                        ? Appearance.colors.colLayer4Active
-                        : previousMonthButton.hovered
-                          ? Appearance.colors.colLayer4Hover
-                          : "transparent"
-                }
-                contentItem: MaterialSymbol {
-                    text: "chevron_left"
-                    iconSize: 21
-                    color: Appearance.colors.colOnSurface
-                }
+            IconButton {
+                controlSize: 36
+                iconName: "chevron_left"
+                iconSize: 21
+                iconColor: Appearance.colors.colOnSurface
+                accessibleName: qsTr("上个月")
+                hoverContainerColor: Appearance.colors.colLayer4Hover
+                pressedContainerColor: Appearance.colors.colLayer4Active
                 onClicked: root.navigateMonth(-1)
             }
 
@@ -166,25 +156,14 @@ Rectangle {
                 }
             }
 
-            ToolButton {
-                id: nextMonthButton
-
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
-                padding: 0
-                background: Rectangle {
-                    radius: height / 2
-                    color: nextMonthButton.down
-                        ? Appearance.colors.colLayer4Active
-                        : nextMonthButton.hovered
-                          ? Appearance.colors.colLayer4Hover
-                          : "transparent"
-                }
-                contentItem: MaterialSymbol {
-                    text: "chevron_right"
-                    iconSize: 21
-                    color: Appearance.colors.colOnSurface
-                }
+            IconButton {
+                controlSize: 36
+                iconName: "chevron_right"
+                iconSize: 21
+                iconColor: Appearance.colors.colOnSurface
+                accessibleName: qsTr("下个月")
+                hoverContainerColor: Appearance.colors.colLayer4Hover
+                pressedContainerColor: Appearance.colors.colLayer4Active
                 onClicked: root.navigateMonth(1)
             }
         }

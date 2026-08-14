@@ -241,13 +241,13 @@ Item {
                             }
                         }
 
-                        IconButton {
+                        PickerIconButton {
                             iconName: "colorize"
                             tooltipText: qsTr("屏幕取色")
                             onClicked: root.pickColorFromScreen()
                         }
 
-                        IconButton {
+                        PickerIconButton {
                             iconName: "close"
                             tooltipText: qsTr("关闭")
                             onClicked: root.close()
@@ -580,44 +580,13 @@ Item {
         font.weight: Font.Medium
     }
 
-    component IconButton: Item {
-        id: iconButton
-
-        property string iconName: ""
-        property string tooltipText: ""
-
-        signal clicked
-
-        implicitWidth: 36
-        implicitHeight: 36
-
-        Rectangle {
-            anchors.fill: parent
-            radius: Appearance.rounding.full
-            color: iconMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
-        }
-
-        MaterialSymbol {
-            anchors.centerIn: parent
-            text: iconButton.iconName
-            iconSize: 20
-            color: Appearance.colors.colOnSurface
-            fill: iconMouse.containsMouse ? 1 : 0
-        }
-
-        MouseArea {
-            id: iconMouse
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: iconButton.clicked()
-        }
-
-        StyledToolTip {
-            extraVisibleCondition: iconMouse.containsMouse && iconButton.tooltipText !== ""
-            text: iconButton.tooltipText
-        }
+    component PickerIconButton: IconButton {
+        controlSize: 36
+        iconSize: 20
+        iconColor: Appearance.colors.colOnSurface
+        containerColor: Appearance.colors.colLayer2
+        hoverContainerColor: Appearance.colors.colLayer4
+        pressedContainerColor: Appearance.colors.colLayer4Active
     }
 
     component FormatField: ColumnLayout {
@@ -685,7 +654,7 @@ Item {
                 }
             }
 
-            IconButton {
+            PickerIconButton {
                 iconName: "content_copy"
                 tooltipText: qsTr("复制")
                 onClicked: formatField.copyRequested(input.text)

@@ -34,27 +34,15 @@ WidgetPanel {
             inputDevicesExpanded = false;
     }
 
-    headerTools: ToolButton {
-        Layout.preferredWidth: 40
-        Layout.preferredHeight: 40
-        hoverEnabled: true
-        Accessible.name: qsTr("打开高级声音设置")
+    headerTools: IconButton {
+        controlSize: 40
+        iconName: "open_in_new"
+        iconSize: 20
+        iconColor: Appearance.colors.colOnLayer2
+        accessibleName: qsTr("打开高级声音设置")
+        hoverContainerColor: Appearance.colors.colLayer2Hover
+        pressedContainerColor: Appearance.colors.colLayer2Active
         onClicked: Volume.openMixer()
-
-        background: Rectangle {
-            radius: Appearance.rounding.full
-            color: parent.down
-                ? Appearance.colors.colLayer2Active
-                : parent.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-        }
-
-        contentItem: MaterialSymbol {
-            text: "open_in_new"
-            iconSize: 20
-            color: Appearance.colors.colOnLayer2
-        }
-
-        StyledToolTip { text: qsTr("高级声音设置") }
     }
 
     ColumnLayout {
@@ -126,38 +114,22 @@ WidgetPanel {
                             font.weight: Font.Medium
                         }
 
-                        ToolButton {
-                            id: inputDevicesButton
-
-                            Layout.preferredWidth: 40
-                            Layout.preferredHeight: 40
-                            hoverEnabled: true
-                            Accessible.name: root.inputDevicesExpanded ? qsTr("收起输入设备") : qsTr("展开输入设备")
+                        IconButton {
+                            selected: root.inputDevicesExpanded
+                            iconName: "expand_more"
+                            iconSize: 22
+                            iconColor: Appearance.colors.colOnLayer2
+                            selectedIconColor: Appearance.colors.colOnSecondaryContainer
+                            selectedContainerColor: Appearance.colors.colSecondaryContainer
+                            selectedHoverContainerColor: Appearance.colors.colSecondaryContainerHover
+                            selectedPressedContainerColor: Appearance.colors.colSecondaryContainerActive
+                            iconRotation: root.inputDevicesExpanded ? 180 : 0
+                            accessibleName: root.inputDevicesExpanded ? qsTr("收起输入设备") : qsTr("展开输入设备")
+                            hoverContainerColor: Appearance.colors.colLayer2Hover
+                            pressedContainerColor: Appearance.colors.colLayer2Active
                             onClicked: root.inputDevicesExpanded = !root.inputDevicesExpanded
 
-                            background: Rectangle {
-                                radius: Appearance.rounding.full
-                                color: root.inputDevicesExpanded
-                                    ? Appearance.colors.colSecondaryContainer
-                                    : inputDevicesButton.down
-                                        ? Appearance.colors.colLayer2Active
-                                        : inputDevicesButton.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-                            }
-
-                            contentItem: MaterialSymbol {
-                                text: "expand_more"
-                                iconSize: 22
-                                color: root.inputDevicesExpanded
-                                    ? Appearance.colors.colOnSecondaryContainer
-                                    : Appearance.colors.colOnLayer2
-                                rotation: root.inputDevicesExpanded ? 180 : 0
-
-                                Behavior on rotation { ElementMoveAnimation {} }
-                            }
-
-                            StyledToolTip {
-                                text: root.inputDevicesExpanded ? qsTr("收起输入设备") : qsTr("展开输入设备")
-                            }
+                            Behavior on iconRotation { ElementMoveAnimation {} }
                         }
                     }
 

@@ -4,6 +4,7 @@ import Qt5Compat.GraphicalEffects
 import qs.Common
 import qs.Components
 import qs.Services
+import qs.Widgets.common
 import "../../../Common/functions/SearchUtils.js" as SearchUtils
 
 Item {
@@ -509,35 +510,24 @@ Item {
             }
         }
 
-        ToolButton {
+        IconButton {
             id: clearButton
 
             anchors.right: parent.right
             anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
-            width: WallpaperPickerTokens.clearButtonSize
-            height: WallpaperPickerTokens.clearButtonSize
+            controlSize: WallpaperPickerTokens.clearButtonSize
             enabled: searchInput.text.length > 0
             opacity: enabled ? 1 : 0
-            hoverEnabled: true
+            iconName: "clear"
+            iconSize: 20
+            iconColor: Appearance.colors.colOnSurfaceVariant
+            accessibleName: qsTr("清除壁纸搜索")
+            hoverContainerColor: Appearance.colors.colLayer2Hover
+            pressedContainerColor: Appearance.colors.colLayer2Active
             onClicked: {
                 searchInput.clear();
                 searchInput.forceActiveFocus();
-            }
-
-            background: Rectangle {
-                radius: width / 2
-                color: clearButton.down
-                    ? Appearance.colors.colLayer2Active
-                    : clearButton.hovered
-                        ? Appearance.colors.colLayer2Hover
-                        : "transparent"
-            }
-
-            contentItem: MaterialSymbol {
-                text: "clear"
-                iconSize: 20
-                color: Appearance.colors.colOnSurfaceVariant
             }
 
             Behavior on opacity {

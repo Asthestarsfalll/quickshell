@@ -103,37 +103,21 @@ Item {
                 }
             }
 
-            ToolButton {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 40
+            IconButton {
                 visible: root.showMuteButton
                 enabled: root.available
-                hoverEnabled: true
-                Accessible.name: root.muted ? qsTr("取消静音 ") + root.title : qsTr("静音 ") + root.title
+                selected: root.muted
+                iconName: "volume_off"
+                iconSize: 20
+                iconFill: root.muted ? 1 : 0
+                iconColor: Appearance.colors.colOnLayer2
+                selectedIconColor: Appearance.colors.colPrimary
+                selectedContainerColor: Appearance.colors.colLayer2Hover
+                accessibleName: root.muted ? qsTr("取消静音 ") + root.title : qsTr("静音 ") + root.title
+                tooltipText: root.muted ? qsTr("取消静音") : qsTr("静音")
+                hoverContainerColor: Appearance.colors.colLayer2Hover
+                pressedContainerColor: Appearance.colors.colLayer2Active
                 onClicked: root.muteRequested()
-
-                background: Rectangle {
-                    radius: Appearance.rounding.full
-                    color: parent.down
-                        ? Appearance.colors.colLayer2Active
-                        : parent.hovered || root.muted
-                            ? Appearance.colors.colLayer2Hover
-                            : "transparent"
-                }
-
-                contentItem: MaterialSymbol {
-                    text: "volume_off"
-                    iconSize: 20
-                    fill: root.muted ? 1 : 0
-                    color: root.muted
-                        ? Appearance.colors.colPrimary
-                        : Appearance.colors.colOnLayer2
-                }
-
-                StyledToolTip {
-                    text: root.muted ? qsTr("取消静音") : qsTr("静音")
-                    extraVisibleCondition: parent.hovered
-                }
             }
         }
 

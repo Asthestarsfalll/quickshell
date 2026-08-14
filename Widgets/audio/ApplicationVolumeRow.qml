@@ -96,47 +96,23 @@ Item {
             onMoved: root.volumeMoved(value)
         }
 
-        ToolButton {
-            id: muteButton
-
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
+        IconButton {
             Layout.alignment: Qt.AlignVCenter
             enabled: root.available
-            hoverEnabled: true
-            Accessible.name: root.muted ? qsTr("取消静音 ") + root.title : qsTr("静音 ") + root.title
+            selected: root.muted
+            iconName: "volume_off"
+            iconSize: 20
+            iconFill: root.muted ? 1 : 0
+            iconColor: Appearance.colors.colOnLayer2
+            selectedIconColor: Appearance.colors.colOnSecondaryContainer
+            selectedContainerColor: Appearance.colors.colSecondaryContainer
+            selectedHoverContainerColor: Appearance.colors.colSecondaryContainerHover
+            selectedPressedContainerColor: Appearance.colors.colSecondaryContainerActive
+            accessibleName: root.muted ? qsTr("取消静音 ") + root.title : qsTr("静音 ") + root.title
+            tooltipText: root.muted ? qsTr("取消静音") : qsTr("静音")
+            hoverContainerColor: Appearance.colors.colLayer2Hover
+            pressedContainerColor: Appearance.colors.colLayer2Active
             onClicked: root.muteRequested()
-
-            background: Rectangle {
-                radius: Appearance.rounding.full
-                color: root.muted
-                    ? Appearance.colors.colSecondaryContainer
-                    : muteButton.down
-                        ? Appearance.colors.colLayer2Active
-                        : muteButton.hovered ? Appearance.colors.colLayer2Hover : "transparent"
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Appearance.animation.expressiveFastEffects.duration
-                        easing.type: Appearance.animation.expressiveFastEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
-                    }
-                }
-            }
-
-            contentItem: MaterialSymbol {
-                text: "volume_off"
-                iconSize: 20
-                fill: root.muted ? 1 : 0
-                color: root.muted
-                    ? Appearance.colors.colOnSecondaryContainer
-                    : Appearance.colors.colOnLayer2
-            }
-
-            StyledToolTip {
-                text: root.muted ? qsTr("取消静音") : qsTr("静音")
-                extraVisibleCondition: muteButton.hovered
-            }
         }
     }
 }
