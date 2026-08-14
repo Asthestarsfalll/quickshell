@@ -20,8 +20,6 @@ Item {
     readonly property string weatherSceneType: weatherBackground.weatherType
     readonly property int weatherSimulationFrameCount: weatherBackground.simulationFrameCount
     readonly property int weatherPaintCount: weatherBackground.paintCount
-    readonly property bool weatherMotionActive:
-        root.presentationActive && !flick.moving
     readonly property real effectiveDpr: Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1
     property int contentMargin: 16
     property int headerHeight: 62
@@ -420,7 +418,7 @@ Item {
                     flick.y + dailyForecastCard.y - flick.contentY
                 scrollProgress:
                     Math.max(0, Math.min(1, flick.contentY / 340))
-                animate: root.weatherMotionActive
+                animate: root.presentationActive
             }
         }
 
@@ -604,7 +602,7 @@ Item {
                                 weatherCode: root.weatherSource.currentWeatherCode
                                 iconName: root.weatherSource.currentIconName
                                 night: root.currentIsNight()
-                                playing: root.weatherMotionActive
+                                playing: root.presentationActive
                                     && currentSummary.y
                                         + currentSummary.height
                                         >= flick.contentY
@@ -644,7 +642,7 @@ Item {
                     width: parent.width
                     height: 452
                     sourceModel: root.weatherSource.dailyTrendForecast
-                    foreground: root.weatherMotionActive
+                    foreground: root.presentationActive
                         && dailyForecastCard.y
                             + dailyForecastCard.height >= flick.contentY
                         && dailyForecastCard.y
@@ -657,7 +655,7 @@ Item {
                     width: parent.width
                     height: 286
                     sourceModel: root.weatherSource.hourlyForecast
-                    foreground: root.weatherMotionActive
+                    foreground: root.presentationActive
                         && hourlyForecastCard.y
                             + hourlyForecastCard.height >= flick.contentY
                         && hourlyForecastCard.y
@@ -678,7 +676,7 @@ Item {
                         contentTop: precipitationWindRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherPrecipitationCard {
@@ -699,7 +697,7 @@ Item {
                         contentTop: precipitationWindRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherWindCard {
@@ -730,7 +728,7 @@ Item {
                         contentTop: aqiHumidityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherAqiCard {
@@ -752,7 +750,7 @@ Item {
                         contentTop: aqiHumidityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherHumidityCard {
@@ -783,7 +781,7 @@ Item {
                         contentTop: uvVisibilityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherUvCard {
@@ -805,7 +803,7 @@ Item {
                         contentTop: uvVisibilityRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherVisibilityCard {
@@ -833,7 +831,7 @@ Item {
                         contentTop: pressureSunRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherPressureCard {
@@ -855,7 +853,7 @@ Item {
                         contentTop: pressureSunRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 1
 
                         WeatherAstroCard {
@@ -888,7 +886,7 @@ Item {
                         contentTop: moonRow.y
                         viewportContentY: flick.contentY
                         viewportHeight: flick.height
-                        activationEnabled: root.weatherMotionActive
+                        activationEnabled: root.presentationActive
                         staggerIndex: 0
 
                         WeatherAstroCard {

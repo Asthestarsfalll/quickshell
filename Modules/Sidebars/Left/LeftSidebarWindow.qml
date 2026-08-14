@@ -10,7 +10,7 @@ Item {
     property var panelScreen: null
     property real sidebarWidth: Metrics.sidebarWidthComfortable
     property int gap: 24
-    readonly property alias blurBackgroundItem: blurRegionAnchor
+    readonly property alias blurBackgroundItem: panelSurface
     // The host window already starts inside layer-shell's usable geometry.
     readonly property int sidebarY: gap
     readonly property real closedSlideOffset: -(sidebarWidth + gap)
@@ -20,7 +20,6 @@ Item {
         Math.max(0, height - sidebarY - gap)
     property bool panelPresented: false
     property bool contentRetained: false
-    property bool blurActive: false
     property bool contentActive: false
     property bool keepLoaded:
         PersonalizationConfig.keepSidebarsLoaded
@@ -35,14 +34,12 @@ Item {
         sidebarContentLoader.item
             ? sidebarContentLoader.item.weatherView : null
     readonly property var systemCardBlurExclusionItems:
-        root.blurActive && root.activeView === "sys"
-            && sidebarContentLoader.item
+        root.activeView === "sys" && sidebarContentLoader.item
             ? sidebarContentLoader.item.systemCardBlurExclusionItems : []
 
     function beginPresentation() {
         panelPresented = true
         contentRetained = true
-        blurActive = false
         contentActive = false
     }
 
@@ -50,7 +47,6 @@ Item {
         if (!WidgetState.leftSidebarOpen)
             return
 
-        blurActive = true
         contentActive = true
     }
 
@@ -60,7 +56,6 @@ Item {
 
         // Hide the already off-screen surface before releasing its layout tree.
         panelPresented = false
-        blurActive = false
         contentActive = false
         if (!root.keepLoaded)
             contentRetained = false
@@ -69,7 +64,6 @@ Item {
 
     Component.onCompleted: {
         panelPresented = WidgetState.leftSidebarOpen
-        blurActive = WidgetState.leftSidebarOpen
         contentActive = WidgetState.leftSidebarOpen
         contentRetained = WidgetState.leftSidebarOpen
             || root.keepLoaded
@@ -81,10 +75,8 @@ Item {
         function onLeftSidebarOpenChanged() {
             if (WidgetState.leftSidebarOpen)
                 root.beginPresentation()
-            else {
-                root.blurActive = false
+            else
                 root.contentActive = false
-            }
         }
     }
 
@@ -183,19 +175,6 @@ Item {
         color: BlurService.backgroundColor(
             Appearance.colors.colLayer0)
         radius: Appearance.rounding.large
-    }
-
-    // Keep the compositor blur region out of the per-frame slide path. This
-    // item becomes visible only after the panel reaches its resting position.
-    Item {
-        id: blurRegionAnchor
-
-        visible: root.blurActive
-        x: panelSurface.x
-        y: panelSurface.y
-        width: panelSurface.width
-        height: panelSurface.height
-        property real radius: panelSurface.radius
     }
 
     Item {

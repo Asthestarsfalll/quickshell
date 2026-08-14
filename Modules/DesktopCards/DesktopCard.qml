@@ -28,7 +28,7 @@ Item {
         anchors.fill: parent
         radius: Appearance.rounding.extraLarge
         visible: cardContent.shellManagedSurface
-        color: BlurService.opaqueBackgroundColor(Appearance.m3colors.m3surfaceContainerHigh)
+        color: BlurService.solidBackgroundColor(Appearance.m3colors.m3surfaceContainerHigh)
     }
 
     SystemCardContent {
@@ -38,7 +38,6 @@ Item {
         tileId: root.tileId
         active: true
         useShellManagedSurface: true
-        desktopPresentation: true
     }
 
     HoverHandler {

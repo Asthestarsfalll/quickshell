@@ -23,8 +23,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 2,
         requiresSystemMonitor: true,
-        preserveDefaultSurface: true,
-        excludeHostBlur: true
+        preserveDefaultSurface: true
     },
     {
         id: "cpu",
@@ -34,8 +33,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        preserveDefaultSurface: true,
-        excludeHostBlur: true
+        preserveDefaultSurface: true
     },
     {
         id: "gpu",
@@ -45,8 +43,7 @@ var cardDefinitions = [
         columnSpan: 1,
         rowSpan: 1,
         requiresSystemMonitor: true,
-        preserveDefaultSurface: true,
-        excludeHostBlur: true
+        preserveDefaultSurface: true
     },
     {
         id: "memoryUsed",

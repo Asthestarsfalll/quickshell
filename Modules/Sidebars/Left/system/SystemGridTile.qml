@@ -89,7 +89,7 @@ Item {
         anchors.fill: parent
         visible: !root.presentationOwned && cardContent.shellManagedSurface
         radius: Appearance.rounding.extraLarge
-        color: BlurService.opaqueBackgroundColor(
+        color: BlurService.solidBackgroundColor(
             Appearance.m3colors.m3surfaceContainerHigh)
     }
 

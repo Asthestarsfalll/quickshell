@@ -140,10 +140,7 @@ Rectangle {
             phaseEntryAnimation.stop()
             progressUpdateAnimation.stop()
             phaseUpdateAnimation.stop()
-            root.displayProgress = 0
-            root.animatedPhaseAngle = 0
-            root.iconRotation = 0
-            root.animationHasRun = false
+            iconRotationUpdateAnimation.stop()
             return
         }
 
@@ -157,6 +154,11 @@ Rectangle {
                 phaseEntryAnimation.restart()
             else
                 root.animatedPhaseAngle = root.phaseAngle
+        } else {
+            progressUpdateAnimation.restart()
+            iconRotationUpdateAnimation.restart()
+            if (root.moon)
+                phaseUpdateAnimation.restart()
         }
     }
 
@@ -165,6 +167,7 @@ Rectangle {
             root.displayProgress = root.progressTarget
         } else if (root.animationActive && root.animationHasRun && !pathEntryAnimation.running) {
             progressUpdateAnimation.restart()
+            iconRotationUpdateAnimation.restart()
         }
     }
 
@@ -251,6 +254,16 @@ Rectangle {
         target: root
         property: "animatedPhaseAngle"
         to: root.phaseAngle
+        duration: 500
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: Animations.curves.emphasizedDecel
+    }
+
+    NumberAnimation {
+        id: iconRotationUpdateAnimation
+        target: root
+        property: "iconRotation"
+        to: root.targetIconRotation()
         duration: 500
         easing.type: Easing.BezierSpline
         easing.bezierCurve: Animations.curves.emphasizedDecel

@@ -150,7 +150,8 @@ Item {
                         width: periodLabel.implicitWidth + Appearance.spacing.medium
                         height: periodLabel.implicitHeight + Appearance.spacing.small
                         radius: Appearance.rounding.small
-                        color: Appearance.colors.colSecondaryContainer
+                        color: BlurService.solidBackgroundColor(
+                            Appearance.colors.colSecondaryContainer)
 
                         anchors {
                             horizontalCenter: parent.horizontalCenter

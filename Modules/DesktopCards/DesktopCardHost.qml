@@ -309,7 +309,7 @@ Variants {
                     anchors.fill: parent
                     radius: Appearance.rounding.extraLarge
                     visible: ghostContent.shellManagedSurface
-                    color: BlurService.opaqueBackgroundColor(Appearance.m3colors.m3surfaceContainerHigh)
+                    color: BlurService.solidBackgroundColor(Appearance.m3colors.m3surfaceContainerHigh)
                 }
 
                 SystemCardContent {
@@ -319,7 +319,6 @@ Variants {
                     tileId: SystemCardDragSession.tileId
                     active: presentationGhost.visible
                     useShellManagedSurface: true
-                    desktopPresentation: true
                 }
 
             }

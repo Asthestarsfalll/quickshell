@@ -17,7 +17,7 @@ Rectangle {
     implicitHeight: unavailableLayout.implicitHeight
         + Appearance.spacing.large * 2
     radius: Appearance.rounding.small
-    color: BlurService.opaqueBackgroundColor(
+    color: BlurService.solidBackgroundColor(
         Appearance.m3colors.m3surfaceContainer)
     readonly property color foregroundColor: reconnecting
         ? Appearance.colors.colOnSurface

@@ -14,7 +14,8 @@ Item {
     readonly property int hour12: ((root.hour24 + 11) % 12) + 1
     readonly property int minute: root.currentTime.getMinutes()
     readonly property int second: root.currentTime.getSeconds()
-    readonly property color faceColor: Appearance.colors.colPrimaryContainer
+    readonly property color faceColor: BlurService.solidBackgroundColor(
+        Appearance.colors.colPrimaryContainer)
     readonly property color dialColor: Appearance.mix(Appearance.colors.colSecondary, Appearance.colors.colPrimaryContainer, 0.15)
     readonly property color infoColor: Appearance.mix(Appearance.colors.colPrimary, Appearance.colors.colPrimaryContainer, 0.55)
     readonly property string periodText: root.hour24 >= 12 ? "PM" : "AM"

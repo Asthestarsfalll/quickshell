@@ -16,7 +16,6 @@ Item {
     // surface bindings; the remaining cards can opt into the shell-managed
     // surface introduced by the sidebar background work.
     property bool useShellManagedSurface: false
-    property bool desktopPresentation: false
     readonly property var catalogEntry: CardCatalog.definitionFor(root.tileId)
     readonly property bool preserveDefaultSurface: root.catalogEntry !== null && root.catalogEntry.preserveDefaultSurface === true
     readonly property bool shellManagedSurface: root.useShellManagedSurface && !root.preserveDefaultSurface
@@ -30,7 +29,9 @@ Item {
     }
 
     function surfaceColor(sidebarBaseColor, defaultColor) {
-        return root.shellManagedSurface ? BlurService.opaqueBackgroundColor(sidebarBaseColor) : defaultColor;
+        const baseColor = root.shellManagedSurface
+            ? sidebarBaseColor : defaultColor;
+        return BlurService.solidBackgroundColor(baseColor);
     }
 
     function temperatureBadge(value) {
@@ -255,7 +256,6 @@ Item {
 
         SystemMediaCard {
             active: root.active
-            opaqueControls: root.desktopPresentation
         }
 
     }

@@ -3,6 +3,7 @@ import Qt5Compat.GraphicalEffects
 import M3Shapes
 import qs.Common
 import qs.Components
+import qs.Services
 
 // Preserves the former Dashboard Hole cover treatment for the System media
 // card. Adapted from Caelestia Shell's CoverArt (GPL-3.0).
@@ -36,7 +37,8 @@ Item {
         anchors.centerIn: parent
         implicitSize: parent.width
         shape: MaterialShape.Cookie12Sided
-        color: Appearance.colors.colSurfaceContainerHighest
+        color: BlurService.solidBackgroundColor(
+            Appearance.colors.colSurfaceContainerHighest)
         rotation: root.coverRotation
     }
 

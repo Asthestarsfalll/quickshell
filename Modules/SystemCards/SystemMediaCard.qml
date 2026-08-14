@@ -9,7 +9,6 @@ Item {
     id: root
 
     property bool active: true
-    property bool opaqueControls: false
     readonly property var player: MediaManager.active
     readonly property bool hasPlayer: player !== null && player !== undefined
     readonly property bool isPlaying: hasPlayer && player.isPlaying
@@ -18,11 +17,12 @@ Item {
     readonly property real progress: hasPlayer && player.length > 0 ? Math.max(0, Math.min(1, currentPosition / player.length)) : 0
 
     function controlColor(primaryButton, hovered) {
-        let color = primaryButton ? (hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary) : (hovered ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer);
-        if (root.opaqueControls)
-            color = Appearance.applyAlpha(color, 1);
-
-        return color;
+        const color = primaryButton
+            ? (hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary)
+            : (hovered
+                ? Appearance.colors.colSecondaryContainerHover
+                : Appearance.colors.colSecondaryContainer);
+        return BlurService.solidBackgroundColor(color);
     }
 
     Accessible.role: Accessible.Pane

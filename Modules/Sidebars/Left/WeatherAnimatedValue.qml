@@ -48,8 +48,6 @@ QtObject {
 
         if (!active) {
             valueAnimation.stop()
-            currentValue = 0
-            hasAnimated = false
             return
         }
 
