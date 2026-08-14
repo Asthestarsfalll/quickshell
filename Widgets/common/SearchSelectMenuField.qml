@@ -447,9 +447,9 @@ FocusScope {
             NumberAnimation {
                 property: "y"
                 from: optionsPopup.y - 4
-                duration: Appearance.animation.expressiveFastSpatial.duration
-                easing.type: Appearance.animation.expressiveFastSpatial.type
-                easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                duration: Appearance.animation.standardDecel.duration
+                easing.type: Appearance.animation.standardDecel.type
+                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
             }
         }
 
@@ -472,9 +472,9 @@ FocusScope {
 
         Behavior on revealProgress {
             NumberAnimation {
-                duration: Appearance.animation.expressiveFastSpatial.duration
-                easing.type: Appearance.animation.expressiveFastSpatial.type
-                easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                duration: Appearance.animation.standardDecel.duration
+                easing.type: Appearance.animation.standardDecel.type
+                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
             }
         }
 
