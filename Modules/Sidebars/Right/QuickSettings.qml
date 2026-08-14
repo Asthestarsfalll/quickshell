@@ -6,6 +6,10 @@ Item {
 
     property var screen: null
     property bool foreground: false
+    property bool componentCompleted: false
+    readonly property bool readyForPresentation: componentCompleted
+
+    Component.onCompleted: componentCompleted = true
 
     PageTransitionLayer {
         anchors.fill: parent
@@ -35,6 +39,7 @@ Item {
 
         IdleContent {
             anchors.fill: parent
+            foreground: root.foreground
         }
     }
 
@@ -44,6 +49,7 @@ Item {
 
         AudioContent {
             anchors.fill: parent
+            foreground: root.foreground
         }
     }
 
@@ -53,6 +59,7 @@ Item {
 
         MicrophoneContent {
             anchors.fill: parent
+            foreground: root.foreground
         }
     }
 

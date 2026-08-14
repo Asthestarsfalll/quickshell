@@ -15,18 +15,43 @@ Item {
     readonly property real closedSlideOffset: sidebarWidth + gap
     readonly property int enterDuration: Animations.durations.sidebarEnter
     readonly property int exitDuration: Animations.durations.sidebarExit
+    readonly property bool requestedOpen: WidgetState.qsOpen
     property bool panelPresented: false
     property bool contentRetained: false
-    readonly property bool panelActive:
-        WidgetState.qsOpen || panelPresented
+    property bool presentationOpen: false
+    readonly property bool contentReady:
+        quickSettingsLoader.status === Loader.Ready
+            && quickSettingsLoader.item !== null
+            && quickSettingsLoader.item.readyForPresentation
+    // A presented surface is only created after contentReady. It remains
+    // operational during closing so its contents leave with the panel.
+    readonly property bool contentOperational: panelPresented
+    readonly property bool panelActive: panelPresented
 
-    function beginPresentation() {
-        panelPresented = true
+    function preparePresentation() {
         contentRetained = true
+        startPresentation()
+    }
+
+    function startPresentation() {
+        if (!requestedOpen || !contentReady)
+            return
+
+        panelPresented = true
+        presentationOpen = true
+    }
+
+    function beginClosing() {
+        presentationOpen = false
+        if (panelPresented)
+            return
+
+        if (!PersonalizationConfig.keepSidebarsLoaded)
+            contentRetained = false
     }
 
     function finishClosing() {
-        if (WidgetState.qsOpen)
+        if (requestedOpen)
             return
 
         // Hide the already off-screen surface before releasing its layout tree.
@@ -36,18 +61,22 @@ Item {
     }
 
     Component.onCompleted: {
-        panelPresented = WidgetState.qsOpen
-        contentRetained = WidgetState.qsOpen
-            || PersonalizationConfig.keepSidebarsLoaded
+        if (PersonalizationConfig.keepSidebarsLoaded)
+            contentRetained = true
+        if (requestedOpen)
+            preparePresentation()
     }
 
-    Connections {
-        target: WidgetState
+    onRequestedOpenChanged: {
+        if (requestedOpen)
+            preparePresentation()
+        else
+            beginClosing()
+    }
 
-        function onQsOpenChanged() {
-            if (WidgetState.qsOpen)
-                root.beginPresentation()
-        }
+    onContentReadyChanged: {
+        if (contentReady)
+            startPresentation()
     }
 
     Connections {
@@ -56,7 +85,7 @@ Item {
         function onKeepSidebarsLoadedChanged() {
             if (PersonalizationConfig.keepSidebarsLoaded) {
                 root.contentRetained = true
-            } else if (!WidgetState.qsOpen
+            } else if (!requestedOpen
                     && !root.panelPresented) {
                 root.contentRetained = false
             }
@@ -77,7 +106,7 @@ Item {
 
         property real slideOffset: root.closedSlideOffset
 
-        state: WidgetState.qsOpen ? "open" : "closed"
+        state: root.presentationOpen ? "open" : "closed"
 
         states: [
             State {
@@ -158,10 +187,11 @@ Item {
         clip: true
 
         Loader {
+            id: quickSettingsLoader
+
             anchors.fill: parent
-            active: PersonalizationConfig.keepSidebarsLoaded
-                || WidgetState.qsOpen
-                || root.contentRetained
+            active: root.contentRetained
+            asynchronous: true
             sourceComponent: quickSettingsComponent
         }
     }
@@ -172,7 +202,7 @@ Item {
         QuickSettings {
             anchors.fill: parent
             screen: root.panelScreen
-            foreground: WidgetState.qsOpen
+            foreground: root.contentOperational
         }
     }
 }

@@ -16,7 +16,8 @@ WidgetPanel {
     showBackButton: true
     backAction: () => WidgetState.qsView = "settings"
 
-    property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "microphone"
+    property bool foreground: false
+    property bool isActive: foreground && WidgetState.qsView === "microphone"
     property bool inputDevicesExpanded: false
     readonly property bool showInputDevices: root.inputDevicesExpanded
     readonly property string stateMessage: {

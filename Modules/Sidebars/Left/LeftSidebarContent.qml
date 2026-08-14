@@ -13,6 +13,18 @@ Item {
     property bool presentationActive: false
     property var weatherSourceOverride: null
     readonly property string activeView: WidgetState.leftSidebarView
+    readonly property var activeViewLoader: {
+        const indexByView = {
+            "info": 0,
+            "sys": 1,
+            "weather": 2
+        };
+        return viewRepeater.itemAt(indexByView[root.activeView]);
+    }
+    readonly property bool readyForPresentation:
+        activeViewLoader
+            && activeViewLoader.status === Loader.Ready
+            && activeViewLoader.item !== null
     readonly property int instantiatedViewCount: {
         let count = 0
         for (let index = 0; index < viewRepeater.count; ++index) {

@@ -18,14 +18,21 @@ Item {
     readonly property int exitDuration: Animations.durations.sidebarExit
     readonly property int qsTargetHeight:
         Math.max(0, height - sidebarY - gap)
+    readonly property bool requestedOpen: WidgetState.leftSidebarOpen
     property bool panelPresented: false
     property bool contentRetained: false
-    property bool contentActive: false
+    property bool presentationOpen: false
     property bool keepLoaded:
         PersonalizationConfig.keepSidebarsLoaded
     property var weatherSourceOverride: null
-    readonly property bool panelVisuallyPresent:
-        WidgetState.leftSidebarOpen || panelPresented
+    readonly property bool contentReady:
+        sidebarContentLoader.status === Loader.Ready
+            && sidebarContentLoader.item !== null
+            && sidebarContentLoader.item.readyForPresentation
+    // A presented surface is only created after contentReady. It remains
+    // operational during closing so its contents leave with the panel.
+    readonly property bool contentOperational: panelPresented
+    readonly property bool panelVisuallyPresent: panelPresented
     readonly property string activeView: WidgetState.leftSidebarView
     readonly property int instantiatedViewCount:
         sidebarContentLoader.item
@@ -37,53 +44,63 @@ Item {
         root.activeView === "sys" && sidebarContentLoader.item
             ? sidebarContentLoader.item.systemCardBlurExclusionItems : []
 
-    function beginPresentation() {
-        panelPresented = true
+    function preparePresentation() {
         contentRetained = true
-        contentActive = false
+        startPresentation()
     }
 
-    function finishOpening() {
-        if (!WidgetState.leftSidebarOpen)
+    function startPresentation() {
+        if (!requestedOpen || !contentReady)
             return
 
-        contentActive = true
+        panelPresented = true
+        presentationOpen = true
+    }
+
+    function beginClosing() {
+        presentationOpen = false
+        if (panelPresented)
+            return
+
+        if (!keepLoaded)
+            contentRetained = false
+        root.presentationClosed()
     }
 
     function finishClosing() {
-        if (WidgetState.leftSidebarOpen)
+        if (requestedOpen)
             return
 
         // Hide the already off-screen surface before releasing its layout tree.
         panelPresented = false
-        contentActive = false
         if (!root.keepLoaded)
             contentRetained = false
         root.presentationClosed()
     }
 
     Component.onCompleted: {
-        panelPresented = WidgetState.leftSidebarOpen
-        contentActive = WidgetState.leftSidebarOpen
-        contentRetained = WidgetState.leftSidebarOpen
-            || root.keepLoaded
+        if (root.keepLoaded)
+            contentRetained = true
+        if (requestedOpen)
+            preparePresentation()
     }
 
-    Connections {
-        target: WidgetState
+    onRequestedOpenChanged: {
+        if (requestedOpen)
+            preparePresentation()
+        else
+            beginClosing()
+    }
 
-        function onLeftSidebarOpenChanged() {
-            if (WidgetState.leftSidebarOpen)
-                root.beginPresentation()
-            else
-                root.contentActive = false
-        }
+    onContentReadyChanged: {
+        if (contentReady)
+            startPresentation()
     }
 
     onKeepLoadedChanged: {
         if (root.keepLoaded) {
             root.contentRetained = true
-        } else if (!WidgetState.leftSidebarOpen
+        } else if (!requestedOpen
                 && !root.panelPresented) {
             root.contentRetained = false
         }
@@ -103,7 +120,7 @@ Item {
 
         property real slideOffset: root.closedSlideOffset
 
-        state: WidgetState.leftSidebarOpen ? "open" : "closed"
+        state: root.presentationOpen ? "open" : "closed"
 
         states: [
             State {
@@ -129,18 +146,12 @@ Item {
                 id: openTransition
                 to: "open"
 
-                SequentialAnimation {
-                    NumberAnimation {
-                        target: animController
-                        property: "slideOffset"
-                        duration: root.enterDuration
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 0.3
-                    }
-
-                    ScriptAction {
-                        script: root.finishOpening()
-                    }
+                NumberAnimation {
+                    target: animController
+                    property: "slideOffset"
+                    duration: root.enterDuration
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 0.3
                 }
             },
             Transition {
@@ -191,9 +202,8 @@ Item {
             id: sidebarContentLoader
 
             anchors.fill: parent
-            active: root.keepLoaded
-                || WidgetState.leftSidebarOpen
-                || root.contentRetained
+            active: root.contentRetained
+            asynchronous: true
             sourceComponent: leftSidebarContentComponent
         }
     }
@@ -205,8 +215,8 @@ Item {
             anchors.fill: parent
             screenName: root.panelScreen ? root.panelScreen.name : ""
             weatherSourceOverride: root.weatherSourceOverride
-            foreground: root.contentActive
-            presentationActive: root.contentActive
+            foreground: root.contentOperational
+            presentationActive: root.contentOperational
         }
     }
 }

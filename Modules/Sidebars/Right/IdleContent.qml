@@ -15,7 +15,8 @@ WidgetPanel {
     showBackButton: true
     backAction: () => WidgetState.qsView = "settings"
 
-    property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "idle"
+    property bool foreground: false
+    property bool isActive: foreground && WidgetState.qsView === "idle"
     property string expandedStage: ""
     property real pendingDimFraction: IdleService.dimFraction
     readonly property var timeoutPresetSeconds: [60, 120, 300, 600, 900, 1800, 3600, 7200]
