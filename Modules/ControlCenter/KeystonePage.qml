@@ -65,8 +65,6 @@ Item {
                 placeholder: selectRow.placeholder
                 textRole: "label"
                 valueRole: "value"
-                maxVisibleItems: 6
-                noResultText: qsTr("无匹配结果")
                 onAccepted: value => selectRow.accepted(value)
             }
         }

@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Controls.Material
 import QtQuick.Window
 import Qt5Compat.GraphicalEffects
 import qs.Common
@@ -13,8 +12,7 @@ FocusScope {
     property string value: ""
     property string placeholder: ""
     property bool expanded: false
-    property int maxVisibleItems: 6
-    property string noResultText: qsTr("无匹配结果")
+    property int maxVisibleItems: 10
     property string textRole: "label"
     property string valueRole: "value"
     property string enabledRole: "enabled"
@@ -22,22 +20,11 @@ FocusScope {
     property bool closeOnAccept: false
     property bool showCheckmark: true
     property bool showActiveIndicator: true
-    property bool searchable: false
-    property string searchText: ""
-    property string searchPlaceholder: qsTr("搜索")
     property real fieldHeight: 40
     property real itemHeight: 40
     property Item popupBoundsItem: null
 
     property int highlightedIndex: -1
-    readonly property var filteredOptions: {
-        const query = root.searchText.trim().toLowerCase();
-        if (!root.searchable || query === "")
-            return root.options;
-
-        return root.options.filter(option =>
-            root.optionText(option).toLowerCase().indexOf(query) !== -1);
-    }
     readonly property string visualSelectedValue: hasPendingAccepted ? pendingAcceptedValue : value
     readonly property string currentText: labelFor(visualSelectedValue)
     readonly property string displayText: currentText !== "" ? currentText : placeholder
@@ -46,7 +33,10 @@ FocusScope {
     readonly property color menuHoverColor: Appearance.m3colors.m3surfaceContainerHighest
     readonly property real menuGap: 6
     readonly property real menuPadding: 6
-    readonly property real listTargetHeight: Math.min(Math.max(1, maxVisibleItems) * itemHeight, Math.max(itemHeight, filteredOptions.length * itemHeight))
+    readonly property real listTargetHeight: Math.min(
+        Math.max(1, maxVisibleItems) * itemHeight,
+        Math.max(itemHeight, options.length * itemHeight)
+    )
     readonly property Item popupParentItem: root.Window.window ? root.Window.window.contentItem : null
 
     property bool hasPendingAccepted: false
@@ -114,12 +104,18 @@ FocusScope {
         return currentValue;
     }
 
-    function selectedIndexInFiltered() {
-        for (let i = 0; i < filteredOptions.length; i += 1) {
-            if (optionValue(filteredOptions[i]) === visualSelectedValue)
+    function selectedIndexInOptions() {
+        for (let i = 0; i < options.length; i += 1) {
+            if (optionValue(options[i]) === visualSelectedValue)
                 return i;
         }
-        return filteredOptions.length > 0 ? 0 : -1;
+        return options.length > 0 ? 0 : -1;
+    }
+
+    function ensureHighlightedVisible() {
+        if (highlightedIndex < 0 || highlightedIndex >= options.length)
+            return;
+        menuList.positionViewAtIndex(highlightedIndex, ListView.Contain);
     }
 
     function updatePopupGeometry() {
@@ -138,12 +134,11 @@ FocusScope {
         if (availableWidth <= 0 || availableHeight <= menuPadding * 2)
             return false;
 
-        const searchHeight = root.searchable ? 48 : 0;
-        const naturalHeight = menuPadding * 2 + searchHeight + listTargetHeight;
+        const naturalHeight = menuPadding * 2 + listTargetHeight;
         optionsPopup.width = Math.min(width, availableWidth);
         optionsPopup.height = Math.min(naturalHeight, availableHeight);
         optionsPopup.effectiveListHeight = Math.max(
-            0, optionsPopup.height - menuPadding * 2 - searchHeight);
+            0, optionsPopup.height - menuPadding * 2);
 
         const belowOrigin = fieldFrame.mapToItem(popupParentItem, 0, height + menuGap);
         const aboveOrigin = fieldFrame.mapToItem(popupParentItem, 0, -optionsPopup.height - menuGap);
@@ -164,7 +159,7 @@ FocusScope {
             return;
 
         hasPendingAccepted = false;
-        highlightedIndex = selectedIndexInFiltered();
+        highlightedIndex = selectedIndexInOptions();
         if (updatePopupGeometry())
             expanded = true;
     }
@@ -181,35 +176,79 @@ FocusScope {
     }
 
     function moveHighlight(delta) {
-        if (filteredOptions.length === 0) {
+        if (options.length === 0) {
             highlightedIndex = -1;
             return;
         }
 
         let nextIndex = highlightedIndex < 0
-            ? (delta >= 0 ? 0 : filteredOptions.length - 1)
-            : (highlightedIndex + delta + filteredOptions.length)
-                % filteredOptions.length;
+            ? (delta >= 0 ? 0 : options.length - 1)
+            : (highlightedIndex + delta + options.length) % options.length;
 
-        for (let attempts = 0; attempts < filteredOptions.length;
+        for (let attempts = 0; attempts < options.length;
                 attempts += 1) {
-            if (optionEnabled(filteredOptions[nextIndex])) {
+            if (optionEnabled(options[nextIndex])) {
                 highlightedIndex = nextIndex;
-                menuList.positionViewAtIndex(highlightedIndex,
-                    ListView.Contain);
+                ensureHighlightedVisible();
                 return;
             }
             nextIndex = (nextIndex + (delta >= 0 ? 1 : -1)
-                + filteredOptions.length) % filteredOptions.length;
+                + options.length) % options.length;
         }
 
         highlightedIndex = -1;
     }
 
-    function acceptHighlighted() {
-        if (highlightedIndex < 0 || highlightedIndex >= filteredOptions.length)
+    function moveHighlightToBoundary(first) {
+        if (options.length === 0) {
+            highlightedIndex = -1;
             return;
-        acceptOption(filteredOptions[highlightedIndex]);
+        }
+
+        let nextIndex = first ? 0 : options.length - 1;
+        for (let attempts = 0; attempts < options.length;
+                attempts += 1) {
+            if (optionEnabled(options[nextIndex])) {
+                highlightedIndex = nextIndex;
+                ensureHighlightedVisible();
+                return;
+            }
+            nextIndex = (nextIndex + (first ? 1 : -1) + options.length)
+                % options.length;
+        }
+        highlightedIndex = -1;
+    }
+
+    function handleMenuKey(event) {
+        if (!root.expanded)
+            return false;
+
+        if (event.key === Qt.Key_Escape) {
+            root.closeMenu();
+        } else if (event.key === Qt.Key_Down) {
+            root.moveHighlight(1);
+        } else if (event.key === Qt.Key_Up) {
+            root.moveHighlight(-1);
+        } else if (event.key === Qt.Key_Home) {
+            root.moveHighlightToBoundary(true);
+        } else if (event.key === Qt.Key_End) {
+            root.moveHighlightToBoundary(false);
+        } else if (event.key === Qt.Key_Return
+                   || event.key === Qt.Key_Enter
+                   || event.key === Qt.Key_Space) {
+            root.acceptHighlighted();
+        } else {
+            return false;
+        }
+
+        event.accepted = true;
+        return true;
+    }
+
+    function acceptHighlighted() {
+        if (highlightedIndex < 0 || highlightedIndex >= options.length)
+            return;
+        acceptOption(options[highlightedIndex]);
     }
 
     function acceptOption(option) {
@@ -218,24 +257,20 @@ FocusScope {
         const acceptedValue = optionValue(option);
         hasPendingAccepted = true;
         pendingAcceptedValue = acceptedValue;
-        highlightedIndex = selectedIndexInFiltered();
+        highlightedIndex = selectedIndexInOptions();
         accepted(acceptedValue);
         if (closeOnAccept)
             closeDelay.restart();
     }
 
     onExpandedChanged: {
-        root.searchText = "";
-        searchField.text = "";
         if (expanded) {
             updatePopupGeometry();
             optionsPopup.open();
             Qt.callLater(() => {
                 updatePopupGeometry();
-                if (root.searchable)
-                    searchField.forceActiveFocus();
-                else
-                    root.forceActiveFocus();
+                root.forceActiveFocus();
+                ensureHighlightedVisible();
             });
         } else {
             closeDelay.stop();
@@ -246,20 +281,21 @@ FocusScope {
         }
     }
 
-    onSearchTextChanged: {
-        if (root.searchable && searchField.text !== root.searchText)
-            searchField.text = root.searchText;
-        if (!root.expanded)
+    onOptionsChanged: {
+        if (!expanded)
             return;
-        root.highlightedIndex = root.selectedIndexInFiltered();
-        root.updatePopupGeometry();
+        highlightedIndex = selectedIndexInOptions();
+        updatePopupGeometry();
+        ensureHighlightedVisible();
     }
 
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_Escape && root.expanded) {
-            root.closeMenu();
-            event.accepted = true;
-        } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space || event.key === Qt.Key_Down) && !root.expanded) {
+        if (root.expanded) {
+            root.handleMenuKey(event);
+        } else if (event.key === Qt.Key_Return
+                   || event.key === Qt.Key_Enter
+                   || event.key === Qt.Key_Space
+                   || event.key === Qt.Key_Down) {
             root.openMenu();
             event.accepted = true;
         }
@@ -395,6 +431,10 @@ FocusScope {
             root.hasPendingAccepted = false;
         }
 
+        Keys.onPressed: event => {
+            root.handleMenuKey(event);
+        }
+
         enter: Transition {
             NumberAnimation {
                 property: "opacity"
@@ -450,7 +490,6 @@ FocusScope {
 
                 width: parent.width
                 height: root.menuPadding * 2
-                    + (root.searchable ? 48 : 0)
                     + optionsPopup.effectiveListHeight
                         * optionsPopup.revealProgress
                 visible: height > 0
@@ -469,54 +508,11 @@ FocusScope {
                     color: root.menuSurfaceColor
                 }
 
-                TextField {
-                    id: searchField
-
-                    x: root.menuPadding
-                    y: root.menuPadding
-                    width: parent.width - root.menuPadding * 2
-                    height: 40
-                    visible: root.searchable
-                    placeholderText: root.searchPlaceholder
-                    color: Appearance.colors.colOnSurface
-                    placeholderTextColor: Appearance.colors.colSubtext
-                    font.family: Fonts.ui
-                    font.pixelSize: 13
-                    leftPadding: 12
-                    rightPadding: 12
-                    topPadding: 0
-                    bottomPadding: 0
-                    selectByMouse: true
-                    Material.accent: Appearance.colors.colPrimary
-                    background: Rectangle {
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer2
-                    }
-
-                    onTextChanged: root.searchText = text
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Down) {
-                            root.moveHighlight(1);
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Up) {
-                            root.moveHighlight(-1);
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Return
-                                   || event.key === Qt.Key_Enter) {
-                            root.acceptHighlighted();
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Escape) {
-                            root.closeMenu();
-                            event.accepted = true;
-                        }
-                    }
-                }
-
                 Item {
                     id: revealClip
 
                     x: root.menuPadding
-                    y: root.menuPadding + (root.searchable ? 48 : 0)
+                    y: root.menuPadding
                     width: parent.width - root.menuPadding * 2
                     height: optionsPopup.effectiveListHeight * optionsPopup.revealProgress
                     clip: true
@@ -528,7 +524,7 @@ FocusScope {
                         height: optionsPopup.effectiveListHeight
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
-                        model: root.filteredOptions
+                        model: root.options
                         interactive: contentHeight > height
                         currentIndex: root.highlightedIndex
                         animateAppearance: false
@@ -684,8 +680,8 @@ FocusScope {
                         anchors.right: parent.right
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
-                        visible: root.filteredOptions.length === 0
-                        text: root.noResultText
+                        visible: root.options.length === 0
+                        text: qsTr("暂无可用选项")
                         color: Appearance.colors.colSubtext
                         font.family: Fonts.ui
                         font.pixelSize: 14

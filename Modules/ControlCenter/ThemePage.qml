@@ -272,7 +272,6 @@ StyledFlickable {
         property string textRole: "label"
         property string valueRole: "value"
         property int fieldWidth: 240
-        property bool searchable: false
 
         signal accepted(string value)
 
@@ -320,9 +319,6 @@ StyledFlickable {
                 placeholder: selectRow.placeholder
                 textRole: selectRow.textRole
                 valueRole: selectRow.valueRole
-                searchable: selectRow.searchable
-                maxVisibleItems: 6
-                noResultText: qsTr("无匹配结果")
                 onAccepted: value => selectRow.accepted(value)
             }
         }
@@ -584,7 +580,6 @@ StyledFlickable {
                 options: FontService.fontOptions
                 value: PersonalizationConfig.uiFontFamily
                 placeholder: qsTr("选择界面字体")
-                searchable: true
                 fieldWidth: 280
                 onAccepted: value =>
                     PersonalizationConfig.setFontFamily("ui", value)
@@ -596,7 +591,6 @@ StyledFlickable {
                 options: FontService.fontOptions
                 value: PersonalizationConfig.monoFontFamily
                 placeholder: qsTr("选择等宽字体")
-                searchable: true
                 fieldWidth: 280
                 onAccepted: value =>
                     PersonalizationConfig.setFontFamily("mono", value)
@@ -608,7 +602,6 @@ StyledFlickable {
                 options: FontService.fontOptions
                 value: PersonalizationConfig.numericFontFamily
                 placeholder: qsTr("选择数字字体")
-                searchable: true
                 fieldWidth: 280
                 onAccepted: value =>
                     PersonalizationConfig.setFontFamily("numeric", value)
@@ -620,7 +613,6 @@ StyledFlickable {
                 options: FontService.fontOptions
                 value: PersonalizationConfig.expressiveFontFamily
                 placeholder: qsTr("选择表现性字体")
-                searchable: true
                 fieldWidth: 280
                 onAccepted: value =>
                     PersonalizationConfig.setFontFamily("expressive", value)

@@ -89,7 +89,6 @@ StyledFlickable {
                     ? qsTr("正在加载…")
                     : settingRow.roleId === "terminal" && settingRow.roleState.currentId === ""
                         ? qsTr("系统默认") : qsTr("无可用应用")
-                searchable: true
                 closeOnAccept: true
                 enabled: !DefaultApplicationsService.loading
                     && !DefaultApplicationsService.busy
