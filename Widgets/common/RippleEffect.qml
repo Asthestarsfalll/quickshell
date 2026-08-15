@@ -39,7 +39,8 @@ Item {
         id: rippleSource
 
         anchors.fill: parent
-        visible: true
+        // The source is sampled by OpacityMask, but must not be drawn directly.
+        visible: false
 
         Rectangle {
             id: ripple
@@ -64,7 +65,6 @@ Item {
         anchors.fill: parent
         source: rippleSource
         maskSource: roundedMask
-        hideSource: true
         visible: ripple.visible
     }
 
