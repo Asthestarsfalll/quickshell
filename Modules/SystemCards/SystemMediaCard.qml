@@ -17,11 +17,7 @@ Item {
     readonly property real progress: hasPlayer && player.length > 0 ? Math.max(0, Math.min(1, currentPosition / player.length)) : 0
 
     function controlColor(primaryButton, hovered) {
-        const color = primaryButton
-            ? (hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary)
-            : (hovered
-                ? Appearance.colors.colSecondaryContainerHover
-                : Appearance.colors.colSecondaryContainer);
+        const color = primaryButton ? (hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary) : (hovered ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer);
         return BlurService.solidBackgroundColor(color);
     }
 
@@ -56,21 +52,38 @@ Item {
     Item {
         id: controls
 
-        readonly property real nextBaseWidth: 64
+        readonly property real sideBaseWidth: 64
         readonly property real spacing: 6
-        readonly property real playBaseWidth: width - nextBaseWidth - spacing
+        readonly property real playBaseWidth: width - sideBaseWidth * 2 - spacing * 2
 
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 22
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.min(188, parent.width - 32)
+        width: Math.min(244, parent.width - 32)
         height: 48
+
+        ControlButton {
+            id: previousButton
+
+            x: 0
+            width: controls.sideBaseWidth + shapeMorphExpansion - playPauseButton.shapeMorphExpansion / 2
+            height: controls.height
+            iconName: "skip_previous"
+            primaryButton: false
+            enabled: root.hasPlayer
+            Accessible.name: qsTr("上一首")
+            onClicked: {
+                if (root.player)
+                    root.player.previous();
+
+            }
+        }
 
         ControlButton {
             id: playPauseButton
 
-            x: 0
-            width: controls.playBaseWidth + shapeMorphExpansion - nextButton.shapeMorphExpansion
+            x: previousButton.x + previousButton.width + controls.spacing
+            width: controls.playBaseWidth + shapeMorphExpansion - previousButton.shapeMorphExpansion - nextButton.shapeMorphExpansion
             height: controls.height
             iconName: root.isPlaying ? "pause" : "play_arrow"
             primaryButton: true
@@ -87,7 +100,7 @@ Item {
             id: nextButton
 
             x: playPauseButton.x + playPauseButton.width + controls.spacing
-            width: controls.nextBaseWidth + shapeMorphExpansion - playPauseButton.shapeMorphExpansion
+            width: controls.sideBaseWidth + shapeMorphExpansion - playPauseButton.shapeMorphExpansion / 2
             height: controls.height
             iconName: "skip_next"
             primaryButton: false
