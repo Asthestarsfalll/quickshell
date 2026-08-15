@@ -10,12 +10,11 @@ Item {
     property var screen: null
     property bool vertical: false
     readonly property bool active: WidgetState.qsOpen && WidgetState.qsView === "network"
-    readonly property bool expanded: !root.vertical && button.pointerHovered
     readonly property real baseSize: Sizes.barControlCircleSize
-    readonly property real targetWidth: root.vertical ? (button.pointerHovered ? 34 : root.baseSize) : (root.expanded ? Math.max(root.baseSize, 18 + 6 + ssidMetrics.width + 20) : root.baseSize)
-    readonly property real targetHeight: root.vertical && button.pointerHovered ? 34 : root.baseSize
-    property real animatedWidth: root.targetWidth
-    property real animatedHeight: root.targetHeight
+    readonly property bool hasSsid: NetworkService.activeConnection.length > 0
+    readonly property real expandedWidth: Math.max(root.baseSize, 18 + 6 + ssidMetrics.width + 20)
+    property real expansionProgress: !root.vertical && root.hasSsid && horizontalButton.pointerHovered ? 1 : 0
+    readonly property string tooltipText: NetworkService.connected ? ((NetworkService.activeConnection || qsTr("网络已连接")) + qsTr("\n点击打开网络设置")) : qsTr("网络未连接\n点击打开网络设置")
     readonly property string networkIcon: {
         if (NetworkService.activeConnectionType === "ETHERNET")
             return "settings_ethernet";
@@ -39,8 +38,20 @@ Item {
         return "signal_wifi_0_bar";
     }
 
-    implicitWidth: root.animatedWidth
-    implicitHeight: root.animatedHeight
+    function toggleNetworkView() {
+        if (root.screen && root.screen.name)
+            WidgetState.qsScreenName = root.screen.name;
+
+        if (root.active) {
+            WidgetState.qsOpen = false;
+        } else {
+            WidgetState.qsView = "network";
+            WidgetState.qsOpen = true;
+        }
+    }
+
+    implicitWidth: root.vertical ? root.baseSize : root.baseSize + (root.expandedWidth - root.baseSize) * root.expansionProgress
+    implicitHeight: root.baseSize
 
     TextMetrics {
         id: ssidMetrics
@@ -51,24 +62,34 @@ Item {
         font.bold: true
     }
 
+    BarCircularButton {
+        id: verticalButton
+
+        anchors.centerIn: parent
+        visible: root.vertical
+        enabled: root.enabled
+        selected: root.active
+        iconName: root.networkIcon
+        containerColor: Appearance.colors.colPrimaryContainer
+        rippleColor: Appearance.colors.colOnPrimaryContainer
+        iconColor: Appearance.colors.colOnPrimaryContainer
+        tooltipText: root.tooltipText
+        onClicked: root.toggleNetworkView()
+    }
+
     RippleButton {
-        id: button
+        id: horizontalButton
 
         anchors.fill: parent
+        visible: !root.vertical
+        enabled: root.enabled
+        toggled: root.active
         buttonRadius: height / 2
         containerColor: Appearance.colors.colPrimaryContainer
         rippleColor: Appearance.colors.colOnPrimaryContainer
         stateLayerEnabled: false
         releaseAction: () => {
-            if (root.screen && root.screen.name)
-                WidgetState.qsScreenName = root.screen.name;
-
-            if (root.active) {
-                WidgetState.qsOpen = false;
-            } else {
-                WidgetState.qsView = "network";
-                WidgetState.qsOpen = true;
-            }
+            return root.toggleNetworkView();
         }
 
         contentItem: Item {
@@ -76,11 +97,12 @@ Item {
 
             Row {
                 anchors.centerIn: parent
-                spacing: ssidSlot.width > 0 ? 6 : 0
+                height: 18
+                spacing: 6 * root.expansionProgress
 
                 MaterialSymbol {
                     width: 18
-                    height: parent.height
+                    height: 18
                     text: root.networkIcon
                     iconSize: 18
                     fill: 0
@@ -88,40 +110,20 @@ Item {
                 }
 
                 Item {
-                    id: ssidSlot
-
-                    width: root.expanded ? ssidMetrics.width : 0
-                    height: parent.height
+                    width: ssidMetrics.width * root.expansionProgress
+                    height: 18
                     clip: true
 
                     Text {
-                        anchors.centerIn: parent
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
                         width: ssidMetrics.width
                         text: NetworkService.activeConnection
-                        opacity: root.expanded ? 1 : 0
+                        opacity: root.expansionProgress
                         font.family: Fonts.ui
                         font.pixelSize: 12
                         font.bold: true
                         color: Appearance.colors.colOnPrimaryContainer
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Appearance.animation.expressiveFastEffects.duration
-                                easing.type: Appearance.animation.expressiveFastEffects.type
-                                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
-                            }
-
-                        }
-
-                    }
-
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: Appearance.animation.expressiveFastEffects.duration
-                            easing.type: Appearance.animation.expressiveFastEffects.type
-                            easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
-                        }
-
                     }
 
                 }
@@ -133,24 +135,15 @@ Item {
     }
 
     PopupToolTip {
-        extraVisibleCondition: button.pointerHovered
-        text: NetworkService.connected ? ((NetworkService.activeConnection || qsTr("网络已连接")) + qsTr("\n点击打开网络设置")) : qsTr("网络未连接\n点击打开网络设置")
+        extraVisibleCondition: !root.vertical && horizontalButton.pointerHovered
+        text: root.tooltipText
     }
 
-    Behavior on animatedWidth {
+    Behavior on expansionProgress {
         NumberAnimation {
-            duration: Appearance.animation.expressiveFastEffects.duration
-            easing.type: Appearance.animation.expressiveFastEffects.type
-            easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
-        }
-
-    }
-
-    Behavior on animatedHeight {
-        NumberAnimation {
-            duration: Appearance.animation.expressiveFastEffects.duration
-            easing.type: Appearance.animation.expressiveFastEffects.type
-            easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+            duration: Appearance.animation.standard.duration
+            easing.type: Appearance.animation.standard.type
+            easing.bezierCurve: Appearance.animation.standard.bezierCurve
         }
 
     }

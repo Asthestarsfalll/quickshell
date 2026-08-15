@@ -28,12 +28,9 @@ RippleButton {
     property color selectedPressedStateLayerColor: root.variant === "standard" || root.variant === "outlined" ? Appearance.applyAlpha(root.selectedIconColor, 0.12) : root.normalPressedStateLayerColor
     property color outlineColor: Appearance.colors.colOutline
     readonly property alias iconItem: iconGlyph
-    readonly property color effectiveContainerColor: root.selected
-        ? root.selectedContainerColor : root.normalContainerColor
-    readonly property color effectiveHoverStateLayerColor: root.selected
-        ? root.selectedHoverStateLayerColor : root.normalHoverStateLayerColor
-    readonly property color effectivePressedStateLayerColor: root.selected
-        ? root.selectedPressedStateLayerColor : root.normalPressedStateLayerColor
+    readonly property color effectiveContainerColor: root.selected ? root.selectedContainerColor : root.normalContainerColor
+    readonly property color effectiveHoverStateLayerColor: root.selected ? root.selectedHoverStateLayerColor : root.normalHoverStateLayerColor
+    readonly property color effectivePressedStateLayerColor: root.selected ? root.selectedPressedStateLayerColor : root.normalPressedStateLayerColor
 
     implicitWidth: root.controlSize
     implicitHeight: root.controlSize
@@ -56,7 +53,7 @@ RippleButton {
 
     StyledToolTip {
         text: root.effectiveTooltipText
-        extraVisibleCondition: root.showTooltip && (root.pointerHovered || root.activeFocus)
+        extraVisibleCondition: root.showTooltip && (root.pointerHovered || root.visualFocus)
     }
 
     backgroundContent: Rectangle {
@@ -76,4 +73,5 @@ RippleButton {
         color: root.selected ? root.selectedIconColor : root.iconColor
         rotation: root.iconRotation
     }
+
 }

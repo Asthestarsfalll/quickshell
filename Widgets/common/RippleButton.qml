@@ -31,7 +31,6 @@ Button {
     property real pressedStateLayerOpacity: 1
     property real focusStateLayerOpacity: 1
     property bool pointerPressActive: false
-    property bool dispatchingPointerClick: false
     readonly property bool pointerHovered: pointerArea.containsMouse
     readonly property real buttonEffectiveRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
 
@@ -59,8 +58,9 @@ Button {
             root.finishRipple();
     }
     onClicked: {
-        if (!root.pointerPressActive && !root.dispatchingPointerClick && root.releaseAction)
-            root.releaseAction(null);
+        const action = root.releaseAction;
+        if (action)
+            action(null);
 
     }
 
@@ -87,24 +87,22 @@ Button {
             }
             root.pointerPressActive = true;
             root.down = true;
+            root.beginRipple(event.x, event.y);
             if (root.downAction)
                 root.downAction(event);
 
-            root.beginRipple(event.x, event.y);
         }
         onReleased: (event) => {
             root.down = false;
             root.pointerPressActive = false;
-            if (event.button !== Qt.LeftButton)
-                return ;
+            if (event.button === Qt.LeftButton)
+                root.finishRipple();
 
-            if (root.releaseAction)
-                root.releaseAction(event);
+        }
+        onClicked: (event) => {
+            if (event.button === Qt.LeftButton)
+                root.clicked();
 
-            root.dispatchingPointerClick = true;
-            root.click();
-            root.dispatchingPointerClick = false;
-            root.finishRipple();
         }
         onDoubleClicked: (event) => {
             if (event.button === Qt.LeftButton && root.doubleClickAction)
@@ -137,7 +135,7 @@ Button {
             z: 1
             enabled: root.stateLayerEnabled
             hovered: root.pointerHovered
-            focused: root.activeFocus
+            focused: root.visualFocus
             pressed: root.down
             selected: root.toggled
             selectedEnabled: root.selectedStateLayerEnabled

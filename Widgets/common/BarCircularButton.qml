@@ -18,7 +18,6 @@ Item {
     property color rippleColor: Appearance.colors.colOnPrimaryContainer
     property color iconColor: Appearance.colors.colOnPrimaryContainer
     property var downAction
-    property var releaseAction
     property var doubleClickAction
     property var altAction
     property var middleClickAction
@@ -51,11 +50,8 @@ Item {
                 root.downAction(event);
 
         }
-        releaseAction: (event) => {
-            if (root.releaseAction)
-                root.releaseAction(event);
-
-            root.clicked(event);
+        releaseAction: () => {
+            return root.clicked(null);
         }
         doubleClickAction: (event) => {
             if (root.doubleClickAction)

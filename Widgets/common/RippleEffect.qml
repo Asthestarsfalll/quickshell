@@ -10,6 +10,7 @@ Item {
     property int duration: Appearance.interaction.rippleDuration
     property int easingType: Appearance.interaction.rippleEasing
     property real shapeRadius: 0
+    property real targetDiameter: 0
     readonly property bool active: ripple.visible
 
     function clear() {
@@ -18,13 +19,14 @@ Item {
         ripple.visible = false;
         ripple.diameter = 0;
         ripple.opacity = 0;
+        root.targetDiameter = 0;
     }
 
     function startAt(x, y) {
         root.clear();
         ripple.centerX = x;
         ripple.centerY = y;
-        ripple.diameter = Math.sqrt(root.width * root.width + root.height * root.height) * 2.2;
+        root.targetDiameter = Math.sqrt(root.width * root.width + root.height * root.height) * 2.2;
         ripple.visible = true;
         rippleAnimation.restart();
     }
@@ -86,7 +88,7 @@ Item {
             target: ripple
             property: "diameter"
             from: 0
-            to: ripple.diameter
+            to: root.targetDiameter
             duration: root.duration
             easing.type: root.easingType
         }
