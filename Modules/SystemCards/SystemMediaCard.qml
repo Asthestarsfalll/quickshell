@@ -16,11 +16,6 @@ Item {
     readonly property real currentPosition: hasPlayer && player === MediaManager.active ? MediaManager.currentPosition : 0
     readonly property real progress: hasPlayer && player.length > 0 ? Math.max(0, Math.min(1, currentPosition / player.length)) : 0
 
-    function controlColor(primaryButton, hovered) {
-        const color = primaryButton ? (hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary) : (hovered ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer);
-        return BlurService.solidBackgroundColor(color);
-    }
-
     Accessible.role: Accessible.Pane
     Accessible.name: qsTr("媒体播放器")
 
@@ -134,25 +129,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: control.visualRadius
-                color: root.controlColor(control.primaryButton, buttonPointer.containsMouse)
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: parent.radius
-                    color: control.primaryButton ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer
-                    opacity: control.down ? 0.2 : buttonPointer.containsMouse ? 0.12 : 0
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Appearance.animation.expressiveEffects.duration
-                            easing.type: Appearance.animation.expressiveEffects.type
-                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                        }
-
-                    }
-
-                }
-
+                color: BlurService.solidBackgroundColor(control.primaryButton ? Appearance.colors.colPrimary : Appearance.colors.colSecondaryContainer)
             }
 
             MaterialSymbol {
