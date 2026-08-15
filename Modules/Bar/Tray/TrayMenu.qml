@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
@@ -7,243 +8,85 @@ import qs.Components
 import qs.Services
 import qs.Widgets.common
 
-PanelWindow {
+PopupWindow {
     id: root
 
-    property var trayItemMenuHandle: null
+    required property QsMenuHandle trayItemMenuHandle
     property string trayItemId: ""
-    property var anchorItem: null
+    property Item anchorItem: null
     property var barVisualItem: null
+    property var screen: null
     property string edge: "top"
     property real padding: 10
-    property real edgeMargin: Sizes.barPopupScreenMargin
-    property real popupGap: Sizes.barPopupGap
-    property real menuX: edgeMargin
-    property real menuY: edgeMargin
-    property var submenuStack: []
-    property bool submenuLoading: false
-    property int submenuRefreshAttempt: 0
-    readonly property int menuDepth: submenuStack.length
-    readonly property var currentSubmenuEntry: menuDepth > 0 ? submenuStack[menuDepth - 1] : null
-    readonly property var currentSubmenuHandle: currentSubmenuEntry
-                                                 ? (currentSubmenuEntry.menu || currentSubmenuEntry)
-                                                 : null
+    property bool opened: false
 
     signal menuClosed()
     signal menuOpened(var qsWindow)
 
-    visible: false
-    color: "transparent"
-    exclusiveZone: -1
-
-    anchors {
-        top: true
-        bottom: true
-        left: true
-        right: true
-    }
-
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "clavis-shell-tray-menu"
-    WlrLayershell.keyboardFocus: root.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    WlrLayershell.exclusionMode: ExclusionMode.Ignore
-
-    mask: Region { item: inputRegion }
-
-    function clamp(value, minimum, maximum) {
-        return Math.max(minimum, Math.min(maximum, value));
-    }
-
-    function refreshMenuHandle(handle) {
-        if (handle && typeof handle.updateLayout === "function")
-            handle.updateLayout();
-    }
-
-    function beginSubmenuRefresh() {
-        if (root.menuDepth === 0)
-            return;
-
-        root.submenuRefreshAttempt = 0;
-        root.submenuLoading = true;
-        root.refreshMenuHandle(root.currentSubmenuHandle);
-        submenuRefreshTimer.restart();
-    }
-
-    function pushSubmenu(entry) {
-        if (!entry || entry.hasChildren !== true)
-            return;
-
-        const nextStack = root.submenuStack.slice();
-        nextStack.push(entry);
-        root.submenuStack = nextStack;
-        root.beginSubmenuRefresh();
-        Qt.callLater(root.updatePosition);
-    }
-
-    function popSubmenu() {
-        if (root.menuDepth === 0)
-            return;
-
-        submenuRefreshTimer.stop();
-        root.submenuLoading = false;
-
-        const nextStack = root.submenuStack.slice(0, -1);
-        root.submenuStack = nextStack;
-        if (root.menuDepth > 0)
-            root.beginSubmenuRefresh();
-        Qt.callLater(root.updatePosition);
-    }
-
-    function resetSubmenus() {
-        submenuRefreshTimer.stop();
-        root.submenuLoading = false;
-        root.submenuRefreshAttempt = 0;
-        root.submenuStack = [];
-    }
-
-    function barVisualBounds() {
-        if (!root.barVisualItem)
-            return null;
-
-        const globalPos = root.barVisualItem.mapToGlobal(0, 0);
-        const screenX = root.screen ? (root.screen.x || 0) : 0;
-        const screenY = root.screen ? (root.screen.y || 0) : 0;
-        return {
-            "x": globalPos.x - screenX,
-            "y": globalPos.y - screenY,
-            "width": root.barVisualItem.width || 0,
-            "height": root.barVisualItem.height || 0
-        };
-    }
-
-    function updatePosition() {
-        const surfaceWidth = Math.max(1, menuSurface.implicitWidth);
-        const surfaceHeight = Math.max(1, menuSurface.implicitHeight);
-        const availableWidth = Math.max(surfaceWidth + root.edgeMargin * 2, root.width);
-        const availableHeight = Math.max(surfaceHeight + root.edgeMargin * 2, root.height);
-
-        if (!root.anchorItem) {
-            root.menuX = root.clamp((availableWidth - surfaceWidth) / 2, root.edgeMargin, availableWidth - surfaceWidth - root.edgeMargin);
-            root.menuY = root.edgeMargin;
-            return;
-        }
-
-        const globalPos = root.anchorItem.mapToGlobal(0, 0);
-        const screenX = root.screen ? (root.screen.x || 0) : 0;
-        const screenY = root.screen ? (root.screen.y || 0) : 0;
-        const anchorX = globalPos.x - screenX;
-        const anchorY = globalPos.y - screenY;
-        const anchorWidth = root.anchorItem.width || 0;
-        const anchorHeight = root.anchorItem.height || 0;
-        const barBounds = root.barVisualBounds();
-
-        const rightX = barBounds
-            ? barBounds.x + barBounds.width + root.popupGap - root.padding
-            : anchorX + anchorWidth + root.popupGap;
-        const leftX = barBounds
-            ? barBounds.x - surfaceWidth - root.popupGap + root.padding
-            : anchorX - surfaceWidth - root.popupGap;
-        const maxX = availableWidth - surfaceWidth - root.edgeMargin;
-        root.menuX = root.edge === "left"
-            ? root.clamp(rightX, root.edgeMargin, maxX)
-            : root.edge === "right"
-                ? root.clamp(leftX, root.edgeMargin, maxX)
-                : root.clamp(anchorX + anchorWidth / 2 - surfaceWidth / 2,
-                    root.edgeMargin, maxX);
-
-        const belowY = barBounds
-            ? barBounds.y + barBounds.height + root.popupGap - root.padding
-            : anchorY + anchorHeight + root.popupGap;
-        const aboveY = barBounds
-            ? barBounds.y - surfaceHeight - root.popupGap + root.padding
-            : anchorY - surfaceHeight - root.popupGap;
-        const maxY = availableHeight - surfaceHeight - root.edgeMargin;
-        root.menuY = root.edge === "left" || root.edge === "right"
-            ? root.clamp(anchorY + anchorHeight / 2 - surfaceHeight / 2,
-                root.edgeMargin, maxY)
-            : root.edge === "bottom"
-                ? root.clamp(aboveY, root.edgeMargin, maxY)
-                : root.clamp(belowY, root.edgeMargin, maxY);
-    }
-
     function open() {
-        root.resetSubmenus();
+        if (root.opened)
+            return ;
+
+        root.opened = true;
         root.visible = true;
         root.menuOpened(root);
-        Qt.callLater(() => {
-            root.updatePosition();
-            keyScope.forceActiveFocus();
-        });
+        keyScope.forceActiveFocus();
     }
 
     function close() {
-        if (!root.visible && root.menuDepth === 0)
-            return;
-
         root.visible = false;
-        root.resetSubmenus();
+    }
+
+    function finishClose() {
+        if (!root.opened)
+            return ;
+
+        root.opened = false;
+        while (stackView.depth > 1)stackView.pop()
         root.menuClosed();
     }
 
+    visible: false
+    color: "transparent"
+    grabFocus: ThemeService.isNiriSession
+    implicitWidth: popupBackground.implicitWidth + root.padding * 2
+    implicitHeight: popupBackground.implicitHeight + root.padding * 2
     onVisibleChanged: {
-        if (visible)
-            Qt.callLater(() => {
-                root.updatePosition();
-                keyScope.forceActiveFocus();
-            });
-    }
-    onEdgeChanged: {
-        if (root.visible)
-            Qt.callLater(root.updatePosition);
+        if (!visible)
+            root.finishClose();
+
     }
 
-    Item {
-        id: inputRegion
-        anchors.fill: parent
+    anchor {
+        window: root.anchorItem ? root.anchorItem.QsWindow.window : null
+        item: root.anchorItem
+        edges: root.edge === "left" ? Edges.Right : root.edge === "right" ? Edges.Left : root.edge === "bottom" ? Edges.Top : Edges.Bottom
+        gravity: root.edge === "left" ? Edges.Right : root.edge === "right" ? Edges.Left : root.edge === "bottom" ? Edges.Top : Edges.Bottom
+        adjustment: root.edge === "left" || root.edge === "right" ? PopupAdjustment.SlideY : PopupAdjustment.SlideX
     }
 
-    Timer {
-        id: submenuRefreshTimer
+    PanelWindow {
+        visible: root.visible && ThemeService.isNiriSession
+        screen: root.screen
+        color: "transparent"
+        exclusiveZone: 0
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "clavis-shell-tray-menu-backdrop"
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
-        interval: 150
-        repeat: true
-
-        onTriggered: {
-            if (root.menuDepth === 0) {
-                stop();
-                root.submenuLoading = false;
-                return;
-            }
-
-            if (menuContent.menuEntries.length > 0) {
-                stop();
-                root.submenuLoading = false;
-                return;
-            }
-
-            root.submenuRefreshAttempt += 1;
-            root.refreshMenuHandle(root.currentSubmenuHandle);
-            if (root.submenuRefreshAttempt >= 5) {
-                stop();
-                root.submenuLoading = false;
-            }
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
         }
-    }
 
-    MouseArea {
-        anchors.fill: parent
-        enabled: root.visible
-        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        z: -1
-
-        onClicked: event => {
-            const outsideMenu = event.x < menuSurface.x
-                || event.x > menuSurface.x + menuSurface.width
-                || event.y < menuSurface.y
-                || event.y > menuSurface.y + menuSurface.height;
-            if (outsideMenu)
-                root.close();
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+            onClicked: root.close()
         }
+
     }
 
     FocusScope {
@@ -251,37 +94,25 @@ PanelWindow {
 
         anchors.fill: parent
         focus: root.visible
-
-        Keys.onEscapePressed: event => {
-            if (root.menuDepth > 0)
-                root.popSubmenu();
+        Keys.onEscapePressed: (event) => {
+            if (stackView.depth > 1)
+                stackView.pop();
             else
                 root.close();
             event.accepted = true;
         }
 
-        QsMenuOpener {
-            id: rootMenuOpener
-            menu: root.trayItemMenuHandle
-        }
-
-        QsMenuOpener {
-            id: submenuOpener
-            menu: root.currentSubmenuHandle
-        }
-
-        Item {
-            id: menuSurface
-
-            x: root.menuX
-            y: root.menuY
-            implicitWidth: popupBackground.implicitWidth + root.padding * 2
-            implicitHeight: popupBackground.implicitHeight + root.padding * 2
-            width: implicitWidth
-            height: implicitHeight
-
-            onImplicitWidthChanged: Qt.callLater(root.updatePosition)
-            onImplicitHeightChanged: Qt.callLater(root.updatePosition)
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.BackButton | Qt.RightButton
+            onPressed: (event) => {
+                if ((event.button === Qt.BackButton || event.button === Qt.RightButton) && stackView.depth > 1) {
+                    stackView.pop();
+                    event.accepted = true;
+                } else {
+                    event.accepted = false;
+                }
+            }
 
             StyledRectangularShadow {
                 target: popupBackground
@@ -295,17 +126,44 @@ PanelWindow {
 
                 x: root.padding
                 y: root.padding
-                implicitWidth: menuContent.implicitWidth + popupPadding * 2
-                implicitHeight: menuContent.implicitHeight + popupPadding * 2
-                color: BlurService.backgroundColor(
-                    Appearance.colors.colLayer0)
+                implicitWidth: stackView.implicitWidth + popupPadding * 2
+                implicitHeight: stackView.implicitHeight + popupPadding * 2
+                color: BlurService.backgroundColor(Appearance.colors.colLayer0)
                 radius: 18
                 border.width: 1
                 border.color: Appearance.colors.colLayer0Border
                 clip: true
                 opacity: 0
-
                 Component.onCompleted: opacity = 1
+
+                StackView {
+                    id: stackView
+
+                    implicitWidth: currentItem ? currentItem.implicitWidth : 0
+                    implicitHeight: currentItem ? currentItem.implicitHeight : 0
+
+                    anchors {
+                        fill: parent
+                        margins: popupBackground.popupPadding
+                    }
+
+                    pushEnter: NoAnimation {
+                    }
+
+                    pushExit: NoAnimation {
+                    }
+
+                    popEnter: NoAnimation {
+                    }
+
+                    popExit: NoAnimation {
+                    }
+
+                    initialItem: SubMenu {
+                        handle: root.trayItemMenuHandle
+                    }
+
+                }
 
                 Behavior on opacity {
                     NumberAnimation {
@@ -314,7 +172,9 @@ PanelWindow {
                         easing.type: Appearance.animation.expressiveEffects.type
                         easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                     }
+
                 }
+
                 Behavior on implicitWidth {
                     NumberAnimation {
                         alwaysRunToEnd: true
@@ -322,7 +182,9 @@ PanelWindow {
                         easing.type: Appearance.animation.elementResize.type
                         easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
                     }
+
                 }
+
                 Behavior on implicitHeight {
                     NumberAnimation {
                         alwaysRunToEnd: true
@@ -330,21 +192,13 @@ PanelWindow {
                         easing.type: Appearance.animation.elementResize.type
                         easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
                     }
+
                 }
 
-                MenuContent {
-                    id: menuContent
-
-                    anchors {
-                        fill: parent
-                        margins: popupBackground.popupPadding
-                    }
-
-                    onImplicitWidthChanged: Qt.callLater(root.updatePosition)
-                    onImplicitHeightChanged: Qt.callLater(root.updatePosition)
-                }
             }
+
         }
+
     }
 
     CompositorBlurRegion {
@@ -352,27 +206,43 @@ PanelWindow {
         backgroundItem: popupBackground
     }
 
-    component MenuContent: ColumnLayout {
+    Component {
+        id: subMenuComponent
+
+        SubMenu {
+        }
+
+    }
+
+    component NoAnimation: Transition {
+        NumberAnimation {
+            duration: 0
+        }
+
+    }
+
+    component SubMenu: ColumnLayout {
         id: submenu
 
-        readonly property var menuModel: root.menuDepth > 0 ? submenuOpener.children : rootMenuOpener.children
-        readonly property var menuEntries: menuModel ? menuModel.values : []
-        spacing: 0
+        required property QsMenuHandle handle
+        property bool isSubmenu: false
+        property bool shown: false
 
-        onMenuEntriesChanged: {
-            if (root.menuDepth > 0 && menuEntries.length > 0) {
-                submenuRefreshTimer.stop();
-                root.submenuLoading = false;
-                root.submenuRefreshAttempt = 0;
-            } else if (root.menuDepth > 0 && root.visible && !root.submenuLoading) {
-                root.beginSubmenuRefresh();
-            }
-            Qt.callLater(root.updatePosition);
+        spacing: 0
+        opacity: shown ? 1 : 0
+        Component.onCompleted: shown = true
+        StackView.onActivating: shown = true
+        StackView.onDeactivating: shown = false
+
+        QsMenuOpener {
+            id: menuOpener
+
+            menu: submenu.handle
         }
 
         Loader {
             Layout.fillWidth: true
-            visible: root.menuDepth > 0
+            visible: submenu.isSubmenu
             active: visible
 
             sourceComponent: MaterialRippleButton {
@@ -386,10 +256,14 @@ PanelWindow {
                 implicitWidth: backContent.implicitWidth + 24
                 implicitHeight: 36
                 Layout.fillWidth: true
-                releaseAction: () => root.popSubmenu()
+                releaseAction: () => {
+                    return stackView.pop();
+                }
 
                 contentItem: RowLayout {
                     id: backContent
+
+                    spacing: 8
 
                     anchors {
                         verticalCenter: parent.verticalCenter
@@ -398,7 +272,6 @@ PanelWindow {
                         leftMargin: 12
                         rightMargin: 12
                     }
-                    spacing: 8
 
                     MaterialSymbol {
                         text: "chevron_left"
@@ -413,124 +286,67 @@ PanelWindow {
                         font.pixelSize: 13
                         Layout.fillWidth: true
                     }
-                }
-            }
-        }
 
-        MaterialRippleButton {
-            id: pinEntry
-
-            visible: root.trayItemId.length > 0 && root.menuDepth === 0
-            buttonRadius: popupBackground.radius - popupBackground.popupPadding
-            colBackground: Appearance.transparentize(Appearance.colors.colLayer0, 1)
-            colBackgroundHover: Appearance.colors.colSecondaryContainer
-            colRipple: Appearance.colors.colSecondaryContainerActive
-            rippleEnabled: false
-            implicitWidth: pinContent.implicitWidth + 24
-            implicitHeight: 36
-            Layout.fillWidth: true
-            releaseAction: () => TrayService.togglePin(root.trayItemId)
-
-            contentItem: RowLayout {
-                id: pinContent
-
-                anchors {
-                    verticalCenter: parent.verticalCenter
-                    left: parent.left
-                    right: parent.right
-                    leftMargin: 12
-                    rightMargin: 12
-                }
-                spacing: 8
-
-                MaterialSymbol {
-                    text: "push_pin"
-                    iconSize: 18
-                    color: pinEntry.pointerHovered ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
                 }
 
-                Text {
-                    text: TrayService.isPinned(root.trayItemId)
-                        ? qsTr("取消固定") : qsTr("固定")
-                    color: pinEntry.pointerHovered ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
-                    font.family: Fonts.ui
-                    font.pixelSize: 13
-                    Layout.fillWidth: true
-                }
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 1
-            color: Appearance.colors.colSubtext
-            Layout.topMargin: 4
-            Layout.bottomMargin: 4
-        }
-
-        RowLayout {
-            visible: root.menuDepth > 0 && submenu.menuEntries.length === 0
-            Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            Layout.topMargin: 8
-            Layout.bottomMargin: 8
-            spacing: 8
-
-            MaterialSymbol {
-                text: root.submenuLoading ? "progress_activity" : "inbox"
-                iconSize: 18
-                color: Appearance.colors.colOnSurfaceVariant
-
-                RotationAnimator on rotation {
-                    from: 0
-                    to: 360
-                    duration: 900
-                    loops: Animation.Infinite
-                    running: root.submenuLoading
-                }
             }
 
-            Text {
-                text: root.submenuLoading ? qsTr("正在加载…") : qsTr("暂无可用项目")
-                color: Appearance.colors.colOnSurfaceVariant
-                font.family: Fonts.ui
-                font.pixelSize: 13
-                Layout.fillWidth: true
-            }
         }
 
         Repeater {
             id: menuEntriesRepeater
 
             property bool iconColumnNeeded: {
-                for (let i = 0; i < submenu.menuEntries.length; i += 1) {
-                    if ((submenu.menuEntries[i].icon || "").length > 0)
+                const entries = menuOpener.children.values;
+                for (let i = 0; i < entries.length; i += 1) {
+                    const entry = entries[i];
+                    if (entry && (entry.icon || "").length > 0)
                         return true;
+
                 }
                 return false;
             }
             property bool specialInteractionColumnNeeded: {
-                for (let i = 0; i < submenu.menuEntries.length; i += 1) {
-                    if (submenu.menuEntries[i].buttonType !== QsMenuButtonType.None)
+                const entries = menuOpener.children.values;
+                for (let i = 0; i < entries.length; i += 1) {
+                    const entry = entries[i];
+                    if (entry && entry.buttonType !== QsMenuButtonType.None)
                         return true;
+
                 }
                 return false;
             }
 
-            model: submenu.menuModel
+            model: menuOpener.children
 
             delegate: TrayMenuEntry {
-                required property var modelData
+                required property QsMenuEntry modelData
 
                 menuEntry: modelData
                 forceIconColumn: menuEntriesRepeater.iconColumnNeeded
                 forceSpecialInteractionColumn: menuEntriesRepeater.specialInteractionColumnNeeded
                 buttonRadius: popupBackground.radius - popupBackground.popupPadding
-
                 onDismiss: root.close()
-                onOpenSubmenu: handle => root.pushSubmenu(handle)
+                onOpenSubmenu: (handle) => {
+                    stackView.push(subMenuComponent, {
+                        "handle": handle,
+                        "isSubmenu": true
+                    });
+                }
             }
+
         }
+
+        Behavior on opacity {
+            NumberAnimation {
+                alwaysRunToEnd: true
+                duration: Appearance.animation.expressiveEffects.duration
+                easing.type: Appearance.animation.expressiveEffects.type
+                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+            }
+
+        }
+
     }
+
 }
