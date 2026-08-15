@@ -2,9 +2,10 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Services
 import qs.Common
+import qs.Components
 import qs.Widgets.common
 
-Item {
+MaterialRippleButton {
     id: root
 
     property bool vertical: false
@@ -17,9 +18,10 @@ Item {
     readonly property real contentWidth: iconSlotWidth + contentSpacing + temperatureSlotWidth
     readonly property real buttonWidth: contentWidth + 20
     readonly property int buttonHeight: 28
+    readonly property bool active: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "weather"
 
     function toggleView() {
-        if (WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "weather") {
+        if (root.active) {
             WidgetState.leftSidebarOpen = false;
             return ;
         }
@@ -27,9 +29,20 @@ Item {
         WidgetState.leftSidebarOpen = true;
     }
 
-    implicitHeight: vertical ? Sizes.barWeatherVerticalPillHeight : buttonHeight
-    implicitWidth: vertical ? buttonHeight : buttonWidth
-    clip: true
+    implicitHeight: root.vertical ? Sizes.barWeatherVerticalPillHeight : root.buttonHeight
+    implicitWidth: root.vertical ? root.buttonHeight : root.buttonWidth
+    buttonRadius: height / 2
+    buttonRadiusPressed: height / 2
+    toggled: root.active
+    colBackground: Appearance.colors.colTertiaryContainer
+    colBackgroundHover: root.down ? Appearance.colors.colTertiaryContainerActive : Appearance.colors.colTertiaryContainerHover
+    colBackgroundToggled: Appearance.colors.colTertiaryContainer
+    colBackgroundToggledHover: root.down ? Appearance.colors.colTertiaryContainerActive : Appearance.colors.colTertiaryContainerHover
+    colRipple: Appearance.applyAlpha(Appearance.colors.colOnTertiaryContainer, 0.18)
+    colRippleToggled: Appearance.applyAlpha(Appearance.colors.colOnTertiaryContainer, 0.18)
+    releaseAction: () => {
+        return root.toggleView();
+    }
 
     TextMetrics {
         id: temperatureMetrics
@@ -40,70 +53,12 @@ Item {
         font.bold: true
     }
 
-    Rectangle {
-        id: background
-
-        function startRipple(x, y) {
-            ripple.centerX = x;
-            ripple.centerY = y;
-            rippleAnimation.diameter = Math.sqrt(width * width + height * height) * 2.2;
-            rippleAnimation.restart();
-        }
-
-        anchors.centerIn: parent
-        width: root.width
-        height: root.height
-        radius: height / 2
-        color: Appearance.colors.colTertiaryContainer
-        clip: true
-
-        Rectangle {
-            id: ripple
-
-            property real centerX: background.width / 2
-            property real centerY: background.height / 2
-            property real diameter: 0
-
-            x: centerX - width / 2
-            y: centerY - height / 2
-            width: diameter
-            height: diameter
-            radius: width / 2
-            color: Appearance.colors.colOnTertiaryContainer
-            opacity: 0
-            visible: opacity > 0
-        }
-
-        ParallelAnimation {
-            id: rippleAnimation
-
-            property real diameter: 0
-
-            NumberAnimation {
-                target: ripple
-                property: "diameter"
-                from: 0
-                to: rippleAnimation.diameter
-                duration: 700
-                easing.type: Easing.OutCubic
-            }
-
-            NumberAnimation {
-                target: ripple
-                property: "opacity"
-                from: 0.22
-                to: 0
-                duration: 700
-                easing.type: Easing.OutCubic
-            }
-
-        }
-
+    PopupToolTip {
+        extraVisibleCondition: root.pointerHovered
+        text: qsTr("天气")
     }
 
-    GridLayout {
-        id: contentRow
-
+    contentItem: GridLayout {
         anchors.centerIn: parent
         width: root.vertical ? root.buttonHeight : root.contentWidth
         height: root.vertical ? root.height : root.buttonHeight
@@ -116,23 +71,11 @@ Item {
             Layout.preferredHeight: root.vertical ? 20 : root.buttonHeight
             Layout.alignment: Qt.AlignCenter
 
-            Text {
+            MaterialSymbol {
                 anchors.centerIn: parent
                 text: WeatherPlugin.currentIconName || "cloud"
-                font.family: Fonts.materialSymbolsRounded
-                font.variableAxes: {
-                    "FILL": 0
-                }
-                font.pixelSize: root.iconSize
+                iconSize: root.iconSize
                 color: Appearance.colors.colOnTertiaryContainer
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 160
-                    }
-
-                }
-
             }
 
         }
@@ -141,7 +84,6 @@ Item {
             Layout.preferredWidth: root.vertical ? root.buttonHeight : root.temperatureSlotWidth
             Layout.preferredHeight: root.vertical ? 16 : root.buttonHeight
             Layout.alignment: Qt.AlignCenter
-            visible: true
 
             Text {
                 anchors.centerIn: parent
@@ -150,35 +92,10 @@ Item {
                 font.pixelSize: root.temperatureSize
                 font.bold: true
                 color: Appearance.colors.colOnTertiaryContainer
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 160
-                    }
-
-                }
-
             }
 
         }
 
-    }
-
-    MouseArea {
-        id: mouseArea
-
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onPressed: (mouse) => {
-            return background.startRipple(mouse.x, mouse.y);
-        }
-        onClicked: root.toggleView()
-    }
-
-    PopupToolTip {
-        extraVisibleCondition: mouseArea.containsMouse
-        text: qsTr("天气")
     }
 
 }

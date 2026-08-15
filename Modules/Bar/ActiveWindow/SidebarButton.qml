@@ -12,12 +12,13 @@ Item {
     implicitHeight: vertical ? buttonRow.implicitHeight + 16 : Sizes.barPillThickness
     implicitWidth: vertical ? Sizes.barVisualThickness : buttonRow.implicitWidth + 16
 
-    Behavior on implicitWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-
-    TopBarPillBackground { anchors.fill: parent }
+    TopBarPillBackground {
+        anchors.fill: parent
+    }
 
     GridLayout {
         id: buttonRow
+
         anchors.centerIn: parent
         rowSpacing: 8
         columnSpacing: 8
@@ -25,14 +26,14 @@ Item {
 
         SidebarPillButton {
             viewName: "info"
-            iconName: "notifications"
+            sidebarIconName: "notifications"
             activeColor: Appearance.colors.colSecondary
             activeContentColor: Appearance.colors.colOnSecondary
         }
 
         SidebarPillButton {
             viewName: "drawer"
-            iconName: "widgets"
+            sidebarIconName: "widgets"
             activeColor: Appearance.colors.colTertiary
             activeContentColor: Appearance.colors.colOnTertiary
         }
@@ -40,5 +41,15 @@ Item {
         SidebarWeatherButton {
             vertical: root.vertical
         }
+
     }
+
+    Behavior on implicitWidth {
+        NumberAnimation {
+            duration: 220
+            easing.type: Easing.OutCubic
+        }
+
+    }
+
 }

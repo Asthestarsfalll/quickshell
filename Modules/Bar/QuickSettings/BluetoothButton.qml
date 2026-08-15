@@ -1,0 +1,33 @@
+import QtQuick
+import qs.Common
+import qs.Services
+import qs.Widgets.common
+
+BarCircularButton {
+    id: root
+
+    property var screen: null
+    readonly property bool active: WidgetState.qsOpen && WidgetState.qsView === "bluetooth"
+
+    iconName: BluetoothService.connected ? "bluetooth_connected" : BluetoothService.enabled ? "bluetooth" : "bluetooth_disabled"
+    selected: root.active
+    enabled: BluetoothService.available
+    containerColor: Appearance.colors.colSecondaryContainer
+    hoverContainerColor: Appearance.colors.colSecondaryContainerHover
+    pressedContainerColor: Appearance.colors.colSecondaryContainerActive
+    selectedContainerColor: Appearance.colors.colSecondaryContainer
+    iconColor: Appearance.colors.colOnSecondaryContainer
+    selectedIconColor: Appearance.colors.colOnSecondaryContainer
+    tooltipText: BluetoothService.connected ? (BluetoothService.connectedName || qsTr("蓝牙已连接")) : BluetoothService.enabled ? qsTr("蓝牙已开启") : qsTr("蓝牙已关闭")
+    onClicked: {
+        if (root.screen && root.screen.name)
+            WidgetState.qsScreenName = root.screen.name;
+
+        if (root.active) {
+            WidgetState.qsOpen = false;
+        } else {
+            WidgetState.qsView = "bluetooth";
+            WidgetState.qsOpen = true;
+        }
+    }
+}

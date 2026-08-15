@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Services.Mpris
 import Clavis.Lyrics
 import qs.Common 
+import qs.Components
 import qs.Services 
 import qs.Widgets.common
 
@@ -78,9 +79,12 @@ Item {
                     maskSource: ShaderEffectSource { sourceItem: Rectangle { width: coverImg.width; height: coverImg.height; radius: 5; color: "black" } }
                 }
             }
-            Text {
-                visible: root.artUrl === ""; anchors.centerIn: parent
-                text: "\uf001"; font.family: Fonts.nerdSymbols; font.pixelSize: 14; color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
+            MaterialSymbol {
+                visible: root.artUrl === ""
+                anchors.centerIn: parent
+                text: "music_note"
+                iconSize: 14
+                color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.50)
             }
         }
 
