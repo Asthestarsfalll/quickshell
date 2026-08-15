@@ -21,10 +21,12 @@ Item {
     readonly property real temperatureValue: Format.isNumber(root.cpu.packageTemperatureCelsius) ? root.cpu.packageTemperatureCelsius : root.cpu.temperatureCelsius
     readonly property real temperatureUsage: root.normalizedTemperature(root.temperatureValue)
     readonly property real cpuUsage: root.normalizedPercent(root.cpu.usagePercent)
-    readonly property string memoryPercentage: Format.percent(root.memory.usagePercent, 0)
-    readonly property string diskPercentage: Format.percent(root.disk.usagePercent, 0)
-    readonly property string temperaturePercentage: Format.isNumber(root.temperatureValue) ? Format.percent(root.temperatureUsage * 100, 0) : Format.unavailable()
-    readonly property string cpuPercentage: Format.percent(root.cpu.usagePercent, 0)
+    readonly property bool useFahrenheit: UiPreferences.systemTemperatureUnit === "fahrenheit"
+    readonly property real displayTemperature: root.useFahrenheit && Format.isNumber(root.temperatureValue) ? root.temperatureValue * 9 / 5 + 32 : root.temperatureValue
+    readonly property string memoryDisplayText: Format.number(root.memory.usagePercent, 0)
+    readonly property string diskDisplayText: Format.number(root.disk.usagePercent, 0)
+    readonly property string temperatureDisplayText: Format.number(root.displayTemperature, 0)
+    readonly property string cpuDisplayText: Format.number(root.cpu.usagePercent, 0)
     // Match the ordinary circular controls in QuickSettings. Vertical bars
     // use the same circle geometry while intentionally hiding percentages.
     readonly property real horizontalIndicatorSize: Sizes.barControlCircleSize
@@ -47,7 +49,7 @@ Item {
     }
 
     // CPU temperature uses the same 90 °C visual ceiling already used by the
-    // lock-screen SystemGrid. The displayed value remains the real Celsius.
+    // lock-screen SystemGrid. Only its text is converted for presentation.
     function normalizedTemperature(value) {
         return Format.isNumber(value) ? root.clamp(value / 90) : 0;
     }
@@ -80,8 +82,8 @@ Item {
             indicatorSize: root.indicatorSize
             iconSize: root.indicatorIconSize
             value: root.memoryUsage
-            showPercentage: !root.vertical
-            percentageText: root.memoryPercentage
+            showText: !root.vertical
+            displayText: root.memoryDisplayText
             icon: "memory_alt"
             fillColor: Appearance.colors.colPrimary
             trackColor: Appearance.colors.colPrimaryContainer
@@ -93,8 +95,8 @@ Item {
             indicatorSize: root.indicatorSize
             iconSize: root.indicatorIconSize
             value: root.diskUsage
-            showPercentage: !root.vertical
-            percentageText: root.diskPercentage
+            showText: !root.vertical
+            displayText: root.diskDisplayText
             icon: "hard_drive"
             fillColor: Appearance.colors.colSecondary
             trackColor: Appearance.colors.colSecondaryContainer
@@ -106,8 +108,8 @@ Item {
             indicatorSize: root.indicatorSize
             iconSize: root.indicatorIconSize
             value: root.temperatureUsage
-            showPercentage: !root.vertical
-            percentageText: root.temperaturePercentage
+            showText: !root.vertical
+            displayText: root.temperatureDisplayText
             icon: "thermostat"
             fillColor: Appearance.colors.colTertiary
             trackColor: Appearance.colors.colTertiaryContainer
@@ -119,8 +121,8 @@ Item {
             indicatorSize: root.indicatorSize
             iconSize: root.indicatorIconSize
             value: root.cpuUsage
-            showPercentage: !root.vertical
-            percentageText: root.cpuPercentage
+            showText: !root.vertical
+            displayText: root.cpuDisplayText
             icon: "developer_board"
             fillColor: Appearance.colors.colTertiary
             trackColor: Appearance.colors.colTertiaryContainer

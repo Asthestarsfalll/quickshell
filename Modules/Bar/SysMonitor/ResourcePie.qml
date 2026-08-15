@@ -13,41 +13,26 @@ Item {
     property color iconColor: Appearance.colors.colOnPrimaryContainer
     property real indicatorSize: 28
     property real iconSize: 15
-    property bool showPercentage: false
-    property string percentageText: ""
+    property bool showText: false
+    property string displayText: ""
     property real labelSpacing: Appearance.spacing.xSmall
     property bool animationEnabled: true
-    property int animationDuration:
-        Appearance.animation.standardSmall.duration
-
+    property int animationDuration: Appearance.animation.standardSmall.duration
     readonly property real normalizedValue: {
         const numeric = Number(root.value);
         if (!isFinite(numeric))
             return 0;
+
         return Math.max(0, Math.min(1, numeric));
     }
     property real degree: root.normalizedValue * 360
     readonly property real centerX: root.indicatorSize / 2
     readonly property real centerY: root.indicatorSize / 2
     readonly property real radius: root.indicatorSize / 2
+    readonly property real displayTextWidth: displayTextMetrics.width
 
-    readonly property real percentageWidth: percentageMetrics.width
-    implicitWidth: root.indicatorSize
-        + (root.showPercentage
-            ? root.labelSpacing + root.percentageWidth : 0)
-    implicitHeight: root.showPercentage
-        ? Math.max(root.indicatorSize, percentageMetrics.height)
-        : root.indicatorSize
-
-    Behavior on degree {
-        enabled: root.animationEnabled
-        NumberAnimation {
-            duration: root.animationDuration
-            easing.type: Appearance.animation.standardSmall.type
-            easing.bezierCurve:
-                Appearance.animation.standardSmall.bezierCurve
-        }
-    }
+    implicitWidth: root.indicatorSize + (root.showText ? root.labelSpacing + root.displayTextWidth : 0)
+    implicitHeight: root.showText ? Math.max(root.indicatorSize, displayTextMetrics.height) : root.indicatorSize
 
     Item {
         id: circleCanvas
@@ -93,7 +78,9 @@ Item {
                     x: sectorPath.startX
                     y: sectorPath.startY
                 }
+
             }
+
         }
 
         MaterialSymbol {
@@ -103,27 +90,43 @@ Item {
             color: root.iconColor
             fill: 1
         }
+
     }
 
     TextMetrics {
-        id: percentageMetrics
-        text: root.percentageText
+        id: displayTextMetrics
+
+        text: root.displayText
         font.family: Fonts.numeric
         font.pixelSize: Typography.labelLarge.pixelSize
         font.weight: Typography.labelLarge.weight
     }
 
     Text {
+        text: root.displayText
+        visible: root.showText
+        color: Appearance.colors.colOnSurface
+        font.family: Fonts.numeric
+        font.pixelSize: Typography.labelLarge.pixelSize
+        font.weight: Typography.labelLarge.weight
+
         anchors {
             left: circleCanvas.right
             leftMargin: root.labelSpacing
             verticalCenter: parent.verticalCenter
         }
-        text: root.percentageText
-        visible: root.showPercentage
-        color: Appearance.colors.colOnSurface
-        font.family: Fonts.numeric
-        font.pixelSize: Typography.labelLarge.pixelSize
-        font.weight: Typography.labelLarge.weight
+
     }
+
+    Behavior on degree {
+        enabled: root.animationEnabled
+
+        NumberAnimation {
+            duration: root.animationDuration
+            easing.type: Appearance.animation.standardSmall.type
+            easing.bezierCurve: Appearance.animation.standardSmall.bezierCurve
+        }
+
+    }
+
 }
