@@ -10,12 +10,11 @@ Item {
     property int easingType: Appearance.interaction.rippleEasing
     property real shapeRadius: 0
     property real targetDiameter: 0
-    readonly property bool active: ripple.visible
+    readonly property bool active: rippleAnimation.running || rippleFadeAnimation.running || ripple.opacity > 0
 
     function clear() {
         rippleAnimation.stop();
         rippleFadeAnimation.stop();
-        ripple.visible = false;
         ripple.diameter = 0;
         ripple.opacity = 0;
         root.targetDiameter = 0;
@@ -26,33 +25,67 @@ Item {
         ripple.centerX = x;
         ripple.centerY = y;
         root.targetDiameter = Math.sqrt(root.width * root.width + root.height * root.height) * 2.2;
-        ripple.visible = true;
         rippleAnimation.restart();
     }
 
     function finish() {
-        if (ripple.visible && !rippleAnimation.running)
+        if (root.active && !rippleAnimation.running)
             rippleFadeAnimation.restart();
 
     }
 
+    onColorChanged: rippleCanvas.requestPaint()
+    onShapeRadiusChanged: rippleCanvas.requestPaint()
     clip: true
 
-    Rectangle {
+    Item {
         id: ripple
 
         property real centerX: root.width / 2
         property real centerY: root.height / 2
         property real diameter: 0
 
-        x: centerX - width / 2
-        y: centerY - height / 2
-        width: diameter
-        height: diameter
-        radius: width / 2
-        color: root.color
+        visible: false
         opacity: 0
-        visible: opacity > 0
+        onCenterXChanged: rippleCanvas.requestPaint()
+        onCenterYChanged: rippleCanvas.requestPaint()
+        onDiameterChanged: rippleCanvas.requestPaint()
+        onOpacityChanged: rippleCanvas.requestPaint()
+    }
+
+    Canvas {
+        id: rippleCanvas
+
+        anchors.fill: parent
+        visible: root.active
+        renderStrategy: Canvas.Immediate
+        onVisibleChanged: {
+            if (visible)
+                requestPaint();
+
+        }
+        onPaint: {
+            const context = getContext("2d");
+            const cornerRadius = Math.min(root.shapeRadius, width / 2, height / 2);
+            context.reset();
+            context.beginPath();
+            context.moveTo(cornerRadius, 0);
+            context.lineTo(width - cornerRadius, 0);
+            context.quadraticCurveTo(width, 0, width, cornerRadius);
+            context.lineTo(width, height - cornerRadius);
+            context.quadraticCurveTo(width, height, width - cornerRadius, height);
+            context.lineTo(cornerRadius, height);
+            context.quadraticCurveTo(0, height, 0, height - cornerRadius);
+            context.lineTo(0, cornerRadius);
+            context.quadraticCurveTo(0, 0, cornerRadius, 0);
+            context.closePath();
+            context.clip();
+            context.globalAlpha = ripple.opacity;
+            context.fillStyle = root.color;
+            context.beginPath();
+            context.arc(ripple.centerX, ripple.centerY, ripple.diameter / 2, 0, Math.PI * 2);
+            context.fill();
+        }
     }
 
     ParallelAnimation {
