@@ -21,6 +21,7 @@ Singleton {
     property QtObject rounding
     property QtObject spacing
     property QtObject scrollBar
+    property QtObject interaction
 
     function clamp01(value) {
         return Math.max(0, Math.min(1, value));
@@ -254,6 +255,17 @@ Singleton {
 
     animationCurves: Animations.curves
     animation: Animations.animation
+
+    interaction: QtObject {
+        readonly property int rippleDuration: 700
+        readonly property real rippleOpacity: 0.22
+        readonly property int stateLayerTransitionDuration: Animations.durations.expressiveFastEffects
+        readonly property real hoverStateLayerOpacity: 0.08
+        readonly property real focusStateLayerOpacity: 0.10
+        readonly property real pressedStateLayerOpacity: 0.12
+        readonly property real selectedStateLayerOpacity: 0.10
+        readonly property int rippleEasing: Easing.OutCubic
+    }
 
     rounding: QtObject {
         property int extraSmall: 4

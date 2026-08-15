@@ -6,7 +6,7 @@ import qs.Common
 import qs.Components
 import qs.Widgets.common
 
-MaterialRippleButton {
+RippleButton {
     id: root
 
     required property QsMenuEntry menuEntry
@@ -26,12 +26,12 @@ MaterialRippleButton {
     signal dismiss()
     signal openSubmenu(var handle)
 
-    colBackground: isSeparator ? Appearance.m3colors.m3outlineVariant : Appearance.transparentize(Appearance.colors.colLayer0, 1)
-    colBackgroundHover: Appearance.colors.colSecondaryContainer
-    colRipple: Appearance.colors.colSecondaryContainerActive
+    containerColor: isSeparator ? Appearance.m3colors.m3outlineVariant : "transparent"
+    stateLayerColor: Appearance.colors.colSecondaryContainer
+    pressedStateLayerColor: Appearance.colors.colSecondaryContainerActive
+    rippleColor: Appearance.colors.colOnSecondaryContainer
     enabled: root.entryAvailable && !isSeparator && root.menuEntry.enabled !== false
     opacity: isSeparator ? 1 : (enabled ? 1 : 0.4)
-    rippleEnabled: false
     buttonRadius: 14
     implicitWidth: isSeparator ? 96 : contentRow.implicitWidth + 24
     implicitHeight: isSeparator ? 1 : 36

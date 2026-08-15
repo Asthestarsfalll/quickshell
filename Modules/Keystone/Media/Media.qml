@@ -153,11 +153,11 @@ Item {
             selectedIconColor: "white"
             accessibleName: root.showLyrics
                 ? qsTr("隐藏歌词") : qsTr("显示歌词")
-            hoverContainerColor: Appearance.applyAlpha("white", 0.12)
-            pressedContainerColor: Appearance.applyAlpha("white", 0.2)
-            selectedHoverContainerColor:
+            hoverStateLayerColor: Appearance.applyAlpha("white", 0.12)
+            pressedStateLayerColor: Appearance.applyAlpha("white", 0.2)
+            selectedHoverStateLayerColor:
                 Appearance.applyAlpha("white", 0.12)
-            selectedPressedContainerColor:
+            selectedPressedStateLayerColor:
                 Appearance.applyAlpha("white", 0.2)
             onClicked: root.showLyrics = !root.showLyrics
         }

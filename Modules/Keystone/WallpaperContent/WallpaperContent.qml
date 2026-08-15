@@ -523,8 +523,8 @@ Item {
             iconSize: 20
             iconColor: Appearance.colors.colOnSurfaceVariant
             accessibleName: qsTr("清除壁纸搜索")
-            hoverContainerColor: Appearance.colors.colLayer2Hover
-            pressedContainerColor: Appearance.colors.colLayer2Active
+            hoverStateLayerColor: Appearance.colors.colLayer2Hover
+            pressedStateLayerColor: Appearance.colors.colLayer2Active
             onClicked: {
                 searchInput.clear();
                 searchInput.forceActiveFocus();

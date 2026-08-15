@@ -337,14 +337,15 @@ StyledFlickable {
                 }
             }
 
-            MaterialRippleButton {
+            RippleButton {
                 Layout.alignment: Qt.AlignLeft
                 Layout.preferredWidth: 116
                 Layout.preferredHeight: 40
                 buttonRadius: Appearance.rounding.full
-                colBackground: Appearance.colors.colSecondaryContainer
-                colBackgroundHover: Appearance.colors.colSecondaryContainerHover
-                colRipple: Appearance.colors.colSecondaryContainerActive
+                containerColor: Appearance.colors.colSecondaryContainer
+                stateLayerColor: Appearance.colors.colSecondaryContainerHover
+                pressedStateLayerColor: Appearance.colors.colSecondaryContainerActive
+                rippleColor: Appearance.colors.colOnSecondaryContainer
                 Accessible.name: qsTr("重置横向时钟样式")
                 releaseAction: () => {
                     return PersonalizationConfig.resetHorizontalClock(true);

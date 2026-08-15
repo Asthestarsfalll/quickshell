@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Components
 
-MaterialRippleButton {
+RippleButton {
     id: root
 
     property string iconName: ""
@@ -19,15 +19,21 @@ MaterialRippleButton {
     property real iconFill: selected ? 1 : 0
     property real iconRotation: 0
     property color iconColor: root.variant === "filled" ? Appearance.colors.colOnPrimary : root.variant === "tonal" ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurfaceVariant
-    property color selectedIconColor: root.variant === "filled" ? Appearance.colors.colOnPrimary : Appearance.colors.colPrimary
-    property color containerColor: root.variant === "filled" ? Appearance.colors.colPrimary : root.variant === "tonal" ? Appearance.colors.colSecondaryContainer : "transparent"
-    property color hoverContainerColor: root.variant === "filled" ? Appearance.colors.colPrimaryHover : root.variant === "tonal" ? Appearance.colors.colSecondaryContainerHover : Appearance.applyAlpha(root.iconColor, 0.08)
-    property color pressedContainerColor: root.variant === "filled" ? Appearance.colors.colPrimaryActive : root.variant === "tonal" ? Appearance.colors.colSecondaryContainerActive : Appearance.applyAlpha(root.iconColor, 0.12)
-    property color selectedContainerColor: root.variant === "standard" || root.variant === "outlined" ? "transparent" : root.containerColor
-    property color selectedHoverContainerColor: root.variant === "standard" || root.variant === "outlined" ? Appearance.applyAlpha(root.selectedIconColor, 0.08) : root.hoverContainerColor
-    property color selectedPressedContainerColor: root.variant === "standard" || root.variant === "outlined" ? Appearance.applyAlpha(root.selectedIconColor, 0.12) : root.pressedContainerColor
+    property color selectedIconColor: root.variant === "filled" ? Appearance.colors.colOnPrimary : root.variant === "tonal" ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colPrimary
+    property color normalContainerColor: root.variant === "filled" ? Appearance.colors.colPrimary : root.variant === "tonal" ? Appearance.colors.colSecondaryContainer : "transparent"
+    property color selectedContainerColor: root.variant === "standard" || root.variant === "outlined" ? "transparent" : root.normalContainerColor
+    property color hoverStateLayerColor: root.variant === "filled" ? Appearance.colors.colPrimaryHover : root.variant === "tonal" ? Appearance.colors.colSecondaryContainerHover : Appearance.applyAlpha(root.iconColor, 0.08)
+    property color pressedStateLayerColor: root.variant === "filled" ? Appearance.colors.colPrimaryActive : root.variant === "tonal" ? Appearance.colors.colSecondaryContainerActive : Appearance.applyAlpha(root.iconColor, 0.12)
+    property color selectedHoverStateLayerColor: root.variant === "standard" || root.variant === "outlined" ? Appearance.applyAlpha(root.selectedIconColor, 0.08) : root.hoverStateLayerColor
+    property color selectedPressedStateLayerColor: root.variant === "standard" || root.variant === "outlined" ? Appearance.applyAlpha(root.selectedIconColor, 0.12) : root.pressedStateLayerColor
     property color outlineColor: Appearance.colors.colOutline
     readonly property alias iconItem: iconGlyph
+    readonly property color effectiveContainerColor: root.selected
+        ? root.selectedContainerColor : root.normalContainerColor
+    readonly property color effectiveHoverStateLayerColor: root.selected
+        ? root.selectedHoverStateLayerColor : root.hoverStateLayerColor
+    readonly property color effectivePressedStateLayerColor: root.selected
+        ? root.selectedPressedStateLayerColor : root.pressedStateLayerColor
 
     implicitWidth: root.controlSize
     implicitHeight: root.controlSize
@@ -35,12 +41,15 @@ MaterialRippleButton {
     toggled: root.selected
     buttonRadius: Appearance.rounding.full
     buttonRadiusPressed: Appearance.rounding.full
-    colBackground: root.activeFocus ? root.hoverContainerColor : root.containerColor
-    colBackgroundHover: root.down ? root.pressedContainerColor : root.hoverContainerColor
-    colBackgroundToggled: root.activeFocus ? root.selectedHoverContainerColor : root.selectedContainerColor
-    colBackgroundToggledHover: root.down ? root.selectedPressedContainerColor : root.selectedHoverContainerColor
-    colRipple: Appearance.applyAlpha(root.iconColor, 0.12)
-    colRippleToggled: Appearance.applyAlpha(root.selectedIconColor, 0.12)
+    containerColor: root.effectiveContainerColor
+    rippleColor: root.selected ? root.selectedIconColor : root.iconColor
+    stateLayerColor: root.effectiveHoverStateLayerColor
+    hoverStateLayerColor: root.effectiveHoverStateLayerColor
+    focusStateLayerColor: root.effectiveHoverStateLayerColor
+    pressedStateLayerColor: root.effectivePressedStateLayerColor
+    stateLayerOpacity: 1
+    focusStateLayerOpacity: 1
+    pressedStateLayerOpacity: 1
     focusPolicy: Qt.StrongFocus
     Accessible.name: root.effectiveAccessibleName
     Accessible.role: Accessible.Button
@@ -67,5 +76,4 @@ MaterialRippleButton {
         color: root.selected ? root.selectedIconColor : root.iconColor
         rotation: root.iconRotation
     }
-
 }

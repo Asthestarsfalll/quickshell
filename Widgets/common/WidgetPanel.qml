@@ -32,8 +32,8 @@ Rectangle {
                 iconSize: 22
                 iconColor: Appearance.colors.colOnLayer2
                 accessibleName: qsTr("返回快捷设置")
-                hoverContainerColor: Appearance.colors.colLayer2Hover
-                pressedContainerColor: Appearance.colors.colLayer2Active
+                hoverStateLayerColor: Appearance.colors.colLayer2Hover
+                pressedStateLayerColor: Appearance.colors.colLayer2Active
                 onClicked: root.backAction()
             }
 

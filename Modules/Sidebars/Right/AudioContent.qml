@@ -41,8 +41,8 @@ WidgetPanel {
         iconSize: 20
         iconColor: Appearance.colors.colOnLayer2
         accessibleName: qsTr("打开高级声音设置")
-        hoverContainerColor: Appearance.colors.colLayer2Hover
-        pressedContainerColor: Appearance.colors.colLayer2Active
+        hoverStateLayerColor: Appearance.colors.colLayer2Hover
+        pressedStateLayerColor: Appearance.colors.colLayer2Active
         onClicked: Volume.openMixer()
     }
 
@@ -122,12 +122,12 @@ WidgetPanel {
                             iconColor: Appearance.colors.colOnLayer2
                             selectedIconColor: Appearance.colors.colOnSecondaryContainer
                             selectedContainerColor: Appearance.colors.colSecondaryContainer
-                            selectedHoverContainerColor: Appearance.colors.colSecondaryContainerHover
-                            selectedPressedContainerColor: Appearance.colors.colSecondaryContainerActive
+                            selectedHoverStateLayerColor: Appearance.colors.colSecondaryContainerHover
+                            selectedPressedStateLayerColor: Appearance.colors.colSecondaryContainerActive
                             iconRotation: root.outputDevicesExpanded ? 180 : 0
                             accessibleName: root.outputDevicesExpanded ? qsTr("收起输出设备") : qsTr("展开输出设备")
-                            hoverContainerColor: Appearance.colors.colLayer2Hover
-                            pressedContainerColor: Appearance.colors.colLayer2Active
+                            hoverStateLayerColor: Appearance.colors.colLayer2Hover
+                            pressedStateLayerColor: Appearance.colors.colLayer2Active
                             onClicked: root.outputDevicesExpanded = !root.outputDevicesExpanded
 
                             Behavior on iconRotation { ElementMoveAnimation {} }

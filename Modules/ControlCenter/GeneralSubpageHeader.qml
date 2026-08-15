@@ -24,8 +24,8 @@ Item {
             iconName: "arrow_back"
             iconColor: Appearance.colors.colOnSurface
             accessibleName: root.backAccessibleName
-            hoverContainerColor: Appearance.colors.colLayer2Hover
-            pressedContainerColor: Appearance.colors.colLayer2Active
+            hoverStateLayerColor: Appearance.colors.colLayer2Hover
+            pressedStateLayerColor: Appearance.colors.colLayer2Active
             onClicked: root.backRequested()
         }
 

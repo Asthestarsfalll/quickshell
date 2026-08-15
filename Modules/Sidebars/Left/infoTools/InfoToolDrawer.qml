@@ -143,7 +143,7 @@ Rectangle {
         spacing: 15
         visible: opacity > 0
 
-        MaterialRippleButton {
+        RippleButton {
             id: expandButton
 
             Layout.leftMargin: 10
@@ -152,9 +152,10 @@ Rectangle {
             implicitWidth: 34
             implicitHeight: 34
             buttonRadius: Appearance.rounding.full
-            colBackground: Appearance.colors.colLayer2
-            colBackgroundHover: Appearance.colors.colLayer2Hover
-            colRipple: Appearance.colors.colLayer2Active
+            containerColor: Appearance.colors.colLayer2
+            stateLayerColor: Appearance.colors.colLayer2Hover
+            pressedStateLayerColor: Appearance.colors.colLayer2Active
+            rippleColor: Appearance.colors.colOnLayer2
             Accessible.name: qsTr("展开工具")
             onClicked: root.setCollapsed(false)
 
@@ -200,7 +201,7 @@ Rectangle {
             Layout.topMargin: 10
             implicitWidth: 56
 
-            MaterialRippleButton {
+            RippleButton {
                 id: collapseButton
 
                 anchors.left: parent.left
@@ -208,9 +209,10 @@ Rectangle {
                 implicitWidth: 34
                 implicitHeight: 34
                 buttonRadius: Appearance.rounding.full
-                colBackground: Appearance.colors.colLayer2
-                colBackgroundHover: Appearance.colors.colLayer2Hover
-                colRipple: Appearance.colors.colLayer2Active
+                containerColor: Appearance.colors.colLayer2
+                stateLayerColor: Appearance.colors.colLayer2Hover
+                pressedStateLayerColor: Appearance.colors.colLayer2Active
+                rippleColor: Appearance.colors.colOnLayer2
             Accessible.name: qsTr("收起工具")
                 onClicked: root.setCollapsed(true)
 
@@ -259,7 +261,7 @@ Rectangle {
                     Repeater {
                         model: root.tabs
 
-                        delegate: MaterialRippleButton {
+                        delegate: RippleButton {
                             id: tabButton
 
                             required property int index
@@ -269,12 +271,10 @@ Rectangle {
                             implicitHeight: 56
                             toggled: root.selectedTab === index
                             buttonRadius: Appearance.rounding.full
-                            colBackground: Appearance.transparentize(Appearance.colors.colLayer1Hover, 1)
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
-                            colBackgroundToggled: Appearance.transparentize(Appearance.colors.colSecondaryContainer, 1)
-                            colBackgroundToggledHover: Appearance.transparentize(Appearance.colors.colSecondaryContainer, 1)
-                            colRipple: Appearance.colors.colLayer1Active
-                            colRippleToggled: Appearance.colors.colSecondaryContainerActive
+                            containerColor: "transparent"
+                            stateLayerColor: Appearance.colors.colLayer1Hover
+                            pressedStateLayerColor: Appearance.colors.colLayer1Active
+                            rippleColor: Appearance.colors.colLayer1
                             Accessible.name: modelData.name
                             onClicked: root.setSelectedTab(index)
 

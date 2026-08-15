@@ -143,7 +143,7 @@ Item {
         }
     }
 
-    component HeaderButton: MaterialRippleButton {
+    component HeaderButton: RippleButton {
         id: headerButton
 
         property string iconName: ""
@@ -154,9 +154,10 @@ Item {
         implicitWidth: forceCircle ? implicitHeight : contentItem.implicitWidth + 20
         implicitHeight: 32
         buttonRadius: Appearance.rounding.full
-        colBackground: Appearance.colors.colLayer2
-        colBackgroundHover: Appearance.colors.colLayer2Hover
-        colRipple: Appearance.colors.colLayer2Active
+        containerColor: Appearance.colors.colLayer2
+        stateLayerColor: Appearance.colors.colLayer2Hover
+        pressedStateLayerColor: Appearance.colors.colLayer2Active
+        rippleColor: Appearance.colors.colOnLayer2
         Accessible.name: accessibleName
 
         Behavior on implicitWidth {
@@ -198,7 +199,7 @@ Item {
         }
     }
 
-    component DayButton: MaterialRippleButton {
+    component DayButton: RippleButton {
         id: dayButton
 
         property string day: ""
@@ -209,10 +210,14 @@ Item {
         implicitHeight: 38
         toggled: todayState === 1
         buttonRadius: Appearance.rounding.small
-        colBackground: Appearance.transparentize(Appearance.colors.colLayer1Hover, 1)
-        colBackgroundHover: Appearance.colors.colLayer1Hover
-        colBackgroundToggled: Appearance.colors.colPrimary
-        colBackgroundToggledHover: Appearance.colors.colPrimaryHover
+        containerColor: dayButton.todayState === 1
+            ? Appearance.colors.colPrimary : "transparent"
+        stateLayerColor: dayButton.todayState === 1
+            ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer1Hover
+        pressedStateLayerColor: dayButton.todayState === 1
+            ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer1Active
+        rippleColor: dayButton.todayState === 1
+            ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
 
         contentItem: Text {
             text: dayButton.day

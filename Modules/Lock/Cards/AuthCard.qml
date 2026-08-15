@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Layouts
-import QtQuick.Shapes
 import M3Shapes
 import qs.Common
+import qs.Widgets.common
 
 FocusScope {
     id: root
@@ -60,127 +60,13 @@ FocusScope {
         radius: height / 2
         clip: true
 
-        Shape {
-            id: rippleLayer
-
-            property real pressX: width / 2
-            property real pressY: height / 2
-            property real circleRadius: 0
-            readonly property real cornerRadius: inputFrame.radius
-            readonly property real endRadius: {
-                const d1 = distSq(0, 0);
-                const d2 = distSq(width, 0);
-                const d3 = distSq(0, height);
-                const d4 = distSq(width, height);
-                return Math.sqrt(Math.max(d1, d2, d3, d4));
-            }
-
-            function distSq(x, y) {
-                return Math.pow(pressX - x, 2) + Math.pow(pressY - y, 2);
-            }
-
-            function start(x, y) {
-                pressX = x;
-                pressY = y;
-                circleRadius = 0;
-                opacity = 0.14;
-                rippleAnim.restart();
-            }
+        RippleEffect {
+            id: rippleEffect
 
             anchors.fill: parent
-            opacity: 0
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeWidth: 0
-                strokeColor: "transparent"
-                fillGradient: RadialGradient {
-                    centerX: rippleLayer.pressX
-                    centerY: rippleLayer.pressY
-                    centerRadius: rippleLayer.circleRadius
-                    focalX: centerX
-                    focalY: centerY
-
-                    GradientStop {
-                        position: 0
-                        color: Appearance.colors.colOnSurface
-                    }
-                    GradientStop {
-                        position: 0.99
-                        color: Appearance.colors.colOnSurface
-                    }
-                    GradientStop {
-                        position: 1
-                        color: Appearance.applyAlpha(Appearance.colors.colOnSurface, 0)
-                    }
-                }
-
-                startX: rippleLayer.cornerRadius
-                startY: 0
-
-                PathLine {
-                    x: rippleLayer.width - rippleLayer.cornerRadius
-                    y: 0
-                }
-                PathArc {
-                    x: rippleLayer.width
-                    y: rippleLayer.cornerRadius
-                    radiusX: rippleLayer.cornerRadius
-                    radiusY: rippleLayer.cornerRadius
-                }
-                PathLine {
-                    x: rippleLayer.width
-                    y: rippleLayer.height - rippleLayer.cornerRadius
-                }
-                PathArc {
-                    x: rippleLayer.width - rippleLayer.cornerRadius
-                    y: rippleLayer.height
-                    radiusX: rippleLayer.cornerRadius
-                    radiusY: rippleLayer.cornerRadius
-                }
-                PathLine {
-                    x: rippleLayer.cornerRadius
-                    y: rippleLayer.height
-                }
-                PathArc {
-                    x: 0
-                    y: rippleLayer.height - rippleLayer.cornerRadius
-                    radiusX: rippleLayer.cornerRadius
-                    radiusY: rippleLayer.cornerRadius
-                }
-                PathLine {
-                    x: 0
-                    y: rippleLayer.cornerRadius
-                }
-                PathArc {
-                    x: rippleLayer.cornerRadius
-                    y: 0
-                    radiusX: rippleLayer.cornerRadius
-                    radiusY: rippleLayer.cornerRadius
-                }
-            }
-
-            ParallelAnimation {
-                id: rippleAnim
-
-                NumberAnimation {
-                    target: rippleLayer
-                    property: "circleRadius"
-                    to: rippleLayer.endRadius
-                    duration: Appearance.animation.expressiveSlowEffects.duration * 2
-                    easing.type: Appearance.animation.expressiveSlowEffects.type
-                    easing.bezierCurve: Appearance.animation.expressiveSlowEffects.bezierCurve
-                }
-
-                NumberAnimation {
-                    target: rippleLayer
-                    property: "opacity"
-                    to: 0
-                    duration: Appearance.animation.expressiveSlowEffects.duration * 2
-                    easing.type: Appearance.animation.expressiveSlowEffects.type
-                    easing.bezierCurve: Appearance.animation.expressiveSlowEffects.bezierCurve
-                }
-            }
+            color: Appearance.colors.colOnSurface
+            effectOpacity: Appearance.interaction.rippleOpacity
+            shapeRadius: inputFrame.radius
         }
 
         RowLayout {
@@ -618,7 +504,7 @@ FocusScope {
             hoverEnabled: true
             cursorShape: root.enterEnabled && mouseX >= enterButton.x ? Qt.PointingHandCursor : Qt.IBeamCursor
             onPressed: mouse => {
-                rippleLayer.start(mouse.x, mouse.y);
+                rippleEffect.startAt(mouse.x, mouse.y);
                 input.forceActiveFocus();
             }
             onClicked: mouse => {

@@ -40,13 +40,14 @@ Item {
         font.bold: true
     }
 
-    BarRippleButton {
+    RippleButton {
         id: button
 
         anchors.fill: parent
         buttonRadius: height / 2
         containerColor: Appearance.colors.colTertiaryContainer
         rippleColor: Appearance.colors.colOnTertiaryContainer
+        stateLayerEnabled: false
         releaseAction: () => {
             return root.toggleView();
         }

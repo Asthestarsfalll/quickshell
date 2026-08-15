@@ -2,28 +2,39 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Common
 import qs.Components
+import qs.Widgets.common
 
-Rectangle {
+RippleButton {
     id: root
 
-    signal clicked()
-    signal altClicked()
-
     property string iconText: "add"
-    property string buttonText: ""
     property bool expanded: false
     property real baseSize: 56
     property real elementSpacing: 5
-    property color colBackground: Appearance.colors.colPrimaryContainer
-    property color colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-    property color colBackgroundActive: Appearance.colors.colPrimaryContainerActive
-    property color colOnBackground: Appearance.colors.colOnPrimaryContainer
+    property color baseColor: Appearance.colors.colPrimaryContainer
+    property color hoverStateColor: Appearance.colors.colPrimaryContainerHover
+    property color pressedStateColor: Appearance.colors.colPrimaryContainerActive
+    property color contentColor: Appearance.colors.colOnPrimaryContainer
+
+    signal altClicked()
 
     Layout.alignment: Qt.AlignLeft
     implicitWidth: root.expanded ? Math.max(contentRow.implicitWidth + 20, root.baseSize) : root.baseSize
     implicitHeight: root.baseSize
-    radius: root.baseSize / 14 * 4
-    color: mouse.pressed ? root.colBackgroundActive : mouse.containsMouse ? root.colBackgroundHover : root.colBackground
+    buttonRadius: root.baseSize / 14 * 4
+    buttonRadiusPressed: root.buttonRadius
+    containerColor: root.baseColor
+    rippleColor: root.contentColor
+    stateLayerColor: root.hoverStateColor
+    hoverStateLayerColor: root.hoverStateColor
+    focusStateLayerColor: root.hoverStateColor
+    pressedStateLayerColor: root.pressedStateColor
+    stateLayerOpacity: 1
+    focusStateLayerOpacity: 1
+    pressedStateLayerOpacity: 1
+    altAction: () => {
+        return root.altClicked();
+    }
 
     Behavior on implicitWidth {
         NumberAnimation {
@@ -31,17 +42,10 @@ Rectangle {
             easing.type: Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
         }
+
     }
 
-    Behavior on color {
-        ColorAnimation {
-            duration: Appearance.animation.expressiveEffects.duration
-            easing.type: Appearance.animation.expressiveEffects.type
-            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-        }
-    }
-
-    Row {
+    contentItem: Row {
         id: contentRow
 
         property real horizontalMargins: (root.baseSize - icon.width) / 2
@@ -56,7 +60,7 @@ Rectangle {
 
             anchors.verticalCenter: parent.verticalCenter
             iconSize: 26
-            color: root.colOnBackground
+            color: root.contentColor
             text: root.iconText
         }
 
@@ -66,14 +70,6 @@ Rectangle {
             height: parent.height
             clip: true
 
-            Behavior on width {
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
-            }
-
             Text {
                 id: buttonText
 
@@ -81,26 +77,23 @@ Rectangle {
                 anchors.leftMargin: root.elementSpacing
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.buttonText
-                color: root.colOnBackground
+                color: root.contentColor
                 font.family: Fonts.ui
                 font.pixelSize: 14
                 font.weight: Font.Medium
             }
+
+            Behavior on width {
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                }
+
+            }
+
         }
+
     }
 
-    MouseArea {
-        id: mouse
-
-        anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: event => {
-            if (event.button === Qt.RightButton)
-                root.altClicked();
-            else
-                root.clicked();
-        }
-    }
 }

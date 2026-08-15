@@ -3,25 +3,26 @@ import QtQuick.Layouts
 import qs.Common
 import qs.Components
 
-MaterialRippleButton {
+RippleButton {
     id: root
 
     property bool filled: false
     property string iconName: ""
 
-    implicitWidth: Math.max(64, actionContent.implicitWidth
-        + Metrics.spacingL * 2)
+    implicitWidth: Math.max(64, actionContent.implicitWidth + Metrics.spacingL * 2)
     implicitHeight: Metrics.controlHeightM
     leftPadding: Metrics.spacingM
     rightPadding: Metrics.spacingM
     buttonRadius: Appearance.rounding.full
     buttonRadiusPressed: Appearance.rounding.full
-    colBackground: root.filled ? Appearance.colors.colPrimary : "transparent"
-    colBackgroundHover: root.filled ? Appearance.colors.colPrimaryHover : Appearance.applyAlpha(Appearance.colors.colPrimary, root.down ? 0.12 : 0.08)
-    colRipple: root.filled ? Appearance.applyAlpha(Appearance.colors.colOnPrimary, 0.12) : Appearance.applyAlpha(Appearance.colors.colPrimary, 0.12)
-    colBackgroundToggled: colBackground
-    colBackgroundToggledHover: colBackgroundHover
-    colRippleToggled: colRipple
+    containerColor: root.filled ? Appearance.colors.colPrimary : "transparent"
+    rippleColor: root.filled ? Appearance.colors.colOnPrimary : Appearance.colors.colPrimary
+    stateLayerColor: root.filled ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary
+    hoverStateLayerColor: root.filled ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary
+    pressedStateLayerColor: root.filled ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimary
+    stateLayerOpacity: root.filled ? 1 : Appearance.interaction.hoverStateLayerOpacity
+    pressedStateLayerOpacity: root.filled ? 1 : Appearance.interaction.pressedStateLayerOpacity
+    focusStateLayerOpacity: root.filled ? 1 : Appearance.interaction.focusStateLayerOpacity
     focusPolicy: Qt.StrongFocus
     Accessible.name: root.text
 
@@ -55,5 +56,4 @@ MaterialRippleButton {
             }
         }
     }
-
 }

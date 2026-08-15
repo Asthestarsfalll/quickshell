@@ -101,10 +101,10 @@ Item {
                 accessibleName: modelData.tip
                 selected: index === toolsRoot.selectedIndex
                 selectedContainerColor: Appearance.colors.colLayer2Hover
-                selectedHoverContainerColor: Appearance.colors.colLayer2Hover
-                selectedPressedContainerColor: Appearance.colors.colLayer2Active
-                hoverContainerColor: Appearance.colors.colLayer2Hover
-                pressedContainerColor: Appearance.colors.colLayer2Active
+                selectedHoverStateLayerColor: Appearance.colors.colLayer2Hover
+                selectedPressedStateLayerColor: Appearance.colors.colLayer2Active
+                hoverStateLayerColor: Appearance.colors.colLayer2Hover
+                pressedStateLayerColor: Appearance.colors.colLayer2Active
                 onPointerHoveredChanged: {
                     if (pointerHovered)
                         toolsRoot.selectedIndex = index;

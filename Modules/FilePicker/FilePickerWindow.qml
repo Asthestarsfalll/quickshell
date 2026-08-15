@@ -753,7 +753,7 @@ FloatingWindow {
                             onCellWidthChanged:
                                 Qt.callLater(fileGrid.refreshLayout)
 
-                            delegate: MaterialRippleButton {
+                            delegate: RippleButton {
                                 id: fileItem
 
                                 required property int index
@@ -775,12 +775,14 @@ FloatingWindow {
                                 rotation: appeared ? 0 : ((index % 3) - 1) * 3
                                 toggled: selected
                                 buttonRadius: Appearance.rounding.large
-                                colBackground: Appearance.transparentize(Appearance.colors.colSecondaryContainer, 1)
-                                colBackgroundHover: Appearance.colors.colLayer3Hover
-                                colBackgroundToggled: Appearance.colors.colSecondaryContainer
-                                colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-                                colRipple: Appearance.colors.colOnSurface
-                                colRippleToggled: Appearance.colors.colOnSecondaryContainer
+                                containerColor: fileItem.selected
+                                    ? Appearance.colors.colSecondaryContainer : "transparent"
+                                stateLayerColor: fileItem.selected
+                                    ? Appearance.colors.colSecondaryContainerHover
+                                    : Appearance.colors.colLayer3Hover
+                                rippleColor: fileItem.selected
+                                    ? Appearance.colors.colOnSecondaryContainer
+                                    : Appearance.colors.colOnSurface
                                 releaseAction: () => {
                                     root.selectEntry(
                                         filePath, fileName, fileIsDir);
@@ -983,7 +985,7 @@ FloatingWindow {
         }
     }
 
-    component BreadcrumbButton: MaterialRippleButton {
+    component BreadcrumbButton: RippleButton {
         id: breadcrumbButton
 
         required property string label
@@ -996,12 +998,10 @@ FloatingWindow {
         padding: 0
         toggled: current
         buttonRadius: Appearance.rounding.small
-        colBackground: Appearance.transparentize(Appearance.colors.colLayer3, 1)
-        colBackgroundHover: Appearance.colors.colLayer3Hover
-        colBackgroundToggled: Appearance.colors.colLayer3
-        colBackgroundToggledHover: Appearance.colors.colLayer3Hover
-        colRipple: Appearance.colors.colOnSurface
-        colRippleToggled: Appearance.colors.colOnSurface
+        containerColor: breadcrumbButton.current
+            ? Appearance.colors.colLayer3 : "transparent"
+        stateLayerColor: Appearance.colors.colLayer3Hover
+        rippleColor: Appearance.colors.colOnSurface
         releaseAction: () => {
             if (breadcrumbButton.current)
                 root.beginPathEditing();
@@ -1038,7 +1038,7 @@ FloatingWindow {
         }
     }
 
-    component PickerToolButton: MaterialRippleButton {
+    component PickerToolButton: RippleButton {
         id: toolButton
 
         property string iconName: ""
@@ -1050,12 +1050,14 @@ FloatingWindow {
         padding: 0
         toggled: active
         buttonRadius: Appearance.rounding.full
-        colBackground: Appearance.transparentize(Appearance.colors.colSecondaryContainer, 1)
-        colBackgroundHover: Appearance.colors.colLayer3Hover
-        colBackgroundToggled: Appearance.colors.colSecondaryContainer
-        colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-        colRipple: Appearance.colors.colOnSurface
-        colRippleToggled: Appearance.colors.colOnSecondaryContainer
+        containerColor: toolButton.active
+            ? Appearance.colors.colSecondaryContainer : "transparent"
+        stateLayerColor: toolButton.active
+            ? Appearance.colors.colSecondaryContainerHover
+            : Appearance.colors.colLayer3Hover
+        rippleColor: toolButton.active
+            ? Appearance.colors.colOnSecondaryContainer
+            : Appearance.colors.colOnSurface
 
         contentItem: MaterialSymbol {
             text: toolButton.iconName
@@ -1072,7 +1074,7 @@ FloatingWindow {
         }
     }
 
-    component LocationButton: MaterialRippleButton {
+    component LocationButton: RippleButton {
         id: locationButton
 
         required property string label
@@ -1086,12 +1088,14 @@ FloatingWindow {
         padding: 0
         toggled: active
         buttonRadius: Appearance.rounding.full
-        colBackground: Appearance.transparentize(Appearance.colors.colSecondaryContainer, 1)
-        colBackgroundHover: Appearance.colors.colLayer2Hover
-        colBackgroundToggled: Appearance.colors.colSecondaryContainer
-        colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-        colRipple: Appearance.colors.colOnSurface
-        colRippleToggled: Appearance.colors.colOnSecondaryContainer
+        containerColor: locationButton.active
+            ? Appearance.colors.colSecondaryContainer : "transparent"
+        stateLayerColor: locationButton.active
+            ? Appearance.colors.colSecondaryContainerHover
+            : Appearance.colors.colLayer2Hover
+        rippleColor: locationButton.active
+            ? Appearance.colors.colOnSecondaryContainer
+            : Appearance.colors.colOnSurface
         releaseAction: () => root.navigateTo(locationButton.normalizedPath)
 
         contentItem: RowLayout {
@@ -1126,7 +1130,7 @@ FloatingWindow {
         }
     }
 
-    component PickerActionButton: MaterialRippleButton {
+    component PickerActionButton: RippleButton {
         id: actionButton
 
         required property string label
@@ -1137,9 +1141,9 @@ FloatingWindow {
         implicitHeight: 44
         padding: 0
         buttonRadius: Appearance.rounding.full
-        colBackground: primary ? Appearance.colors.colPrimary : Appearance.colors.colSurfaceContainerHighest
-        colBackgroundHover: primary ? Appearance.colors.colPrimaryHover : Appearance.colors.colSurfaceContainerHighestHover
-        colRipple: primary ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
+        containerColor: primary ? Appearance.colors.colPrimary : Appearance.colors.colSurfaceContainerHighest
+        stateLayerColor: primary ? Appearance.colors.colPrimaryHover : Appearance.colors.colSurfaceContainerHighestHover
+        rippleColor: primary ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
 
         contentItem: Item {
             RowLayout {

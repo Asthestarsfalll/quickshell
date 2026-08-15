@@ -139,16 +139,17 @@ Item {
         }
     }
 
-    component ActionButton: MaterialRippleButton {
+    component ActionButton: RippleButton {
         required property string iconName
         required property string accessibleName
 
         implicitWidth: 30
         implicitHeight: 30
         buttonRadius: Appearance.rounding.small
-        colBackground: Appearance.transparentize(Appearance.colors.colLayer2Hover, 1)
-        colBackgroundHover: Appearance.colors.colLayer2Hover
-        colRipple: Appearance.colors.colLayer2Active
+        containerColor: "transparent"
+        stateLayerColor: Appearance.colors.colLayer2Hover
+        pressedStateLayerColor: Appearance.colors.colLayer2Active
+        rippleColor: Appearance.colors.colOnLayer2
         Accessible.name: accessibleName
 
         contentItem: MaterialSymbol {

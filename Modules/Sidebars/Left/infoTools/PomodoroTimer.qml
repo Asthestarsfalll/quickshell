@@ -72,19 +72,22 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             spacing: 10
 
-            MaterialRippleButton {
+            RippleButton {
                 implicitWidth: 90
                 implicitHeight: 35
                 buttonRadius: Appearance.rounding.full
-                colBackground: TimerService.pomodoroRunning
+                containerColor: TimerService.pomodoroRunning
                     ? Appearance.colors.colSecondaryContainer
                     : Appearance.colors.colPrimary
-                colBackgroundHover: TimerService.pomodoroRunning
+                stateLayerColor: TimerService.pomodoroRunning
                     ? Appearance.colors.colSecondaryContainerHover
                     : Appearance.colors.colPrimaryHover
-                colRipple: TimerService.pomodoroRunning
+                pressedStateLayerColor: TimerService.pomodoroRunning
                     ? Appearance.colors.colSecondaryContainerActive
                     : Appearance.colors.colPrimaryActive
+                rippleColor: TimerService.pomodoroRunning
+                    ? Appearance.colors.colOnSecondaryContainer
+                    : Appearance.colors.colOnPrimary
                 Accessible.name: TimerService.pomodoroRunning
                     ? qsTr("暂停番茄钟") : qsTr("开始番茄钟")
                 onClicked: TimerService.togglePomodoro()
@@ -106,16 +109,17 @@ Item {
                 }
             }
 
-            MaterialRippleButton {
+            RippleButton {
                 implicitWidth: 90
                 implicitHeight: 35
                 buttonRadius: Appearance.rounding.full
                 enabled: TimerService.pomodoroSecondsLeft < TimerService.pomodoroLapDuration
                     || TimerService.pomodoroCycle > 0
                     || TimerService.pomodoroBreak
-                colBackground: Appearance.colors.colErrorContainer
-                colBackgroundHover: Appearance.colors.colErrorContainerHover
-                colRipple: Appearance.colors.colErrorContainerActive
+                containerColor: Appearance.colors.colErrorContainer
+                stateLayerColor: Appearance.colors.colErrorContainerHover
+                pressedStateLayerColor: Appearance.colors.colErrorContainerActive
+                rippleColor: Appearance.colors.colOnErrorContainer
                 Accessible.name: qsTr("重置番茄钟")
                 onClicked: TimerService.resetPomodoro()
 

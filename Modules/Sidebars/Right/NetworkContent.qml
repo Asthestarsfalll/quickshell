@@ -149,8 +149,8 @@ WidgetPanel {
             iconSize: 21
             iconColor: Appearance.colors.colOnLayer2
             accessibleName: qsTr("刷新网络列表")
-            hoverContainerColor: Appearance.colors.colLayer2Hover
-            pressedContainerColor: Appearance.colors.colLayer2Active
+            hoverStateLayerColor: Appearance.colors.colLayer2Hover
+            pressedStateLayerColor: Appearance.colors.colLayer2Active
             onClicked: root.requestRefresh()
 
             RotationAnimation on iconRotation {
@@ -487,8 +487,8 @@ WidgetPanel {
                     iconSize: 19
                     iconColor: Appearance.colors.colOnLayer2
                     accessibleName: qsTr("网络操作")
-                    hoverContainerColor: Appearance.colors.colLayer3Hover
-                    pressedContainerColor: Appearance.colors.colLayer3Active
+                    hoverStateLayerColor: Appearance.colors.colLayer3Hover
+                    pressedStateLayerColor: Appearance.colors.colLayer3Active
                     onClicked: networkMenu.open()
 
                     Menu {
@@ -560,8 +560,8 @@ WidgetPanel {
                             iconColor: Appearance.colors.colOnLayer1
                             accessibleName: itemRoot.showPassword
                                 ? qsTr("隐藏密码") : qsTr("显示密码")
-                            hoverContainerColor: Appearance.colors.colLayer1Hover
-                            pressedContainerColor: Appearance.colors.colLayer1Active
+                            hoverStateLayerColor: Appearance.colors.colLayer1Hover
+                            pressedStateLayerColor: Appearance.colors.colLayer1Active
                             onClicked: itemRoot.showPassword =
                                 !itemRoot.showPassword
                         }

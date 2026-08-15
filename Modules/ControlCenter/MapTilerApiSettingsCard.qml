@@ -222,8 +222,8 @@ Rectangle {
                         accessibleName: root.revealApiKey
                             ? qsTr("隐藏 API key")
                             : qsTr("显示 API key")
-                        hoverContainerColor: Appearance.colors.colLayer3Hover
-                        pressedContainerColor: Appearance.colors.colLayer3Active
+                        hoverStateLayerColor: Appearance.colors.colLayer3Hover
+                        pressedStateLayerColor: Appearance.colors.colLayer3Active
                         onClicked: root.revealApiKey = !root.revealApiKey
                     }
                 }

@@ -35,7 +35,7 @@ Item {
     Accessible.name: root.tooltipText
     Accessible.role: Accessible.Button
 
-    BarRippleButton {
+    RippleButton {
         id: button
 
         anchors.centerIn: parent
@@ -45,6 +45,7 @@ Item {
         buttonRadius: width / 2
         containerColor: root.containerColor
         rippleColor: root.rippleColor
+        stateLayerEnabled: false
         downAction: (event) => {
             if (root.downAction)
                 root.downAction(event);

@@ -51,13 +51,14 @@ Item {
         font.bold: true
     }
 
-    BarRippleButton {
+    RippleButton {
         id: button
 
         anchors.fill: parent
         buttonRadius: height / 2
         containerColor: Appearance.colors.colPrimaryContainer
         rippleColor: Appearance.colors.colOnPrimaryContainer
+        stateLayerEnabled: false
         releaseAction: () => {
             if (root.screen && root.screen.name)
                 WidgetState.qsScreenName = root.screen.name;

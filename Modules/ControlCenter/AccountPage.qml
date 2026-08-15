@@ -519,7 +519,7 @@ Item {
                         Repeater {
                             model: root.wallpaperChoices
 
-                            delegate: MaterialRippleButton {
+                            delegate: RippleButton {
                                 id: wallpaperChoice
 
                                 required property string modelData
@@ -528,10 +528,9 @@ Item {
                                 Layout.preferredHeight: width / 1.25
                                 padding: 0
                                 buttonRadius: Appearance.rounding.extraLarge
-                                colBackground: Appearance.colors.colSurfaceContainer
-                                colBackgroundHover: Appearance.colors.colSurfaceContainer
-                                colRipple: Appearance.colors.colOnSurface
-                                rippleOpacity: 0.18
+                                containerColor: Appearance.colors.colSurfaceContainer
+                                stateLayerColor: Appearance.colors.colOnSurface
+                                rippleColor: Appearance.colors.colOnSurface
                                 Accessible.name: qsTr("使用壁纸 %1").arg(
                                     WallpaperService.basename(modelData))
                                 onClicked: WallpaperService.setWallpaper(modelData)

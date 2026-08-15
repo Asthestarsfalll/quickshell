@@ -479,8 +479,8 @@ Item {
                         iconSize: 22
                         iconColor: root.headerInk
                         accessibleName: qsTr("编辑天气位置")
-                        hoverContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1)
-                        pressedContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
+                        hoverStateLayerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1)
+                        pressedStateLayerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
                         onClicked: console.warn("[Weather] settings action is unavailable")
                     }
 
@@ -492,8 +492,8 @@ Item {
                         iconSize: 22
                         iconColor: root.headerInk
                         accessibleName: qsTr("刷新天气")
-                        hoverContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1)
-                        pressedContainerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
+                        hoverStateLayerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.1)
+                        pressedStateLayerColor: Qt.rgba(root.headerInkMuted.r, root.headerInkMuted.g, root.headerInkMuted.b, 0.18)
                         onClicked: root.weatherSource.refresh()
                     }
 

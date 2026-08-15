@@ -4,7 +4,7 @@ import Quickshell.Services.Notifications
 import qs.Common
 import qs.Widgets.common
 
-MaterialRippleButton {
+RippleButton {
     id: root
 
     property string iconName: ""
@@ -17,12 +17,10 @@ MaterialRippleButton {
     implicitWidth: iconOnly ? 40 : Math.max(64, contentItem.implicitWidth + 30)
     buttonRadius: Appearance.rounding.small
     buttonRadiusPressed: Appearance.rounding.small
-    rippleDuration: 1200
-    rippleFadeDuration: 2400
-    rippleOpacity: 1
-    colBackground: critical ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer4
-    colBackgroundHover: critical ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer4Hover
-    colRipple: critical ? Appearance.colors.colSecondaryContainerActive : Appearance.colors.colLayer4Active
+    containerColor: critical ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer4
+    stateLayerColor: critical ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer4Hover
+    pressedStateLayerColor: critical ? Appearance.colors.colSecondaryContainerActive : Appearance.colors.colLayer4Active
+    rippleColor: critical ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer4
 
     contentItem: Item {
         implicitWidth: contentRow.implicitWidth

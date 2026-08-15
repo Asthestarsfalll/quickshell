@@ -116,8 +116,8 @@ Rectangle {
                 iconSize: 21
                 iconColor: Appearance.colors.colOnSurface
                 accessibleName: qsTr("上个月")
-                hoverContainerColor: Appearance.colors.colLayer4Hover
-                pressedContainerColor: Appearance.colors.colLayer4Active
+                hoverStateLayerColor: Appearance.colors.colLayer4Hover
+                pressedStateLayerColor: Appearance.colors.colLayer4Active
                 onClicked: root.navigateMonth(-1)
             }
 
@@ -162,8 +162,8 @@ Rectangle {
                 iconSize: 21
                 iconColor: Appearance.colors.colOnSurface
                 accessibleName: qsTr("下个月")
-                hoverContainerColor: Appearance.colors.colLayer4Hover
-                pressedContainerColor: Appearance.colors.colLayer4Active
+                hoverStateLayerColor: Appearance.colors.colLayer4Hover
+                pressedStateLayerColor: Appearance.colors.colLayer4Active
                 onClicked: root.navigateMonth(1)
             }
         }

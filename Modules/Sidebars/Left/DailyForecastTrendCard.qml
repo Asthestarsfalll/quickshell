@@ -193,9 +193,9 @@ Rectangle {
                     iconSize: 20
                     iconColor: Appearance.colors.colOnSurfaceVariant
                     accessibleName: qsTr("每日预报更多选项")
-                    containerColor: Appearance.colors.colLayer2
-                    hoverContainerColor: Appearance.colors.colLayer4
-                    pressedContainerColor: Appearance.colors.colLayer4Active
+                    normalContainerColor: Appearance.colors.colLayer2
+                    hoverStateLayerColor: Appearance.colors.colLayer4
+                    pressedStateLayerColor: Appearance.colors.colLayer4Active
                     onClicked: console.warn("[Weather] daily forecast menu is unavailable")
                 }
 

@@ -115,8 +115,8 @@ Item {
                 selectedContainerColor: Appearance.colors.colLayer2Hover
                 accessibleName: root.muted ? qsTr("取消静音 ") + root.title : qsTr("静音 ") + root.title
                 tooltipText: root.muted ? qsTr("取消静音") : qsTr("静音")
-                hoverContainerColor: Appearance.colors.colLayer2Hover
-                pressedContainerColor: Appearance.colors.colLayer2Active
+                hoverStateLayerColor: Appearance.colors.colLayer2Hover
+                pressedStateLayerColor: Appearance.colors.colLayer2Active
                 onClicked: root.muteRequested()
             }
         }

@@ -919,9 +919,9 @@ FloatingWindow {
         controlSize: 36
         iconSize: 20
         iconColor: Appearance.colors.colOnSurface
-        containerColor: Appearance.colors.colLayer2
-        hoverContainerColor: Appearance.colors.colLayer4
-        pressedContainerColor: Appearance.colors.colLayer4Active
+        normalContainerColor: Appearance.colors.colLayer2
+        hoverStateLayerColor: Appearance.colors.colLayer4
+        pressedStateLayerColor: Appearance.colors.colLayer4Active
     }
 
     component MainFab: Item {
@@ -932,7 +932,6 @@ FloatingWindow {
         property real expandedSize: 50
         property real collapsedRadius: 18
         property real morphProgress: expanded ? 1 : 0
-        property int rippleDuration: 400
         readonly property QtObject spatialMotion: Appearance.animation.elementMoveFast
         readonly property real currentSize: collapsedSize
             + (expandedSize - collapsedSize) * morphProgress
@@ -954,148 +953,24 @@ FloatingWindow {
             }
         }
 
-        Rectangle {
-            id: mainFabBackground
+        RippleButton {
+            id: mainFabButton
 
             anchors.fill: parent
-            radius: Math.min(width / 2, fab.currentRadius)
-            color: fabMouse.pressed
-                   ? Appearance.colors.colPrimaryActive
-                   : fabMouse.containsMouse
-                     ? Appearance.colors.colPrimaryHover
-                     : Appearance.colors.colPrimary
-
-            function startRipple(x, y) {
-                const dist = (ox, oy) => ox * ox + oy * oy;
-                mainFabRippleAnimation.x = x;
-                mainFabRippleAnimation.y = y;
-                mainFabRippleAnimation.radius = Math.sqrt(Math.max(
-                    dist(0, 0),
-                    dist(width, 0),
-                    dist(0, height),
-                    dist(width, height)
-                ));
-                mainFabRippleFade.complete();
-                mainFabRippleAnimation.restart();
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: Appearance.animation.expressiveEffects.duration
-                    easing.type: Appearance.animation.expressiveEffects.type
-                    easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                }
-            }
-
-            layer.enabled: true
-            layer.effect: OpacityMask {
-                maskSource: Rectangle {
-                    width: mainFabBackground.width
-                    height: mainFabBackground.height
-                    radius: mainFabBackground.radius
-                }
-            }
-
-            Item {
-                id: mainFabRipple
-
-                property real rippleSize: 0
-
-                width: rippleSize
-                height: rippleSize
-                opacity: 0
-                visible: width > 0 && height > 0
-
-                RadialGradient {
-                    anchors.fill: parent
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0.0
-                            color: Appearance.colors.colPrimaryActive
-                        }
-                        GradientStop {
-                            position: 0.32
-                            color: Appearance.colors.colPrimaryActive
-                        }
-                        GradientStop {
-                            position: 0.58
-                            color: Appearance.applyAlpha(Appearance.colors.colPrimaryActive, 0)
-                        }
-                    }
-                }
-
-                transform: Translate {
-                    x: -mainFabRipple.width / 2
-                    y: -mainFabRipple.height / 2
-                }
-            }
-
-            NumberAnimation {
-                id: mainFabRippleFade
-
-                target: mainFabRipple
-                property: "opacity"
-                to: 0
-                duration: fab.rippleDuration * 2
-                easing.type: Appearance.animation.standardDecel.type
-                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-            }
-
-            SequentialAnimation {
-                id: mainFabRippleAnimation
-
-                property real x: 0
-                property real y: 0
-                property real radius: 0
-
-                PropertyAction {
-                    target: mainFabRipple
-                    property: "x"
-                    value: mainFabRippleAnimation.x
-                }
-                PropertyAction {
-                    target: mainFabRipple
-                    property: "y"
-                    value: mainFabRippleAnimation.y
-                }
-                PropertyAction {
-                    target: mainFabRipple
-                    property: "opacity"
-                    value: 1
-                }
-                NumberAnimation {
-                    target: mainFabRipple
-                    property: "rippleSize"
-                    from: 0
-                    to: mainFabRippleAnimation.radius * 2
-                    duration: fab.rippleDuration
-                    easing.type: Appearance.animation.standardDecel.type
-                    easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-                }
-            }
-        }
-
-        MaterialSymbol {
-            anchors.centerIn: parent
-            text: "add"
-            iconSize: 28 - 5 * fab.morphProgress
-            color: Appearance.colors.colOnPrimary
-            rotation: 45 * fab.morphProgress
-        }
-
-        MouseArea {
-            id: fabMouse
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onPressed: mouse => {
-                if (mouse.button === Qt.LeftButton)
-                    mainFabBackground.startRipple(mouse.x, mouse.y);
-            }
-            onReleased: mainFabRippleFade.restart()
-            onCanceled: mainFabRippleFade.restart()
+            buttonRadius: Math.min(width / 2, fab.currentRadius)
+            containerColor: Appearance.colors.colPrimary
+            rippleColor: Appearance.colors.colOnPrimary
+            stateLayerColor: Appearance.colors.colPrimaryHover
+            pressedStateLayerColor: Appearance.colors.colPrimaryActive
             onClicked: fab.clicked()
+
+            contentItem: MaterialSymbol {
+                anchors.centerIn: parent
+                text: "add"
+                iconSize: 28 - 5 * fab.morphProgress
+                color: Appearance.colors.colOnPrimary
+                rotation: 45 * fab.morphProgress
+            }
         }
     }
 
@@ -1111,7 +986,6 @@ FloatingWindow {
         property real expandedY: 0
         property real collapsedWidth: actionSize
         property real revealProgress: expanded ? 1 : 0
-        property int rippleDuration: 400
         readonly property real horizontalPadding: 16
         readonly property int motionDelay: expanded
             ? (order - 1) * 18
@@ -1144,120 +1018,19 @@ FloatingWindow {
             }
         }
 
-        Rectangle {
-            id: miniBackground
+        RippleButton {
+            id: miniButton
 
             anchors.fill: parent
-            radius: height / 2
-            color: miniMouse.pressed
-                   ? Appearance.colors.colPrimaryContainerActive
-                   : miniMouse.containsMouse
-                     ? Appearance.colors.colPrimaryContainerHover
-                     : Appearance.colors.colPrimaryContainer
+            buttonRadius: height / 2
+            containerColor: Appearance.colors.colPrimaryContainer
+            rippleColor: Appearance.colors.colOnPrimaryContainer
+            stateLayerColor: Appearance.colors.colPrimaryContainerHover
+            pressedStateLayerColor: Appearance.colors.colPrimaryContainerActive
+            enabled: miniFab.enabled
+            onClicked: miniFab.clicked()
 
-            function startRipple(x, y) {
-                const dist = (ox, oy) => ox * ox + oy * oy;
-                miniRippleAnimation.x = x;
-                miniRippleAnimation.y = y;
-                miniRippleAnimation.radius = Math.sqrt(Math.max(
-                    dist(0, 0),
-                    dist(width, 0),
-                    dist(0, height),
-                    dist(width, height)
-                ));
-                miniRippleFade.complete();
-                miniRippleAnimation.restart();
-            }
-
-            layer.enabled: true
-            layer.effect: OpacityMask {
-                maskSource: Rectangle {
-                    width: miniBackground.width
-                    height: miniBackground.height
-                    radius: miniBackground.radius
-                }
-            }
-
-            Item {
-                id: miniRipple
-
-                property real rippleSize: 0
-
-                width: rippleSize
-                height: rippleSize
-                opacity: 0
-                visible: width > 0 && height > 0
-
-                RadialGradient {
-                    anchors.fill: parent
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0.0
-                            color: Appearance.colors.colPrimaryContainerActive
-                        }
-                        GradientStop {
-                            position: 0.32
-                            color: Appearance.colors.colPrimaryContainerActive
-                        }
-                        GradientStop {
-                            position: 0.58
-                            color: Appearance.applyAlpha(Appearance.colors.colPrimaryContainerActive, 0)
-                        }
-                    }
-                }
-
-                transform: Translate {
-                    x: -miniRipple.width / 2
-                    y: -miniRipple.height / 2
-                }
-            }
-
-            NumberAnimation {
-                id: miniRippleFade
-
-                target: miniRipple
-                property: "opacity"
-                to: 0
-                duration: miniFab.rippleDuration * 2
-                easing.type: Appearance.animation.standardDecel.type
-                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-            }
-
-            SequentialAnimation {
-                id: miniRippleAnimation
-
-                property real x: 0
-                property real y: 0
-                property real radius: 0
-
-                PropertyAction {
-                    target: miniRipple
-                    property: "x"
-                    value: miniRippleAnimation.x
-                }
-                PropertyAction {
-                    target: miniRipple
-                    property: "y"
-                    value: miniRippleAnimation.y
-                }
-                PropertyAction {
-                    target: miniRipple
-                    property: "opacity"
-                    value: 1
-                }
-                NumberAnimation {
-                    target: miniRipple
-                    property: "rippleSize"
-                    from: 0
-                    to: miniRippleAnimation.radius * 2
-                    duration: miniFab.rippleDuration
-                    easing.type: Appearance.animation.standardDecel.type
-                    easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-                }
-            }
-        }
-
-        RowLayout {
+            contentItem: RowLayout {
             id: contentRow
 
             anchors.centerIn: parent
@@ -1269,7 +1042,7 @@ FloatingWindow {
                 text: miniFab.iconName
                 iconSize: 20
                 color: Appearance.colors.colOnPrimaryContainer
-                fill: miniMouse.containsMouse ? 1 : 0
+                fill: miniButton.pointerHovered ? 1 : 0
             }
 
             Text {
@@ -1279,21 +1052,7 @@ FloatingWindow {
                 font.pixelSize: 13
                 font.weight: Font.Medium
             }
-        }
-
-        MouseArea {
-            id: miniMouse
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onPressed: mouse => {
-                if (mouse.button === Qt.LeftButton)
-                    miniBackground.startRipple(mouse.x, mouse.y);
             }
-            onReleased: miniRippleFade.restart()
-            onCanceled: miniRippleFade.restart()
-            onClicked: miniFab.clicked()
         }
     }
 

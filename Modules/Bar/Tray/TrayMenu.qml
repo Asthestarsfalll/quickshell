@@ -245,14 +245,14 @@ PopupWindow {
             visible: submenu.isSubmenu
             active: visible
 
-            sourceComponent: MaterialRippleButton {
+            sourceComponent: RippleButton {
                 id: backButton
 
                 buttonRadius: popupBackground.radius - popupBackground.popupPadding
-                colBackground: Appearance.transparentize(Appearance.colors.colLayer0, 1)
-                colBackgroundHover: Appearance.colors.colSecondaryContainer
-                colRipple: Appearance.colors.colSecondaryContainerActive
-                rippleEnabled: false
+                containerColor: "transparent"
+                stateLayerColor: Appearance.colors.colSecondaryContainer
+                pressedStateLayerColor: Appearance.colors.colSecondaryContainerActive
+                rippleColor: Appearance.colors.colOnSecondaryContainer
                 implicitWidth: backContent.implicitWidth + 24
                 implicitHeight: 36
                 Layout.fillWidth: true

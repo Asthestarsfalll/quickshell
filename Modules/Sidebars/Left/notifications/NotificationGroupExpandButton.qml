@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import qs.Common
 import qs.Widgets.common
 
-MaterialRippleButton {
+RippleButton {
     id: root
 
     required property int count
@@ -14,12 +14,10 @@ MaterialRippleButton {
     implicitWidth: Math.max(contentItem.implicitWidth + 10, 30)
     buttonRadius: Appearance.rounding.full
     buttonRadiusPressed: Appearance.rounding.full
-    rippleDuration: 1200
-    rippleFadeDuration: 2400
-    rippleOpacity: 1
-    colBackground: Appearance.mix(Appearance.colors.colLayer2, Appearance.colors.colLayer2Hover, 0.5)
-    colBackgroundHover: Appearance.colors.colLayer2Hover
-    colRipple: Appearance.colors.colLayer2Active
+    containerColor: Appearance.mix(Appearance.colors.colLayer2, Appearance.colors.colLayer2Hover, 0.5)
+    stateLayerColor: Appearance.colors.colLayer2Hover
+    pressedStateLayerColor: Appearance.colors.colLayer2Active
+    rippleColor: Appearance.colors.colOnLayer2
 
     contentItem: Item {
         implicitWidth: contentRow.implicitWidth

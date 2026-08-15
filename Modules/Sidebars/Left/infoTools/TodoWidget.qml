@@ -124,7 +124,7 @@ Item {
         z: 10
     }
 
-    MaterialRippleButton {
+    RippleButton {
         id: fabButton
 
         property real radius: buttonRadius
@@ -137,9 +137,10 @@ Item {
         implicitWidth: root.fabSize
         implicitHeight: root.fabSize
         buttonRadius: Appearance.rounding.normal
-        colBackground: Appearance.colors.colPrimaryContainer
-        colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-        colRipple: Appearance.colors.colPrimaryContainerActive
+        containerColor: Appearance.colors.colPrimaryContainer
+        stateLayerColor: Appearance.colors.colPrimaryContainerHover
+        pressedStateLayerColor: Appearance.colors.colPrimaryContainerActive
+        rippleColor: Appearance.colors.colOnPrimaryContainer
         Accessible.name: qsTr("添加任务")
         onClicked: root.showAddDialog = true
 

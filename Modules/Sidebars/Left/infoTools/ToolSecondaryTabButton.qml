@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
 import qs.Common
 import qs.Components
+import qs.Widgets.common
 
 TabButton {
     id: root
@@ -10,46 +10,22 @@ TabButton {
     required property string buttonText
     required property string buttonIcon
 
-    readonly property int rippleDuration: 1200
-    readonly property color transparentSurface: Appearance.transparentize(Appearance.colors.colSurfaceContainer, 1)
-    readonly property color hoverSurface: Appearance.applyAlpha(Appearance.colors.colOnSurface, checked ? 0 : 0.05)
-    readonly property color rippleColor: Appearance.applyAlpha(Appearance.colors.colOnSurface, 0.05)
+    readonly property int tabMargin: 3
+    readonly property color transparentSurface: Appearance.transparentize(
+        Appearance.colors.colSurfaceContainer, 1)
+    readonly property color hoverSurface: Appearance.applyAlpha(
+        Appearance.colors.colOnSurface, checked ? 0 : 0.05)
 
     implicitHeight: 48
     padding: 0
     hoverEnabled: true
     Accessible.name: buttonText
 
-    function clearRipple() {
-        rippleAnimation.stop();
-        rippleFadeAnimation.stop();
-        ripple.opacity = 0;
-        ripple.implicitWidth = 0;
-        ripple.implicitHeight = 0;
-    }
-
-    function startRipple(x, y) {
-        root.clearRipple();
-        const localY = y - buttonBackground.y;
-        const distance = (offsetX, offsetY) => offsetX * offsetX + offsetY * offsetY;
-        const bottom = buttonBackground.y + buttonBackground.height;
-
-        rippleAnimation.originX = x;
-        rippleAnimation.originY = localY;
-        rippleAnimation.radius = Math.sqrt(Math.max(
-            distance(0, buttonBackground.y),
-            distance(0, bottom),
-            distance(root.width, buttonBackground.y),
-            distance(root.width, bottom)
-        ));
-        rippleAnimation.restart();
-    }
-
     background: Rectangle {
         id: buttonBackground
 
         anchors.fill: parent
-        anchors.margins: 3
+        anchors.margins: root.tabMargin
         radius: Appearance.rounding.normal
         color: pointerArea.containsMouse ? root.hoverSurface : root.transparentSurface
 
@@ -61,39 +37,12 @@ TabButton {
             }
         }
 
-        layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: buttonBackground.width
-                height: buttonBackground.height
-                radius: buttonBackground.radius
-            }
-        }
+        RippleEffect {
+            id: rippleEffect
 
-        Item {
-            id: ripple
-
-            property real implicitWidth: 0
-            property real implicitHeight: 0
-
-            width: implicitWidth
-            height: implicitHeight
-            opacity: 0
-            visible: width > 0 && height > 0
-
-            RadialGradient {
-                anchors.fill: parent
-                gradient: Gradient {
-                    GradientStop { position: 0; color: root.rippleColor }
-                    GradientStop { position: 0.3; color: root.rippleColor }
-                    GradientStop { position: 0.5; color: Appearance.applyAlpha(root.rippleColor, 0) }
-                }
-            }
-
-            transform: Translate {
-                x: -ripple.width / 2
-                y: -ripple.height / 2
-            }
+            anchors.fill: parent
+            color: Appearance.colors.colOnSurface
+            shapeRadius: buttonBackground.radius
         }
     }
 
@@ -140,46 +89,15 @@ TabButton {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        acceptedButtons: Qt.LeftButton
 
         onPressed: event => {
             root.click();
-            root.startRipple(event.x, event.y);
+            const localPoint = buttonBackground.mapFromItem(pointerArea, event.x, event.y);
+            rippleEffect.startAt(localPoint.x, localPoint.y);
         }
 
-        onReleased: rippleFadeAnimation.restart()
-        onCanceled: rippleFadeAnimation.restart()
-    }
-
-    NumberAnimation {
-        id: rippleFadeAnimation
-
-        target: ripple
-        property: "opacity"
-        to: 0
-        duration: root.rippleDuration * 2
-        easing.type: Easing.OutCubic
-    }
-
-    SequentialAnimation {
-        id: rippleAnimation
-
-        property real originX: 0
-        property real originY: 0
-        property real radius: 0
-
-        PropertyAction { target: ripple; property: "x"; value: rippleAnimation.originX }
-        PropertyAction { target: ripple; property: "y"; value: rippleAnimation.originY }
-        PropertyAction { target: ripple; property: "opacity"; value: 1 }
-
-        ParallelAnimation {
-            NumberAnimation {
-                target: ripple
-                properties: "implicitWidth,implicitHeight"
-                from: 0
-                to: rippleAnimation.radius * 2
-                duration: root.rippleDuration
-                easing.type: Easing.OutCubic
-            }
-        }
+        onReleased: rippleEffect.finish()
+        onCanceled: rippleEffect.finish()
     }
 }

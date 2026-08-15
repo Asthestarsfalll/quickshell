@@ -179,8 +179,8 @@ WidgetPanel {
             iconSize: 21
             iconColor: Appearance.colors.colOnLayer2
             accessibleName: qsTr("重新扫描蓝牙设备")
-            hoverContainerColor: Appearance.colors.colLayer2Hover
-            pressedContainerColor: Appearance.colors.colLayer2Active
+            hoverStateLayerColor: Appearance.colors.colLayer2Hover
+            pressedStateLayerColor: Appearance.colors.colLayer2Active
             onClicked: root.restartDiscoveryLease()
 
             RotationAnimation on iconRotation {
@@ -514,8 +514,8 @@ WidgetPanel {
                 iconSize: 18
                 iconColor: Appearance.colors.colOnLayer2
                 accessibleName: qsTr("蓝牙设备操作")
-                hoverContainerColor: Appearance.colors.colLayer3Hover
-                pressedContainerColor: Appearance.colors.colLayer3Active
+                hoverStateLayerColor: Appearance.colors.colLayer3Hover
+                pressedStateLayerColor: Appearance.colors.colLayer3Active
                 onClicked: deviceMenu.open()
 
                 Menu {

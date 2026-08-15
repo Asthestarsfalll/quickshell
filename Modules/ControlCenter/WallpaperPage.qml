@@ -179,13 +179,13 @@ StyledFlickable {
         iconFill: 1
         iconColor: action.darkOverlay
             ? "white" : Appearance.colors.colOnSurface
-        containerColor: action.darkOverlay
+        normalContainerColor: action.darkOverlay
             ? Appearance.applyAlpha("white", 0.18)
             : Appearance.colors.colSurfaceContainerHigh
-        hoverContainerColor: action.darkOverlay
+        hoverStateLayerColor: action.darkOverlay
             ? Appearance.applyAlpha("white", 0.28)
             : Appearance.colors.colSurfaceContainerHighest
-        pressedContainerColor: action.darkOverlay
+        pressedStateLayerColor: action.darkOverlay
             ? Appearance.applyAlpha("white", 0.36)
             : Appearance.colors.colLayer3Active
     }
@@ -834,7 +834,7 @@ StyledFlickable {
                             onFlipClicked: easingCurveEditor.flipCurve()
                         }
 
-                        Rectangle {
+                        RippleButton {
                             id: editBezierButton
 
                             Layout.alignment: Qt.AlignLeft
@@ -842,73 +842,15 @@ StyledFlickable {
                             Layout.preferredHeight: 44
                             enabled: easingCurveEditor.editable
                             opacity: enabled ? 1 : 0.45
-                            radius: 13
-                            clip: true
-                            color: editBezierMouse.pressed
-                                   ? Appearance.colors.colPrimaryContainerActive
-                                   : editBezierMouse.containsMouse
-                                     ? Appearance.colors.colPrimaryContainerHover
-                                     : Appearance.colors.colPrimaryContainer
+                            buttonRadius: 13
+                            containerColor: Appearance.colors.colPrimaryContainer
+                            rippleColor: Appearance.colors.colOnPrimaryContainer
+                            stateLayerColor: Appearance.colors.colPrimaryContainerHover
+                            pressedStateLayerColor: Appearance.colors.colPrimaryContainerActive
+                            Accessible.name: qsTr("编辑贝塞尔")
+                            onClicked: easingCurveEditor.openCoordinateEditor()
 
-                            function startRipple(x, y) {
-                                ripple.centerX = x;
-                                ripple.centerY = y;
-                                rippleAnimation.diameter = Math.sqrt(width * width + height * height) * 2.2;
-                                rippleAnimation.restart();
-                            }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Appearance.animation.expressiveEffects.duration
-                                    easing.type: Appearance.animation.expressiveEffects.type
-                                    easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                                }
-                            }
-
-                            Rectangle {
-                                id: ripple
-
-                                property real centerX: editBezierButton.width / 2
-                                property real centerY: editBezierButton.height / 2
-                                property real diameter: 0
-
-                                x: centerX - width / 2
-                                y: centerY - height / 2
-                                width: diameter
-                                height: diameter
-                                radius: width / 2
-                                color: Appearance.colors.colOnPrimaryContainer
-                                opacity: 0
-                                visible: opacity > 0
-                            }
-
-                            ParallelAnimation {
-                                id: rippleAnimation
-
-                                property real diameter: 0
-
-                                NumberAnimation {
-                                    target: ripple
-                                    property: "diameter"
-                                    from: 0
-                                    to: rippleAnimation.diameter
-                                    duration: Appearance.animation.standardLarge.duration
-                                    easing.type: Appearance.animation.standardDecel.type
-                                    easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-                                }
-
-                                NumberAnimation {
-                                    target: ripple
-                                    property: "opacity"
-                                    from: 0.18
-                                    to: 0
-                                    duration: Appearance.animation.standardLarge.duration
-                                    easing.type: Appearance.animation.standardDecel.type
-                                    easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-                                }
-                            }
-
-                            RowLayout {
+                            contentItem: RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 8
 
@@ -930,19 +872,6 @@ StyledFlickable {
                                 }
                             }
 
-                            MouseArea {
-                                id: editBezierMouse
-
-                                anchors.fill: parent
-                                enabled: editBezierButton.enabled
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onPressed: mouse => {
-                                    if (mouse.button === Qt.LeftButton)
-                                        editBezierButton.startRipple(mouse.x, mouse.y);
-                                }
-                                onClicked: easingCurveEditor.openCoordinateEditor()
-                            }
                         }
 
                         SplitMenuButton {

@@ -583,9 +583,9 @@ Item {
         controlSize: 36
         iconSize: 20
         iconColor: Appearance.colors.colOnSurface
-        containerColor: Appearance.colors.colLayer2
-        hoverContainerColor: Appearance.colors.colLayer4
-        pressedContainerColor: Appearance.colors.colLayer4Active
+        normalContainerColor: Appearance.colors.colLayer2
+        hoverStateLayerColor: Appearance.colors.colLayer4
+        pressedStateLayerColor: Appearance.colors.colLayer4Active
     }
 
     component FormatField: ColumnLayout {

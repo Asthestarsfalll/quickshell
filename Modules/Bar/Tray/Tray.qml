@@ -159,7 +159,7 @@ Item {
         columnSpacing: 15
         columns: root.vertical ? 1 : Math.max(1, root.pinnedItems.length + 1)
 
-        MaterialRippleButton {
+        RippleButton {
             id: trayOverflowButton
 
             visible: root.unpinnedItems.length > 0
@@ -167,13 +167,10 @@ Item {
             implicitWidth: 24
             implicitHeight: 24
             buttonRadius: Appearance.rounding.full
-            colBackground: Appearance.transparentize(Appearance.colors.colLayer0, 1)
-            colBackgroundHover: Appearance.colors.colSecondaryContainer
-            colBackgroundToggled: Appearance.colors.colSecondaryContainer
-            colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-            colRipple: Appearance.colors.colSecondaryContainerActive
-            colRippleToggled: Appearance.colors.colSecondaryContainerActive
-            rippleEnabled: false
+            containerColor: root.trayOverflowOpen ? Appearance.colors.colSecondaryContainer : "transparent"
+            stateLayerColor: root.trayOverflowOpen ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer
+            pressedStateLayerColor: Appearance.colors.colSecondaryContainerActive
+            rippleColor: Appearance.colors.colOnSecondaryContainer
             Layout.alignment: Qt.AlignVCenter
             releaseAction: () => {
                 if (root.trayOverflowOpen) {

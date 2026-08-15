@@ -167,19 +167,22 @@ Item {
             anchors.bottomMargin: 6
             spacing: 4
 
-            MaterialRippleButton {
+            RippleButton {
                 implicitWidth: 90
                 implicitHeight: 35
                 buttonRadius: Appearance.rounding.full
-                colBackground: TimerService.stopwatchRunning
+                containerColor: TimerService.stopwatchRunning
                     ? Appearance.colors.colSecondaryContainer
                     : Appearance.colors.colPrimary
-                colBackgroundHover: TimerService.stopwatchRunning
+                stateLayerColor: TimerService.stopwatchRunning
                     ? Appearance.colors.colSecondaryContainerHover
                     : Appearance.colors.colPrimaryHover
-                colRipple: TimerService.stopwatchRunning
+                pressedStateLayerColor: TimerService.stopwatchRunning
                     ? Appearance.colors.colSecondaryContainerActive
                     : Appearance.colors.colPrimaryActive
+                rippleColor: TimerService.stopwatchRunning
+                    ? Appearance.colors.colOnSecondaryContainer
+                    : Appearance.colors.colOnPrimary
                 Accessible.name: TimerService.stopwatchRunning
                     ? qsTr("暂停秒表") : qsTr("启动秒表")
                 onClicked: TimerService.toggleStopwatch()
@@ -201,20 +204,23 @@ Item {
                 }
             }
 
-            MaterialRippleButton {
+            RippleButton {
                 implicitWidth: 90
                 implicitHeight: 35
                 buttonRadius: Appearance.rounding.full
                 enabled: TimerService.stopwatchTime > 0 || TimerService.stopwatchLaps.length > 0
-                colBackground: TimerService.stopwatchRunning
+                containerColor: TimerService.stopwatchRunning
                     ? Appearance.colors.colLayer2
                     : Appearance.colors.colErrorContainer
-                colBackgroundHover: TimerService.stopwatchRunning
+                stateLayerColor: TimerService.stopwatchRunning
                     ? Appearance.colors.colLayer2Hover
                     : Appearance.colors.colErrorContainerHover
-                colRipple: TimerService.stopwatchRunning
+                pressedStateLayerColor: TimerService.stopwatchRunning
                     ? Appearance.colors.colLayer2Active
                     : Appearance.colors.colErrorContainerActive
+                rippleColor: TimerService.stopwatchRunning
+                    ? Appearance.colors.colOnLayer2
+                    : Appearance.colors.colOnErrorContainer
                 Accessible.name: TimerService.stopwatchRunning
                     ? qsTr("记录单圈") : qsTr("重置秒表")
                 onClicked: {

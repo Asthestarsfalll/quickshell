@@ -213,19 +213,16 @@ Rectangle {
             }
         }
 
-        MaterialRippleButton {
+        RippleButton {
             id: avatarButton
 
             anchors.fill: parent
             padding: 0
             focusPolicy: Qt.StrongFocus
             buttonRadius: Appearance.rounding.full
-            colBackground: Appearance.transparentize(
-                Appearance.colors.colOnImage, 1)
-            colBackgroundHover: Appearance.transparentize(
-                Appearance.colors.colOnImage, 1)
-            colRipple: Appearance.colors.colOnImage
-            rippleOpacity: 0.22
+            containerColor: "transparent"
+            stateLayerEnabled: false
+            rippleColor: Appearance.colors.colOnImage
             Accessible.name: root.avatarActionLabel
             onClicked: {
                 focus = false

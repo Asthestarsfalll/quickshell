@@ -282,9 +282,9 @@ StyledFlickable {
                                 accessibleName: root.revealApiKey
                                     ? qsTr("隐藏 API key")
                                     : qsTr("显示 API key")
-                                hoverContainerColor:
+                                hoverStateLayerColor:
                                     Appearance.colors.colLayer3Hover
-                                pressedContainerColor:
+                                pressedStateLayerColor:
                                     Appearance.colors.colLayer3Active
                                 onClicked: root.revealApiKey =
                                     !root.revealApiKey

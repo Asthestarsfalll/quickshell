@@ -799,8 +799,8 @@ Item {
                     iconSize: 16
                     iconColor: Appearance.colors.colOnSurfaceVariant
                     accessibleName: qsTr("复制坐标")
-                    hoverContainerColor: Appearance.colors.colLayer2Hover
-                    pressedContainerColor: Appearance.colors.colLayer2Active
+                    hoverStateLayerColor: Appearance.colors.colLayer2Hover
+                    pressedStateLayerColor: Appearance.colors.colLayer2Active
                     onClicked: root.copyCoordinateList()
                 }
             }
