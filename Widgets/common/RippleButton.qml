@@ -136,7 +136,7 @@ Button {
             enabled: root.stateLayerEnabled
             hovered: root.pointerHovered
             focused: root.visualFocus
-            pressed: root.down
+            pressed: false
             selected: root.toggled
             selectedEnabled: root.selectedStateLayerEnabled
             color: root.stateLayerColor

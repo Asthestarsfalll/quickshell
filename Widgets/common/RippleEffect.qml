@@ -1,5 +1,4 @@
 import QtQuick
-import Qt5Compat.GraphicalEffects
 import qs.Common
 
 Item {
@@ -37,46 +36,23 @@ Item {
 
     }
 
-    Item {
-        id: rippleSource
-
-        anchors.fill: parent
-        // The source is sampled by OpacityMask, but must not be drawn directly.
-        visible: false
-
-        Rectangle {
-            id: ripple
-
-            property real centerX: root.width / 2
-            property real centerY: root.height / 2
-            property real diameter: 0
-
-            x: centerX - width / 2
-            y: centerY - height / 2
-            width: diameter
-            height: diameter
-            radius: width / 2
-            color: root.color
-            opacity: 0
-            visible: false
-        }
-
-    }
-
-    OpacityMask {
-        anchors.fill: parent
-        source: rippleSource
-        maskSource: roundedMask
-        visible: ripple.visible
-    }
+    clip: true
 
     Rectangle {
-        id: roundedMask
+        id: ripple
 
-        anchors.fill: parent
-        radius: root.shapeRadius
-        color: "white"
-        visible: false
+        property real centerX: root.width / 2
+        property real centerY: root.height / 2
+        property real diameter: 0
+
+        x: centerX - width / 2
+        y: centerY - height / 2
+        width: diameter
+        height: diameter
+        radius: width / 2
+        color: root.color
+        opacity: 0
+        visible: opacity > 0
     }
 
     ParallelAnimation {
