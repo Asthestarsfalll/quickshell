@@ -23,10 +23,8 @@ BarCircularButton {
     selected: root.isActive
     iconName: root.sidebarIconName
     containerColor: root.activeColor
-    hoverContainerColor: root.activeColor
-    selectedContainerColor: root.activeColor
+    rippleColor: root.activeContentColor
     iconColor: root.activeContentColor
-    selectedIconColor: root.activeContentColor
     tooltipText: root.viewName === "drawer" ? qsTr("抽屉") : qsTr("通知中心")
     onClicked: root.toggleView()
 }

@@ -1,16 +1,21 @@
 import QtQuick
-import QtQuick.Layouts
 import qs.Services
 import qs.Common
 import qs.Components
 import qs.Widgets.common
 
-MaterialRippleButton {
+Item {
     id: root
 
     property var screen: null
     property bool vertical: false
     readonly property bool active: WidgetState.qsOpen && WidgetState.qsView === "network"
+    readonly property bool expanded: !root.vertical && button.pointerHovered
+    readonly property real baseSize: Sizes.barControlCircleSize
+    readonly property real targetWidth: root.vertical ? (button.pointerHovered ? 34 : root.baseSize) : (root.expanded ? Math.max(root.baseSize, 18 + 6 + ssidMetrics.width + 20) : root.baseSize)
+    readonly property real targetHeight: root.vertical && button.pointerHovered ? 34 : root.baseSize
+    property real animatedWidth: root.targetWidth
+    property real animatedHeight: root.targetHeight
     readonly property string networkIcon: {
         if (NetworkService.activeConnectionType === "ETHERNET")
             return "settings_ethernet";
@@ -34,35 +39,104 @@ MaterialRippleButton {
         return "signal_wifi_0_bar";
     }
 
-    implicitHeight: Sizes.barControlCircleSize
-    implicitWidth: root.vertical ? Sizes.barControlCircleSize : (root.pointerHovered ? layout.implicitWidth + 20 : Sizes.barControlCircleSize)
-    buttonRadius: height / 2
-    buttonRadiusPressed: height / 2
-    toggled: root.active
-    colBackground: Appearance.colors.colPrimaryContainer
-    colBackgroundHover: root.down ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colPrimaryContainerHover
-    colBackgroundToggled: Appearance.colors.colPrimaryContainer
-    colBackgroundToggledHover: root.down ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colPrimaryContainerHover
-    colRipple: Appearance.applyAlpha(Appearance.colors.colOnPrimaryContainer, 0.16)
-    colRippleToggled: Appearance.applyAlpha(Appearance.colors.colOnPrimaryContainer, 0.16)
-    releaseAction: () => {
-        if (root.screen && root.screen.name)
-            WidgetState.qsScreenName = root.screen.name;
+    implicitWidth: root.animatedWidth
+    implicitHeight: root.animatedHeight
 
-        if (root.active) {
-            WidgetState.qsOpen = false;
-        } else {
-            WidgetState.qsView = "network";
-            WidgetState.qsOpen = true;
+    TextMetrics {
+        id: ssidMetrics
+
+        text: NetworkService.activeConnection
+        font.family: Fonts.ui
+        font.pixelSize: 12
+        font.bold: true
+    }
+
+    BarRippleButton {
+        id: button
+
+        anchors.fill: parent
+        buttonRadius: height / 2
+        containerColor: Appearance.colors.colPrimaryContainer
+        rippleColor: Appearance.colors.colOnPrimaryContainer
+        releaseAction: () => {
+            if (root.screen && root.screen.name)
+                WidgetState.qsScreenName = root.screen.name;
+
+            if (root.active) {
+                WidgetState.qsOpen = false;
+            } else {
+                WidgetState.qsView = "network";
+                WidgetState.qsOpen = true;
+            }
         }
+
+        contentItem: Item {
+            anchors.fill: parent
+
+            Row {
+                anchors.centerIn: parent
+                spacing: ssidSlot.width > 0 ? 6 : 0
+
+                MaterialSymbol {
+                    width: 18
+                    height: parent.height
+                    text: root.networkIcon
+                    iconSize: 18
+                    fill: 0
+                    color: Appearance.colors.colOnPrimaryContainer
+                }
+
+                Item {
+                    id: ssidSlot
+
+                    width: root.expanded ? ssidMetrics.width : 0
+                    height: parent.height
+                    clip: true
+
+                    Text {
+                        anchors.centerIn: parent
+                        width: ssidMetrics.width
+                        text: NetworkService.activeConnection
+                        opacity: root.expanded ? 1 : 0
+                        font.family: Fonts.ui
+                        font.pixelSize: 12
+                        font.bold: true
+                        color: Appearance.colors.colOnPrimaryContainer
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Appearance.animation.expressiveFastEffects.duration
+                                easing.type: Appearance.animation.expressiveFastEffects.type
+                                easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                            }
+
+                        }
+
+                    }
+
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: Appearance.animation.expressiveFastEffects.duration
+                            easing.type: Appearance.animation.expressiveFastEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
     }
 
     PopupToolTip {
-        extraVisibleCondition: root.pointerHovered
+        extraVisibleCondition: button.pointerHovered
         text: NetworkService.connected ? ((NetworkService.activeConnection || qsTr("网络已连接")) + qsTr("\n点击打开网络设置")) : qsTr("网络未连接\n点击打开网络设置")
     }
 
-    Behavior on implicitWidth {
+    Behavior on animatedWidth {
         NumberAnimation {
             duration: Appearance.animation.expressiveFastEffects.duration
             easing.type: Appearance.animation.expressiveFastEffects.type
@@ -71,38 +145,11 @@ MaterialRippleButton {
 
     }
 
-    contentItem: RowLayout {
-        id: layout
-
-        anchors.centerIn: parent
-        spacing: 6
-
-        MaterialSymbol {
-            text: root.networkIcon
-            iconSize: 18
-            color: Appearance.colors.colOnPrimaryContainer
-            fill: root.active ? 1 : 0
-        }
-
-        Text {
-            text: NetworkService.activeConnection
-            visible: root.pointerHovered && !root.vertical
-            opacity: visible ? 1 : 0
-            font.family: Fonts.ui
-            font.pixelSize: 12
-            font.bold: true
-            color: Appearance.colors.colOnPrimaryContainer
-            Layout.alignment: Qt.AlignVCenter
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Appearance.animation.expressiveFastEffects.duration
-                    easing.type: Appearance.animation.expressiveFastEffects.type
-                    easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
-                }
-
-            }
-
+    Behavior on animatedHeight {
+        NumberAnimation {
+            duration: Appearance.animation.expressiveFastEffects.duration
+            easing.type: Appearance.animation.expressiveFastEffects.type
+            easing.bezierCurve: Appearance.animation.expressiveFastEffects.bezierCurve
         }
 
     }

@@ -12,11 +12,8 @@ BarCircularButton {
     iconName: "settings"
     selected: root.active
     containerColor: Appearance.colors.colPrimaryContainer
-    hoverContainerColor: Appearance.colors.colPrimaryContainerHover
-    pressedContainerColor: Appearance.colors.colPrimaryContainerActive
-    selectedContainerColor: Appearance.colors.colPrimaryContainer
+    rippleColor: Appearance.colors.colOnPrimaryContainer
     iconColor: Appearance.colors.colOnPrimaryContainer
-    selectedIconColor: Appearance.colors.colOnPrimaryContainer
     tooltipText: qsTr("左键：快捷设置\n右键：控制中心")
     onClicked: {
         if (root.screen && root.screen.name)

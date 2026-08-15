@@ -13,11 +13,8 @@ BarCircularButton {
     selected: root.active
     enabled: BluetoothService.available
     containerColor: Appearance.colors.colSecondaryContainer
-    hoverContainerColor: Appearance.colors.colSecondaryContainerHover
-    pressedContainerColor: Appearance.colors.colSecondaryContainerActive
-    selectedContainerColor: Appearance.colors.colSecondaryContainer
+    rippleColor: Appearance.colors.colOnSecondaryContainer
     iconColor: Appearance.colors.colOnSecondaryContainer
-    selectedIconColor: Appearance.colors.colOnSecondaryContainer
     tooltipText: BluetoothService.connected ? (BluetoothService.connectedName || qsTr("蓝牙已连接")) : BluetoothService.enabled ? qsTr("蓝牙已开启") : qsTr("蓝牙已关闭")
     onClicked: {
         if (root.screen && root.screen.name)
