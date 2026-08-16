@@ -16,6 +16,7 @@ FocusScope {
     property bool expanded: false
     property real fieldHeight: 40
     property real itemHeight: 40
+    property real menuItemSpacing: 4
     property int maxVisibleItems: 6
     property Item popupBoundsItem: null
     property real scrollTargetX: 0
@@ -23,7 +24,8 @@ FocusScope {
     readonly property Item popupParentItem: root.Window.window ? root.Window.window.contentItem : null
     readonly property real menuPadding: 6
     readonly property real menuGap: 6
-    readonly property real listTargetHeight: Math.min(maxVisibleItems * itemHeight, Math.max(itemHeight, options.length * itemHeight))
+    readonly property int visibleMenuItemCount: Math.min(Math.max(1, maxVisibleItems), Math.max(1, options.length))
+    readonly property real listTargetHeight: visibleMenuItemCount * itemHeight + Math.max(0, visibleMenuItemCount - 1) * menuItemSpacing
     readonly property bool dragActive: dragCoordinator && dragCoordinator.dragActive
 
     signal toggled(string componentId)
@@ -99,29 +101,29 @@ FocusScope {
         const source = Array.isArray(root.values) ? root.values : [];
         const entries = [];
         for (let index = 0; index < source.length; index += 1) {
-            if (source[index] !== componentId)
-                entries.push({
-                "entryKey": source[index],
-                "componentId": source[index],
+            const value = source[index];
+            const isDraggedComponent = value === componentId;
+            const movingWithinThisZone = root.zone === sourceZone && root.zone === targetZone;
+            if (isDraggedComponent && movingWithinThisZone)
+                continue;
+
+            if (isDraggedComponent && root.zone !== sourceZone)
+                continue;
+
+            entries.push({
+                "entryKey": value,
+                "componentId": value,
                 "placeholder": false
             });
-
         }
         if (root.zone === targetZone) {
             const insertionIndex = Math.max(0, Math.min(entries.length, targetIndex));
             entries.splice(insertionIndex, 0, {
-                "entryKey": "__drop_placeholder__",
+                "entryKey": componentId,
                 "componentId": componentId,
                 "placeholder": true
             });
         }
-        if (root.zone === sourceZone)
-            entries.push({
-            "entryKey": componentId,
-            "componentId": componentId,
-            "placeholder": false
-        });
-
         root.synchronizeEntries(entries);
     }
 
@@ -323,7 +325,7 @@ FocusScope {
                 model: chipModel
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                interactive: contentWidth > width && !root.dragActive
+                interactive: false
 
                 Behavior on contentX {
                     enabled: !root.dragActive
@@ -358,7 +360,7 @@ FocusScope {
                         width: chipDelegate.placeholder ? parent.width : chipDelegate.naturalWidth
                         height: 30
                         anchors.centerIn: parent
-                        radius: Appearance.rounding.full
+                        radius: Appearance.rounding.small
                         color: chipDelegate.placeholder ? Appearance.colors.colLayer2Active : chipHover.hovered ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colPrimaryContainer
                         opacity: chipDelegate.placeholder ? 0.45 : 1
 
@@ -632,6 +634,7 @@ FocusScope {
                     width: parent.width - root.menuPadding * 2
                     height: optionsPopup.height - root.menuPadding * 2
                     model: root.options
+                    spacing: root.menuItemSpacing
                     boundsBehavior: Flickable.StopAtBounds
                     currentIndex: root.highlightedIndex
                     animateAppearance: false

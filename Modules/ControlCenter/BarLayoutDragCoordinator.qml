@@ -75,15 +75,15 @@ Item {
         const id = root.componentId;
         const zone = root.targetZone;
         const index = root.targetIndex;
+        if (zone !== "" && index >= 0)
+            root.dropped(id, zone, index);
+
         root.dragActive = false;
         root.leadingField.clearDropPreview();
         root.trailingField.clearDropPreview();
         root.activeTargetField = null;
         root.componentId = "";
         root.targetZone = "";
-        if (zone !== "" && index >= 0)
-            root.dropped(id, zone, index);
-
     }
 
     FrameAnimation {
@@ -103,7 +103,7 @@ Item {
         width: root.dragWidth
         height: 30
         z: 1000
-        radius: Appearance.rounding.full
+        radius: Appearance.rounding.small
         color: Appearance.colors.colPrimaryContainerHover
         scale: 1.04
 
