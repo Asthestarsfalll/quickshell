@@ -272,7 +272,7 @@ StyledFlickable {
                 Layout.fillWidth: true
                 visible: root.selectedDigitData().colorRole === "custom"
                 text: root.customColorDraft
-                placeholderText: "#RRGGBB 或 #RRGGBBAA"
+                placeholderText: qsTr("#RRGGBB 或 #RRGGBBAA")
                 Accessible.name: qsTr("自定义颜色")
                 onTextChanged: {
                     if (activeFocus)

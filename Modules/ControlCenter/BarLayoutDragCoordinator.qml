@@ -55,16 +55,24 @@ Item {
         root.leadingField.autoScrollVelocity = 0;
         root.trailingField.autoScrollVelocity = 0;
         if (!targetField) {
+            const previewChanged = root.targetZone !== "" || root.targetIndex !== -1;
             root.targetZone = "";
             root.targetIndex = -1;
-            root.leadingField.showDropPreview(root.componentId, root.sourceZone, "", -1);
-            root.trailingField.showDropPreview(root.componentId, root.sourceZone, "", -1);
+            if (previewChanged) {
+                root.leadingField.showDropPreview(root.componentId, root.sourceZone, "", -1);
+                root.trailingField.showDropPreview(root.componentId, root.sourceZone, "", -1);
+            }
             return ;
         }
-        root.targetZone = targetField.zone;
-        root.targetIndex = targetField.insertionIndexAt(root, root.pointerX, root.pointerY);
-        root.leadingField.showDropPreview(root.componentId, root.sourceZone, root.targetZone, root.targetIndex);
-        root.trailingField.showDropPreview(root.componentId, root.sourceZone, root.targetZone, root.targetIndex);
+        const nextZone = targetField.zone;
+        const nextIndex = targetField.insertionIndexAt(root, root.pointerX, root.pointerY);
+        const previewChanged = nextZone !== root.targetZone || nextIndex !== root.targetIndex;
+        root.targetZone = nextZone;
+        root.targetIndex = nextIndex;
+        if (previewChanged) {
+            root.leadingField.showDropPreview(root.componentId, root.sourceZone, root.targetZone, root.targetIndex);
+            root.trailingField.showDropPreview(root.componentId, root.sourceZone, root.targetZone, root.targetIndex);
+        }
         targetField.updateAutoScroll(root, root.pointerX);
     }
 
@@ -83,7 +91,9 @@ Item {
         root.trailingField.clearDropPreview();
         root.activeTargetField = null;
         root.componentId = "";
+        root.sourceZone = "";
         root.targetZone = "";
+        root.targetIndex = -1;
     }
 
     FrameAnimation {

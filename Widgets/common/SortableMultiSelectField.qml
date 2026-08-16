@@ -347,6 +347,7 @@ FocusScope {
                     required property string entryKey
                     required property string componentId
                     required property bool placeholder
+                    readonly property bool ownsActiveDrag: root.dragActive && root.dragCoordinator && root.dragCoordinator.componentId === chipDelegate.componentId && root.dragCoordinator.sourceZone === root.zone
                     readonly property bool isDragged: root.dragActive && root.dragCoordinator.componentId === componentId && !placeholder
                     readonly property real naturalWidth: Math.max(72, chipLabel.implicitWidth + 48)
 
@@ -438,7 +439,7 @@ FocusScope {
                         DragHandler {
                             id: dragHandler
 
-                            enabled: !chipDelegate.placeholder && !closeMouse.containsMouse && root.dragCoordinator !== null
+                            enabled: root.dragCoordinator !== null && (!chipDelegate.placeholder || chipDelegate.ownsActiveDrag) && (!closeMouse.containsMouse || chipDelegate.ownsActiveDrag)
                             target: null
                             dragThreshold: 8
                             onActiveChanged: {
