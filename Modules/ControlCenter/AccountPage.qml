@@ -4,6 +4,7 @@ import QtCore
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material
+import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Window
 import qs.Common
@@ -23,10 +24,19 @@ Item {
         backupPicker.dismiss();
     }
 
-    readonly property bool wideLayout: width >= 720
+    readonly property bool wideLayout: width >= 880
     readonly property real cardGap: Appearance.spacing.medium
     readonly property real columnWidth: wideLayout
         ? (cardLayout.width - cardGap) / 2 : cardLayout.width
+    readonly property real wallpaperPreviewMaximumWidth: 152
+    readonly property real wallpaperPreviewWidth: Math.min(
+        wallpaperPreviewMaximumWidth,
+        Math.floor((personalizationCard.width
+            - Appearance.spacing.large * 2
+            - Appearance.spacing.medium * 2
+            - Appearance.spacing.small * 2) / 3))
+    readonly property real wallpaperPreviewHeight:
+        Math.round(wallpaperPreviewWidth / 1.25)
     readonly property var pairedBluetoothDevices: {
         const result = [];
         const seen = {};
@@ -510,6 +520,7 @@ Item {
 
                     GridLayout {
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
                         Layout.leftMargin: Appearance.spacing.medium
                         Layout.rightMargin: Appearance.spacing.medium
                         columns: 3
@@ -524,12 +535,14 @@ Item {
 
                                 required property string modelData
 
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: width / 1.25
+                                Layout.preferredWidth: root.wallpaperPreviewWidth
+                                Layout.preferredHeight: root.wallpaperPreviewHeight
                                 padding: 0
-                                buttonRadius: Appearance.rounding.extraLarge
+                                buttonRadius: Appearance.rounding.small
                                 containerColor: Appearance.colors.colSurfaceContainer
-                                stateLayerColor: Appearance.colors.colOnSurface
+                                hoverStateLayerOpacity: 0
+                                pressedStateLayerOpacity:
+                                    Appearance.interaction.pressedStateLayerOpacity
                                 rippleColor: Appearance.colors.colOnSurface
                                 Accessible.name: qsTr("使用壁纸 %1").arg(
                                     WallpaperService.basename(modelData))
@@ -537,16 +550,14 @@ Item {
 
                                 backgroundContent: Rectangle {
                                     anchors.fill: parent
-                                    radius: Appearance.rounding.extraLarge
+                                    radius: Appearance.rounding.small
                                     color: WallpaperService.isColorSource(wallpaperChoice.modelData)
                                         ? wallpaperChoice.modelData
                                         : Appearance.colors.colSurfaceContainer
-                                    border.width: WallpaperService.currentWallpaper
-                                        === wallpaperChoice.modelData ? 3 : 0
-                                    border.color: Appearance.colors.colPrimary
-                                    clip: true
 
                                     Image {
+                                        id: wallpaperImage
+
                                         anchors.fill: parent
                                         source: WallpaperService.isColorSource(wallpaperChoice.modelData)
                                             ? "" : Paths.fileUrl(wallpaperChoice.modelData)
@@ -560,7 +571,26 @@ Item {
                                         cache: true
                                         smooth: false
                                         mipmap: false
+                                        visible: source !== ""
+                                        layer.enabled: true
+                                        layer.effect: MultiEffect {
+                                            maskEnabled: true
+                                            maskSource: wallpaperMask
+                                            maskThresholdMin: 0.5
+                                            maskSpreadAtMin: 1
+                                        }
                                     }
+
+                                    Rectangle {
+                                        id: wallpaperMask
+
+                                        anchors.fill: parent
+                                        radius: Appearance.rounding.small
+                                        color: Appearance.m3colors.m3scrim
+                                        visible: false
+                                        layer.enabled: true
+                                    }
+
                                 }
 
                                 contentItem: Item {}
@@ -568,12 +598,10 @@ Item {
                         }
 
                         Rectangle {
-                            Layout.fillWidth: true
-                            Layout.columnSpan: 3
-                            Layout.preferredHeight:
-                                (width - Appearance.spacing.small * 2) / 3 / 1.25
+                            Layout.preferredWidth: root.wallpaperPreviewWidth
+                            Layout.preferredHeight: root.wallpaperPreviewHeight
                             visible: root.wallpaperChoices.length === 0
-                            radius: Appearance.rounding.extraLarge
+                            radius: Appearance.rounding.small
                             color: Appearance.colors.colSurfaceContainer
 
                             MaterialSymbol {
