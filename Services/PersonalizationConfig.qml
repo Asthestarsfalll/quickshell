@@ -270,6 +270,30 @@ Singleton {
     property string iconTheme: ""
     property string keystoneStyle: "bangs"
     property string barPosition: "top"
+    readonly property var barComponentIds: ["workspaces", "information", "activeWindow", "tray", "systemMonitor", "quickSettings"]
+    readonly property var defaultBarLeadingComponents: ["workspaces", "information", "activeWindow"]
+    readonly property var defaultBarTrailingComponents: ["tray", "systemMonitor", "quickSettings"]
+    readonly property var barComponentOptions: [({
+        "value": "workspaces",
+        "label": qsTr("工作区")
+    }), ({
+        "value": "information",
+        "label": qsTr("信息中心")
+    }), ({
+        "value": "activeWindow",
+        "label": qsTr("聚焦窗口")
+    }), ({
+        "value": "tray",
+        "label": qsTr("托盘")
+    }), ({
+        "value": "systemMonitor",
+        "label": qsTr("系统监控")
+    }), ({
+        "value": "quickSettings",
+        "label": qsTr("快捷设置")
+    })]
+    property var barLeadingComponents: root.defaultBarLeadingComponents.slice()
+    property var barTrailingComponents: root.defaultBarTrailingComponents.slice()
     property string keystonePosition: "top"
     property bool keystoneHideDate: false
     readonly property var horizontalClockAxisDefaults: ({
@@ -1009,6 +1033,90 @@ Singleton {
         setValue("barPosition", normalizedEdgePosition(value));
     }
 
+    function normalizedBarComponents(raw, excluded) {
+        const source = Array.isArray(raw) ? raw : [];
+        const blocked = excluded || [];
+        const result = [];
+        for (let index = 0; index < source.length; index += 1) {
+            const componentId = String(source[index] || "");
+            if (root.barComponentIds.indexOf(componentId) === -1 || blocked.indexOf(componentId) !== -1 || result.indexOf(componentId) !== -1)
+                continue;
+
+            result.push(componentId);
+        }
+        return result;
+    }
+
+    function normalizedBarLayout(leading, trailing, useDefaults) {
+        const normalizedLeading = root.normalizedBarComponents(useDefaults ? root.defaultBarLeadingComponents : leading, []);
+        const normalizedTrailing = root.normalizedBarComponents(useDefaults ? root.defaultBarTrailingComponents : trailing, normalizedLeading);
+        return {
+            "leading": normalizedLeading,
+            "trailing": normalizedTrailing
+        };
+    }
+
+    function barZoneComponents(zone) {
+        return zone === "leading" ? root.barLeadingComponents : zone === "trailing" ? root.barTrailingComponents : [];
+    }
+
+    function moveBarComponent(componentId, targetZone, targetIndex) {
+        const id = String(componentId || "");
+        if (root.barComponentIds.indexOf(id) === -1 || (targetZone !== "leading" && targetZone !== "trailing"))
+            return false;
+
+        const leading = root.normalizedBarComponents(root.barLeadingComponents, []).filter((value) => {
+            return value !== id;
+        });
+        const trailing = root.normalizedBarComponents(root.barTrailingComponents, leading).filter((value) => {
+            return value !== id;
+        });
+        const target = targetZone === "leading" ? leading : trailing;
+        const numericIndex = Number(targetIndex);
+        const insertionIndex = isFinite(numericIndex) ? Math.max(0, Math.min(target.length, Math.round(numericIndex))) : target.length;
+        target.splice(insertionIndex, 0, id);
+        root.barLeadingComponents = leading;
+        root.barTrailingComponents = trailing;
+        root.save();
+        return true;
+    }
+
+    function removeBarComponent(componentId) {
+        const id = String(componentId || "");
+        if (root.barComponentIds.indexOf(id) === -1)
+            return false;
+
+        const leading = root.barLeadingComponents.filter((value) => {
+            return value !== id;
+        });
+        const trailing = root.barTrailingComponents.filter((value) => {
+            return value !== id;
+        });
+        if (leading.length === root.barLeadingComponents.length && trailing.length === root.barTrailingComponents.length)
+            return false;
+
+        root.barLeadingComponents = root.normalizedBarComponents(leading, []);
+        root.barTrailingComponents = root.normalizedBarComponents(trailing, root.barLeadingComponents);
+        root.save();
+        return true;
+    }
+
+    function toggleBarComponent(componentId, zone) {
+        if (zone !== "leading" && zone !== "trailing")
+            return false;
+
+        if (root.barZoneComponents(zone).indexOf(componentId) !== -1)
+            return root.removeBarComponent(componentId);
+
+        return root.moveBarComponent(componentId, zone, root.barZoneComponents(zone).length);
+    }
+
+    function resetBarComponents() {
+        root.barLeadingComponents = root.defaultBarLeadingComponents.slice();
+        root.barTrailingComponents = root.defaultBarTrailingComponents.slice();
+        root.save();
+    }
+
     function setKeystonePosition(value) {
         setValue("keystonePosition", normalizedEdgePosition(value));
     }
@@ -1197,7 +1305,9 @@ Singleton {
                 }
             },
             "bar": {
-                "position": root.barPosition
+                "position": root.barPosition,
+                "barLeadingComponents": root.barLeadingComponents.slice(),
+                "barTrailingComponents": root.barTrailingComponents.slice()
             },
             "sidebar": {
                 "keepLoaded": root.keepSidebarsLoaded
@@ -1296,6 +1406,10 @@ Singleton {
         root.horizontalClockAxes = root.normalizedHorizontalClockAxes(horizontalClock.axes);
         root.horizontalClockDigits = root.normalizedHorizontalClockDigits(horizontalClock.digits);
         root.barPosition = normalizedEdgePosition(bar.position);
+        const hasBarLayout = Array.isArray(bar.barLeadingComponents) || Array.isArray(bar.barTrailingComponents);
+        const barLayout = root.normalizedBarLayout(bar.barLeadingComponents, bar.barTrailingComponents, !hasBarLayout);
+        root.barLeadingComponents = barLayout.leading;
+        root.barTrailingComponents = barLayout.trailing;
         root.keepSidebarsLoaded = sidebar.keepLoaded === undefined ? true : !!sidebar.keepLoaded;
     }
 

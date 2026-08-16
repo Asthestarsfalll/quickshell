@@ -2788,6 +2788,12 @@ Click to open network settings</translation>
         <source>药丸</source>
         <translation>Pill</translation>
     </message>
+    <message><source>工作区</source><translation>Workspaces</translation></message>
+    <message><source>信息中心</source><translation>Information Center</translation></message>
+    <message><source>聚焦窗口</source><translation>Active Window</translation></message>
+    <message><source>托盘</source><translation>Tray</translation></message>
+    <message><source>系统监控</source><translation>System Monitor</translation></message>
+    <message><source>快捷设置</source><translation>Quick Settings</translation></message>
 </context>
 <context>
     <name>PillRecordingVisual</name>
@@ -6698,6 +6704,16 @@ Windows: </translation>
 <context>
     <name>GeneralBarPage</name>
     <message><source>位置</source><translation>Position</translation></message>
+    <message><source>组件</source><translation>Components</translation></message>
+    <message><source>拖动组件调整顺序，拖到另一侧可移动位置。</source><translation>Drag components to reorder them or move them to the other side.</translation></message>
+    <message><source>左侧</source><translation>Left</translation></message>
+    <message><source>右侧</source><translation>Right</translation></message>
+    <message><source>上方</source><translation>Top</translation></message>
+    <message><source>下方</source><translation>Bottom</translation></message>
+</context>
+<context>
+    <name>SortableMultiSelectField</name>
+    <message><source>未选择组件</source><translation>No components selected</translation></message>
 </context>
 <context>
     <name>GeneralEffectsPage</name>

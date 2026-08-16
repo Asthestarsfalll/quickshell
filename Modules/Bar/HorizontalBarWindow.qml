@@ -9,16 +9,21 @@ PanelWindow {
 
     required property string edge
     readonly property real visualThickness: Sizes.barVisualThickness
-    readonly property real outerEdgeMargin:
-        axis.isTop ? 0 : Sizes.barOuterEdgeMargin
+    readonly property real outerEdgeMargin: axis.isTop ? 0 : Sizes.barOuterEdgeMargin
     readonly property real shadowBuffer: Sizes.barShadowBuffer
-    readonly property real surfaceThickness:
-        outerEdgeMargin + visualThickness + shadowBuffer
-    readonly property real exclusiveThickness:
-        outerEdgeMargin + visualThickness
+    readonly property real surfaceThickness: outerEdgeMargin + visualThickness + shadowBuffer
+    readonly property real exclusiveThickness: outerEdgeMargin + visualThickness
+
+    implicitHeight: surfaceThickness
+    color: "transparent"
+    exclusiveZone: exclusiveThickness
+    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.namespace: "clavis-shell-bar-horizontal"
+    WlrLayershell.exclusionMode: ExclusionMode.Normal
 
     BarAxis {
         id: axis
+
         edge: root.edge
     }
 
@@ -28,16 +33,10 @@ PanelWindow {
         top: axis.isTop
         bottom: axis.isBottom
     }
-    implicitHeight: surfaceThickness
-    color: "transparent"
-    exclusiveZone: exclusiveThickness
-
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.namespace: "clavis-shell-bar-horizontal"
-    WlrLayershell.exclusionMode: ExclusionMode.Normal
 
     Item {
         id: visualBand
+
         x: 0
         y: axis.isTop ? 0 : root.shadowBuffer
         width: parent.width
@@ -45,27 +44,30 @@ PanelWindow {
 
         HorizontalBarContent {
             id: content
+
             anchors.fill: parent
             screen: root.screen
             axis: axis
         }
-    }
 
-    mask: Region {
-        Region { item: content.leadingInputRegionItem }
-        Region { item: content.trailingInputRegionItem }
     }
 
     CompositorBlurRegion {
         targetWindow: root
-        backgroundItem: content.workspacesItem
-        additionalBackgroundItems: [
-            content.sidebarButtonItem,
-            content.activeWindowItem,
-            content.trayItem,
-            content.sysMonitorItem,
-            content.quickSettingsItem
-        ]
+        backgroundItem: content.backgroundItems.length > 0 ? content.backgroundItems[0] : null
+        additionalBackgroundItems: content.backgroundItems.slice(1)
         radius: 18
     }
+
+    mask: Region {
+        Region {
+            item: content.leadingInputRegionItem
+        }
+
+        Region {
+            item: content.trailingInputRegionItem
+        }
+
+    }
+
 }

@@ -2788,6 +2788,12 @@
         <source>药丸</source>
         <translation>药丸</translation>
     </message>
+    <message><source>工作区</source><translation>工作区</translation></message>
+    <message><source>信息中心</source><translation>信息中心</translation></message>
+    <message><source>聚焦窗口</source><translation>聚焦窗口</translation></message>
+    <message><source>托盘</source><translation>托盘</translation></message>
+    <message><source>系统监控</source><translation>系统监控</translation></message>
+    <message><source>快捷设置</source><translation>快捷设置</translation></message>
 </context>
 <context>
     <name>PillRecordingVisual</name>
@@ -6658,6 +6664,16 @@
 <context>
     <name>GeneralBarPage</name>
     <message><source>位置</source><translation>位置</translation></message>
+    <message><source>组件</source><translation>组件</translation></message>
+    <message><source>拖动组件调整顺序，拖到另一侧可移动位置。</source><translation>拖动组件调整顺序，拖到另一侧可移动位置。</translation></message>
+    <message><source>左侧</source><translation>左侧</translation></message>
+    <message><source>右侧</source><translation>右侧</translation></message>
+    <message><source>上方</source><translation>上方</translation></message>
+    <message><source>下方</source><translation>下方</translation></message>
+</context>
+<context>
+    <name>SortableMultiSelectField</name>
+    <message><source>未选择组件</source><translation>未选择组件</translation></message>
 </context>
 <context>
     <name>GeneralEffectsPage</name>
