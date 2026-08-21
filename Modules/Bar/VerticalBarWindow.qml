@@ -10,8 +10,7 @@ PanelWindow {
     required property string edge
     readonly property real visualThickness: Sizes.barVisualThickness
     readonly property real outerEdgeMargin: Sizes.barOuterEdgeMargin
-    readonly property real shadowBuffer: Sizes.barShadowBuffer
-    readonly property real surfaceThickness: outerEdgeMargin + visualThickness + shadowBuffer
+    readonly property real surfaceThickness: outerEdgeMargin + visualThickness
     readonly property real exclusiveThickness: outerEdgeMargin + visualThickness
 
     implicitWidth: surfaceThickness
@@ -37,7 +36,7 @@ PanelWindow {
     Item {
         id: visualBand
 
-        x: axis.isLeft ? root.outerEdgeMargin : root.shadowBuffer
+        x: axis.isLeft ? root.outerEdgeMargin : 0
         y: 0
         width: root.visualThickness
         height: parent.height

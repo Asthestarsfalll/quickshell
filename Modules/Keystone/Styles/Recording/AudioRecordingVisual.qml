@@ -12,7 +12,8 @@ Item {
     required property string sourceNodeName
     required property bool captureSink
     required property double elapsedMs
-
+    property bool vertical: false
+    property string edge: "top"
     property real contentProgress: 0
 
     signal stopRequested()
@@ -24,10 +25,10 @@ Item {
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        const pad = value => value < 10 ? "0" + value : String(value);
-        return hours > 0
-            ? pad(hours) + ":" + pad(minutes) + ":" + pad(seconds)
-            : pad(minutes) + ":" + pad(seconds);
+        const pad = (value) => {
+            return value < 10 ? "0" + value : String(value);
+        };
+        return hours > 0 ? pad(hours) + ":" + pad(minutes) + ":" + pad(seconds) : pad(minutes) + ":" + pad(seconds);
     }
 
     function beginEntry() {
@@ -47,10 +48,10 @@ Item {
         active: root.recording && root.sourceNodeName !== ""
         sourceNodeName: root.sourceNodeName
         captureSink: root.captureSink
-
         onErrorStringChanged: {
             if (errorString !== "")
                 console.warn("[AudioLevelProvider]", errorString);
+
         }
     }
 
@@ -60,17 +61,24 @@ Item {
         anchors.fill: parent
         opacity: root.contentProgress
 
-        RowLayout {
+        GridLayout {
             anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 8
-            spacing: 8
+            anchors.leftMargin: root.vertical ? 8 : 12
+            anchors.rightMargin: root.vertical ? 8 : 8
+            anchors.topMargin: root.vertical ? 12 : 0
+            anchors.bottomMargin: root.vertical ? 8 : 0
+            rowSpacing: 8
+            columnSpacing: 8
+            columns: root.vertical ? 1 : 3
 
             AudioWaveform {
                 id: waveform
 
-                Layout.fillWidth: true
-                Layout.preferredHeight: 40
+                Layout.fillWidth: !root.vertical
+                Layout.fillHeight: root.vertical
+                Layout.preferredWidth: root.vertical ? 40 : -1
+                Layout.preferredHeight: root.vertical ? -1 : 40
+                vertical: root.vertical
                 active: root.sessionActive
                 acceptSamples: root.recording
                 sourceAvailable: levelProvider.available
@@ -78,16 +86,26 @@ Item {
                 sampleTimestampMs: levelProvider.visualTimestampMs
             }
 
-            Text {
-                Layout.preferredWidth: 72
+            Item {
+                Layout.preferredWidth: root.vertical ? 44 : 72
+                Layout.preferredHeight: root.vertical ? 72 : 40
                 Layout.alignment: Qt.AlignVCenter
-                text: root.formatElapsed(root.elapsedMs)
-                horizontalAlignment: Text.AlignRight
-                color: Appearance.colors.colOnSurface
-                font.family: Fonts.numeric
-                font.pixelSize: 14
-                font.weight: Font.DemiBold
-                font.features: { "tnum": 1 }
+
+                Text {
+                    anchors.centerIn: parent
+                    width: root.vertical ? parent.height : parent.width
+                    text: root.formatElapsed(root.elapsedMs)
+                    horizontalAlignment: Text.AlignHCenter
+                    color: Appearance.colors.colOnSurface
+                    font.family: Fonts.numeric
+                    font.pixelSize: 14
+                    font.weight: Font.DemiBold
+                    font.features: {
+                        "tnum": 1
+                    }
+                    rotation: !root.vertical ? 0 : root.edge === "left" ? -90 : 90
+                }
+
             }
 
             AudioStopButton {
@@ -98,7 +116,9 @@ Item {
                 canStop: root.recording
                 onStopRequested: root.stopRequested()
             }
+
         }
+
     }
 
     NumberAnimation {
@@ -123,14 +143,19 @@ Item {
             easing.type: Appearance.animation.emphasizedAccel.type
             easing.bezierCurve: Appearance.animation.emphasizedAccel.bezierCurve
         }
+
         ScriptAction {
             script: root.collapseRequested()
         }
+
         PauseAnimation {
             duration: KeystoneMotion.audioCollapseDuration
         }
+
         ScriptAction {
             script: root.exitFinished()
         }
+
     }
+
 }

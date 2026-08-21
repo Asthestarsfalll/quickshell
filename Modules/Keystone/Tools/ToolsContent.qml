@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Window 
+import QtQuick.Window
 import qs.Common
 import qs.Widgets.common
 
@@ -10,90 +10,112 @@ Item {
     property bool vertical: false
     property string edge: "top"
     property string popupEdge: edge
+    readonly property int buttonSize: 48
+    readonly property int buttonSpacing: 40
+    readonly property int buttonsExtent: 480
+    readonly property int crossExtent: 72
+    property var toolsModel: [{
+        "action": "color-picker",
+        "icon": "colorize",
+        "tip": qsTr("取色器")
+    }, {
+        "action": "record-video",
+        "icon": "videocam",
+        "tip": qsTr("录屏")
+    }, {
+        "action": "record-gif",
+        "icon": "gif",
+        "tip": qsTr("录制 GIF")
+    }, {
+        "action": "audio-mic",
+        "icon": "mic",
+        "tip": qsTr("录麦克风")
+    }, {
+        "action": "audio-system",
+        "icon": "speaker",
+        "tip": qsTr("录电脑声音")
+    }]
+    property int selectedIndex: 0
+
+    signal requestHideKeystone()
+
+    function triggerSelected() {
+        const tool = toolsModel[selectedIndex];
+        if (!tool)
+            return ;
+
+        toolsRoot.requestHideKeystone();
+        switch (tool.action) {
+        case "color-picker":
+            toolsBackend.pickColor();
+            break;
+        case "record-video":
+            toolsBackend.startRecord("video");
+            break;
+        case "record-gif":
+            toolsBackend.startRecord("gif");
+            break;
+        case "audio-mic":
+            toolsBackend.startAudio("mic");
+            break;
+        case "audio-system":
+            toolsBackend.startAudio("system");
+            break;
+        default:
+            console.warn("[Tools] backend unavailable", tool.action);
+        }
+    }
+
+    function stopRecording() {
+        toolsBackend.stopRecord();
+    }
+
+    function stopAudio() {
+        toolsBackend.stopAudio();
+    }
+
+    implicitWidth: vertical ? crossExtent : buttonsExtent
+    implicitHeight: vertical ? buttonsExtent : crossExtent
+    focus: visible
+    onVisibleChanged: {
+        if (visible) {
+            selectedIndex = 0;
+            forceActiveFocus();
+        }
+    }
+    Keys.onLeftPressed: {
+        selectedIndex = (selectedIndex - 1 + toolsModel.length) % toolsModel.length;
+    }
+    Keys.onRightPressed: {
+        selectedIndex = (selectedIndex + 1) % toolsModel.length;
+    }
+    Keys.onUpPressed: {
+        if (toolsRoot.vertical)
+            selectedIndex = (selectedIndex - 1 + toolsModel.length) % toolsModel.length;
+
+    }
+    Keys.onDownPressed: {
+        if (toolsRoot.vertical)
+            selectedIndex = (selectedIndex + 1) % toolsModel.length;
+
+    }
+    Keys.onReturnPressed: triggerSelected()
+    Keys.onEnterPressed: triggerSelected()
 
     ToolsBackend {
         id: toolsBackend
     }
 
-    signal requestHideKeystone()
-
-    property var toolsModel: [
-        { icon: "colorize",         tip: qsTr("取色器") },
-        { icon: "videocam",         tip: qsTr("录屏") },
-        { icon: "gif",              tip: qsTr("录制 GIF") },
-        { icon: "crop_free",        tip: qsTr("普通截屏") },
-        { icon: "height",           tip: qsTr("截长屏") },
-        { icon: "document_scanner", tip: qsTr("OCR 识别") },
-        { icon: "mic",              tip: qsTr("录麦克风") },
-        { icon: "speaker",          tip: qsTr("录电脑声音") }
-    ]
-
-    property int selectedIndex: 0
-
-    focus: visible
-    onVisibleChanged: {
-        if (visible) {
-            selectedIndex = 0;
-            forceActiveFocus(); 
-        }
-    }
-
-    Keys.onLeftPressed: {
-        selectedIndex = (selectedIndex - 1 + toolsModel.length) % toolsModel.length
-    }
-    
-    Keys.onRightPressed: {
-        selectedIndex = (selectedIndex + 1) % toolsModel.length
-    }
-    Keys.onUpPressed: {
-        if (toolsRoot.vertical)
-            selectedIndex = (selectedIndex - 1 + toolsModel.length) % toolsModel.length
-    }
-    Keys.onDownPressed: {
-        if (toolsRoot.vertical)
-            selectedIndex = (selectedIndex + 1) % toolsModel.length
-    }
-    
-    Keys.onReturnPressed: triggerSelected()
-    Keys.onEnterPressed: triggerSelected()
-
-    function triggerSelected() {
-        toolsRoot.requestHideKeystone()
-        
-        if (selectedIndex === 0) {
-            toolsBackend.pickColor()
-        } else if (selectedIndex === 1) {
-            toolsBackend.startRecord("video")
-        } else if (selectedIndex === 2) {
-            toolsBackend.startRecord("gif")
-        } else if (selectedIndex === 3) {
-            toolsBackend.takeScreenshot()
-        } else if (selectedIndex === 6) {
-            toolsBackend.startAudio("mic")
-        } else if (selectedIndex === 7) {
-            toolsBackend.startAudio("system")
-        } else {
-            console.warn("[Tools] backend unavailable", toolsModel[selectedIndex].tip)
-        }
-    }
-
-    function stopRecording() {
-        toolsBackend.stopRecord()
-    }
-    function stopAudio() {
-        toolsBackend.stopAudio()
-    }
-
     Grid {
         anchors.centerIn: parent
-        spacing: 8
+        spacing: toolsRoot.buttonSpacing
         columns: toolsRoot.vertical ? 1 : toolsRoot.toolsModel.length
 
         Repeater {
             model: toolsRoot.toolsModel
 
             IconButton {
-                controlSize: 48
+                controlSize: toolsRoot.buttonSize
                 iconName: modelData.icon
                 iconSize: 22
                 iconColor: Appearance.colors.colOnSurface
@@ -108,12 +130,16 @@ Item {
                 onPointerHoveredChanged: {
                     if (pointerHovered)
                         toolsRoot.selectedIndex = index;
+
                 }
                 onClicked: {
                     toolsRoot.selectedIndex = index;
                     toolsRoot.triggerSelected();
                 }
             }
+
         }
+
     }
+
 }
