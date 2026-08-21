@@ -29,6 +29,8 @@ Item {
         const position = root.player === MediaManager.active ? MediaManager.currentPosition : Math.max(0, Number(root.player.position) || 0);
         return Lyrics.indexForTime(position);
     }
+    readonly property string currentLyric: currentLineIndex >= 0 && currentLineIndex < lyricsModel.length ? String(lyricsModel[currentLineIndex].text || "") : lyricsModel && lyricsModel.length > 0 ? String(lyricsModel[0].text || "") : ""
+    readonly property bool currentLyricHasCjk: /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(currentLyric)
 
     implicitWidth: vertical ? horizontalHeight : horizontalWidth
     implicitHeight: vertical ? horizontalWidth : horizontalHeight
@@ -66,6 +68,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 26
             height: 26
+            visible: !root.vertical
 
             Image {
                 id: coverImage
@@ -113,6 +116,7 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: root.currentTextWidth
+            visible: !root.vertical || !root.currentLyricHasCjk
             interactive: false
             animateAppearance: false
             animateMovement: false
@@ -237,6 +241,51 @@ Item {
 
         }
 
+    }
+
+    Item {
+        id: uprightAlbumCover
+
+        anchors.top: root.edge === "right" ? parent.top : undefined
+        anchors.topMargin: 15
+        anchors.bottom: root.edge === "left" ? parent.bottom : undefined
+        anchors.bottomMargin: 15
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: 26
+        height: 26
+        visible: root.vertical
+
+        Image {
+            anchors.fill: parent
+            source: root.artUrl
+            visible: source !== ""
+            fillMode: Image.PreserveAspectCrop
+        }
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            visible: root.artUrl === ""
+            text: "music_note"
+            iconSize: 14
+            color: Appearance.applyAlpha(Appearance.colors.colOnLayer0, 0.5)
+        }
+
+    }
+
+    Text {
+        anchors.centerIn: parent
+        width: root.horizontalHeight
+        height: Math.max(0, parent.height - 110)
+        visible: root.vertical && root.currentLyricHasCjk
+        text: root.currentLyric.split("").join("\n")
+        color: Appearance.m3colors.darkmode ? "white" : "black"
+        font.family: Fonts.ui
+        font.pixelSize: 15
+        font.weight: Font.Bold
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        wrapMode: Text.WrapAnywhere
+        clip: true
     }
 
 }

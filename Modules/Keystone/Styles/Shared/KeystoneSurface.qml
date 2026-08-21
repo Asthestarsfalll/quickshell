@@ -1427,86 +1427,44 @@ Variants {
 
             }
 
-            PillRecordingVisual {
-                id: pillRecordingVisual
+            Item {
+                id: pillRecordingSlot
 
-                anchors.rightMargin: keystoneWindow.rightEdge ? 0 : -rightOverflow
-                anchors.leftMargin: keystoneWindow.rightEdge ? -rightOverflow : 0
-                anchors.topMargin: keystoneWindow.horizontalEdge ? 0 : -mainLeadingInset
-                anchors.verticalCenter: keystoneWindow.horizontalEdge ? root.verticalCenter : undefined
-                anchors.horizontalCenter: keystoneWindow.horizontalEdge ? undefined : root.horizontalCenter
-                state: keystoneWindow.edge
-                active: styleSurface.detached && root.recordingPresentationActive
-                recording: styleSurface.detached && root.isRecording
-                finalizing: styleSurface.detached && root.isFinalizing
-                recordingType: RecordingService.recordingType
-                elapsedMs: RecordingService.elapsedMs
-                morphProgress: root.pillMorphProgress
-                recordingInfoProgress: root.recordingInfoProgress
-                recordingActionProgress: root.recordingActionProgress
-                processingContentProgress: root.processingContentProgress
-                baseMainWidth: root.collapsedW
-                layoutHeight: root.collapsedH
-                vertical: !keystoneWindow.horizontalEdge
-                edge: keystoneWindow.edge
-                visible: styleSurface.detached && (active || opacity > 0.01)
+                anchors.fill: root
+                visible: styleSurface.detached && root.recordingPresentationActive
                 z: root.z + 2
-                onStopRequested: {
-                    if (!RecordingService.stop())
-                        return ;
 
-                    root.pillStopFusionMinimumActive = true;
-                }
-                states: [
-                    State {
-                        name: "top"
+                PillRecordingVisual {
+                    id: pillRecordingVisual
 
-                        AnchorChanges {
-                            target: pillRecordingVisual
-                            anchors.left: undefined
-                            anchors.right: root.right
-                            anchors.top: undefined
-                            anchors.bottom: undefined
-                        }
+                    anchors.rightMargin: keystoneWindow.horizontalEdge ? -mainTrailingInset : 0
+                    anchors.topMargin: keystoneWindow.horizontalEdge ? 0 : -mainLeadingInset
+                    anchors.verticalCenter: keystoneWindow.horizontalEdge ? pillRecordingSlot.verticalCenter : undefined
+                    anchors.horizontalCenter: keystoneWindow.horizontalEdge ? undefined : pillRecordingSlot.horizontalCenter
+                    anchors.top: keystoneWindow.horizontalEdge ? undefined : pillRecordingSlot.top
+                    anchors.right: keystoneWindow.horizontalEdge ? pillRecordingSlot.right : undefined
+                    active: root.recordingPresentationActive
+                    recording: root.isRecording
+                    finalizing: root.isFinalizing
+                    recordingType: RecordingService.recordingType
+                    elapsedMs: RecordingService.elapsedMs
+                    morphProgress: root.pillMorphProgress
+                    recordingInfoProgress: root.recordingInfoProgress
+                    recordingActionProgress: root.recordingActionProgress
+                    processingContentProgress: root.processingContentProgress
+                    baseMainWidth: root.collapsedW
+                    layoutHeight: root.collapsedH
+                    vertical: !keystoneWindow.horizontalEdge
+                    edge: keystoneWindow.edge
+                    visible: active || opacity > 0.01
+                    onStopRequested: {
+                        if (!RecordingService.stop())
+                            return ;
 
-                    },
-                    State {
-                        name: "bottom"
-
-                        AnchorChanges {
-                            target: pillRecordingVisual
-                            anchors.left: root.left
-                            anchors.right: undefined
-                            anchors.top: undefined
-                            anchors.bottom: undefined
-                        }
-
-                    },
-                    State {
-                        name: "left"
-
-                        AnchorChanges {
-                            target: pillRecordingVisual
-                            anchors.left: undefined
-                            anchors.right: undefined
-                            anchors.top: root.top
-                            anchors.bottom: undefined
-                        }
-
-                    },
-                    State {
-                        name: "right"
-
-                        AnchorChanges {
-                            target: pillRecordingVisual
-                            anchors.left: undefined
-                            anchors.right: undefined
-                            anchors.top: root.top
-                            anchors.bottom: undefined
-                        }
-
+                        root.pillStopFusionMinimumActive = true;
                     }
-                ]
+                }
+
             }
 
             BangsRecordingVisual {

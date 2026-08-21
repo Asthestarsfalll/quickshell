@@ -46,6 +46,7 @@ Item {
     readonly property real mainCenterPrimary: primaryCoordinate(mainRightPrimary - mainLayoutWidth / 2)
     readonly property real satelliteCenterPrimary: primaryCoordinate(mainRightPrimary + satelliteCenterOffset)
     readonly property real mainLeadingInset: reversePrimaryAxis ? primaryExtent - mainRightPrimary : mainRightPrimary - mainLayoutWidth
+    readonly property real mainTrailingInset: reversePrimaryAxis ? mainRightPrimary - mainLayoutWidth : primaryExtent - mainRightPrimary
     readonly property real satelliteRightExtent: Math.max(0, satelliteCenterOffset + satelliteWidth / 2)
     readonly property real interactivePrimaryExtent: normalizedRecordingActionProgress > 0.01 ? satelliteRightExtent : 0
     readonly property real rightOverflow: maxRightExtent + effectBleed
