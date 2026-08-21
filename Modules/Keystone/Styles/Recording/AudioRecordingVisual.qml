@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Clavis.Cava
 import qs.Common
+import "RecordingFormat.js" as RecordingFormat
 
 Item {
     id: root
@@ -19,17 +20,6 @@ Item {
     signal stopRequested()
     signal collapseRequested()
     signal exitFinished()
-
-    function formatElapsed(milliseconds) {
-        const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        const pad = (value) => {
-            return value < 10 ? "0" + value : String(value);
-        };
-        return hours > 0 ? pad(hours) + ":" + pad(minutes) + ":" + pad(seconds) : pad(minutes) + ":" + pad(seconds);
-    }
 
     function beginEntry() {
         exitSequence.stop();
@@ -94,7 +84,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     width: root.vertical ? parent.height : parent.width
-                    text: root.formatElapsed(root.elapsedMs)
+                    text: RecordingFormat.elapsed(root.elapsedMs)
                     horizontalAlignment: Text.AlignHCenter
                     color: Appearance.colors.colOnSurface
                     font.family: Fonts.numeric

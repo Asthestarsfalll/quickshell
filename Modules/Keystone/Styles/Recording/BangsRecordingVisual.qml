@@ -3,6 +3,7 @@ import QtQuick.Controls
 import qs.Common
 import qs.Components
 import qs.Widgets.common
+import "RecordingFormat.js" as RecordingFormat
 
 Item {
     id: root
@@ -26,25 +27,6 @@ Item {
     readonly property color typeColor: recordingType === "gif" ? Appearance.colors.colTertiary : Appearance.colors.colError
 
     signal stopRequested()
-
-    function formatElapsed(milliseconds) {
-        const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        const twoDigits = (value) => {
-            return String(value).padStart(2, "0");
-        };
-        return hours > 0 ? twoDigits(hours) + ":" + twoDigits(minutes) + ":" + twoDigits(seconds) : twoDigits(minutes) + ":" + twoDigits(seconds);
-    }
-
-    function containsCjk(text) {
-        return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(text);
-    }
-
-    function uprightVerticalText(text) {
-        return text.split("").join("\n");
-    }
 
     opacity: entryProgress
     onElapsedMsChanged: {
@@ -146,7 +128,7 @@ Item {
 
             Text {
                 anchors.fill: parent
-                text: root.formatElapsed(root.heldElapsedMs)
+                text: RecordingFormat.elapsed(root.heldElapsedMs)
                 color: Appearance.colors.colOnLayer0
                 horizontalAlignment: Text.AlignRight
                 verticalAlignment: Text.AlignVCenter
@@ -317,7 +299,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                text: root.formatElapsed(root.heldElapsedMs)
+                text: RecordingFormat.elapsed(root.heldElapsedMs)
                 color: Appearance.colors.colOnLayer0
                 rotation: root.edge === "left" ? -90 : 90
                 renderType: Text.NativeRendering
@@ -394,19 +376,10 @@ Item {
 
         }
 
-        Text {
+        VerticalRecordingStatusLabel {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.containsCjk(qsTr("正在处理")) ? root.uprightVerticalText(qsTr("正在处理")) : qsTr("正在处理")
-            color: Appearance.colors.colOnLayer0
-            horizontalAlignment: Text.AlignHCenter
-            renderType: Text.NativeRendering
-
-            font {
-                family: Fonts.ui
-                pixelSize: 14
-                weight: Font.DemiBold
-            }
-
+            label: qsTr("正在处理")
+            edge: root.edge
         }
 
     }

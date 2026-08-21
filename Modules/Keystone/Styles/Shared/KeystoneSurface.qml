@@ -139,41 +139,6 @@ Variants {
         }
 
         // ============================================================
-        // 【物理挖孔层 (Mask Region)】
-        // ============================================================
-        Item {
-            id: hitBoxRegion
-
-            anchors.top: maskContainer.top
-            anchors.left: maskContainer.left
-            width: maskContainer.width + (styleSurface.detached && keystoneWindow.horizontalEdge ? pillRecordingVisual.interactivePrimaryExtent : 0)
-            height: maskContainer.height + (styleSurface.detached && !keystoneWindow.horizontalEdge ? pillRecordingVisual.interactivePrimaryExtent : 0)
-            state: keystoneWindow.rightEdge ? "right" : "default"
-            states: [
-                State {
-                    name: "default"
-
-                    AnchorChanges {
-                        target: hitBoxRegion
-                        anchors.left: maskContainer.left
-                        anchors.right: undefined
-                    }
-
-                },
-                State {
-                    name: "right"
-
-                    AnchorChanges {
-                        target: hitBoxRegion
-                        anchors.left: undefined
-                        anchors.right: maskContainer.right
-                    }
-
-                }
-            ]
-        }
-
-        // ============================================================
         // 【阴影源 (Shadow Source)】
         // ============================================================
         Item {
@@ -355,7 +320,6 @@ Variants {
             anchors.bottomMargin: keystoneWindow.bottomEdge ? styleSurface.edgeMargin : 0
             anchors.leftMargin: keystoneWindow.leftEdge ? styleSurface.edgeMargin : 0
             anchors.rightMargin: keystoneWindow.rightEdge ? styleSurface.edgeMargin : 0
-            anchors.horizontalCenterOffset: styleSurface.detached && keystoneWindow.horizontalEdge && root.recordingPresentationActive ? -0.15 * Math.max(0, root.width - root.collapsedW) : 0
             width: root.width + (keystoneWindow.horizontalEdge ? keystoneWindow.edgeCurveAlong * 2 : 0)
             height: root.height + (!keystoneWindow.horizontalEdge ? keystoneWindow.edgeCurveAlong * 2 : 0)
             state: keystoneWindow.edge
@@ -483,13 +447,6 @@ Variants {
                 property bool hasClosablePopup: !contentPresentationActive && (expanded || isLyricsMode || isHubMode || isToolsMode)
                 readonly property bool dashboardTabActive: isHubMode && hubTabIndex === 0
                 readonly property bool showDashboardHole: dashboardTabActive
-                property int lyricsW: lyricsWidget.implicitWidth
-                property int lyricsH: lyricsWidget.implicitHeight
-                property int expandedW: 540
-                property int expandedH: 210
-                property int collapsedW: 220
-                property int collapsedH: 42
-                property int recordingBangsW: 220
                 property real pillMorphProgress: 0
                 property real recordingInfoProgress: 0
                 property real recordingActionProgress: 0
@@ -497,25 +454,14 @@ Variants {
                 readonly property int pillEntryDuration: 1000
                 readonly property int pillFusionDuration: 820
                 property int pillActiveFusionDuration: pillFusionDuration
-                property int toolsW: toolsWidget.buttonsExtent
-                property int toolsH: toolsWidget.crossExtent
                 property int notifW: 380
                 property int notifH: (NotificationManager.popupList.length * 70) + 20
-                property int volW: 320
-                property int volH: 64
-                property int audioW: KeystoneMotion.audioRecordingWidth
-                property int audioH: KeystoneMotion.audioRecordingHeight
                 property color color: BlurService.backgroundColor(Appearance.colors.colLayer0)
-                readonly property bool sideAxisSwappedLayout: !keystoneWindow.horizontalEdge && (isCollapsedMode || isToolsMode || isVolumeMode || audioGeometryActive || recordingPresentationActive)
-                property real logicalTargetW: recordingPresentationActive ? (styleSurface.detached ? pillRecordingVisual.mainLayoutWidth : recordingBangsW) : audioGeometryActive ? audioW : isToolsMode ? toolsW : isHubMode ? hub.implicitWidth : isLyricsMode ? lyricsW : expanded ? expandedW : isVolumeMode ? volW : isNotifMode ? notifW : (collapsedW + (isCollapsedHovered ? 16 : 0))
-                property int logicalTargetH: recordingPresentationActive ? collapsedH : audioGeometryActive ? audioH : isToolsMode ? toolsH : isHubMode ? hub.implicitHeight : isLyricsMode ? lyricsH : expanded ? expandedH : isVolumeMode ? volH : isNotifMode ? notifH : (collapsedH + (isCollapsedHovered ? 6 : 0))
-                // A side collapsed surface swaps its base dimensions, but its
-                // dominant hover delta belongs to the cross axis: width grows
-                // inward from the anchored left/right edge. The smaller delta
-                // remains on the vertical primary axis. Other modes retain
-                // their existing geometry.
-                property real targetW: !keystoneWindow.horizontalEdge && isCollapsedMode ? collapsedH + (isCollapsedHovered ? 16 : 0) : sideAxisSwappedLayout ? logicalTargetH : logicalTargetW
-                property int targetH: !keystoneWindow.horizontalEdge && isCollapsedMode ? collapsedW + (isCollapsedHovered ? 6 : 0) : sideAxisSwappedLayout ? logicalTargetW : logicalTargetH
+                readonly property QtObject activeLayout: keystoneWindow.horizontalEdge ? horizontalLayout : verticalLayout
+                readonly property real recordingVisualWidth: styleSurface.detached && pillRecordingPresenter.item ? pillRecordingPresenter.item.implicitWidth : activeLayout.attachedRecordingWidth
+                readonly property real recordingVisualHeight: styleSurface.detached && pillRecordingPresenter.item ? pillRecordingPresenter.item.implicitHeight : activeLayout.attachedRecordingHeight
+                property real targetW: activeLayout.targetWidth
+                property real targetH: activeLayout.targetHeight
                 property int targetR: styleSurface.detached ? Math.min(Math.min(targetW, targetH) / 2, styleSurface.maxPillRadius) : 12
                 property int wDuration: KeystoneMotion.expandingDuration
                 property int hDuration: KeystoneMotion.expandingDuration
@@ -572,7 +518,7 @@ Variants {
                         hub.currentIndex = root.hubTabIndex;
 
                 }
-                clip: !(styleSurface.detached && root.recordingPresentationActive)
+                clip: true
                 z: 100
                 width: targetW
                 height: targetH
@@ -676,7 +622,7 @@ Variants {
                         wBezier = KeystoneMotion.hoverBezier;
                         return ;
                     }
-                    if (targetW === root.audioW && root.audioGeometryActive) {
+                    if (targetW === root.activeLayout.audioWidth && root.audioGeometryActive) {
                         wDuration = KeystoneMotion.audioExpandDuration;
                         wBezier = KeystoneMotion.hoverBezier;
                         return ;
@@ -696,7 +642,7 @@ Variants {
                         hBezier = KeystoneMotion.hoverBezier;
                         return ;
                     }
-                    if (targetH === root.audioH && root.audioGeometryActive) {
+                    if (targetH === root.activeLayout.audioHeight && root.audioGeometryActive) {
                         hDuration = KeystoneMotion.audioExpandDuration;
                         hBezier = KeystoneMotion.hoverBezier;
                         return ;
@@ -787,6 +733,54 @@ Variants {
 
                     }
                 ]
+
+                HorizontalKeystoneLayout {
+                    id: horizontalLayout
+
+                    recordingActive: root.recordingPresentationActive
+                    audioActive: root.audioGeometryActive
+                    toolsActive: root.isToolsMode
+                    hubActive: root.isHubMode
+                    lyricsActive: root.isLyricsMode
+                    expandedActive: root.expanded
+                    volumeActive: root.isVolumeMode
+                    notificationsActive: root.isNotifMode
+                    collapsedHovered: root.isCollapsedHovered
+                    recordingWidth: root.recordingVisualWidth
+                    recordingHeight: root.recordingVisualHeight
+                    toolsWidth: toolsWidget.implicitWidth
+                    toolsHeight: toolsWidget.implicitHeight
+                    hubWidth: hub.implicitWidth
+                    hubHeight: hub.implicitHeight
+                    lyricsWidth: lyricsWidget.implicitWidth
+                    lyricsHeight: lyricsWidget.implicitHeight
+                    notificationsWidth: root.notifW
+                    notificationsHeight: root.notifH
+                }
+
+                VerticalKeystoneLayout {
+                    id: verticalLayout
+
+                    recordingActive: root.recordingPresentationActive
+                    audioActive: root.audioGeometryActive
+                    toolsActive: root.isToolsMode
+                    hubActive: root.isHubMode
+                    lyricsActive: root.isLyricsMode
+                    expandedActive: root.expanded
+                    volumeActive: root.isVolumeMode
+                    notificationsActive: root.isNotifMode
+                    collapsedHovered: root.isCollapsedHovered
+                    recordingWidth: root.recordingVisualWidth
+                    recordingHeight: root.recordingVisualHeight
+                    toolsWidth: toolsWidget.implicitWidth
+                    toolsHeight: toolsWidget.implicitHeight
+                    hubWidth: hub.implicitWidth
+                    hubHeight: hub.implicitHeight
+                    lyricsWidth: lyricsWidget.implicitWidth
+                    lyricsHeight: lyricsWidget.implicitHeight
+                    notificationsWidth: root.notifW
+                    notificationsHeight: root.notifH
+                }
 
                 ParallelAnimation {
                     id: recordingContentIn
@@ -1160,8 +1154,8 @@ Variants {
 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: keystoneWindow.horizontalEdge ? root.volW : root.volH
-                        height: keystoneWindow.horizontalEdge ? root.volH : root.volW
+                        width: root.activeLayout.volumeWidth
+                        height: root.activeLayout.volumeHeight
                         vertical: !keystoneWindow.horizontalEdge
                         mode: root.sliderMode
                         audioNode: root.sliderMode === "volume" ? root.audioNode : root.sliderMode === "mic" ? root.sourceAudioNode : null
@@ -1212,8 +1206,8 @@ Variants {
 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.lyricsW
-                        height: root.lyricsH
+                        width: implicitWidth
+                        height: implicitHeight
                         player: root.currentPlayer
                         active: root.isLyricsMode
                         vertical: !keystoneWindow.horizontalEdge
@@ -1236,8 +1230,8 @@ Variants {
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.topMargin: 20
-                        width: root.expandedW - 40
-                        height: root.expandedH - 40
+                        width: root.activeLayout.expandedWidth - 40
+                        height: root.activeLayout.expandedHeight - 40
                         opacity: (!root.contentPresentationActive && root.expanded && !root.isLyricsMode && !root.isHubMode) ? 1 : 0
                         visible: opacity > 0.01
 
@@ -1295,8 +1289,8 @@ Variants {
 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: keystoneWindow.horizontalEdge ? root.toolsW : root.toolsH
-                        height: keystoneWindow.horizontalEdge ? root.toolsH : root.toolsW
+                        width: implicitWidth
+                        height: implicitHeight
                         vertical: !keystoneWindow.horizontalEdge
                         edge: keystoneWindow.edge
                         opacity: root.isToolsMode ? 1 : 0
@@ -1341,7 +1335,7 @@ Variants {
                 }
 
                 Behavior on width {
-                    enabled: !(styleSurface.detached && root.recordingPresentationActive)
+                    enabled: !(styleSurface.detached && root.recordingPresentationActive && keystoneWindow.horizontalEdge)
 
                     NumberAnimation {
                         duration: root.wDuration
@@ -1352,6 +1346,8 @@ Variants {
                 }
 
                 Behavior on height {
+                    enabled: !(styleSurface.detached && root.recordingPresentationActive && !keystoneWindow.horizontalEdge)
+
                     NumberAnimation {
                         duration: root.hDuration
                         easing.type: KeystoneMotion.type
@@ -1401,10 +1397,7 @@ Variants {
             ClockContent {
                 id: clockContent
 
-                anchors.top: root.top
-                anchors.horizontalCenter: root.horizontalCenter
-                width: keystoneWindow.horizontalEdge ? root.collapsedW : root.collapsedH
-                height: keystoneWindow.horizontalEdge ? root.collapsedH : root.collapsedW
+                anchors.fill: root
                 player: root.currentPlayer
                 edge: keystoneWindow.edge
                 opacity: root.isCollapsedMode ? 1 : 0
@@ -1427,22 +1420,19 @@ Variants {
 
             }
 
-            Item {
-                id: pillRecordingSlot
+            Loader {
+                id: pillRecordingPresenter
 
                 anchors.fill: root
                 visible: styleSurface.detached && root.recordingPresentationActive
+                sourceComponent: keystoneWindow.horizontalEdge ? horizontalPillRecordingComponent : verticalPillRecordingComponent
                 z: root.z + 2
+            }
 
-                PillRecordingVisual {
-                    id: pillRecordingVisual
+            Component {
+                id: horizontalPillRecordingComponent
 
-                    anchors.rightMargin: keystoneWindow.horizontalEdge ? -mainTrailingInset : 0
-                    anchors.topMargin: keystoneWindow.horizontalEdge ? 0 : -mainLeadingInset
-                    anchors.verticalCenter: keystoneWindow.horizontalEdge ? pillRecordingSlot.verticalCenter : undefined
-                    anchors.horizontalCenter: keystoneWindow.horizontalEdge ? undefined : pillRecordingSlot.horizontalCenter
-                    anchors.top: keystoneWindow.horizontalEdge ? undefined : pillRecordingSlot.top
-                    anchors.right: keystoneWindow.horizontalEdge ? pillRecordingSlot.right : undefined
+                HorizontalPillRecordingVisual {
                     active: root.recordingPresentationActive
                     recording: root.isRecording
                     finalizing: root.isFinalizing
@@ -1452,19 +1442,42 @@ Variants {
                     recordingInfoProgress: root.recordingInfoProgress
                     recordingActionProgress: root.recordingActionProgress
                     processingContentProgress: root.processingContentProgress
-                    baseMainWidth: root.collapsedW
-                    layoutHeight: root.collapsedH
-                    vertical: !keystoneWindow.horizontalEdge
+                    baseMainWidth: horizontalLayout.collapsedWidth
+                    layoutHeight: horizontalLayout.collapsedHeight
                     edge: keystoneWindow.edge
-                    visible: active || opacity > 0.01
-                    onStopRequested: {
-                        if (!RecordingService.stop())
-                            return ;
-
-                        root.pillStopFusionMinimumActive = true;
-                    }
                 }
 
+            }
+
+            Component {
+                id: verticalPillRecordingComponent
+
+                VerticalPillRecordingVisual {
+                    active: root.recordingPresentationActive
+                    recording: root.isRecording
+                    finalizing: root.isFinalizing
+                    recordingType: RecordingService.recordingType
+                    elapsedMs: RecordingService.elapsedMs
+                    morphProgress: root.pillMorphProgress
+                    recordingInfoProgress: root.recordingInfoProgress
+                    recordingActionProgress: root.recordingActionProgress
+                    processingContentProgress: root.processingContentProgress
+                    baseMainHeight: verticalLayout.collapsedHeight
+                    layoutWidth: verticalLayout.collapsedWidth
+                    edge: keystoneWindow.edge
+                }
+
+            }
+
+            Connections {
+                function onStopRequested() {
+                    if (!RecordingService.stop())
+                        return ;
+
+                    root.pillStopFusionMinimumActive = true;
+                }
+
+                target: pillRecordingPresenter.item
             }
 
             BangsRecordingVisual {
@@ -1531,10 +1544,6 @@ Variants {
         mask: Region {
             Region {
                 item: maskContainer
-            }
-
-            Region {
-                item: styleSurface.detached && root.recordingPresentationActive ? pillRecordingVisual : null
             }
 
         }
